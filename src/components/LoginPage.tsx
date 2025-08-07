@@ -111,7 +111,7 @@ const SpiderWebBackground = () => {
           ctx.moveTo(point.x, point.y);
           ctx.lineTo(mouseRef.current.x, mouseRef.current.y);
           const opacity = 1 - distToMouse / mouseDistance;
-          ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.1})`;
+          ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.6})`;
           ctx.lineWidth = 4; // Much thicker lines
           ctx.shadowColor = "rgba(59, 130, 246, 0.2)";
           ctx.shadowBlur = 10;
@@ -144,7 +144,7 @@ const SpiderWebBackground = () => {
             ctx.moveTo(point.x, point.y);
             ctx.lineTo(otherPoint.x, otherPoint.y);
             const opacity = 1 - distance / maxDistance;
-            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.6})`;
+            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.8})`;
             ctx.lineWidth = 1; // Thicker base lines
             ctx.stroke();
           }
@@ -585,7 +585,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             transition={{
               duration: 4 + Math.random() * 4,
               repeat: Infinity,
-              delay: Math.random() * 3,
+              delay: Math.random() * 9,
               ease: "easeInOut",
             }}
           />
