@@ -10,7 +10,6 @@ import {
   Users, 
   Plus, 
   Search, 
-  Filter, 
   Edit, 
   Trash2, 
   UserCheck, 
@@ -19,7 +18,6 @@ import {
   Mail,
   Phone,
   Calendar,
-  MoreVertical,
   Eye,
   EyeOff
 } from "lucide-react";

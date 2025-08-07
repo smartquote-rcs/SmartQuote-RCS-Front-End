@@ -3,7 +3,7 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Search, Filter, Star, ShoppingCart, Eye, Heart, Grid, List } from "lucide-react";
+import { Search, Star, ShoppingCart, Eye, Heart, Grid, List } from "lucide-react";
 
 const produtos = [
   {

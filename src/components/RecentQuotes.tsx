@@ -1,5 +1,5 @@
 import { Badge } from "./ui/badge";
-import { Eye, Download, Clock } from "lucide-react";
+import { Eye, Download } from "lucide-react";
 
 const recentQuotes = [
   {

@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Settings, Bell, Shield, Database, Mail, Palette, Globe, Save } from "lucide-react";
+import { Settings, Bell, Shield, Database, Save } from "lucide-react";
 
 export function SettingsPage() {
   const [generalSettings, setGeneralSettings] = useState({

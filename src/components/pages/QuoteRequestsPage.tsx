@@ -3,7 +3,7 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Search, Filter, Eye, Download, Mail, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Search, Eye, Download, Mail, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 
 const cotacoes = [
   {

@@ -3,7 +3,7 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Search, Star, Building, Phone, Mail, Globe, MapPin, TrendingUp, Download } from "lucide-react";
+import { Search, Star, Building, Phone, Mail, Globe, MapPin, Download } from "lucide-react";
 
 const fornecedores = [
   {
@@ -94,7 +94,6 @@ const fornecedores = [
 ];
 
 const categorias = ["Todas", "Energia Solar", "Infraestrutura TI", "Equipamento de Impressão", "Energia", "Segurança de Dados"];
-const statusOptions = ["Todos", "active", "inactive"];
 
 const getStatusBadge = (status: string) => {
   switch (status) {

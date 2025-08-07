@@ -1,7 +1,4 @@
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Mail, Users, CheckCircle, Clock, Download, TrendingUp, AlertTriangle, DollarSign } from "lucide-react";
+import { Mail, Users, Clock, Download, TrendingUp } from "lucide-react";
 import { QuoteProcessingChart } from "../QuoteProcessingChart";
 import { SupplierPerformanceChart } from "../SupplierPerformanceChart";
 import { RecentQuotes } from "../RecentQuotes";

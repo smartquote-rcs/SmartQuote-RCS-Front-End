@@ -1,5 +1,5 @@
 import { Badge } from "./ui/badge";
-import { AlertTriangle, CheckCircle, X, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle, X } from "lucide-react";
 
 const pendingApprovals = [
   {
