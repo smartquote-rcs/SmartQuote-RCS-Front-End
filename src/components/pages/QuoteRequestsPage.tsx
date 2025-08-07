@@ -197,7 +197,7 @@ export function QuoteRequestsPage() {
             <TabsContent value="all" className="h-full mt-0">
               <div className="grid gap-4 lg:gap-6">
                 {filteredCotacoes.map((cotacao) => (
-                  <div key={cotacao.id} className="dark-card p-4 hover:border-dark-cta transition-colors">
+                  <div key={cotacao.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1">
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
                       <div className="flex items-start space-x-3 flex-1 min-w-0">
                         <div className="flex-shrink-0">
@@ -245,7 +245,7 @@ export function QuoteRequestsPage() {
             <TabsContent value="pending" className="h-full mt-0">
               <div className="grid gap-4 lg:gap-6">
                 {cotacoes.filter(c => c.status === 'pending_approval').map((cotacao) => (
-                  <div key={cotacao.id} className="dark-card p-4 hover:border-dark-cta transition-colors">
+                  <div key={cotacao.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1">
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
                       <div className="flex items-start space-x-3 flex-1 min-w-0">
                         <div className="flex-shrink-0">
@@ -293,7 +293,7 @@ export function QuoteRequestsPage() {
             <TabsContent value="processing" className="h-full mt-0">
               <div className="grid gap-4 lg:gap-6">
                 {cotacoes.filter(c => c.status === 'processing').map((cotacao) => (
-                  <div key={cotacao.id} className="dark-card p-4 hover:border-dark-cta transition-colors">
+                  <div key={cotacao.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1">
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
                       <div className="flex items-start space-x-3 flex-1 min-w-0">
                         <div className="flex-shrink-0">

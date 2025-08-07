@@ -1,44 +1,13 @@
 import { useState, useEffect } from "react";
-import { UserDashboard } from "./components/UserDashboard";
-import { ManagerDashboard } from "./components/ManagerDashboard";
-import { AdminDashboard } from "./components/AdminDashboard";
 import { LoginPage } from "./components/LoginPage";
+import { UserDashboard } from "./components/UserDashboard";
+import { AdminDashboard } from "./components/AdminDashboard";
 
 interface User {
   email: string;
   name: string;
   role: "user" | "manager" | "admin";
 }
-
-const userCredentials = [
-  {
-    email: "usuario@rcs.pt",
-    password: "demo123",
-    userData: {
-      email: "usuario@rcs.pt",
-      name: "João Silva",
-      role: "user" as const
-    }
-  },
-  {
-    email: "gestor@rcs.pt", 
-    password: "demo123",
-    userData: {
-      email: "gestor@rcs.pt",
-      name: "Maria Santos",
-      role: "manager" as const
-    }
-  },
-  {
-    email: "admin@rcs.pt",
-    password: "demo123", 
-    userData: {
-      email: "admin@rcs.pt",
-      name: "Carlos Mendes",
-      role: "admin" as const
-    }
-  }
-];
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -48,41 +17,67 @@ export default function App() {
   useEffect(() => {
     // Verificar se o usuário já está logado (localStorage)
     const savedAuth = localStorage.getItem("smartquote_auth");
-    if (savedAuth) {
+    const savedToken = localStorage.getItem("auth_token");
+    
+    if (savedAuth || savedToken) {
       try {
-        const authData = JSON.parse(savedAuth);
-        setIsAuthenticated(true);
-        setUser(authData.user);
+        if (savedAuth) {
+          // Dados salvos do sistema anterior
+          const authData = JSON.parse(savedAuth);
+          setIsAuthenticated(true);
+          setUser(authData.user);
+        } else if (savedToken) {
+          // Só tem token da API, criar dados de usuário básicos
+          setIsAuthenticated(true);
+          setUser({
+            email: 'usuario@api.com',
+            name: 'Usuário API',
+            role: 'user'
+          });
+        }
       } catch (error) {
         localStorage.removeItem("smartquote_auth");
+        localStorage.removeItem("auth_token");
       }
     }
     setIsLoading(false);
   }, []);
 
-  const handleLogin = (credentials: { email: string; password: string }) => {
-    const validUser = userCredentials.find(
-      cred => cred.email === credentials.email && cred.password === credentials.password
-    );
+  const handleLogin = (credentials: { email: string; password: string; role?: 'user' | 'admin' }) => {
+    console.log('🎯 App.tsx - handleLogin chamado com:', credentials);
+    
+    // Como o LoginPage já validou com a API, vamos aceitar o login
+    // e criar dados de usuário baseados no role selecionado ou email
+    const userData = {
+      email: credentials.email,
+      name: credentials.email.split('@')[0] || 'Usuário', // Nome baseado no email
+      role: credentials.role || (credentials.email.includes('admin') ? 'admin' as const : 'user' as const)
+    };
 
-    if (validUser) {
-      setUser(validUser.userData);
-      setIsAuthenticated(true);
-      
-      // Salvar no localStorage
-      localStorage.setItem("smartquote_auth", JSON.stringify({
-        user: validUser.userData,
-        timestamp: Date.now()
-      }));
-    } else {
-      alert("Credenciais inválidas. Verifique as credenciais de demonstração.");
-    }
+    console.log('👤 Dados do usuário criados:', userData);
+
+    setUser(userData);
+    setIsAuthenticated(true);
+    
+    // Salvar no localStorage
+    localStorage.setItem("smartquote_auth", JSON.stringify({
+      user: userData,
+      timestamp: Date.now()
+    }));
+    
+    console.log('✅ Login aceito no App.tsx, estado atualizado');
   };
 
   const handleLogout = () => {
+    // Limpar roles salvos para o usuário atual
+    if (user?.email) {
+      localStorage.removeItem('user_role_' + user.email);
+    }
+    
     setIsAuthenticated(false);
     setUser(null);
     localStorage.removeItem("smartquote_auth");
+    localStorage.removeItem("auth_token"); // Limpar também o token da API
   };
 
   const renderDashboard = () => {

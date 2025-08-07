@@ -187,8 +187,8 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         <div className="p-4 lg:p-8 border-b border-dark-color">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 lg:space-x-4">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-600 to-blue-500 rounded-2xl flex items-center justify-center dark-shadow-lg relative overflow-hidden">
-                <span className="text-white font-bold text-base lg:text-lg relative z-10">RCS</span>
+              <div className="w-15 h-15 lg:w-18 lg:h-18 bg-gray-800 rounded-2xl flex items-center justify-center shadow-lg relative overflow-hidden p-1">
+                <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain relative z-10" />
               </div>
               <div>
                 <h1 className="text-lg lg:text-xl font-bold text-dark-primary">RCS Procurement</h1>
@@ -327,8 +327,8 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">RCS</span>
+            <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center p-1">
+              <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-bold text-dark-primary">RCS Procurement</span>
           </div>

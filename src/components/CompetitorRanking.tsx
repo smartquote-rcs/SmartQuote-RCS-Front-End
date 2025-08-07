@@ -1,6 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
 import { ArrowUpRight, TrendingUp, TrendingDown, Crown } from "lucide-react";
 
 const competitors = [

@@ -1,0 +1,212 @@
+import api from './client';
+
+// Tipos
+interface AuthResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
+interface SignupData {
+  name: string;
+  email: string;
+  password: string;
+}
+
+interface SigninData {
+  email: string;
+  password: string;
+}
+
+interface EmployeeData {
+  name: string;
+  email: string;
+  role?: string;
+}
+
+// Serviço de Autenticação
+export const authService = {
+  // Registrar novo usuário
+  async signup(userData: SignupData): Promise<AuthResponse> {
+    try {
+      console.log('🔌 Fazendo requisição para:', '/auth/signup');
+      console.log('📝 Dados enviados:', { email: userData.email, name: userData.name });
+      
+      const response = await api.post('/auth/signup', {
+        email: userData.email,
+        password: userData.password,
+        username: userData.name
+      });
+      
+      console.log('📨 Resposta recebida:', response.data);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro na requisição de registro:', error);
+      console.error('📊 Status do erro:', error.response?.status);
+      console.error('📄 Dados do erro:', error.response?.data);
+      
+      let errorMessage = 'Erro ao criar conta';
+      
+      // Tratamento específico por código de status HTTP
+      switch (error.response?.status) {
+        case 400:
+          const serverMessage = error.response?.data?.error || error.response?.data?.message || '';
+          if (serverMessage.toLowerCase().includes('email')) {
+            errorMessage = 'Formato de email inválido.';
+          } else if (serverMessage.toLowerCase().includes('password')) {
+            errorMessage = 'Senha deve ter pelo menos 8 caracteres.';
+          } else {
+            errorMessage = 'Dados inválidos. Verifique as informações.';
+          }
+          break;
+        case 409:
+          errorMessage = 'Este email já está registrado. Tente fazer login ou use outro email.';
+          break;
+        case 422:
+          errorMessage = 'Dados inválidos. Verifique o formato dos campos.';
+          break;
+        case 429:
+          errorMessage = 'Muitas tentativas de registro. Aguarde alguns minutos.';
+          break;
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          errorMessage = 'Erro no servidor. Tente novamente em alguns minutos.';
+          break;
+        default:
+          if (!error.response) {
+            errorMessage = 'Erro de conexão. Verifique sua internet.';
+          } else {
+            // Usar mensagem do servidor se disponível
+            errorMessage = error.response?.data?.error || error.response?.data?.message || 'Erro desconhecido ao criar conta.';
+          }
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage 
+      };
+    }
+  },
+
+  // Fazer login
+  async signin(credentials: SigninData): Promise<AuthResponse> {
+    try {
+      console.log('🔌 Fazendo requisição para:', '/auth/signin');
+      console.log('📝 Dados enviados:', { email: credentials.email });
+      
+      const response = await api.post('/auth/signin', {
+        email: credentials.email,
+        password: credentials.password
+      });
+      
+      console.log('📨 Resposta recebida:', response.data);
+      
+      // Salvar token no localStorage
+      if (response.data.token) {
+        localStorage.setItem('auth_token', response.data.token);
+        console.log('💾 Token salvo no localStorage');
+      }
+      
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro na requisição:', error);
+      console.error('📊 Status do erro:', error.response?.status);
+      console.error('📄 Dados do erro:', error.response?.data);
+      
+      let errorMessage = 'Erro ao fazer login';
+      
+      // Tratamento específico por código de status HTTP
+      switch (error.response?.status) {
+        case 400:
+          errorMessage = 'Dados de login inválidos. Verifique email e senha.';
+          break;
+        case 401:
+          // Analisar a mensagem específica do servidor
+          const serverMessage = error.response?.data?.error || error.response?.data?.message || '';
+          if (serverMessage.toLowerCase().includes('password')) {
+            errorMessage = 'Senha incorreta. Verifique sua senha.';
+          } else if (serverMessage.toLowerCase().includes('email') || serverMessage.toLowerCase().includes('user')) {
+            errorMessage = 'Email não encontrado. Verifique seu email ou crie uma conta.';
+          } else {
+            errorMessage = 'Email ou senha incorretos.';
+          }
+          break;
+        case 403:
+          errorMessage = 'Acesso negado. Sua conta pode estar bloqueada ou inativa.';
+          break;
+        case 404:
+          errorMessage = 'Serviço de autenticação não encontrado. Tente novamente mais tarde.';
+          break;
+        case 422:
+          errorMessage = 'Dados inválidos. Verifique o formato do email e senha.';
+          break;
+        case 429:
+          errorMessage = 'Muitas tentativas de login. Aguarde alguns minutos antes de tentar novamente.';
+          break;
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          errorMessage = 'Erro no servidor. Tente novamente em alguns minutos.';
+          break;
+        default:
+          if (!error.response) {
+            errorMessage = 'Erro de conexão. Verifique sua internet.';
+          } else {
+            // Usar mensagem do servidor se disponível
+            errorMessage = error.response?.data?.error || error.response?.data?.message || 'Erro desconhecido no login.';
+          }
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage
+      };
+    }
+  },
+
+  // Logout
+  logout(): void {
+    localStorage.removeItem('auth_token');
+  },
+
+  // Verificar se está logado
+  isLoggedIn(): boolean {
+    return !!localStorage.getItem('auth_token');
+  }
+};
+
+// Serviço de Funcionários
+export const employeeService = {
+  // Listar todos os funcionários
+  async getAll(): Promise<AuthResponse> {
+    try {
+      const response = await api.get('/employee/');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Erro ao buscar funcionários' 
+      };
+    }
+  },
+
+  // Criar novo funcionário
+  async create(employeeData: EmployeeData): Promise<AuthResponse> {
+    try {
+      const response = await api.post('/employee/create', {
+        name: employeeData.name,
+        email: employeeData.email,
+        role: employeeData.role
+      });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Erro ao criar funcionário' 
+      };
+    }
+  }
+};

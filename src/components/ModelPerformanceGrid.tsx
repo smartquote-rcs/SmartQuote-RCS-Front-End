@@ -1,8 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Progress } from "./ui/progress";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ExternalLink } from "lucide-react";
 
 const models = [
   {
@@ -67,7 +63,7 @@ export function ModelPerformanceGrid() {
     }
   };
 
-  const getTrendColor = (trend: string, change: number) => {
+  const getTrendColor = (trend: string) => {
     if (trend === "up") return "text-dark-positive";
     if (trend === "down") return "text-dark-negative";
     return "text-dark-secondary";
@@ -103,7 +99,7 @@ export function ModelPerformanceGrid() {
                     <h3 className="font-bold text-dark-primary text-lg">{model.name}</h3>
                     <div className="flex items-center space-x-2 mt-1">
                       {getTrendIcon(model.trend)}
-                      <span className={`text-sm font-bold ${getTrendColor(model.trend, model.change)}`}>
+                      <span className={`text-sm font-bold ${getTrendColor(model.trend)}`}>
                         {model.change > 0 ? "+" : ""}{model.change}%
                       </span>
                     </div>

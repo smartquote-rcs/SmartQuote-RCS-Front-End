@@ -256,13 +256,8 @@ export function AdminDashboard({
         <div className="p-3 sm:p-4 lg:p-6 border-b border-dark-color flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-600 to-blue-500 rounded-2xl flex items-center justify-center dark-shadow-lg relative overflow-hidden flex-shrink-0">
-                <span className="text-white font-bold text-sm sm:text-base lg:text-lg relative z-10">
-                  RCS
-                </span> 
-                <h3 className="text-base sm:text-lg font-semibold text-white text-center">
-                  Angola
-                </h3>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gray-800 rounded-2xl flex items-center justify-center shadow-lg relative overflow-hidden flex-shrink-0 p-1">
+                <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain relative z-10" />
               </div>
                
               <div className="min-w-0">
@@ -379,10 +374,8 @@ export function AdminDashboard({
             <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
           <div className="flex items-center space-x-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-600 to-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs sm:text-sm">
-                SQ
-              </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-800 rounded-lg flex items-center justify-center p-1">
+              <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-bold text-dark-primary text-sm sm:text-base">
               SmartQuote
