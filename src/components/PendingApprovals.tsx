@@ -46,29 +46,29 @@ const getPriorityBadge = (priority: string) => {
 
 export function PendingApprovals() {
   return (
-    <div className="dark-card">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-6 space-y-4 lg:space-y-0">
+    <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-3 lg:pb-4 space-y-3 lg:space-y-0">
         <div>
-          <h3 className="text-lg lg:text-xl font-bold text-dark-primary mb-2 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-orange-400" />
+          <h3 className="text-base lg:text-lg font-bold text-dark-primary mb-1 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-orange-400" />
             Aprovações Pendentes
           </h3>
-          <p className="text-sm lg:text-base text-dark-secondary font-medium">
+          <p className="text-xs lg:text-sm text-dark-secondary font-medium">
             Cotações que requerem revisão manual e aprovação
           </p>
         </div>
-        <button className="dark-button-secondary text-sm self-start lg:self-auto">Ver Todas</button>
+        <button className="dark-button-secondary text-xs self-start lg:self-auto">Ver Todas</button>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {pendingApprovals.map((approval) => (
-          <div key={approval.id} className="p-4 rounded-xl bg-dark-bg border border-orange-500/20 hover:border-orange-500/40 transition-colors">
-            <div className="flex flex-col lg:flex-row lg:items-start justify-between mb-3 space-y-3 lg:space-y-0">
+          <div key={approval.id} className="p-3 lg:p-4 rounded-xl bg-dark-bg border border-orange-500/20 hover:border-orange-500/40 transition-colors">
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between mb-3 space-y-2 lg:space-y-0">
               <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 lg:gap-3 mb-2">
-                  <span className="font-mono text-sm font-medium text-dark-primary">{approval.id}</span>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="font-mono text-xs font-medium text-dark-primary">{approval.id}</span>
                   {getPriorityBadge(approval.priority)}
                 </div>
-                <div className="text-sm text-dark-secondary mb-1">{approval.client}</div>
+                <div className="text-sm text-dark-secondary mb-2">{approval.client}</div>
                 <div className="font-bold text-dark-primary text-lg">{approval.amount}</div>
               </div>
               <div className="flex items-center space-x-2">
@@ -80,7 +80,7 @@ export function PendingApprovals() {
                 </button>
               </div>
             </div>
-            <div className="space-y-2 text-xs">
+            <div className="space-y-3 text-xs">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-1 lg:space-y-0">
                 <span className="text-dark-secondary">Motivo:</span>
                 <span className="text-dark-primary">{approval.reason}</span>

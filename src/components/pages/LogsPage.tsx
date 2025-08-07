@@ -118,19 +118,15 @@ export function LogsPage() {
     return matchesSearch && matchesLevel && matchesCategory;
   });
 
-  const LogCard = ({ log }: { log: any }) => (
-    <div className={`glass-card p-4 border-l-4 hover:border-cyan-400/50 transition-all duration-300 ${
-      log.nivel === 'error' ? 'border-red-500' :
-      log.nivel === 'warning' ? 'border-yellow-500' :
-      log.nivel === 'info' ? 'border-blue-500' : 'border-green-500'
-    }`}>
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-3 lg:space-y-0 lg:space-x-6">
-        <div className="flex items-start space-x-3 flex-1 min-w-0">
-          <div className="flex-shrink-0 mt-1">
+    const LogCard = ({ log }: { log: any }) => (
+    <div className="glass-card p-4 lg:p-5 border-l-4 border-l-blue-500 hover:shadow-lg transition-all duration-300 bg-white/5 rounded-2xl border border-white/20">
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
+        <div className="flex items-start space-x-4 flex-1 min-w-0">
+          <div className="flex-shrink-0">
             {getLevelIcon(log.nivel)}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
               <div className="flex items-center space-x-2">
                 <Clock className="w-4 h-4 text-dark-secondary flex-shrink-0" />
                 <span className="font-mono text-xs sm:text-sm text-dark-primary">{log.timestamp}</span>
@@ -141,10 +137,10 @@ export function LogsPage() {
               </div>
             </div>
             
-            <h3 className="font-medium text-dark-primary mb-1 text-sm sm:text-base">{log.acao}</h3>
-            <p className="text-xs sm:text-sm text-dark-secondary mb-3 break-words">{log.detalhes}</p>
+            <h3 className="font-medium text-dark-primary mb-2 text-sm sm:text-base">{log.acao}</h3>
+            <p className="text-xs sm:text-sm text-dark-secondary mb-4 break-words">{log.detalhes}</p>
             
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div className="flex items-center space-x-2">
                 <User className="w-3 h-3 text-dark-secondary flex-shrink-0" />
                 <span className="text-dark-secondary">Usuário:</span>

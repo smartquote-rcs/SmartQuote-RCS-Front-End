@@ -113,14 +113,14 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           setActivePage(item.key);
           setIsMobileMenuOpen(false);
         }}
-        className={`flex items-center space-x-3 p-3 rounded-md w-full text-left transition-all duration-300 ${
+        className={`flex items-center space-x-2 p-2 rounded-md w-full text-left transition-all duration-300 ${
           isActive 
             ? "bg-white/10 backdrop-blur-md border border-blue-400 text-blue-400" 
             : "hover:bg-white/5 hover:backdrop-blur-md border border-transparent hover:border-blue-400/30 text-dark-secondary hover:text-blue-300"
         }`}
       >
-        <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`} />
-        <span className={`text-sm lg:text-base ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>{item.label}</span>
+        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`} />
+        <span className={`text-xs lg:text-sm ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>{item.label}</span>
       </button>
     );
   };
@@ -180,7 +180,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
       <div className={`
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         fixed lg:relative z-50 lg:z-auto
-        w-72 h-full bg-dark-bg border-r border-dark-color 
+        w-60 h-full bg-dark-bg border-r border-dark-color 
         flex flex-col transition-transform duration-300 ease-in-out
       `}>
         {/* Logo */}
@@ -205,20 +205,20 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         </div>
         
         {/* Navigation */}
-        <nav className="flex-1 p-4 lg:p-6 space-y-6 lg:space-y-8 overflow-y-auto">
+        <nav className="flex-1 p-2 lg:p-4 space-y-2 lg:space-y-3">
           {/* Main Navigation */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             {mainNavItems.map((item) => renderNavItem(item, activePage === item.key))}
           </div>
 
           <Separator style={{ backgroundColor: '#374151' }} />
 
           {/* IA Group */}
-          <div className="space-y-4">
-            <div className="px-4">
+          <div className="space-y-2">
+            <div className="px-2">
               <h3 className="text-xs font-bold text-dark-secondary uppercase tracking-widest">Inteligência Artificial</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {aiItems.map((item) => renderNavItem(item, activePage === item.key))}
             </div>
           </div>
@@ -226,11 +226,11 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           <Separator style={{ backgroundColor: '#374151' }} />
 
           {/* System Group */}
-          <div className="space-y-4">
-            <div className="px-4">
+          <div className="space-y-2">
+            <div className="px-2">
               <h3 className="text-xs font-bold text-dark-secondary uppercase tracking-widest">Sistema</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {systemItems.map((item) => renderNavItem(item, activePage === item.key))}
             </div>
           </div>
@@ -238,20 +238,20 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           <Separator style={{ backgroundColor: '#374151' }} />
 
           {/* Admin Group */}
-          <div className="space-y-4">
-            <div className="px-4">
+          <div className="space-y-2">
+            <div className="px-2">
               <h3 className="text-xs font-bold text-dark-secondary uppercase tracking-widest">Administração</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {adminItems.map((item) => renderNavItem(item, activePage === item.key))}
             </div>
           </div>
         </nav>
 
         {/* User Profile & Status */}
-        <div className="p-4 lg:p-6 border-t border-dark-color space-y-4">
+        <div className="p-2 lg:p-4 border-t border-dark-color space-y-2">
           {/* System Status - Enhanced */}
-          <div className="glass-card p-3 lg:p-4 border border-white/20 transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10">
+          <div className="glass-card p-3 lg:p-4 border border-white/20 rounded-xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 bg-white/5">
             <div className="flex items-center space-x-2 mb-3">
               <div className="w-2 h-2 bg-green-400 rounded-full status-online"></div>
               <h4 className="text-sm font-bold text-dark-primary">Sistema Ativo</h4>
@@ -276,14 +276,14 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
               </div>
             </div>
             
-            <button className="dark-button-primary text-xs py-2 px-3 lg:px-4 w-full hover:scale-105 transition-transform duration-200">
+            <button className="bg-blue-600 hover:bg-blue-500 text-white text-xs py-2 px-3 lg:px-4 w-full hover:scale-105 transition-all duration-200 rounded-lg">
               <Database className="w-3 h-3 mr-1" />
               Monitoramento Completo
             </button>
           </div>
 
           {/* User Info - Enhanced */}
-          <div className="flex items-center space-x-3 p-3 rounded-xl glass-card border border-white/20 transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10">
+          <div className="flex items-center space-x-3 p-3 rounded-xl glass-card border border-white/20 transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 bg-white/5">
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-blue-600 to-blue-500 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:shadow-xl hover:shadow-blue-500/25 hover:scale-110">
               <span className="text-white text-xs lg:text-sm font-bold">
                 {user?.name?.charAt(0) || 'U'}

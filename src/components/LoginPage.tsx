@@ -701,15 +701,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             SmartQuote RCS
           </motion.h1>
 
-          <motion.p
-            className="text-sm sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-blue-100 font-medium px-4"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 1 }}
-          >
-            Plataforma SaaS de Automação de Procurement
-          </motion.p>
-
           <motion.div
             className="mt-4 sm:mt-6 text-blue-200 text-sm sm:text-base md:text-lg lg:text-xl px-4"
             initial={{ opacity: 0 }}

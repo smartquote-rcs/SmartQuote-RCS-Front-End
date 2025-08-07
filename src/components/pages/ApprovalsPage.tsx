@@ -112,21 +112,21 @@ export function ApprovalsPage() {
   };
 
   const ApprovalCard = ({ aprovacao }: { aprovacao: any }) => (
-    <div className="dark-card p-4 border-l-4 border-l-orange-500 hover:border-dark-cta transition-colors">
+    <div className="glass-card p-6 lg:p-8 border-l-4 border-l-orange-500 hover:border-dark-cta transition-colors bg-white/5 rounded-2xl border border-white/20">
       <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
         <div className="flex items-start space-x-4 flex-1 min-w-0">
           <div className="flex-shrink-0">
             {getPriorityIcon(aprovacao.prioridade)}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-4">
               <h3 className="font-mono text-sm font-bold text-dark-primary">{aprovacao.id}</h3>
               <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                 {getPriorityBadge(aprovacao.prioridade)}
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Building className="w-4 h-4 text-dark-secondary flex-shrink-0" />
                 <span className="font-medium text-dark-primary">{aprovacao.cliente}</span>

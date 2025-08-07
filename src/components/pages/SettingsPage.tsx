@@ -101,14 +101,14 @@ export function SettingsPage() {
 
           <div className="flex-1 overflow-auto">
             <TabsContent value="general" className="h-full mt-0">
-              <div className="dark-card p-6 max-w-2xl">
-                <div className="flex items-center space-x-3 mb-6">
+              <div className="glass-card p-8 lg:p-10 max-w-2xl bg-white/5 rounded-2xl border border-white/20">
+                <div className="flex items-center space-x-3 mb-8">
                   <Settings className="w-5 h-5 text-blue-400" />
                   <h2 className="text-lg font-bold text-dark-primary">Configurações Gerais</h2>
                 </div>
                 
-                <div className="space-y-6">
-                  <div className="space-y-2">
+                <div className="space-y-8">
+                  <div className="space-y-3">
                     <Label htmlFor="systemName" className="text-dark-primary">Nome do Sistema</Label>
                     <Input
                       id="systemName"
@@ -118,8 +118,8 @@ export function SettingsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-3">
                       <Label className="text-dark-primary">Idioma</Label>
                       <Select value={generalSettings.language} onValueChange={(value) => setGeneralSettings({...generalSettings, language: value})}>
                         <SelectTrigger className="bg-dark-bg border-dark-color text-dark-primary">
@@ -195,13 +195,13 @@ export function SettingsPage() {
             </TabsContent>
 
             <TabsContent value="notifications" className="h-full mt-0">
-              <div className="dark-card p-6 max-w-2xl">
-                <div className="flex items-center space-x-3 mb-6">
+              <div className="glass-card p-8 lg:p-10 max-w-2xl bg-white/5 rounded-2xl border border-white/20">
+                <div className="flex items-center space-x-3 mb-8">
                   <Bell className="w-5 h-5 text-orange-400" />
                   <h2 className="text-lg font-bold text-dark-primary">Configurações de Notificações</h2>
                 </div>
                 
-                <div className="space-y-6">
+                <div className="space-y-8">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-dark-primary">Notificações por Email</Label>
@@ -266,13 +266,13 @@ export function SettingsPage() {
             </TabsContent>
 
             <TabsContent value="security" className="h-full mt-0">
-              <div className="dark-card p-6 max-w-2xl">
-                <div className="flex items-center space-x-3 mb-6">
+              <div className="glass-card p-8 lg:p-10 max-w-2xl bg-white/5 rounded-2xl border border-white/20">
+                <div className="flex items-center space-x-3 mb-8">
                   <Shield className="w-5 h-5 text-red-400" />
                   <h2 className="text-lg font-bold text-dark-primary">Configurações de Segurança</h2>
                 </div>
                 
-                <div className="space-y-6">
+                <div className="space-y-8">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-dark-primary">Autenticação de Dois Fatores</Label>
@@ -346,13 +346,13 @@ export function SettingsPage() {
             </TabsContent>
 
             <TabsContent value="integrations" className="h-full mt-0">
-              <div className="dark-card p-6 max-w-2xl">
-                <div className="flex items-center space-x-3 mb-6">
+              <div className="glass-card p-8 lg:p-10 max-w-2xl bg-white/5 rounded-2xl border border-white/20">
+                <div className="flex items-center space-x-3 mb-8">
                   <Database className="w-5 h-5 text-purple-400" />
                   <h2 className="text-lg font-bold text-dark-primary">Configurações de Integrações</h2>
                 </div>
                 
-                <div className="space-y-6">
+                <div className="space-y-8">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-dark-primary">API Habilitada</Label>

@@ -3,7 +3,7 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Search, Star, Building, Phone, Mail, Globe, MapPin, TrendingUp } from "lucide-react";
+import { Search, Star, Building, Phone, Mail, Globe, MapPin, TrendingUp, Download } from "lucide-react";
 
 const fornecedores = [
   {
@@ -141,25 +141,25 @@ export function SuppliersPage() {
   });
 
   const FornecedorCard = ({ fornecedor }: { fornecedor: any }) => (
-    <div className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300">
+    <div className="glass-card p-4 lg:p-6 hover:border-cyan-400/50 transition-all duration-300 bg-white/5 rounded-2xl border border-white/20">
       <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
         <div className="flex items-start space-x-4 flex-1 min-w-0">
           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center flex-shrink-0">
             <Building className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
               <h3 className="font-bold text-dark-primary text-sm sm:text-base truncate">{fornecedor.nome}</h3>
               <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                 {getStatusBadge(fornecedor.status)}
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p className="text-xs sm:text-sm text-dark-secondary">{fornecedor.categoria}</p>
               {getRatingStars(fornecedor.rating)}
               <p className="text-xs text-dark-secondary">{fornecedor.avaliacoes} avaliações</p>
               
-              <div className="space-y-1 text-xs sm:text-sm text-dark-secondary">
+              <div className="space-y-2 text-xs sm:text-sm text-dark-secondary">
                 <div className="flex items-center space-x-2">
                   <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                   <span className="truncate">{fornecedor.localizacao}</span>
@@ -232,6 +232,10 @@ export function SuppliersPage() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg border border-blue-500 transition-colors duration-200 flex items-center space-x-2 text-sm">
+              <Download className="w-4 h-4" />
+              <span>Exportar Relatório</span>
+            </button>
             <div className="dark-tag text-center sm:text-left">
               {filteredFornecedores.length} fornecedores
             </div>
@@ -294,7 +298,7 @@ export function SuppliersPage() {
 
           <div className="flex-1 overflow-auto">
             <TabsContent value="all" className="h-full mt-0">
-              <div className="grid gap-4 lg:gap-6">
+              <div className="grid gap-3 lg:gap-4">
                 {filteredFornecedores.map((fornecedor) => (
                   <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
                 ))}
@@ -302,7 +306,7 @@ export function SuppliersPage() {
             </TabsContent>
 
             <TabsContent value="active" className="h-full mt-0">
-              <div className="grid gap-4 lg:gap-6">
+              <div className="grid gap-3 lg:gap-4">
                 {fornecedores.filter(f => f.status === 'active').map((fornecedor) => (
                   <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
                 ))}
@@ -310,7 +314,7 @@ export function SuppliersPage() {
             </TabsContent>
 
             <TabsContent value="top" className="h-full mt-0">
-              <div className="grid gap-4 lg:gap-6">
+              <div className="grid gap-3 lg:gap-4">
                 {fornecedores.filter(f => f.rating >= 4.5).map((fornecedor) => (
                   <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
                 ))}

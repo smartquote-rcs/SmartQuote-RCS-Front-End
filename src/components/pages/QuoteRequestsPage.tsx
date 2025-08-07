@@ -197,21 +197,21 @@ export function QuoteRequestsPage() {
             <TabsContent value="all" className="h-full mt-0">
               <div className="grid gap-4 lg:gap-6">
                 {filteredCotacoes.map((cotacao) => (
-                  <div key={cotacao.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1">
+                  <div key={cotacao.id} className="glass-card p-6 lg:p-8 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-2xl border border-white/20">
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-                      <div className="flex items-start space-x-3 flex-1 min-w-0">
+                      <div className="flex items-start space-x-4 flex-1 min-w-0">
                         <div className="flex-shrink-0">
                           {getStatusIcon(cotacao.status)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
                             <h3 className="font-mono text-sm font-bold text-dark-primary">{cotacao.id}</h3>
                             <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                               {getStatusBadge(cotacao.status)}
                               {getPriorityBadge(cotacao.prioridade)}
                             </div>
                           </div>
-                          <div className="space-y-1 text-xs sm:text-sm">
+                          <div className="space-y-2 text-xs sm:text-sm">
                             <p className="text-dark-primary font-medium">{cotacao.cliente}</p>
                             <p className="text-dark-secondary">{cotacao.produto} - {cotacao.quantidade}</p>
                             <p className="text-dark-secondary">Fornecedor: {cotacao.fornecedor}</p>
@@ -245,21 +245,21 @@ export function QuoteRequestsPage() {
             <TabsContent value="pending" className="h-full mt-0">
               <div className="grid gap-4 lg:gap-6">
                 {cotacoes.filter(c => c.status === 'pending_approval').map((cotacao) => (
-                  <div key={cotacao.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1">
+                  <div key={cotacao.id} className="glass-card p-6 lg:p-8 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-2xl border border-white/20">
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-                      <div className="flex items-start space-x-3 flex-1 min-w-0">
+                      <div className="flex items-start space-x-4 flex-1 min-w-0">
                         <div className="flex-shrink-0">
                           {getStatusIcon(cotacao.status)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
                             <h3 className="font-mono text-sm font-bold text-dark-primary">{cotacao.id}</h3>
                             <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                               {getStatusBadge(cotacao.status)}
                               {getPriorityBadge(cotacao.prioridade)}
                             </div>
                           </div>
-                          <div className="space-y-1 text-xs sm:text-sm">
+                          <div className="space-y-2 text-xs sm:text-sm">
                             <p className="text-dark-primary font-medium">{cotacao.cliente}</p>
                             <p className="text-dark-secondary">{cotacao.produto} - {cotacao.quantidade}</p>
                             <p className="text-dark-secondary">Fornecedor: {cotacao.fornecedor}</p>
@@ -293,21 +293,21 @@ export function QuoteRequestsPage() {
             <TabsContent value="processing" className="h-full mt-0">
               <div className="grid gap-4 lg:gap-6">
                 {cotacoes.filter(c => c.status === 'processing').map((cotacao) => (
-                  <div key={cotacao.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1">
+                  <div key={cotacao.id} className="glass-card p-6 lg:p-8 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-2xl border border-white/20">
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-                      <div className="flex items-start space-x-3 flex-1 min-w-0">
+                      <div className="flex items-start space-x-4 flex-1 min-w-0">
                         <div className="flex-shrink-0">
                           {getStatusIcon(cotacao.status)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
                             <h3 className="font-mono text-sm font-bold text-dark-primary">{cotacao.id}</h3>
                             <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                               {getStatusBadge(cotacao.status)}
                               {getPriorityBadge(cotacao.prioridade)}
                             </div>
                           </div>
-                          <div className="space-y-1 text-xs sm:text-sm">
+                          <div className="space-y-2 text-xs sm:text-sm">
                             <p className="text-dark-primary font-medium">{cotacao.cliente}</p>
                             <p className="text-dark-secondary">{cotacao.produto} - {cotacao.quantidade}</p>
                             <p className="text-dark-secondary">Fornecedor: {cotacao.fornecedor}</p>

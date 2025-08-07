@@ -9,14 +9,14 @@ const supplierData = [
 
 export function SupplierPerformanceChart() {
   return (
-    <div className="dark-card">
-      <div className="pb-6">
-        <h3 className="text-lg lg:text-xl font-bold text-dark-primary mb-2">Distribuição de Fornecedores</h3>
-        <p className="text-sm lg:text-base text-dark-secondary font-medium">
+    <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
+      <div className="pb-3 lg:pb-4">
+        <h3 className="text-base lg:text-lg font-bold text-dark-primary mb-1">Distribuição de Fornecedores</h3>
+        <p className="text-xs lg:text-sm text-dark-secondary font-medium">
           Fornecedores ativos por categoria e métricas de desempenho
         </p>
       </div>
-      <div className="h-64 lg:h-80">
+      <div className="h-48 lg:h-64">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

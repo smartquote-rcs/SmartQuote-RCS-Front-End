@@ -11,7 +11,7 @@ import {
   LogOut,
   Menu,
   X,
-  Shield,
+  Shield
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -92,16 +92,16 @@ export function AdminDashboard({
           setActivePage(item.key);
           setIsMobileMenuOpen(false);
         }}
-        className={`flex items-center space-x-3 p-3 rounded-md w-full text-left transition-all duration-300 ${
+        className={`flex items-center space-x-2 p-2 rounded-md w-full text-left transition-all duration-300 ${
           isActive 
             ? "bg-white/10 backdrop-blur-md border border-blue-400 text-blue-400" 
             : "hover:bg-white/5 hover:backdrop-blur-md border border-transparent hover:border-blue-400/30 text-dark-secondary hover:text-blue-300"
         }`}
       >
         <Icon
-          className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`}
+          className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`}
         />
-        <span className={`text-xs sm:text-sm lg:text-base truncate ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>
+        <span className={`text-xs sm:text-sm truncate ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>
           {item.label}
         </span>
       </button>
@@ -147,64 +147,64 @@ export function AdminDashboard({
             <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
               {/* Data Management Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
-                <div className="glass-card">
+                <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-600 to-purple-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-purple-500 hover:to-purple-400 hover:shadow-lg hover:shadow-purple-500/25">
-                      <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-purple-500 hover:to-purple-400 hover:shadow-lg hover:shadow-purple-500/25">
+                      <Database className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-xl sm:text-2xl font-bold text-dark-primary transition-colors duration-300 hover:text-purple-400">
+                      <h3 className="text-lg sm:text-xl font-bold text-dark-primary transition-colors duration-300 hover:text-purple-400">
                         2.4GB
                       </h3>
-                      <p className="text-xs sm:text-sm text-dark-secondary truncate">
+                      <p className="text-xs text-dark-secondary truncate">
                         Dados Armazenados
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="glass-card">
+                                <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-green-600 to-green-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-green-500 hover:to-green-400 hover:shadow-lg hover:shadow-green-500/25">
-                      <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-green-600 to-green-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-green-500 hover:to-green-400 hover:shadow-lg hover:shadow-green-500/25">
+                      <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-xl sm:text-2xl font-bold text-dark-primary transition-colors duration-300 hover:text-green-400">
+                      <h3 className="text-lg sm:text-xl font-bold text-dark-primary transition-colors duration-300 hover:text-green-400">
                         99.9%
                       </h3>
-                      <p className="text-xs sm:text-sm text-dark-secondary truncate">
+                      <p className="text-xs text-dark-secondary truncate">
                         Uptime
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="glass-card">
+                <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:shadow-lg hover:shadow-blue-500/25">
-                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:shadow-lg hover:shadow-blue-500/25">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-xl sm:text-2xl font-bold text-dark-primary transition-colors duration-300 hover:text-blue-400">
+                      <h3 className="text-lg sm:text-xl font-bold text-dark-primary transition-colors duration-300 hover:text-blue-400">
                         15,247
                       </h3>
-                      <p className="text-xs sm:text-sm text-dark-secondary truncate">
+                      <p className="text-xs text-dark-secondary truncate">
                         Registros Totais
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="glass-card">
+                <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-600 to-orange-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-orange-500 hover:to-orange-400 hover:shadow-lg hover:shadow-orange-500/25">
-                      <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-orange-600 to-orange-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-orange-500 hover:to-orange-400 hover:shadow-lg hover:shadow-orange-500/25">
+                      <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-xl sm:text-2xl font-bold text-dark-primary transition-colors duration-300 hover:text-orange-400">
+                      <h3 className="text-lg sm:text-xl font-bold text-dark-primary transition-colors duration-300 hover:text-orange-400">
                         Diário
                       </h3>
-                      <p className="text-xs sm:text-sm text-dark-secondary truncate">
+                      <p className="text-xs text-dark-secondary truncate">
                         Backup
                       </p>
                     </div>
@@ -248,7 +248,7 @@ export function AdminDashboard({
         className={`
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         fixed lg:relative z-50 lg:z-auto
-        w-64 sm:w-72 h-full bg-dark-bg border-r border-dark-color 
+        w-56 sm:w-64 h-full bg-dark-bg border-r border-dark-color 
         flex flex-col transition-transform duration-300 ease-in-out
       `}
       >
@@ -262,7 +262,7 @@ export function AdminDashboard({
                
               <div className="min-w-0">
                 <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-dark-primary truncate">
-                  SmartQuote RCS
+                  SMARTQUOTE
                 </h1>
                 <p className="text-xs text-dark-secondary font-medium truncate">
                   Painel Administrativo
@@ -279,9 +279,9 @@ export function AdminDashboard({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 overflow-y-auto">
+        <nav className="flex-1 p-3 sm:p-4 lg:p-4 space-y-4 sm:space-y-5 overflow-y-auto">
           {/* Main Navigation */}
-          <div className="space-y-1 sm:space-y-2">
+          <div className="space-y-2">
             {mainNavItems.map((item) =>
               renderNavItem(item, activePage === item.key),
             )}
@@ -290,13 +290,13 @@ export function AdminDashboard({
           <Separator style={{ backgroundColor: "#374151" }} />
 
           {/* System Group */}
-          <div className="space-y-3 sm:space-y-4">
-            <div className="px-3 sm:px-4">
-              <h3 className="text-xs font-bold text-dark-secondary uppercase tracking-widest">
+          <div className="space-y-2">
+            <div className="px-2 sm:px-3">
+              <h3 className="text-xs font-bold text-dark-primary uppercase tracking-widest">
                 Sistema
               </h3>
             </div>
-            <div className="space-y-1 sm:space-y-2">
+            <div className="space-y-2">
               {systemItems.map((item) =>
                 renderNavItem(item, activePage === item.key),
               )}
@@ -306,13 +306,13 @@ export function AdminDashboard({
           <Separator style={{ backgroundColor: "#374151" }} />
 
           {/* Admin Group */}
-          <div className="space-y-3 sm:space-y-4">
-            <div className="px-3 sm:px-4">
-              <h3 className="text-xs font-bold text-dark-secondary uppercase tracking-widest">
+          <div className="space-y-2">
+            <div className="px-2 sm:px-3">
+              <h3 className="text-xs font-bold text-dark-Primary uppercase tracking-widest">
                 Administração
               </h3>
             </div>
-            <div className="space-y-1 sm:space-y-2">
+            <div className="space-y-1">
               {adminItems.map((item) =>
                 renderNavItem(item, activePage === item.key),
               )}
@@ -321,9 +321,9 @@ export function AdminDashboard({
         </nav>
 
         {/* System Status & User */}
-        <div className="p-3 sm:p-4 lg:p-6 border-t border-dark-color space-y-3 sm:space-y-4 flex-shrink-0">
+        <div className="p-2 sm:p-3 lg:p-4 border-t border-dark-color space-y-2 sm:space-y-3 flex-shrink-0">
           {/* System Status */}
-          <div className="glass-card p-3 lg:p-4 text-center border border-white/20 transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10">
+          <div className="glass-card p-3 lg:p-4 text-center border border-white/20 rounded-xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 bg-white/5">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <div className="w-2 h-2 bg-green-400 rounded-full status-online"></div>
               <h4 className="text-xs sm:text-sm font-bold text-dark-primary">
@@ -333,14 +333,14 @@ export function AdminDashboard({
             <p className="text-xs text-dark-secondary mb-3">
               IA: Online | Admin: Ativo
             </p>
-            <button className="dark-button-primary text-xs py-2 px-3 lg:px-4 w-full flex items-center justify-center space-x-1 hover:scale-105 transition-transform duration-200">
+            <button className="bg-blue-600 hover:bg-blue-500 text-white text-xs py-2 px-3 lg:px-4 w-full flex items-center justify-center space-x-1 hover:scale-105 transition-all duration-200 rounded-lg">
               <Database className="w-3 h-3" />
               <span>Ver Status</span>
             </button>
           </div>
 
           {/* User Info */}
-          <div className="flex items-center space-x-3 p-3 rounded-xl glass-card border border-white/20 transition-all duration-300 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10">
+          <div className="flex items-center space-x-3 p-3 rounded-xl glass-card border border-white/20 transition-all duration-300 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10 bg-white/5">
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-red-500 hover:to-red-400 hover:shadow-lg hover:shadow-red-500/25">
               <Shield className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
             </div>
@@ -378,7 +378,7 @@ export function AdminDashboard({
               <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-bold text-dark-primary text-sm sm:text-base">
-              SmartQuote
+              SmartQuote-RCS
             </span>
           </div>
           <div className="w-9 sm:w-10"></div>

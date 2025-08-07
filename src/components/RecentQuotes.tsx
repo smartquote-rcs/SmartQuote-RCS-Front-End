@@ -49,25 +49,25 @@ const getStatusBadge = (status: string) => {
 
 export function RecentQuotes() {
   return (
-    <div className="dark-card">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-6 space-y-4 lg:space-y-0">
+    <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-3 lg:pb-4 space-y-3 lg:space-y-0">
         <div>
-          <h3 className="text-lg lg:text-xl font-bold text-dark-primary mb-2">Cotações Recentes</h3>
-          <p className="text-sm lg:text-base text-dark-secondary font-medium">
+          <h3 className="text-base lg:text-lg font-bold text-dark-primary mb-1">Cotações Recentes</h3>
+          <p className="text-xs lg:text-sm text-dark-secondary font-medium">
             Atividade mais recente de processamento de cotações
           </p>
         </div>
-        <button className="dark-button-secondary text-sm self-start lg:self-auto">Ver Todas</button>
+        <button className="dark-button-secondary text-xs self-start lg:self-auto">Ver Todas</button>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {recentQuotes.map((quote) => (
-          <div key={quote.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-4 rounded-xl bg-dark-bg border border-dark-color hover:border-dark-cta transition-colors space-y-3 lg:space-y-0">
+          <div key={quote.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-3 lg:p-4 rounded-xl bg-dark-bg border border-dark-color hover:border-dark-cta transition-colors space-y-2 lg:space-y-0">
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 lg:gap-3 mb-2">
+              <div className="flex flex-wrap items-center gap-2 lg:gap-3 mb-3">
                 <span className="font-mono text-sm font-medium text-dark-primary">{quote.id}</span>
                 {getStatusBadge(quote.status)}
               </div>
-              <div className="text-sm text-dark-secondary mb-1">{quote.client}</div>
+              <div className="text-sm text-dark-secondary mb-2">{quote.client}</div>
               <div className="text-xs text-dark-secondary">{quote.time}</div>
             </div>
             <div className="flex items-center justify-between lg:justify-end lg:text-right space-x-4">

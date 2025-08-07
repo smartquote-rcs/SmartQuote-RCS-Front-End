@@ -173,29 +173,29 @@ export function ProductSearchPage() {
   };
 
   const ProductCard = ({ produto }: { produto: any }) => (
-    <div className={`glass-card hover:border-cyan-400/50 transition-all duration-300 hover:shadow-lg ${
-      viewMode === "list" ? "flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-6 p-4" : "p-4"
+    <div className={`glass-card hover:border-cyan-400/50 transition-all duration-300 hover:shadow-lg bg-white/5 rounded-2xl border border-white/20 ${
+      viewMode === "list" ? "flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-6 p-6 lg:p-8" : "p-6 lg:p-8"
     }`}>
       {/* Image */}
-      <div className={`relative ${viewMode === "list" ? "w-full lg:w-32 h-48 lg:h-24" : "w-full h-48"} bg-gray-800 rounded-lg overflow-hidden mb-4 ${viewMode === "list" ? "lg:mb-0" : ""}`}>
+      <div className={`relative ${viewMode === "list" ? "w-full lg:w-32 h-48 lg:h-24" : "w-full h-48"} bg-gray-800 rounded-xl overflow-hidden mb-4 ${viewMode === "list" ? "lg:mb-0" : ""}`}>
         <img 
           src={produto.imagem} 
           alt={produto.nome}
           className="w-full h-full object-cover"
         />
         {produto.desconto > 0 && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+          <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
             -{produto.desconto}%
           </div>
         )}
         {produto.popular && (
-          <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+          <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
             Popular
           </div>
         )}
         <button
           onClick={() => toggleFavorite(produto.id)}
-          className="absolute bottom-2 right-2 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+          className="absolute bottom-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
         >
           <Heart className={`w-4 h-4 ${favorites.includes(produto.id) ? "text-red-400 fill-current" : "text-white"}`} />
         </button>
@@ -203,8 +203,8 @@ export function ProductSearchPage() {
 
       {/* Content */}
       <div className={`${viewMode === "list" ? "flex-1" : ""}`}>
-        <div className="mb-3">
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between mb-2 space-y-2 lg:space-y-0">
+        <div className="mb-4">
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between mb-3 space-y-2 lg:space-y-0">
             <h3 className={`font-bold text-dark-primary ${viewMode === "list" ? "text-lg" : "text-base"} leading-tight`}>
               {produto.nome}
             </h3>
@@ -214,7 +214,7 @@ export function ProductSearchPage() {
           <p className="text-xs text-dark-secondary">{produto.fornecedor}</p>
         </div>
 
-        <div className="mb-3">
+        <div className="mb-4">
           {getRatingStars(produto.avaliacao)}
           <p className="text-xs text-dark-secondary mt-1">{produto.avaliacoes} avaliações</p>
         </div>

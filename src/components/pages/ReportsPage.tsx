@@ -119,14 +119,14 @@ export function ReportsPage() {
   });
 
   const RelatorioCard = ({ relatorio }: { relatorio: any }) => (
-    <div className="dark-card p-4 hover:border-dark-cta transition-colors">
+    <div className="glass-card p-6 lg:p-8 hover:border-dark-cta transition-colors bg-white/5 rounded-2xl border border-white/20">
       <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
         <div className="flex items-start space-x-4 flex-1 min-w-0">
           <div className="flex-shrink-0 mt-1">
             {getTypeIcon(relatorio.tipo)}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
               <h3 className="font-bold text-dark-primary text-sm sm:text-base truncate">{relatorio.titulo}</h3>
               <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                 {getStatusBadge(relatorio.status)}
@@ -134,9 +134,9 @@ export function ReportsPage() {
               </div>
             </div>
             
-            <p className="text-xs sm:text-sm text-dark-secondary mb-3 break-words">{relatorio.descricao}</p>
+            <p className="text-xs sm:text-sm text-dark-secondary mb-4 break-words">{relatorio.descricao}</p>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
               <div>
                 <span className="text-dark-secondary">Período:</span>
                 <span className="text-dark-primary ml-2">{relatorio.periodo}</span>
@@ -220,8 +220,8 @@ export function ReportsPage() {
       <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
-          <div className="dark-card p-4">
-            <div className="flex items-center space-x-3">
+          <div className="glass-card p-6 lg:p-8 bg-white/5 rounded-2xl border border-white/20">
+            <div className="flex items-center space-x-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
                 <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
@@ -232,8 +232,8 @@ export function ReportsPage() {
             </div>
           </div>
           
-          <div className="dark-card p-4">
-            <div className="flex items-center space-x-3">
+          <div className="glass-card p-6 lg:p-8 bg-white/5 rounded-2xl">
+            <div className="flex items-center space-x-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-600 flex items-center justify-center flex-shrink-0">
                 <Download className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
@@ -244,8 +244,8 @@ export function ReportsPage() {
             </div>
           </div>
 
-          <div className="dark-card p-4">
-            <div className="flex items-center space-x-3">
+          <div className="glass-card p-6 lg:p-8 bg-white/5 rounded-2xl">
+            <div className="flex items-center space-x-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-600 flex items-center justify-center flex-shrink-0">
                 <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
@@ -256,8 +256,8 @@ export function ReportsPage() {
             </div>
           </div>
 
-          <div className="dark-card p-4">
-            <div className="flex items-center space-x-3">
+          <div className="glass-card p-6 lg:p-8 bg-white/5 rounded-2xl">
+            <div className="flex items-center space-x-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
                 <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
