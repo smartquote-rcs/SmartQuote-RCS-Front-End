@@ -22,6 +22,9 @@ interface EmployeeData {
   name: string;
   email: string;
   role?: string;
+  department?: string;
+  phone?: string;
+  password?: string;
 }
 
 // Serviço de Autenticação
@@ -93,27 +96,27 @@ export const authService = {
   // Fazer login
   async signin(credentials: SigninData): Promise<AuthResponse> {
     try {
-      console.log('🔌 Fazendo requisição para:', '/auth/signin');
-      console.log('📝 Dados enviados:', { email: credentials.email });
+      console.log('Fazendo requisição para:', '/auth/signin');
+      console.log('Dados enviados:', { email: credentials.email });
       
       const response = await api.post('/auth/signin', {
         email: credentials.email,
         password: credentials.password
       });
       
-      console.log('📨 Resposta recebida:', response.data);
+      console.log('Resposta recebida:', response.data);
       
       // Salvar token no localStorage
       if (response.data.token) {
         localStorage.setItem('auth_token', response.data.token);
-        console.log('💾 Token salvo no localStorage');
+        console.log('Token salvo no localStorage');
       }
       
       return { success: true, data: response.data };
     } catch (error: any) {
-      console.error('💥 Erro na requisição:', error);
-      console.error('📊 Status do erro:', error.response?.status);
-      console.error('📄 Dados do erro:', error.response?.data);
+      console.error('Erro na requisição:', error);
+      console.error('Status do erro:', error.response?.status);
+      console.error('Dados do erro:', error.response?.data);
       
       let errorMessage = 'Erro ao fazer login';
       
@@ -183,12 +186,25 @@ export const employeeService = {
   // Listar todos os funcionários
   async getAll(): Promise<AuthResponse> {
     try {
+      console.log('📤 Fazendo requisição para buscar usuários...');
       const response = await api.get('/employee/');
+      
+      console.log('📨 Resposta bruta da API:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        data: response.data
+      });
+      
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('💥 Erro ao buscar funcionários:', error);
+      console.error('📊 Status do erro:', error.response?.status);
+      console.error('📄 Dados do erro:', error.response?.data);
+      
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Erro ao buscar funcionários' 
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar funcionários' 
       };
     }
   },
@@ -196,16 +212,38 @@ export const employeeService = {
   // Criar novo funcionário
   async create(employeeData: EmployeeData): Promise<AuthResponse> {
     try {
+      console.log('📤 Enviando dados para criar usuário:', employeeData);
+      
       const response = await api.post('/employee/create', {
         name: employeeData.name,
         email: employeeData.email,
-        role: employeeData.role
+        role: employeeData.role,
+        department: employeeData.department,
+        phone: employeeData.phone,
+        password: employeeData.password
       });
+      
+      console.log('📨 Resposta da API ao criar usuário:', response);
+      console.log('📊 Status da resposta:', response.status);
+      console.log('📄 Dados da resposta:', response.data);
+      
+      // Status 204 (No Content) é um sucesso, mas sem dados de retorno
+      if (response.status === 204 || response.status === 201 || response.status === 200) {
+        return { 
+          success: true, 
+          data: response.data || { message: 'Usuário criado com sucesso' }
+        };
+      }
+      
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('💥 Erro ao criar usuário:', error);
+      console.error('📊 Status do erro:', error.response?.status);
+      console.error('📄 Dados do erro:', error.response?.data);
+      
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Erro ao criar funcionário' 
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao criar funcionário' 
       };
     }
   }

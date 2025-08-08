@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { LoginPage } from "./components/LoginPage";
 import { UserDashboard } from "./components/UserDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
+import { AppProvider } from "./contexts/AppContext";
 
 interface User {
   email: string;
@@ -86,6 +87,8 @@ export default function App() {
     switch (user.role) {
       case "user":
         return <UserDashboard user={user} onLogout={handleLogout} />;
+      case "manager":
+        return <AdminDashboard user={user} onLogout={handleLogout} />;
       case "admin":
         return <AdminDashboard user={user} onLogout={handleLogout} />;
       default:
@@ -109,8 +112,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
-      {renderDashboard()}
-    </div>
+    <AppProvider>
+      <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
+        {renderDashboard()}
+      </div>
+    </AppProvider>
   );
 }

@@ -1,8 +1,12 @@
-import { Mail, Users, Clock, Download, TrendingUp } from "lucide-react";
+import { Mail, Users, Clock, Download, TrendingUp, Bell } from "lucide-react";
 import { QuoteProcessingChart } from "../QuoteProcessingChart";
 import { SupplierPerformanceChart } from "../SupplierPerformanceChart";
 import { RecentQuotes } from "../RecentQuotes";
 import { PendingApprovals } from "../PendingApprovals";
+
+interface DashboardPageProps {
+  onNavigateToNotifications?: () => void;
+}
 
 const metrics = [
   {
@@ -61,7 +65,10 @@ const systemAlerts = [
   }
 ];
 
-export function DashboardPage() {
+export function DashboardPage({ onNavigateToNotifications }: DashboardPageProps = {}) {
+  // Simular notificações não lidas (em um app real, viria de um contexto ou API)
+  const unreadNotifications = 3;
+
   return (
     <div className="flex flex-col h-full max-w-full overflow-hidden">
       {/* Header */}
@@ -74,6 +81,21 @@ export function DashboardPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {onNavigateToNotifications && (
+              <button 
+                onClick={onNavigateToNotifications}
+                className="relative bg-white/10 hover:bg-blue-500/20 hover:border-blue-400/50 text-white p-3 rounded-lg border border-white/20 transition-all duration-300 hover:scale-105 group"
+                title="Ir para Notificações"
+              >
+                <Bell className="w-5 h-5 group-hover:text-blue-400 transition-colors" />
+                {/* Badge de notificações não lidas */}
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center text-[11px] font-bold animate-pulse">
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </span>
+                )}
+              </button>
+            )}
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg border border-blue-500 transition-colors duration-200 flex items-center gap-2 text-xs sm:text-sm lg:text-base">
               <Download className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Exportar Relatório</span>

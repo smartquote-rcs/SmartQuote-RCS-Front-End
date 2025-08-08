@@ -22,8 +22,28 @@ api.interceptors.request.use((config) => {
 
 // Interceptor para tratar erros de autenticação
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`📨 Resposta da API [${response.config.method?.toUpperCase()} ${response.config.url}]:`, {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+    
+    // Status 204 (No Content) é sucesso mas sem dados
+    if (response.status === 204) {
+      response.data = { message: 'Operação realizada com sucesso' };
+    }
+    
+    return response;
+  },
   (error) => {
+    console.error(`💥 Erro na API [${error.config?.method?.toUpperCase()} ${error.config?.url}]:`, {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    });
+    
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token');
       // Não recarregar a página automaticamente durante login

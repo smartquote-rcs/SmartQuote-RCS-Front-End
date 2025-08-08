@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Eye, EyeOff, Lock, Mail, CheckCircle, AlertCircle, TrendingUp } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, CheckCircle, AlertCircle } from "lucide-react";
 import { authService } from "../api/services.ts";
 
 interface LoginPageProps {
@@ -180,49 +180,14 @@ const SpiderWebBackground = () => {
 export function LoginPage({ onLogin }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
-  const [username, setUsername] = useState("");
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
   const [isLoginSuccess, setIsLoginSuccess] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState({
-    hasMinLength: false,
-    hasUpperCase: false,
-    hasLowerCase: false,
-    hasNumbers: false,
-    score: 0
-  });
-
-  // Função para calcular força da senha
-  const calculatePasswordStrength = (pwd: string) => {
-    const hasMinLength = pwd.length >= 8;
-    const hasUpperCase = /[A-Z]/.test(pwd);
-    const hasLowerCase = /[a-z]/.test(pwd);
-    const hasNumbers = /\d/.test(pwd);
-    
-    const score = [hasMinLength, hasUpperCase, hasLowerCase, hasNumbers].filter(Boolean).length;
-    
-    setPasswordStrength({
-      hasMinLength,
-      hasUpperCase,
-      hasLowerCase,
-      hasNumbers,
-      score
-    });
-  };
-
-  // Atualizar força da senha quando a senha mudar
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPassword = e.target.value;
-    setPassword(newPassword);
-    if (showRegister) {
-      calculatePasswordStrength(newPassword);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -334,9 +299,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
   };
 
-  const handleRegister = async () => {
-    // Validações locais primeiro
-    if (!username || !email || !password) {
+  // @ts-ignore - Função de backup para referência futura
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!username.trim() || !email.trim() || !password.trim()) {
       setFeedback({ 
         type: 'error', 
         message: 'Por favor, preencha todos os campos obrigatórios.' 
@@ -437,7 +405,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               setEmail('');
               setPassword('');
               setTimeout(() => {
-                setShowRegister(false);
                 setFeedback({ type: null, message: '' });
               }, 2000);
             }
@@ -451,7 +418,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             setEmail('');
             setPassword('');
             setTimeout(() => {
-              setShowRegister(false);
               setFeedback({ type: null, message: '' });
             }, 2000);
           }
@@ -499,7 +465,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
   };
 
-
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  };
 
   return (
     <div className="min-h-screen max-w-full bg-gradient-to-br from-gray-900 via-gray-900 to-gray-900 relative overflow-hidden">
@@ -743,13 +711,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   transition={{ delay: 1.4, duration: 0.6 }}
                 >
                   <CardTitle className="text-xl sm:text-2xl text-center text-white">
-                    {showRegister ? 'Criar Conta' : 'Acesso ao Sistema'}
+                    Acesso ao Sistema
                   </CardTitle>
                   <CardDescription className="text-center text-blue-100 text-sm sm:text-base">
-                    {showRegister 
-                      ? 'Crie sua conta para acessar a plataforma'
-                      : 'Entre com suas credenciais para acessar a plataforma'
-                    }
+                    Entre com suas credenciais para acessar a plataforma
                   </CardDescription>
                 </motion.div>
               </CardHeader>
@@ -761,43 +726,23 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.6, duration: 0.6 }}
                 >
-                  {showRegister && (
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="username"
-                        className="text-white text-sm sm:text-base font-medium"
-                      >
-                        Nome
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400 z-10" />
-                        <Input
-                          id="username"
-                          type="text"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          className="pl-12 pr-4 h-12 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200"
-                          placeholder="Seu nome completo"
-                          required
-                        />
-                      </div>
-                    </div>
-                  )}
                   <div className="space-y-2">
                     <Label
                       htmlFor="email"
-                      className="text-white text-sm sm:text-base font-medium"
+                      className="text-white text-sm sm:text-base"
                     >
                       Email
                     </Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400 z-10" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
                       <Input
                         id="email"
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-12 pr-4 h-12 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200"
+                        onChange={(e) =>
+                          setEmail(e.target.value)
+                        }
+                        className="pl-12 h-12"
                         placeholder="seu@email.com"
                         required
                       />
@@ -807,96 +752,40 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   <div className="space-y-2">
                     <Label
                       htmlFor="password"
-                      className="text-white text-sm sm:text-base font-medium"
+                      className="text-white text-sm sm:text-base"
                     >
                       Senha
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400 z-10" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
                       <Input
                         id="password"
-                        type={showPassword ? "text" : "password"}
+                        type={
+                          showPassword ? "text" : "password"
+                        }
                         value={password}
                         onChange={handlePasswordChange}
-                        className="pl-12 pr-12 h-12 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200"
+                        className="pl-12 pr-14 h-12"
                         placeholder="••••••••"
                         required
                       />
                       <motion.button
                         type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2 top-2 w-8 h-8 flex items-center justify-center rounded-full bg-slate-700/50 hover:bg-slate-600/70 text-blue-400 hover:text-white transition-all duration-200 z-10 border border-slate-600/30"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.98 }}
+                        onClick={() =>
+                          setShowPassword(!showPassword)
+                        }
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-white transition-colors"
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
                       >
                         {showPassword ? (
-                          <EyeOff className="w-4 h-4" />
+                          <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
                         ) : (
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                         )}
                       </motion.button>
                     </div>
                   </div>
-
-                  {/* Indicador de Força da Senha - apenas para registro */}
-                  {showRegister && password.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="space-y-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-blue-200">Força da senha:</span>
-                        <div className="flex space-x-1">
-                          {[1, 2, 3, 4].map((level) => (
-                            <div
-                              key={level}
-                              className={`w-4 h-1 rounded-full transition-colors duration-300 ${
-                                level <= passwordStrength.score
-                                  ? level === 1
-                                    ? 'bg-red-500'
-                                    : level === 2
-                                    ? 'bg-yellow-500'
-                                    : level === 3
-                                    ? 'bg-blue-500'
-                                    : 'bg-green-500'
-                                  : 'bg-gray-600'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-blue-300">
-                          {passwordStrength.score === 1 && 'Fraca'}
-                          {passwordStrength.score === 2 && 'Regular'}
-                          {passwordStrength.score === 3 && 'Boa'}
-                          {passwordStrength.score === 4 && 'Forte'}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {[
-                          { key: 'hasMinLength', text: 'Pelo menos 8 caracteres' },
-                          { key: 'hasUpperCase', text: 'Uma letra maiúscula' },
-                          { key: 'hasLowerCase', text: 'Uma letra minúscula' },
-                          { key: 'hasNumbers', text: 'Um número' }
-                        ].map((requirement) => (
-                          <div key={requirement.key} className="flex items-center space-x-2">
-                            <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                              passwordStrength[requirement.key as keyof typeof passwordStrength] 
-                                ? 'bg-green-400' 
-                                : 'bg-gray-500'
-                            }`} />
-                            <span className={`text-xs transition-colors duration-300 ${
-                              passwordStrength[requirement.key as keyof typeof passwordStrength] 
-                                ? 'text-green-300' 
-                                : 'text-gray-400'
-                            }`}>
-                              {requirement.text}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
 
                   <motion.div
                     whileHover={{ scale: 1.05 }}
@@ -906,7 +795,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                       type="submit"
                       className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 sm:py-4 shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base"
                       disabled={isLoading}
-                      onClick={showRegister ? (e) => { e.preventDefault(); handleRegister(); } : undefined}
                     >
                       {isLoading ? (
                         <motion.div
@@ -923,10 +811,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                               ease: "linear",
                             }}
                           />
-                          <span>{showRegister ? 'Criando...' : 'Entrando...'}</span>
+                          <span>Entrando...</span>
                         </motion.div>
                       ) : (
-                        showRegister ? "Criar Conta" : "Entrar no Sistema"
+                        "Entrar no Sistema"
                       )}
                     </Button>
                   </motion.div>
@@ -966,58 +854,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                       <span className="text-sm font-medium">{feedback.message}</span>
                     </motion.div>
                   )}
-
-                  {/* Botão para alternar entre login e registro */}
-                  <motion.div
-                    className="text-center"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <p className="text-slate-400 text-sm">
-                      <span className="text-blue-300 font-medium">Novo usuário?</span> Entre em contato com o administrador para criar sua conta.
-                    </p>
-                  </motion.div>
                 </motion.form>
               </CardContent>
             </Card>
           </motion.div>
         </div>
-        
-        {/* Footer limpo e elegante */}
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900/90 to-transparent backdrop-blur-sm border-t border-slate-700/30"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2, duration: 0.8 }}
-        >
-          <div className="h-full flex items-center justify-center px-6">
-            <motion.div
-              className="flex items-center gap-4 text-slate-400"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2.5, duration: 0.6 }}
-            >
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-medium">SmartQuote</span>
-              </div>
-              
-              <div className="w-px h-4 bg-slate-600"></div>
-              
-              <motion.div
-                className="flex items-center gap-1"
-                animate={{ opacity: [1, 0.5, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                <span className="text-xs">Sistema Online</span>
-              </motion.div>
-              
-              <div className="w-px h-4 bg-slate-600"></div>
-              
-              <span className="text-xs">© 2025 - Plataforma de Cotações Inteligentes</span>
-            </motion.div>
-          </div>
-        </motion.div>
       </div>
     </div>
   );

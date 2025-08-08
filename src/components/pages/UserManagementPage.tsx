@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -24,78 +24,31 @@ import {
   Building,
   Clock,
   X,
-  Save
+  Save,
+  RefreshCw,
+  CheckCircle
 } from "lucide-react";
+import { employeeService } from "../../api/services";
 
 interface UserData {
   id: string;
   name: string;
   email: string;
   role: "user" | "manager" | "admin";
-  status: "active" | "inactive" | "suspended";
-  department: string;
+  status?: "active" | "inactive" | "suspended";
+  department?: string;
   phone?: string;
-  lastLogin: string;
-  createdAt: string;
+  lastLogin?: string;
+  createdAt?: string;
 }
 
-const initialUsers: UserData[] = [
-  {
-    id: "USR-001",
-    name: "João Silva",
-    email: "usuario@rcs.pt",
-    role: "user",
-    status: "active",
-    department: "Procurement",
-    phone: "+351 912 345 678",
-    lastLogin: "2024-01-24 14:30",
-    createdAt: "2023-03-15"
-  },
-  {
-    id: "USR-002",
-    name: "Maria Santos",
-    email: "gestor@rcs.pt", 
-    role: "manager",
-    status: "active",
-    department: "Gestão",
-    phone: "+351 913 456 789",
-    lastLogin: "2024-01-24 13:45",
-    createdAt: "2023-01-10"
-  },
-  {
-    id: "USR-003",
-    name: "Carlos Mendes",
-    email: "admin@rcs.pt",
-    role: "admin",
-    status: "active",
-    department: "TI",
-    phone: "+351 914 567 890",
-    lastLogin: "2024-01-24 15:00",
-    createdAt: "2022-12-01"
-  },
-  {
-    id: "USR-004",
-    name: "Ana Costa",
-    email: "ana.costa@rcs.pt",
-    role: "user",
-    status: "active",
-    department: "Compras",
-    phone: "+351 915 678 901",
-    lastLogin: "2024-01-23 16:20",
-    createdAt: "2023-06-20"
-  },
-  {
-    id: "USR-005",
-    name: "Pedro Oliveira",
-    email: "pedro.oliveira@rcs.pt",
-    role: "manager",
-    status: "inactive",
-    department: "Logística",
-    phone: "+351 916 789 012",
-    lastLogin: "2024-01-20 10:15",
-    createdAt: "2023-08-05"
-  }
-];
+interface ToastNotification {
+  id: string;
+  type: "success" | "error" | "info";
+  title: string;
+  message: string;
+  duration?: number;
+}
 
 const departments = ["Todos", "Procurement", "Gestão", "TI", "Compras", "Logística", "Financeiro"];
 const roles = ["Todos", "user", "manager", "admin"];
@@ -114,7 +67,7 @@ const getRoleBadge = (role: string) => {
   }
 };
 
-const getStatusBadge = (status: string) => {
+const getStatusBadge = (status?: string) => {
   switch (status) {
     case "active":
       return <Badge className="bg-green-600 text-white text-xs">Ativo</Badge>;
@@ -140,58 +93,330 @@ const getRoleIcon = (role: string) => {
   }
 };
 
-export function UserManagementPage() {
-  const [users, setUsers] = useState<UserData[]>(initialUsers);
+export default function UserManagementPage() {
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("Todos");
-  const [statusFilter, setStatusFilter] = useState("Todos");
-  const [departmentFilter, setDepartmentFilter] = useState("Todos");
+  const [selectedDepartment, setSelectedDepartment] = useState("Todos");
+  const [selectedRole, setSelectedRole] = useState("Todos");
+  const [selectedStatus, setSelectedStatus] = useState("Todos");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState({
+    hasMinLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasNumbers: false,
+    hasSpecialChar: false,
+    score: 0
+  });
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
-    role: "user" as const,
+    role: "user",
     department: "",
     phone: "",
     password: ""
   });
+
+  // Função para limpar o formulário
+  const clearForm = () => {
+    setNewUser({ 
+      name: "", 
+      email: "", 
+      role: "user", 
+      department: "", 
+      phone: "", 
+      password: "" 
+    });
+    setPasswordStrength({
+      hasMinLength: false,
+      hasUpperCase: false,
+      hasLowerCase: false,
+      hasNumbers: false,
+      hasSpecialChar: false,
+      score: 0
+    });
+    setIsAddDialogOpen(false);
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await employeeService.getAll();
+      
+      console.log("🔍 Debug - Resposta completa da API:", response);
+      
+      if (response.success && response.data) {
+        console.log("🔍 Debug - response.data:", response.data);
+        console.log("🔍 Debug - Tipo de response.data:", typeof response.data);
+        console.log("🔍 Debug - É array?", Array.isArray(response.data));
+        console.log("🔍 Debug - Keys de response.data:", Object.keys(response.data));
+        
+        // Verificar se response.data é um array ou se está aninhado
+        let usersArray = null;
+        
+        // Tentar diferentes estruturas possíveis de dados
+        if (Array.isArray(response.data)) {
+          console.log("🔍 Debug - Dados diretos em response.data (array)");
+          usersArray = response.data;
+        } else if (response.data.users && Array.isArray(response.data.users)) {
+          console.log("🔍 Debug - Dados encontrados em response.data.users");
+          usersArray = response.data.users;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          console.log("🔍 Debug - Dados encontrados em response.data.data");
+          usersArray = response.data.data;
+        } else if (response.data.employees && Array.isArray(response.data.employees)) {
+          console.log("🔍 Debug - Dados encontrados em response.data.employees");
+          usersArray = response.data.employees;
+        } else if (response.data.items && Array.isArray(response.data.items)) {
+          console.log("🔍 Debug - Dados encontrados em response.data.items");
+          usersArray = response.data.items;
+        } else {
+          // Tentar encontrar qualquer propriedade que seja um array
+          const dataKeys = Object.keys(response.data);
+          for (const key of dataKeys) {
+            if (Array.isArray(response.data[key])) {
+              console.log(`🔍 Debug - Array encontrado em response.data.${key}`);
+              usersArray = response.data[key];
+              break;
+            }
+          }
+        }
+        
+        // Se ainda não encontrou um array, tentar outras estruturas
+        if (!usersArray) {
+          // Se response.data é um objeto que contém um único usuário, transformar em array
+          if (response.data.id || response.data._id || response.data.email) {
+            console.log("🔍 Debug - Objeto único detectado, convertendo para array");
+            usersArray = [response.data];
+          } else {
+            console.warn("⚠️ Estrutura de dados não reconhecida:", response.data);
+            setUsers([]);
+            showToast("error", "Formato de Dados Inválido", "A API retornou dados em formato não reconhecido. Contacte o administrador.", 6000);
+            return;
+          }
+        }
+
+        console.log("🔍 Debug - usersArray final:", usersArray);
+        console.log("🔍 Debug - Quantidade de usuários:", usersArray.length);
+
+        // Verificar se o array tem elementos válidos
+        if (usersArray.length === 0) {
+          console.log("📝 Array vazio - nenhum usuário encontrado");
+          setUsers([]);
+          showToast("info", "Lista Vazia", "Nenhum usuário encontrado no sistema. Adicione o primeiro usuário!", 4000);
+          return;
+        }
+
+        // Mapear dados da API para o formato local
+        try {
+          const mappedUsers: UserData[] = usersArray.map((emp: any, index: number) => {
+            console.log(`🔍 Debug - Mapeando usuário ${index}:`, emp);
+            return {
+              id: emp.id?.toString() || emp._id?.toString() || `USER-${Date.now()}-${index}`,
+              name: emp.name || emp.username || emp.displayName || 'Nome não informado',
+              email: emp.email || 'Email não informado',
+              role: emp.role || 'user',
+              status: emp.status || "active",
+              department: emp.department || emp.dept || 'Não informado',
+              phone: emp.phone || emp.phoneNumber || '',
+              lastLogin: emp.lastLogin || emp.last_login || 'Nunca',
+              createdAt: emp.createdAt || emp.created_at || emp.dateCreated || new Date().toLocaleDateString('pt-PT')
+            };
+          });
+          
+          console.log("🔍 Debug - Usuários mapeados:", mappedUsers);
+          setUsers(mappedUsers);
+          
+          showToast("success", "Dados Carregados", `${mappedUsers.length} usuários carregados da API com sucesso!`, 3000);
+        } catch (mappingError) {
+          console.error("💥 Erro durante o mapeamento dos usuários:", mappingError);
+          console.error("💥 Dados que causaram o erro:", usersArray);
+          setUsers([]);
+          showToast("error", "Erro no Processamento", "Falha ao processar dados da API. Formato de dados incompatível.", 6000);
+        }
+      } else {
+        console.error("❌ Erro ao carregar usuários:", response.error);
+        setUsers([]);
+        showToast("error", "Erro na API", `Falha ao carregar usuários: ${response.error || 'Erro desconhecido'}`, 6000);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+      setUsers([]);
+      showToast("error", "Conexão Falhada", "Não foi possível conectar à API. Verifique sua conexão.", 6000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Funções para Toast Notifications
+  const showToast = (type: "success" | "error" | "info", title: string, message: string, duration: number = 5000) => {
+    const id = Date.now().toString();
+    const newToast: ToastNotification = { id, type, title, message, duration };
+    setToasts(prev => [...prev, newToast]);
+    
+    // Auto remove toast após duração especificada
+    setTimeout(() => {
+      removeToast(id);
+    }, duration);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
   const [showPassword, setShowPassword] = useState(false);
+
+  // Função para calcular força da senha
+  const calculatePasswordStrength = (pwd: string) => {
+    const hasMinLength = pwd.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(pwd);
+    const hasLowerCase = /[a-z]/.test(pwd);
+    const hasNumbers = /\d/.test(pwd);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
+    
+    const score = [hasMinLength, hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChar].filter(Boolean).length;
+    
+    setPasswordStrength({
+      hasMinLength,
+      hasUpperCase,
+      hasLowerCase,
+      hasNumbers,
+      hasSpecialChar,
+      score
+    });
+  };
+
+  // Função para validar dados do usuário
+  const validateUserData = () => {
+    // Validações obrigatórias
+    if (!newUser.name || !newUser.email || !newUser.department) {
+      showToast("error", "Campos Obrigatórios", "Por favor, preencha todos os campos obrigatórios: Nome, Email e Departamento.");
+      return false;
+    }
+
+    // Validação de nome
+    if (newUser.name.length < 2) {
+      showToast("error", "Nome Inválido", "O nome deve ter pelo menos 2 caracteres.");
+      return false;
+    }
+
+    // Validação de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUser.email)) {
+      showToast("error", "Email Inválido", "Por favor, insira um endereço de email válido (exemplo: usuario@empresa.com).");
+      return false;
+    }
+
+    // Verificar se email já existe
+    const emailExists = users.some(user => user.email.toLowerCase() === newUser.email.toLowerCase());
+    if (emailExists) {
+      showToast("error", "Email em Uso", "Este endereço de email já está registrado no sistema. Use um email diferente.");
+      return false;
+    }
+
+    // Validação de senha (se fornecida)
+    if (newUser.password) {
+      if (newUser.password.length < 8) {
+        showToast("error", "Senha Fraca", "A senha deve ter pelo menos 8 caracteres para maior segurança.");
+        return false;
+      }
+
+      const hasUpperCase = /[A-Z]/.test(newUser.password);
+      const hasLowerCase = /[a-z]/.test(newUser.password);
+      const hasNumbers = /\d/.test(newUser.password);
+      
+      if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
+        showToast("error", "Senha Insegura", "A senha deve conter pelo menos: uma letra maiúscula, uma minúscula e um número.");
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "Todos" || user.role === roleFilter;
-    const matchesStatus = statusFilter === "Todos" || user.status === statusFilter;
-    const matchesDepartment = departmentFilter === "Todos" || user.department === departmentFilter;
+                         (user.department && user.department.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesRole = selectedRole === "Todos" || user.role === selectedRole;
+    const matchesStatus = selectedStatus === "Todos" || user.status === selectedStatus;
+    const matchesDepartment = selectedDepartment === "Todos" || user.department === selectedDepartment;
     
     return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
   });
 
-  const handleAddUser = () => {
-    if (!newUser.name || !newUser.email || !newUser.department) {
-      alert("Por favor, preencha todos os campos obrigatórios.");
+  const handleAddUser = async () => {
+    // Usar a função de validação
+    if (!validateUserData()) {
       return;
     }
 
-    const newUserId = `USR-${String(users.length + 1).padStart(3, '0')}`;
-    const userToAdd: UserData = {
-      id: newUserId,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      status: "active",
-      department: newUser.department,
-      phone: newUser.phone,
-      lastLogin: "Nunca",
-      createdAt: new Date().toLocaleDateString('pt-PT')
-    };
+    try {
+      const newEmployee = {
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role as "user" | "manager" | "admin",
+        department: newUser.department,
+        phone: newUser.phone,
+        password: newUser.password
+      };
 
-    setUsers([...users, userToAdd]);
-    setNewUser({ name: "", email: "", role: "user", department: "", phone: "", password: "" });
-    setIsAddDialogOpen(false);
+      console.log('🚀 Tentando criar usuário:', newEmployee);
+      const response = await employeeService.create(newEmployee);
+      console.log('📨 Resposta do serviço de criação:', response);
+      
+      if (response.success) {
+        console.log('✅ Usuário criado com sucesso!');
+        
+        // Recarregar lista de usuários
+        await loadUsers();
+        
+        // Salvar o role do usuário no localStorage para futuro login
+        localStorage.setItem('user_role_' + newUser.email, newUser.role);
+        
+        // Mensagem de sucesso com informação sobre o dashboard
+        const dashboardInfo = newUser.role === 'admin' ? 'Administrador (acesso completo)' : 
+                             newUser.role === 'manager' ? 'Gerente (acesso limitado)' : 
+                             'Usuário (acesso básico)';
+        
+        showToast(
+          "success", 
+          "Usuário Criado com Sucesso", 
+          `${newUser.name} foi adicionado como ${dashboardInfo}. ${newUser.password ? 'Senha temporária definida.' : 'Lembre-se de definir uma senha.'}`
+        );
+        
+        console.log(`👤 Role salvo para ${newUser.email}: ${newUser.role}`);
+        
+        // Limpar formulário e fechar dialog
+        clearForm();
+      } else {
+        console.log('❌ Falha ao criar usuário:', response.error);
+        showToast(
+          "error", 
+          "Erro ao Criar Usuário", 
+          response.error || "Ocorreu um erro inesperado. Tente novamente."
+        );
+        // Limpar formulário mesmo em caso de erro
+        clearForm();
+      }
+    } catch (error) {
+      console.error("💥 Erro ao criar usuário:", error);
+      showToast(
+        "error", 
+        "Falha na Conexão", 
+        "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente."
+      );
+      // Limpar formulário mesmo em caso de erro
+      clearForm();
+    }
   };
 
   const handleEditUser = (user: UserData) => {
@@ -205,6 +430,12 @@ export function UserManagementPage() {
     setUsers(users.map(user => 
       user.id === editingUser.id ? editingUser : user
     ));
+    
+    // Atualizar o role do usuário no localStorage se foi alterado
+    localStorage.setItem('user_role_' + editingUser.email, editingUser.role);
+    
+    console.log(`👤 Role atualizado para ${editingUser.email}: ${editingUser.role}`);
+    
     setEditingUser(null);
     setIsEditDialogOpen(false);
   };
@@ -336,6 +567,14 @@ export function UserManagementPage() {
               <span className="text-blue-300 font-bold text-lg">{filteredUsers.length}</span>
               <span className="text-blue-200 ml-2">usuários</span>
             </div>
+            <Button 
+              onClick={loadUsers}
+              disabled={loading}
+              className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-4 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>{loading ? 'Carregando...' : 'Atualizar'}</span>
+            </Button>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
@@ -391,9 +630,24 @@ export function UserManagementPage() {
                         id="password"
                         type={showPassword ? "text" : "password"}
                         value={newUser.password}
-                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                        onChange={(e) => {
+                          const newPassword = e.target.value;
+                          setNewUser({ ...newUser, password: newPassword });
+                          if (newPassword) {
+                            calculatePasswordStrength(newPassword);
+                          } else {
+                            setPasswordStrength({
+                              hasMinLength: false,
+                              hasUpperCase: false,
+                              hasLowerCase: false,
+                              hasNumbers: false,
+                              hasSpecialChar: false,
+                              score: 0
+                            });
+                          }
+                        }}
                         className="pr-12 bg-slate-700/50 border-slate-600 text-white"
-                        placeholder="Senha inicial"
+                        placeholder="Senha inicial (opcional)"
                       />
                       <button
                         type="button"
@@ -403,6 +657,53 @@ export function UserManagementPage() {
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
+                    {newUser.password && (
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1 bg-slate-700 rounded-full h-2">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-300 ${
+                                passwordStrength.score <= 2 ? 'bg-red-500' :
+                                passwordStrength.score <= 3 ? 'bg-yellow-500' :
+                                passwordStrength.score <= 4 ? 'bg-blue-500' : 'bg-green-500'
+                              }`}
+                              style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                            />
+                          </div>
+                          <span className={`text-xs font-medium ${
+                            passwordStrength.score <= 2 ? 'text-red-400' :
+                            passwordStrength.score <= 3 ? 'text-yellow-400' :
+                            passwordStrength.score <= 4 ? 'text-blue-400' : 'text-green-400'
+                          }`}>
+                            {passwordStrength.score <= 2 ? 'Fraca' :
+                             passwordStrength.score <= 3 ? 'Regular' :
+                             passwordStrength.score <= 4 ? 'Boa' : 'Forte'}
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-xs">
+                          <div className={`flex items-center space-x-2 ${passwordStrength.hasMinLength ? 'text-green-400' : 'text-slate-400'}`}>
+                            <span className={`w-2 h-2 rounded-full ${passwordStrength.hasMinLength ? 'bg-green-400' : 'bg-slate-600'}`} />
+                            <span>Pelo menos 8 caracteres</span>
+                          </div>
+                          <div className={`flex items-center space-x-2 ${passwordStrength.hasUpperCase ? 'text-green-400' : 'text-slate-400'}`}>
+                            <span className={`w-2 h-2 rounded-full ${passwordStrength.hasUpperCase ? 'bg-green-400' : 'bg-slate-600'}`} />
+                            <span>Uma letra maiúscula</span>
+                          </div>
+                          <div className={`flex items-center space-x-2 ${passwordStrength.hasLowerCase ? 'text-green-400' : 'text-slate-400'}`}>
+                            <span className={`w-2 h-2 rounded-full ${passwordStrength.hasLowerCase ? 'bg-green-400' : 'bg-slate-600'}`} />
+                            <span>Uma letra minúscula</span>
+                          </div>
+                          <div className={`flex items-center space-x-2 ${passwordStrength.hasNumbers ? 'text-green-400' : 'text-slate-400'}`}>
+                            <span className={`w-2 h-2 rounded-full ${passwordStrength.hasNumbers ? 'bg-green-400' : 'bg-slate-600'}`} />
+                            <span>Um número</span>
+                          </div>
+                          <div className={`flex items-center space-x-2 ${passwordStrength.hasSpecialChar ? 'text-green-400' : 'text-slate-400'}`}>
+                            <span className={`w-2 h-2 rounded-full ${passwordStrength.hasSpecialChar ? 'bg-green-400' : 'bg-slate-600'}`} />
+                            <span>Um caractere especial</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -415,11 +716,16 @@ export function UserManagementPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-slate-800 border-slate-600">
-                          <SelectItem value="user">Usuário</SelectItem>
-                          <SelectItem value="manager">Gestor</SelectItem>
-                          <SelectItem value="admin">Administrador</SelectItem>
+                          <SelectItem value="user">Usuário - Dashboard básico</SelectItem>
+                          <SelectItem value="manager">Gestor - Dashboard administrativo</SelectItem>
+                          <SelectItem value="admin">Administrador - Acesso completo</SelectItem>
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-slate-400">
+                        {newUser.role === 'user' && '📊 Acesso ao dashboard de usuário com funcionalidades básicas'}
+                        {newUser.role === 'manager' && '⚡ Acesso ao dashboard administrativo com permissões de gerência'}
+                        {newUser.role === 'admin' && '🔑 Acesso completo ao sistema incluindo gestão de usuários'}
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="department" className="text-white font-medium flex items-center gap-2">
@@ -489,7 +795,7 @@ export function UserManagementPage() {
             
             {/* Filter Controls */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
                 <SelectTrigger className="w-full sm:w-40 h-12 bg-slate-800/50 border-slate-600/50 text-white rounded-xl backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300">
                   <div className="flex items-center gap-2 min-w-0">
                     <Shield className="w-4 h-4 text-purple-400 flex-shrink-0" />
@@ -521,7 +827,7 @@ export function UserManagementPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                 <SelectTrigger className="w-full sm:w-36 h-12 bg-slate-800/50 border-slate-600/50 text-white rounded-xl backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300">
                   <div className="flex items-center gap-2 min-w-0">
                     <Activity className="w-4 h-4 text-orange-400 flex-shrink-0" />
@@ -553,7 +859,7 @@ export function UserManagementPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
                 <SelectTrigger className="w-full sm:w-48 h-12 bg-slate-800/50 border-slate-600/50 text-white rounded-xl backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300">
                   <div className="flex items-center gap-2 min-w-0">
                     <Building className="w-4 h-4 text-cyan-400 flex-shrink-0" />
@@ -581,7 +887,7 @@ export function UserManagementPage() {
           </div>
 
           {/* Filter Results Summary */}
-          {(searchTerm || roleFilter !== "Todos" || statusFilter !== "Todos" || departmentFilter !== "Todos") && (
+          {(searchTerm || selectedRole !== "Todos" || selectedStatus !== "Todos" || selectedDepartment !== "Todos") && (
             <div className="mt-4 p-4 bg-slate-800/30 border border-slate-600/30 rounded-xl backdrop-blur-sm">
               <div className="flex flex-col lg:flex-row lg:items-center gap-3">
                 {/* Results Counter */}
@@ -604,31 +910,31 @@ export function UserManagementPage() {
                     </div>
                   )}
                   
-                  {roleFilter !== "Todos" && (
+                  {selectedRole !== "Todos" && (
                     <div className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-full text-purple-300 text-xs min-w-fit">
                       <Shield className="w-3 h-3 flex-shrink-0" />
-                      <span className="whitespace-nowrap">{roleFilter === "user" ? "Usuário" : roleFilter === "manager" ? "Gestor" : "Administrador"}</span>
-                      <button onClick={() => setRoleFilter("Todos")} className="ml-1 hover:text-purple-100 flex-shrink-0">
+                      <span className="whitespace-nowrap">{selectedRole === "user" ? "Usuário" : selectedRole === "manager" ? "Gestor" : "Administrador"}</span>
+                      <button onClick={() => setSelectedRole("Todos")} className="ml-1 hover:text-purple-100 flex-shrink-0">
                         <X className="w-3 h-3" />
                       </button>
                     </div>
                   )}
                   
-                  {statusFilter !== "Todos" && (
+                  {selectedStatus !== "Todos" && (
                     <div className="flex items-center gap-1 px-3 py-1.5 bg-orange-500/20 border border-orange-500/30 rounded-full text-orange-300 text-xs min-w-fit">
                       <Activity className="w-3 h-3 flex-shrink-0" />
-                      <span className="whitespace-nowrap">{statusFilter === "active" ? "Ativo" : statusFilter === "inactive" ? "Inativo" : "Suspenso"}</span>
-                      <button onClick={() => setStatusFilter("Todos")} className="ml-1 hover:text-orange-100 flex-shrink-0">
+                      <span className="whitespace-nowrap">{selectedStatus === "active" ? "Ativo" : selectedStatus === "inactive" ? "Inativo" : "Suspenso"}</span>
+                      <button onClick={() => setSelectedStatus("Todos")} className="ml-1 hover:text-orange-100 flex-shrink-0">
                         <X className="w-3 h-3" />
                       </button>
                     </div>
                   )}
                   
-                  {departmentFilter !== "Todos" && (
+                  {selectedDepartment !== "Todos" && (
                     <div className="flex items-center gap-1 px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-cyan-300 text-xs min-w-fit">
                       <Building className="w-3 h-3 flex-shrink-0" />
-                      <span className="max-w-[100px] truncate">{departmentFilter}</span>
-                      <button onClick={() => setDepartmentFilter("Todos")} className="ml-1 hover:text-cyan-100 flex-shrink-0">
+                      <span className="max-w-[100px] truncate">{selectedDepartment}</span>
+                      <button onClick={() => setSelectedDepartment("Todos")} className="ml-1 hover:text-cyan-100 flex-shrink-0">
                         <X className="w-3 h-3" />
                       </button>
                     </div>
@@ -641,9 +947,24 @@ export function UserManagementPage() {
 
         {/* Users Grid */}
         <div className="grid gap-4 lg:gap-6">
-          {filteredUsers.map((user) => (
-            <UserCard key={user.id} user={user} />
-          ))}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
+              <p className="text-slate-300">Carregando usuários...</p>
+            </div>
+          ) : filteredUsers.length > 0 ? (
+            filteredUsers.map((user) => (
+              <UserCard key={user.id} user={user} />
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <Users className="w-12 h-12 text-slate-500" />
+              <div className="text-center">
+                <h3 className="text-base sm:text-lg font-medium text-slate-300 mb-2">Nenhum usuário encontrado</h3>
+                <p className="text-slate-500 text-sm">Tente ajustar os filtros ou adicione um novo usuário.</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Edit User Dialog */}
@@ -827,15 +1148,104 @@ export function UserManagementPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-8 lg:py-12">
-            <Users className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />
-            <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhum usuário encontrado</h3>
-            <p className="text-sm sm:text-base text-dark-secondary px-4">Tente ajustar os filtros de pesquisa</p>
-          </div>
-        )}
       </main>
+
+      {/* Toast Notifications Container */}
+      <div className="fixed top-4 right-4 z-[9999] space-y-3 max-w-sm pointer-events-none">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`transform transition-all duration-500 ease-in-out animate-in slide-in-from-right glass-card backdrop-blur-xl border-2 rounded-2xl p-5 shadow-2xl hover:scale-105 pointer-events-auto ${
+              toast.type === "success" 
+                ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-50 shadow-emerald-500/20" 
+                : toast.type === "error" 
+                ? "bg-red-500/15 border-red-400/40 text-red-50 shadow-red-500/20"
+                : "bg-cyan-500/15 border-cyan-400/40 text-cyan-50 shadow-cyan-500/20"
+            }`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  toast.type === "success" 
+                    ? "bg-emerald-500/80 ring-2 ring-emerald-400/30" 
+                    : toast.type === "error" 
+                    ? "bg-red-500/80 ring-2 ring-red-400/30"
+                    : "bg-cyan-500/80 ring-2 ring-cyan-400/30"
+                }`}>
+                  {toast.type === "success" && <CheckCircle className="w-5 h-5 text-white" />}
+                  {toast.type === "error" && <X className="w-5 h-5 text-white" />}
+                  {toast.type === "info" && <Activity className="w-5 h-5 text-white" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm leading-tight mb-1">{toast.title}</h4>
+                  <p className="text-xs opacity-90 leading-relaxed">{toast.message}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => removeToast(toast.id)}
+                className="ml-2 p-1.5 rounded-full hover:bg-white/15 transition-all duration-200 flex-shrink-0 hover:scale-110"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Progress bar para mostrar tempo restante */}
+            <div className={`mt-4 h-1.5 rounded-full overflow-hidden ${
+              toast.type === "success" 
+                ? "bg-emerald-500/20" 
+                : toast.type === "error" 
+                ? "bg-red-500/20"
+                : "bg-cyan-500/20"
+            }`}>
+              <div 
+                className={`h-full rounded-full ${
+                  toast.type === "success" 
+                    ? "bg-gradient-to-r from-emerald-400 to-emerald-500" 
+                    : toast.type === "error" 
+                    ? "bg-gradient-to-r from-red-400 to-red-500"
+                    : "bg-gradient-to-r from-cyan-400 to-cyan-500"
+                }`}
+                style={{
+                  animation: `shrink ${toast.duration || 5000}ms linear forwards`
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* CSS para animação da progress bar */}
+      <style>{`
+        @keyframes shrink {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+        .animate-in {
+          animation: slideInFromRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes slideInFromRight {
+          from {
+            transform: translateX(100%) scale(0.9);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+          }
+        }
+        .toast-exit {
+          animation: slideOutToRight 0.4s ease-in-out forwards;
+        }
+        @keyframes slideOutToRight {
+          from {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+          }
+          to {
+            transform: translateX(120%) scale(0.9);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }

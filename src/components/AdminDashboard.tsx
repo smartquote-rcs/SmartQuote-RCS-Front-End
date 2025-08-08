@@ -11,7 +11,11 @@ import {
   LogOut,
   Menu,
   X,
-  Shield
+  Shield,
+  Bell,
+  Plus,
+  Send,
+  RefreshCw
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -20,9 +24,11 @@ import { SuppliersPage } from "./pages/SuppliersPage";
 import { ApprovalsPage } from "./pages/ApprovalsPage";
 import { LogsPage } from "./pages/LogsPage";
 import { ReportsPage } from "./pages/ReportsPage";
-import { SettingsPage } from "./pages/SettingsPage";
+import SettingsPage from "./pages/SettingsPage";
 import { ProductSearchPage } from "./pages/ProductSearchPage";
-import { UserManagementPage } from "./pages/UserManagementPage";
+import UserManagementPage from "./pages/UserManagementPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
+import { useApp } from "../contexts/AppContext";
 
 interface User {
   email: string;
@@ -48,6 +54,11 @@ const mainNavItems = [
     key: "quotes",
   },
   {
+    icon: Plus,
+    label: "Nova Cotação",
+    key: "new-quote",
+  },
+  {
     icon: Search,
     label: "Pesquisa de Produtos",
     key: "product-search",
@@ -59,6 +70,7 @@ const mainNavItems = [
 const systemItems = [
   { icon: Activity, label: "Logs do Sistema", key: "logs" },
   { icon: FileText, label: "Relatórios", key: "reports" },
+  { icon: Bell, label: "Notificações", key: "notifications" },
 ];
 
 const adminItems = [
@@ -80,8 +92,12 @@ export function AdminDashboard({
   onLogout,
 }: AdminDashboardProps) {
   const [activePage, setActivePage] = useState("dashboard");
-  const [isMobileMenuOpen, setIsMobileMenuOpen] =
-    useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [newQuotePrompt, setNewQuotePrompt] = useState("");
+  const [isCreatingQuote, setIsCreatingQuote] = useState(false);
+  
+  // Usar o contexto da aplicação
+  const { addQuote, quotes: allQuotes } = useApp();
 
   const renderNavItem = (item: any, isActive: boolean) => {
     const Icon = item.icon;
@@ -111,15 +127,226 @@ export function AdminDashboard({
   const renderContent = () => {
     switch (activePage) {
       case "dashboard":
-        return <DashboardPage />;
+        return <DashboardPage onNavigateToNotifications={() => setActivePage("notifications")} />;
       case "quotes":
         return <QuoteRequestsPage />;
+      case "new-quote":
+        return (
+          <div className="flex flex-col h-full w-full">
+            <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+                <div className="min-w-0">
+                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary truncate flex items-center gap-3">
+                    <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+                    Nova Cotação - Admin
+                  </h1>
+                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">Crie cotações personalizadas usando IA para qualquer cliente</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <button 
+                      onClick={() => setActivePage("notifications")}
+                      className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
+                    >
+                      <Bell className="w-5 h-5 text-slate-300" />
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-bold text-white">3</span>
+                      </div>
+                    </button>
+                  </div>
+                  <div className="dark-tag text-center sm:text-left flex-shrink-0">
+                    {allQuotes.length} cotações no sistema
+                  </div>
+                </div>
+              </div>
+            </header>
+            
+            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
+              {/* Nova Cotação com IA */}
+              <div className="mb-8">
+                <div className="glass-card bg-gradient-to-br from-blue-900/30 to-cyan-900/30 rounded-xl border border-blue-500/20 p-4 sm:p-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="p-2 bg-blue-500/20 rounded-lg">
+                      <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-white">Criar Nova Cotação com IA - Admin</h2>
+                      <p className="text-xs sm:text-sm text-blue-200">Crie cotações personalizadas para clientes usando nossa IA</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <textarea
+                        value={newQuotePrompt}
+                        onChange={(e) => setNewQuotePrompt(e.target.value)}
+                        placeholder="Ex: Cliente corporativo precisa de 100 laptops Dell Latitude 5520 para escritório em Lisboa, incluindo configuração e suporte técnico por 12 meses..."
+                        className="w-full h-20 sm:h-24 bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 sm:p-4 text-white placeholder-slate-400 resize-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors text-xs sm:text-sm"
+                        maxLength={500}
+                      />
+                      <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 text-xs text-slate-400">
+                        {newQuotePrompt.length}/500
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                      <button
+                        onClick={() => {
+                          if (newQuotePrompt.trim()) {
+                            setIsCreatingQuote(true);
+                            // Simular processamento de IA
+                            setTimeout(() => {
+                              const newQuote = {
+                                produto: `Admin: ${newQuotePrompt.substring(0, 30)}...`,
+                                fornecedor: "Admin SmartQuote",
+                                valor: "€" + (Math.random() * 10000 + 500).toFixed(2),
+                                status: "approved" as const,
+                                data: new Date().toLocaleDateString('pt-PT'),
+                                submittedAt: new Date().toLocaleString('pt-PT')
+                              };
+                              addQuote(newQuote);
+                              setIsCreatingQuote(false);
+                              setNewQuotePrompt("");
+                              setActivePage("quotes");
+                            }, 3000);
+                          }
+                        }}
+                        disabled={!newQuotePrompt.trim() || isCreatingQuote}
+                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 flex-1 sm:flex-none text-xs sm:text-sm"
+                      >
+                        {isCreatingQuote ? (
+                          <>
+                            <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Criando Cotação...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span>Gerar Cotação</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setNewQuotePrompt("")}
+                        className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm"
+                      >
+                        Limpar
+                      </button>
+                      <button
+                        onClick={() => setActivePage("quotes")}
+                        className="bg-green-600/50 hover:bg-green-700/50 border border-green-600/50 text-green-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium flex items-center space-x-2 transition-all duration-300 text-xs sm:text-sm"
+                      >
+                        <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>Ver Todas</span>
+                      </button>
+                    </div>
+                    
+                    {isCreatingQuote && (
+                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 sm:p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                          <span className="text-blue-300 text-xs sm:text-sm">Admin: Nossa IA está processando a cotação e conectando com fornecedores premium...</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Estatísticas Rápidas */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="glass-card p-4 bg-green-500/10 rounded-xl border border-green-500/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-green-400">{allQuotes.filter(q => q.status === 'approved').length}</h3>
+                      <p className="text-xs text-dark-secondary">Aprovadas</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="glass-card p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-yellow-600 flex items-center justify-center">
+                      <RefreshCw className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-yellow-400">{allQuotes.filter(q => q.status === 'pending').length}</h3>
+                      <p className="text-xs text-dark-secondary">Pendentes</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="glass-card p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-blue-400">{allQuotes.filter(q => q.status === 'processing').length}</h3>
+                      <p className="text-xs text-dark-secondary">Processando</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="glass-card p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-purple-400">{allQuotes.length}</h3>
+                      <p className="text-xs text-dark-secondary">Total</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Informações administrativas */}
+              <div className="glass-card p-4 sm:p-6 bg-white/5 rounded-xl border border-white/20">
+                <h3 className="text-base sm:text-lg font-bold text-white mb-4">Ferramentas Administrativas</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <button 
+                    onClick={() => setActivePage("user-management")}
+                    className="glass-card p-4 bg-white/5 hover:bg-blue-500/20 hover:border-blue-400/50 transition-all duration-300 text-left"
+                  >
+                    <Users className="w-6 h-6 text-blue-400 mb-2" />
+                    <h4 className="font-medium text-white">Gestão de Usuários</h4>
+                    <p className="text-xs text-dark-secondary">Criar e gerenciar contas</p>
+                  </button>
+                  
+                  <button 
+                    onClick={() => setActivePage("suppliers")}
+                    className="glass-card p-4 bg-white/5 hover:bg-green-500/20 hover:border-green-400/50 transition-all duration-300 text-left"
+                  >
+                    <Users className="w-6 h-6 text-green-400 mb-2" />
+                    <h4 className="font-medium text-white">Fornecedores</h4>
+                    <p className="text-xs text-dark-secondary">Gerenciar parceiros</p>
+                  </button>
+                  
+                  <button 
+                    onClick={() => setActivePage("reports")}
+                    className="glass-card p-4 bg-white/5 hover:bg-purple-500/20 hover:border-purple-400/50 transition-all duration-300 text-left"
+                  >
+                    <FileText className="w-6 h-6 text-purple-400 mb-2" />
+                    <h4 className="font-medium text-white">Relatórios</h4>
+                    <p className="text-xs text-dark-secondary">Análises e estatísticas</p>
+                  </button>
+                </div>
+              </div>
+            </main>
+          </div>
+        );
       case "product-search":
         return <ProductSearchPage />;
       case "suppliers":
         return <SuppliersPage />;
       case "approvals":
         return <ApprovalsPage />;
+      case "notifications":
+        return <NotificationsPage />;
       case "logs":
         return <LogsPage />;
       case "reports":

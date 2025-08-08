@@ -3,7 +3,8 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Search, Star, ShoppingCart, Eye, Heart, Grid, List } from "lucide-react";
+import { Search, ShoppingCart, Eye, Heart, Grid, List } from "lucide-react";
+import { useApp } from "../../contexts/AppContext";
 
 const produtos = [
   {
@@ -99,32 +100,14 @@ const fornecedores = ["Todos", "EnerTech Solutions", "TechFlow Innovations", "Pr
 const getDisponibilidadeBadge = (disponibilidade: string) => {
   switch (disponibilidade) {
     case "Em stock":
-      return <Badge className="bg-green-600 text-white text-xs">Em Stock</Badge>;
+      return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Em Stock</Badge>;
     case "Sob consulta":
-      return <Badge className="bg-orange-600 text-white text-xs">Sob Consulta</Badge>;
+      return <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Sob Consulta</Badge>;
     case "Limitado":
-      return <Badge className="bg-red-600 text-white text-xs">Limitado</Badge>;
+      return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Limitado</Badge>;
     default:
-      return <Badge className="text-xs">{disponibilidade}</Badge>;
+      return <Badge className="bg-gradient-to-r from-gray-500 to-gray-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">{disponibilidade}</Badge>;
   }
-};
-
-const getRatingStars = (rating: number) => {
-  return (
-    <div className="flex items-center space-x-1">
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`w-4 h-4 ${
-              star <= rating ? "text-yellow-400 fill-current" : "text-gray-400"
-            }`}
-          />
-        ))}
-      </div>
-      <span className="text-sm text-dark-secondary ml-1">({rating})</span>
-    </div>
-  );
 };
 
 export function ProductSearchPage() {
@@ -133,7 +116,9 @@ export function ProductSearchPage() {
   const [fornecedorFilter, setFornecedorFilter] = useState("Todos");
   const [priceRange, setPriceRange] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  // Usar contexto global para favoritos
+  const { favorites, toggleFavorite } = useApp();
 
   const filteredProducts = produtos.filter((produto) => {
     const matchesSearch = produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -164,59 +149,48 @@ export function ProductSearchPage() {
     return matchesSearch && matchesCategory && matchesFornecedor && matchesPrice;
   });
 
-  const toggleFavorite = (productId: string) => {
-    setFavorites(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
-  };
-
   const ProductCard = ({ produto }: { produto: any }) => (
-    <div className={`glass-card hover:border-cyan-400/50 transition-all duration-300 hover:shadow-lg bg-white/5 rounded-2xl border border-white/20 ${
-      viewMode === "list" ? "flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-6 p-6 lg:p-8" : "p-6 lg:p-8"
+    <div className={`glass-card bg-white/5 rounded-xl border border-white/20 transition-all duration-300 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] w-full max-w-full overflow-hidden ${
+      viewMode === "list" ? "flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-6 p-4 lg:p-6" : "p-4 lg:p-6 flex flex-col h-full"
     }`}>
       {/* Image */}
-      <div className={`relative ${viewMode === "list" ? "w-full lg:w-32 h-48 lg:h-24" : "w-full h-48"} bg-gray-800 rounded-xl overflow-hidden mb-4 ${viewMode === "list" ? "lg:mb-0" : ""}`}>
+      <div className={`relative ${viewMode === "list" ? "w-full lg:w-32 h-48 lg:h-24" : "w-full h-48"} bg-gray-800 rounded-xl overflow-hidden mb-4 ${viewMode === "list" ? "lg:mb-0" : ""} group`}>
         <img 
           src={produto.imagem} 
           alt={produto.nome}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
         />
         {produto.desconto > 0 && (
-          <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+          <div className="absolute top-3 left-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
             -{produto.desconto}%
           </div>
         )}
         {produto.popular && (
-          <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+          <div className="absolute top-3 right-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
             Popular
           </div>
         )}
         <button
           onClick={() => toggleFavorite(produto.id)}
-          className="absolute bottom-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+          className="absolute bottom-3 right-3 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
         >
-          <Heart className={`w-4 h-4 ${favorites.includes(produto.id) ? "text-red-400 fill-current" : "text-white"}`} />
+          <Heart className={`w-4 h-4 transition-colors ${favorites.includes(produto.id) ? "text-red-400 fill-current" : "text-white hover:text-red-300"}`} />
         </button>
       </div>
 
       {/* Content */}
-      <div className={`${viewMode === "list" ? "flex-1" : ""}`}>
-        <div className="mb-4">
+      <div className={`${viewMode === "list" ? "flex-1" : "flex-1 flex flex-col"}`}>
+        <div className="mb-4 flex-grow">
           <div className="flex flex-col lg:flex-row lg:items-start justify-between mb-3 space-y-2 lg:space-y-0">
-            <h3 className={`font-bold text-dark-primary ${viewMode === "list" ? "text-lg" : "text-base"} leading-tight`}>
+            <h3 className={`font-bold text-dark-primary hover:text-cyan-400 transition-colors duration-300 ${viewMode === "list" ? "text-lg" : "text-base"} leading-tight line-clamp-2`}>
               {produto.nome}
             </h3>
             {getDisponibilidadeBadge(produto.disponibilidade)}
           </div>
-          <p className="text-sm text-dark-secondary mb-2">{produto.categoria}</p>
-          <p className="text-xs text-dark-secondary">{produto.fornecedor}</p>
-        </div>
-
-        <div className="mb-4">
-          {getRatingStars(produto.avaliacao)}
-          <p className="text-xs text-dark-secondary mt-1">{produto.avaliacoes} avaliações</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-blue-300 font-medium truncate mr-2">{produto.categoria}</p>
+            <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[120px]">{produto.fornecedor}</span>
+          </div>
         </div>
 
         {viewMode === "list" && (
@@ -225,24 +199,29 @@ export function ProductSearchPage() {
           </p>
         )}
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-3 lg:space-y-0">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xl font-bold text-dark-primary">{produto.preco}</span>
-              {produto.precoOriginal && (
-                <span className="text-sm text-dark-secondary line-through">{produto.precoOriginal}</span>
-              )}
+        <div className="mt-auto">
+          <div className="flex flex-col space-y-3 mb-3">
+            <div>
+              <div className="flex items-center space-x-2 flex-wrap">
+                <span className="text-xl font-bold text-green-400">{produto.preco}</span>
+                {produto.precoOriginal && (
+                  <span className="text-sm text-red-400 line-through bg-red-500/20 px-2 py-1 rounded">{produto.precoOriginal}</span>
+                )}
+              </div>
+              <p className="text-xs text-dark-secondary mt-1 flex items-center">
+                <span className="w-2 h-2 bg-green-400 rounded-full mr-2 flex-shrink-0"></span>
+                <span className="truncate">{produto.prazoEntrega}</span>
+              </p>
             </div>
-            <p className="text-xs text-dark-secondary">{produto.prazoEntrega}</p>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <button className="p-2 rounded-lg bg-dark-tag hover:bg-dark-hover transition-colors">
-              <Eye className="w-4 h-4 text-dark-secondary" />
+          <div className="flex items-center space-x-2 w-full">
+            <button className="glass-card p-2 rounded-lg hover:bg-cyan-500/20 hover:border-cyan-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0">
+              <Eye className="w-4 h-4 text-dark-secondary group-hover:text-cyan-400 transition-colors" />
             </button>
-            <button className="dark-button-primary px-4 py-2 text-sm flex items-center space-x-2">
-              <ShoppingCart className="w-4 h-4" />
-              <span>Solicitar Cotação</span>
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-sm flex items-center justify-center space-x-2 rounded-lg transition-all duration-300 flex-1 min-h-[40px]">
+              <ShoppingCart className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Solicitar Cotação</span>
             </button>
           </div>
         </div>
@@ -269,7 +248,7 @@ export function ProductSearchPage() {
             </div>
             <button
               onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm"
+              className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg"
             >
               {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
               <span>{viewMode === "grid" ? "Lista" : "Grade"}</span>
@@ -281,14 +260,14 @@ export function ProductSearchPage() {
       <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0 flex-shrink-0">
-            <TabsList className="bg-dark-tag border border-dark-color">
-              <TabsTrigger value="all" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm">
+            <TabsList className="glass-card bg-white/5 border border-white/20 rounded-xl p-1">
+              <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300">
                 Todos os Produtos ({produtos.length})
               </TabsTrigger>
-              <TabsTrigger value="popular" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm">
+              <TabsTrigger value="popular" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300">
                 Populares ({produtos.filter(p => p.popular).length})
               </TabsTrigger>
-              <TabsTrigger value="ofertas" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm">
+              <TabsTrigger value="ofertas" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300">
                 Ofertas ({produtos.filter(p => p.desconto > 0).length})
               </TabsTrigger>
             </TabsList>
@@ -344,9 +323,9 @@ export function ProductSearchPage() {
             </div>
           </div>
 
-          <div className="flex-1 scrollable-content">
+          <div className="flex-1 scrollable-content overflow-hidden">
             <TabsContent value="all" className="h-full mt-0">
-              <div className={`grid gap-6 ${
+              <div className={`grid gap-4 lg:gap-6 w-full ${
                 viewMode === "grid" 
                   ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
                   : "grid-cols-1"
@@ -358,7 +337,7 @@ export function ProductSearchPage() {
             </TabsContent>
 
             <TabsContent value="popular" className="h-full mt-0">
-              <div className={`grid gap-6 ${
+              <div className={`grid gap-4 lg:gap-6 w-full ${
                 viewMode === "grid" 
                   ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
                   : "grid-cols-1"
@@ -370,7 +349,7 @@ export function ProductSearchPage() {
             </TabsContent>
 
             <TabsContent value="ofertas" className="h-full mt-0">
-              <div className={`grid gap-6 ${
+              <div className={`grid gap-4 lg:gap-6 w-full ${
                 viewMode === "grid" 
                   ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
                   : "grid-cols-1"
