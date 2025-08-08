@@ -115,7 +115,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               </div>
             </header>
             
-            <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
+            <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
               <div className="grid gap-4 lg:gap-6">
                 {myQuotes.map((quote) => (
                   <div key={quote.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300">
@@ -155,7 +155,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               </div>
             </header>
             
-            <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
+            <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
               <div className="text-center py-8 lg:py-12">
                 <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />
                 <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Histórico de Cotações</h3>
@@ -170,7 +170,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
   };
 
   return (
-    <div className="flex h-screen bg-dark-bg overflow-hidden" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className="flex h-screen max-w-full bg-dark-bg overflow-hidden" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div 

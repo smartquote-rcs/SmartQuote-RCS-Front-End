@@ -109,7 +109,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
       {renderDashboard()}
     </div>
   );

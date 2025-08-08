@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { FileText, Download, Calendar, TrendingUp, Users, Euro, Activity, Eye } from "lucide-react";
+import { FileText, Download, Calendar, TrendingUp, Users, Euro, Activity, Eye, Search } from "lucide-react";
 
 const relatorios = [
   {
@@ -171,20 +170,20 @@ export function ReportsPage() {
         <div className="flex flex-col space-y-2 min-w-0 lg:min-w-[140px]">
           {relatorio.status === "Concluído" && (
             <>
-              <Button className="dark-button-primary flex items-center justify-center space-x-2 px-3 py-2 text-sm">
+              <button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-green-600/20">
                 <Download className="w-4 h-4" />
                 <span>Download</span>
-              </Button>
-              <Button className="dark-button-secondary flex items-center justify-center space-x-2 px-3 py-2 text-sm">
+              </button>
+              <button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-600/20">
                 <Eye className="w-4 h-4" />
                 <span>Visualizar</span>
-              </Button>
+              </button>
             </>
           )}
           {relatorio.status === "Em Processamento" && (
-            <Button disabled className="bg-gray-600 text-gray-300 px-3 py-2 text-sm rounded-lg">
+            <button disabled className="bg-slate-600/50 text-slate-300 px-4 py-2 text-sm rounded-xl font-medium cursor-not-allowed backdrop-blur-sm border border-slate-500/30">
               Processando...
-            </Button>
+            </button>
           )}
         </div>
       </div>
@@ -197,27 +196,28 @@ export function ReportsPage() {
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary flex items-center gap-3">
-              <FileText className="w-6 h-6 text-blue-400" />
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+              <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               Relatórios
             </h1>
-            <p className="text-xs sm:text-sm text-dark-secondary mt-1">
+            <p className="text-sm sm:text-base text-dark-secondary mt-2">
               Acesse e gere relatórios detalhados do sistema
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="dark-tag text-center sm:text-left">
-              {filteredRelatorios.length} relatórios
+            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
+              <span className="text-blue-300 font-bold text-lg">{filteredRelatorios.length}</span>
+              <span className="text-blue-200 ml-2">relatórios</span>
             </div>
-            <Button className="dark-button-primary flex items-center justify-center space-x-2 px-4 py-2 text-sm">
-              <FileText className="w-4 h-4" />
+            <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
+              <FileText className="w-5 h-5" />
               <span>Novo Relatório</span>
-            </Button>
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <div className="glass-card p-6 lg:p-8 bg-white/5 rounded-2xl border border-white/20">
@@ -273,12 +273,12 @@ export function ReportsPage() {
         <div className="mb-6 lg:mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0 lg:space-x-4">
             <div className="relative flex-1 max-w-md">
-              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
               <Input
                 placeholder="Pesquisar relatórios..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-dark-card border-dark-color text-dark-primary"
+                className="pl-10"
               />
             </div>
             

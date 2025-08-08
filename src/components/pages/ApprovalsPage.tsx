@@ -112,63 +112,65 @@ export function ApprovalsPage() {
   };
 
   const ApprovalCard = ({ aprovacao }: { aprovacao: any }) => (
-    <div className="glass-card p-6 lg:p-8 border-l-4 border-l-orange-500 hover:border-dark-cta transition-colors bg-white/5 rounded-2xl border border-white/20">
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-        <div className="flex items-start space-x-4 flex-1 min-w-0">
-          <div className="flex-shrink-0">
+    <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300 group relative">
+      {/* Borda lateral de prioridade */}
+      <div className={`absolute left-0 top-0 w-1 h-full rounded-l-xl ${
+        aprovacao.prioridade === 'high' ? 'bg-red-500' : 
+        aprovacao.prioridade === 'medium' ? 'bg-orange-500' : 'bg-yellow-500'
+      }`}></div>
+      
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-3 lg:space-y-0 lg:space-x-4">
+        <div className="flex items-start space-x-3 flex-1 min-w-0">
+          <div className="flex-shrink-0 mt-1">
             {getPriorityIcon(aprovacao.prioridade)}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-4">
-              <h3 className="font-mono text-sm font-bold text-dark-primary">{aprovacao.id}</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+              <h3 className="font-mono text-base font-bold text-white group-hover:text-cyan-400 transition-colors duration-300">{aprovacao.id}</h3>
               <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                 {getPriorityBadge(aprovacao.prioridade)}
               </div>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <Building className="w-4 h-4 text-dark-secondary flex-shrink-0" />
-                <span className="font-medium text-dark-primary">{aprovacao.cliente}</span>
+                <Building className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="font-medium text-white text-sm">{aprovacao.cliente}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Euro className="w-4 h-4 text-dark-secondary flex-shrink-0" />
-                <span className="text-xl font-bold text-dark-primary">{aprovacao.valor}</span>
+                <Euro className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="text-xl font-bold text-green-400">{aprovacao.valor}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <User className="w-4 h-4 text-dark-secondary flex-shrink-0" />
-                <span className="text-dark-secondary">Responsável: {aprovacao.responsavel}</span>
+                <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="text-slate-300 text-sm">Responsável: <span className="text-white font-medium">{aprovacao.responsavel}</span></span>
               </div>
             </div>
 
-            <div className="mt-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
-              <p className="text-sm font-medium text-orange-400 mb-1">Motivo da Aprovação Manual:</p>
-              <p className="text-sm text-dark-secondary">{aprovacao.motivo}</p>
+            <div className="mt-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30 backdrop-blur-sm">
+              <p className="text-xs font-medium text-orange-400 mb-1">Motivo da Aprovação Manual:</p>
+              <p className="text-xs text-slate-300">{aprovacao.motivo}</p>
             </div>
 
-            <div className="mt-3">
-              <p className="text-sm text-dark-secondary">{aprovacao.descricao}</p>
-            </div>
-
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
-              <div>
-                <span className="text-dark-secondary">Categoria:</span>
-                <span className="text-dark-primary ml-2">{aprovacao.categoria}</span>
+            <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
+                <span className="text-slate-400 text-xs block mb-1">Categoria:</span>
+                <span className="text-white font-medium">{aprovacao.categoria}</span>
               </div>
-              <div>
-                <span className="text-dark-secondary">Fornecedor:</span>
-                <span className="text-dark-primary ml-2">{aprovacao.fornecedor}</span>
+              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
+                <span className="text-slate-400 text-xs block mb-1">Fornecedor:</span>
+                <span className="text-white font-medium">{aprovacao.fornecedor}</span>
               </div>
-              <div>
-                <span className="text-dark-secondary">Prazo:</span>
-                <span className="text-dark-primary ml-2">
+              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
+                <span className="text-slate-400 text-xs block mb-1">Prazo:</span>
+                <span className="text-white font-medium">
                   {new Date(aprovacao.prazo).toLocaleDateString('pt-PT')}
                 </span>
               </div>
-              <div className="sm:col-span-2 lg:col-span-3">
-                <span className="text-dark-secondary">Submetido:</span>
-                <span className="text-dark-primary ml-2">
-                  {new Date(aprovacao.submetido).toLocaleString('pt-PT')}
+              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
+                <span className="text-slate-400 text-xs block mb-1">Submetido:</span>
+                <span className="text-white font-medium">
+                  {new Date(aprovacao.submetido).toLocaleDateString('pt-PT')}
                 </span>
               </div>
             </div>
@@ -176,26 +178,26 @@ export function ApprovalsPage() {
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col space-y-2 min-w-0 lg:min-w-[140px]">
+        <div className="flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-2 min-w-0 lg:min-w-[120px]">
           <Button
             onClick={() => handleApprove(aprovacao.id)}
-            className="dark-button-primary flex items-center justify-center space-x-2 px-4 py-2 text-sm"
+            className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none"
           >
-            <CheckCircle className="w-4 h-4" />
+            <CheckCircle className="w-3 h-3" />
             <span>Aprovar</span>
           </Button>
           <Button
             onClick={() => handleReject(aprovacao.id)}
-            className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm rounded-lg transition-colors flex items-center justify-center space-x-2"
+            className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3" />
             <span>Rejeitar</span>
           </Button>
           <Button
             variant="outline"
-            className="dark-button-secondary px-4 py-2 text-sm"
+            className="px-3 py-1.5 text-xs bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 border border-slate-600/50 rounded-lg transition-all duration-200 font-medium flex-1 lg:flex-none"
           >
-            Ver Detalhes
+            Detalhes
           </Button>
         </div>
       </div>
@@ -208,23 +210,24 @@ export function ApprovalsPage() {
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-orange-400" />
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 sm:w-7 sm:h-7 text-orange-400" />
               Aprovações Pendentes
             </h1>
-            <p className="text-xs sm:text-sm text-dark-secondary mt-1">
+            <p className="text-sm sm:text-base text-dark-secondary mt-2">
               Cotações que requerem revisão manual e aprovação
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="dark-tag bg-orange-600 text-center sm:text-left">
-              {filteredAprovacoes.length} pendentes
+            <div className="glass-card px-4 py-2 text-center sm:text-left bg-orange-500/20 border-orange-500/30">
+              <span className="text-orange-300 font-bold text-lg">{filteredAprovacoes.length}</span>
+              <span className="text-orange-200 ml-2">pendentes</span>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
         {/* Filters */}
         <div className="mb-6 lg:mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0 lg:space-x-4">
@@ -234,7 +237,7 @@ export function ApprovalsPage() {
                 placeholder="Pesquisar aprovações..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-dark-card border-dark-color text-dark-primary"
+                className="pl-10"
               />
             </div>
             

@@ -63,7 +63,7 @@ const systemAlerts = [
 
 export function DashboardPage() {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full max-w-full overflow-hidden">
       {/* Header */}
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
@@ -83,28 +83,30 @@ export function DashboardPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
         {/* Top-level Metrics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           {metrics.map((metric) => {
             const Icon = metric.icon;
             
             return (
-              <div key={metric.title} className="glass-card p-3 lg:p-4 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-xl border border-white/20">
-                <div className="flex items-center justify-between mb-3 lg:mb-4">
-                  <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:scale-110 hover:shadow-lg`}>
-                    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${metric.iconColor} transition-all duration-300`} />
+              <div key={metric.title} className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300 group">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-blue-500/25`}>
+                    <Icon className={`w-5 h-5 ${metric.iconColor} transition-all duration-300`} />
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <span className={`text-xs font-bold transition-all duration-300 hover:scale-110 ${metric.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                      {metric.change}
-                    </span>
+                  <div className={`text-xs px-2 py-1 rounded-full font-semibold transition-all duration-300 ${
+                    metric.isPositive 
+                      ? 'bg-green-500/20 text-green-400 group-hover:bg-green-500/30' 
+                      : 'bg-red-500/20 text-red-400 group-hover:bg-red-500/30'
+                  }`}>
+                    {metric.change}
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary mb-1 transition-colors duration-300 hover:text-cyan-400">{metric.value}</h3>
-                  <p className="text-xs font-medium text-dark-secondary">{metric.title}</p>
-                  <p className="text-xs text-dark-secondary mt-1">{metric.period}</p>
+                  <h3 className="text-2xl font-bold text-white mb-1 transition-colors duration-300 group-hover:text-cyan-400">{metric.value}</h3>
+                  <p className="text-sm font-medium text-slate-300 mb-1">{metric.title}</p>
+                  <p className="text-xs text-slate-400">{metric.period}</p>
                 </div>
               </div>
             );
@@ -113,30 +115,30 @@ export function DashboardPage() {
 
         {/* System Alerts */}
         <div className="mb-6 lg:mb-8">
-          <div className="glass-card p-3 lg:p-4 hover:border-cyan-400/50 transition-all duration-300 bg-white/5 rounded-xl border border-white/20">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-3 lg:pb-4 space-y-2 lg:space-y-0">
+          <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-4 border border-white/10 backdrop-blur-sm">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-4 space-y-2 lg:space-y-0">
               <div>
-                <h3 className="text-base lg:text-lg font-bold text-dark-primary mb-1">Alertas do Sistema</h3>
-                <p className="text-xs lg:text-sm text-dark-secondary font-medium">
+                <h3 className="text-lg font-bold text-white mb-1">Alertas do Sistema</h3>
+                <p className="text-sm text-slate-300">
                   Atualizações em tempo real do processamento e notificações
                 </p>
               </div>
-              <button className="dark-button-secondary text-xs px-3 py-2 self-start lg:self-auto">Ver Todos</button>
+              <button className="px-3 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-sm rounded-lg border border-slate-600/50 transition-all duration-200 self-start lg:self-auto">Ver Todos</button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {systemAlerts.map((alert, index) => (
-                <div key={index} className="glass-card p-3 hover:border-cyan-400/30 transition-all duration-300 bg-white/5 rounded-lg border border-white/10">
+                <div key={index} className="glass-card bg-gradient-to-r from-white/5 to-white/2 rounded-lg p-3 border border-white/10 hover:border-cyan-400/30 transition-all duration-300">
                   <div className="flex items-start space-x-3">
                     <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                       alert.type === 'success' ? 'bg-green-400' : 
                       alert.type === 'warning' ? 'bg-orange-400' : 'bg-blue-400'
                     }`}></div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-dark-primary break-words">{alert.message}</p>
-                      <p className="text-xs text-dark-secondary mt-1">{alert.time}</p>
+                      <p className="text-sm font-medium text-white break-words">{alert.message}</p>
+                      <p className="text-xs text-slate-400 mt-1">{alert.time}</p>
                     </div>
                     {alert.type === 'warning' && (
-                      <button className="dark-button-secondary text-xs px-2 py-1 flex-shrink-0">
+                      <button className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 text-xs rounded-lg border border-orange-500/30 transition-all duration-200 flex-shrink-0">
                         Revisar
                       </button>
                     )}
@@ -147,8 +149,8 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-8">
+        {/* Charts Section */}
+        <div className="space-y-6 lg:space-y-8 mb-6 lg:mb-8">
           <QuoteProcessingChart />
           <SupplierPerformanceChart />
         </div>

@@ -3,7 +3,7 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Search, Eye, Download, Mail, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Search, Eye, Download, Mail, Clock, CheckCircle, AlertTriangle, FileText, Building, User, Euro } from "lucide-react";
 
 const cotacoes = [
   {
@@ -118,36 +118,124 @@ export function QuoteRequestsPage() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  const QuoteCard = ({ cotacao }: { cotacao: any }) => (
+    <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300 group relative">
+      {/* Borda lateral de status */}
+      <div className={`absolute left-0 top-0 w-1 h-full rounded-l-xl ${
+        cotacao.status === 'pending_approval' ? 'bg-orange-500' : 
+        cotacao.status === 'processing' ? 'bg-blue-500' : 
+        cotacao.status === 'processed' ? 'bg-green-500' : 'bg-purple-500'
+      }`}></div>
+      
+      <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-3 lg:space-y-0 lg:space-x-4">
+        <div className="flex items-start space-x-3 flex-1 min-w-0">
+          <div className="flex-shrink-0 mt-1">
+            {getStatusIcon(cotacao.status)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+              <h3 className="font-mono text-base font-bold text-white group-hover:text-cyan-400 transition-colors duration-300">{cotacao.id}</h3>
+              <div className="flex items-center space-x-2 mt-1 sm:mt-0">
+                {getStatusBadge(cotacao.status)}
+                {getPriorityBadge(cotacao.prioridade)}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Building className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="font-medium text-white text-sm">{cotacao.cliente}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="text-slate-300 text-sm">{cotacao.produto} - {cotacao.quantidade}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="text-slate-300 text-sm">Responsável: <span className="text-white font-medium">{cotacao.responsavel}</span></span>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
+              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
+                <span className="text-slate-400 text-xs block mb-1">Fornecedor:</span>
+                <span className="text-white font-medium">{cotacao.fornecedor}</span>
+              </div>
+              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
+                <span className="text-slate-400 text-xs block mb-1">Recebido:</span>
+                <span className="text-white font-medium">
+                  {new Date(cotacao.dataRecebido).toLocaleDateString('pt-PT')}
+                </span>
+              </div>
+              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50 col-span-2 lg:col-span-1">
+                <span className="text-slate-400 text-xs block mb-1">Prazo:</span>
+                <span className="text-white font-medium">
+                  {new Date(cotacao.prazoResposta).toLocaleDateString('pt-PT')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Valor e Actions */}
+        <div className="flex flex-col space-y-3 min-w-0 lg:min-w-[140px]">
+          <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/30 text-center">
+            <div className="flex items-center justify-center space-x-1 mb-1">
+              <Euro className="w-4 h-4 text-green-400" />
+              <span className="text-xs text-green-400 font-medium">Valor</span>
+            </div>
+            <div className="text-lg font-bold text-green-400">{cotacao.valor}</div>
+          </div>
+          
+          <div className="flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-2">
+            <button className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none">
+              <Eye className="w-3 h-3" />
+              <span>Ver</span>
+            </button>
+            <button className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none">
+              <Download className="w-3 h-3" />
+              <span>PDF</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">Solicitações de Cotação</h1>
-            <p className="text-xs sm:text-sm text-dark-secondary mt-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+              <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
+              Solicitações de Cotação
+            </h1>
+            <p className="text-sm sm:text-base text-dark-secondary mt-2">
               Gerencie e acompanhe todas as solicitações de cotação do sistema
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="dark-tag text-center sm:text-left">
-              {filteredCotacoes.length} cotações
+            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
+              <span className="text-blue-300 font-bold text-lg">{filteredCotacoes.length}</span>
+              <span className="text-blue-200 ml-2">cotações</span>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0 flex-shrink-0">
-            <TabsList className="bg-dark-tag border border-dark-color">
-              <TabsTrigger value="all" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm">
+            <TabsList className="bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
+              <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 text-sm">
                 Todas ({cotacoes.length})
               </TabsTrigger>
-              <TabsTrigger value="pending" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm">
+              <TabsTrigger value="pending" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-300 text-sm">
                 Pendentes ({cotacoes.filter(c => c.status === 'pending_approval').length})
               </TabsTrigger>
-              <TabsTrigger value="processing" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm">
+              <TabsTrigger value="processing" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 text-sm">
                 Processando ({cotacoes.filter(c => c.status === 'processing').length})
               </TabsTrigger>
             </TabsList>
@@ -160,7 +248,7 @@ export function QuoteRequestsPage() {
                   placeholder="Pesquisar cotações..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full lg:w-64 bg-dark-card border-dark-color text-dark-primary"
+                  className="pl-10 w-full lg:w-64"
                 />
               </div>
               
@@ -193,147 +281,27 @@ export function QuoteRequestsPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 scrollable-content">
             <TabsContent value="all" className="h-full mt-0">
-              <div className="grid gap-4 lg:gap-6">
+              <div className="grid gap-4">
                 {filteredCotacoes.map((cotacao) => (
-                  <div key={cotacao.id} className="glass-card p-6 lg:p-8 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-2xl border border-white/20">
-                    <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-                      <div className="flex items-start space-x-4 flex-1 min-w-0">
-                        <div className="flex-shrink-0">
-                          {getStatusIcon(cotacao.status)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
-                            <h3 className="font-mono text-sm font-bold text-dark-primary">{cotacao.id}</h3>
-                            <div className="flex items-center space-x-2 mt-1 sm:mt-0">
-                              {getStatusBadge(cotacao.status)}
-                              {getPriorityBadge(cotacao.prioridade)}
-                            </div>
-                          </div>
-                          <div className="space-y-2 text-xs sm:text-sm">
-                            <p className="text-dark-primary font-medium">{cotacao.cliente}</p>
-                            <p className="text-dark-secondary">{cotacao.produto} - {cotacao.quantidade}</p>
-                            <p className="text-dark-secondary">Fornecedor: {cotacao.fornecedor}</p>
-                            <p className="text-dark-secondary">Responsável: {cotacao.responsavel}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-end space-y-3 sm:space-y-0 sm:space-x-4 lg:text-right">
-                        <div>
-                          <div className="text-lg sm:text-xl font-bold text-dark-primary">{cotacao.valor}</div>
-                          <div className="text-xs text-dark-secondary">
-                            Prazo: {new Date(cotacao.prazoResposta).toLocaleDateString('pt-PT')}
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button className="p-2 rounded-lg bg-dark-tag hover:bg-dark-hover transition-colors">
-                            <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-dark-secondary" />
-                          </button>
-                          <button className="p-2 rounded-lg bg-dark-tag hover:bg-dark-hover transition-colors">
-                            <Download className="w-3 h-3 sm:w-4 sm:h-4 text-dark-secondary" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <QuoteCard key={cotacao.id} cotacao={cotacao} />
                 ))}
               </div>
             </TabsContent>
 
             <TabsContent value="pending" className="h-full mt-0">
-              <div className="grid gap-4 lg:gap-6">
+              <div className="grid gap-4">
                 {cotacoes.filter(c => c.status === 'pending_approval').map((cotacao) => (
-                  <div key={cotacao.id} className="glass-card p-6 lg:p-8 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-2xl border border-white/20">
-                    <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-                      <div className="flex items-start space-x-4 flex-1 min-w-0">
-                        <div className="flex-shrink-0">
-                          {getStatusIcon(cotacao.status)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
-                            <h3 className="font-mono text-sm font-bold text-dark-primary">{cotacao.id}</h3>
-                            <div className="flex items-center space-x-2 mt-1 sm:mt-0">
-                              {getStatusBadge(cotacao.status)}
-                              {getPriorityBadge(cotacao.prioridade)}
-                            </div>
-                          </div>
-                          <div className="space-y-2 text-xs sm:text-sm">
-                            <p className="text-dark-primary font-medium">{cotacao.cliente}</p>
-                            <p className="text-dark-secondary">{cotacao.produto} - {cotacao.quantidade}</p>
-                            <p className="text-dark-secondary">Fornecedor: {cotacao.fornecedor}</p>
-                            <p className="text-dark-secondary">Responsável: {cotacao.responsavel}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-end space-y-3 sm:space-y-0 sm:space-x-4 lg:text-right">
-                        <div>
-                          <div className="text-lg sm:text-xl font-bold text-dark-primary">{cotacao.valor}</div>
-                          <div className="text-xs text-dark-secondary">
-                            Prazo: {new Date(cotacao.prazoResposta).toLocaleDateString('pt-PT')}
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button className="p-2 rounded-lg bg-dark-tag hover:bg-dark-hover transition-colors">
-                            <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-dark-secondary" />
-                          </button>
-                          <button className="p-2 rounded-lg bg-dark-tag hover:bg-dark-hover transition-colors">
-                            <Download className="w-3 h-3 sm:w-4 sm:h-4 text-dark-secondary" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <QuoteCard key={cotacao.id} cotacao={cotacao} />
                 ))}
               </div>
             </TabsContent>
 
             <TabsContent value="processing" className="h-full mt-0">
-              <div className="grid gap-4 lg:gap-6">
+              <div className="grid gap-4">
                 {cotacoes.filter(c => c.status === 'processing').map((cotacao) => (
-                  <div key={cotacao.id} className="glass-card p-6 lg:p-8 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-2xl border border-white/20">
-                    <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-                      <div className="flex items-start space-x-4 flex-1 min-w-0">
-                        <div className="flex-shrink-0">
-                          {getStatusIcon(cotacao.status)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
-                            <h3 className="font-mono text-sm font-bold text-dark-primary">{cotacao.id}</h3>
-                            <div className="flex items-center space-x-2 mt-1 sm:mt-0">
-                              {getStatusBadge(cotacao.status)}
-                              {getPriorityBadge(cotacao.prioridade)}
-                            </div>
-                          </div>
-                          <div className="space-y-2 text-xs sm:text-sm">
-                            <p className="text-dark-primary font-medium">{cotacao.cliente}</p>
-                            <p className="text-dark-secondary">{cotacao.produto} - {cotacao.quantidade}</p>
-                            <p className="text-dark-secondary">Fornecedor: {cotacao.fornecedor}</p>
-                            <p className="text-dark-secondary">Responsável: {cotacao.responsavel}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-end space-y-3 sm:space-y-0 sm:space-x-4 lg:text-right">
-                        <div>
-                          <div className="text-lg sm:text-xl font-bold text-dark-primary">{cotacao.valor}</div>
-                          <div className="text-xs text-dark-secondary">
-                            Prazo: {new Date(cotacao.prazoResposta).toLocaleDateString('pt-PT')}
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button className="p-2 rounded-lg bg-dark-tag hover:bg-dark-hover transition-colors">
-                            <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-dark-secondary" />
-                          </button>
-                          <button className="p-2 rounded-lg bg-dark-tag hover:bg-dark-hover transition-colors">
-                            <Download className="w-3 h-3 sm:w-4 sm:h-4 text-dark-secondary" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <QuoteCard key={cotacao.id} cotacao={cotacao} />
                 ))}
               </div>
             </TabsContent>
@@ -341,9 +309,9 @@ export function QuoteRequestsPage() {
 
           {filteredCotacoes.length === 0 && (
             <div className="text-center py-8 lg:py-12">
-              <Search className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />
-              <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhuma cotação encontrada</h3>
-              <p className="text-sm sm:text-base text-dark-secondary px-4">Tente ajustar os filtros de pesquisa</p>
+              <Search className="w-10 h-10 sm:w-12 sm:h-12 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-white mb-2">Nenhuma cotação encontrada</h3>
+              <p className="text-sm sm:text-base text-slate-300 px-4">Tente ajustar os filtros de pesquisa</p>
             </div>
           )}
         </Tabs>

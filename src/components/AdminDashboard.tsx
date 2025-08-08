@@ -132,14 +132,21 @@ export function AdminDashboard({
         return (
           <div className="flex flex-col h-full">
             <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
                 <div>
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+                    <Database className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
                     Gestão de Dados
                   </h1>
-                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">
+                  <p className="text-sm sm:text-base text-dark-secondary mt-2">
                     Administração avançada de dados do sistema
                   </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                  <div className="glass-card px-4 py-2 text-center sm:text-left bg-purple-500/20 border-purple-500/30">
+                    <span className="text-purple-300 font-bold text-lg">2.4GB</span>
+                    <span className="text-purple-200 ml-2">armazenados</span>
+                  </div>
                 </div>
               </div>
             </header>
@@ -232,7 +239,7 @@ export function AdminDashboard({
 
   return (
     <div
-      className="flex h-screen bg-dark-bg overflow-hidden"
+      className="flex h-screen max-w-full bg-dark-bg overflow-hidden"
       style={{ fontFamily: "Inter, system-ui, sans-serif" }}
     >
       {/* Mobile Menu Overlay */}
@@ -279,7 +286,7 @@ export function AdminDashboard({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 sm:p-4 lg:p-4 space-y-4 sm:space-y-5 overflow-y-auto">
+        <nav className="flex-1 p-3 sm:p-4 lg:p-4 space-y-4 sm:space-y-5 scrollable-content">
           {/* Main Navigation */}
           <div className="space-y-2">
             {mainNavItems.map((item) =>

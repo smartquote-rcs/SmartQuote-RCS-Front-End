@@ -502,7 +502,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-900 relative overflow-hidden">
+    <div className="min-h-screen max-w-full bg-gradient-to-br from-gray-900 via-gray-900 to-gray-900 relative overflow-hidden">
       {/* Success Message - Centered */}
       {isLoginSuccess && (
         <motion.div
@@ -778,7 +778,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           onChange={(e) =>
                             setUsername(e.target.value)
                           }
-                          className="pl-10 sm:pl-12 bg-white/10 border-white/20 text-white placeholder:text-blue-200 focus:border-cyan-400 transition-all duration-300 backdrop-blur-sm text-sm sm:text-base h-10 sm:h-12"
+                          className="pl-12 h-12"
                           placeholder="Seu nome completo"
                           required
                         />
@@ -801,7 +801,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         onChange={(e) =>
                           setEmail(e.target.value)
                         }
-                        className="pl-10 sm:pl-12 bg-white/10 border-white/20 text-white placeholder:text-blue-200 focus:border-cyan-400 transition-all duration-300 backdrop-blur-sm text-sm sm:text-base h-10 sm:h-12"
+                        className="pl-12 h-12"
                         placeholder="seu@email.com"
                         required
                       />
@@ -824,7 +824,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         }
                         value={password}
                         onChange={handlePasswordChange}
-                        className="pl-10 sm:pl-12 pr-12 sm:pr-14 bg-white/10 border-white/20 text-white placeholder:text-blue-200 focus:border-cyan-400 transition-all duration-300 backdrop-blur-sm text-sm sm:text-base h-10 sm:h-12"
+                        className="pl-12 pr-14 h-12"
                         placeholder="••••••••"
                         required
                       />

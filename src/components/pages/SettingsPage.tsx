@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -66,18 +65,18 @@ export function SettingsPage() {
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary flex items-center gap-3">
-              <Settings className="w-6 h-6 text-blue-400" />
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+              <Settings className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               Configurações do Sistema
             </h1>
-            <p className="text-xs sm:text-sm text-dark-secondary mt-1">
+            <p className="text-sm sm:text-base text-dark-secondary mt-2">
               Configure e personalize o comportamento do SmartQuote RCS
             </p>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
         <Tabs defaultValue="general" className="w-full h-full flex flex-col">
           <TabsList className="bg-dark-tag border border-dark-color mb-6 flex-shrink-0 grid grid-cols-2 lg:grid-cols-4">
             <TabsTrigger value="general" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm flex items-center space-x-2">
@@ -98,7 +97,7 @@ export function SettingsPage() {
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 scrollable-content">
             <TabsContent value="general" className="h-full mt-0">
               <div className="glass-card p-8 lg:p-10 max-w-2xl bg-white/5 rounded-2xl border border-white/20">
                 <div className="flex items-center space-x-3 mb-8">
@@ -113,7 +112,6 @@ export function SettingsPage() {
                       id="systemName"
                       value={generalSettings.systemName}
                       onChange={(e) => setGeneralSettings({...generalSettings, systemName: e.target.value})}
-                      className="bg-dark-bg border-dark-color text-dark-primary"
                     />
                   </div>
 
@@ -185,10 +183,10 @@ export function SettingsPage() {
                     </div>
                   </div>
 
-                  <Button onClick={handleSaveGeneral} className="dark-button-primary flex items-center space-x-2 px-6 py-2">
-                    <Save className="w-4 h-4" />
+                  <button onClick={handleSaveGeneral} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
+                    <Save className="w-5 h-5" />
                     <span>Salvar Configurações</span>
-                  </Button>
+                  </button>
                 </div>
               </div>
             </TabsContent>
@@ -256,10 +254,10 @@ export function SettingsPage() {
                     />
                   </div>
 
-                  <Button onClick={handleSaveNotifications} className="dark-button-primary flex items-center space-x-2 px-6 py-2">
-                    <Save className="w-4 h-4" />
+                  <button onClick={handleSaveNotifications} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
+                    <Save className="w-5 h-5" />
                     <span>Salvar Configurações</span>
-                  </Button>
+                  </button>
                 </div>
               </div>
             </TabsContent>
@@ -331,15 +329,14 @@ export function SettingsPage() {
                       value={securitySettings.ipWhitelist}
                       onChange={(e) => setSecuritySettings({...securitySettings, ipWhitelist: e.target.value})}
                       placeholder="192.168.1.0/24, 10.0.0.0/8"
-                      className="bg-dark-bg border-dark-color text-dark-primary"
                     />
                     <p className="text-xs text-dark-secondary">IPs permitidos separados por vírgula</p>
                   </div>
 
-                  <Button onClick={handleSaveSecurity} className="dark-button-primary flex items-center space-x-2 px-6 py-2">
-                    <Save className="w-4 h-4" />
+                  <button onClick={handleSaveSecurity} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
+                    <Save className="w-5 h-5" />
                     <span>Salvar Configurações</span>
-                  </Button>
+                  </button>
                 </div>
               </div>
             </TabsContent>
@@ -400,10 +397,10 @@ export function SettingsPage() {
                     </Select>
                   </div>
 
-                  <Button onClick={handleSaveIntegrations} className="dark-button-primary flex items-center space-x-2 px-6 py-2">
-                    <Save className="w-4 h-4" />
+                  <button onClick={handleSaveIntegrations} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
+                    <Save className="w-5 h-5" />
                     <span>Salvar Configurações</span>
-                  </Button>
+                  </button>
                 </div>
               </div>
             </TabsContent>

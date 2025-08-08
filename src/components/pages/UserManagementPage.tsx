@@ -19,7 +19,12 @@ import {
   Phone,
   Calendar,
   Eye,
-  EyeOff
+  EyeOff,
+  Activity,
+  Building,
+  Clock,
+  X,
+  Save
 } from "lucide-react";
 
 interface UserData {
@@ -217,38 +222,38 @@ export function UserManagementPage() {
   };
 
   const UserCard = ({ user }: { user: UserData }) => (
-    <div className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between space-y-4 sm:space-y-0 sm:space-x-4">
-        <div className="flex items-start space-x-3 flex-1 min-w-0">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center flex-shrink-0">
+    <div className="glass-card p-6 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-2xl border border-white/20">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between space-y-4 sm:space-y-0 sm:space-x-6">
+        <div className="flex items-start space-x-4 flex-1 min-w-0">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-lg">
             {getRoleIcon(user.role)}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
-              <h3 className="font-bold text-dark-primary text-sm sm:text-base truncate">{user.name}</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
+              <h3 className="font-bold text-dark-primary text-base sm:text-lg truncate">{user.name}</h3>
               <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                 {getRoleBadge(user.role)}
                 {getStatusBadge(user.status)}
               </div>
             </div>
-            <div className="space-y-1 text-xs sm:text-sm text-dark-secondary">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-dark-secondary">
               <div className="flex items-center space-x-2">
-                <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <span className="truncate">{user.email}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                <User className="w-4 h-4 text-green-400 flex-shrink-0" />
                 <span>{user.department}</span>
               </div>
               {user.phone && (
                 <div className="flex items-center space-x-2">
-                  <Phone className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <Phone className="w-4 h-4 text-purple-400 flex-shrink-0" />
                   <span>{user.phone}</span>
                 </div>
               )}
               <div className="flex items-center space-x-2">
-                <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span>Último login: {user.lastLogin}</span>
+                <Calendar className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                <span>Login: {user.lastLogin}</span>
               </div>
             </div>
           </div>
@@ -258,46 +263,49 @@ export function UserManagementPage() {
         <div className="flex items-center space-x-2 flex-shrink-0">
           <button
             onClick={() => handleToggleUserStatus(user.id)}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-3 rounded-xl transition-all duration-300 hover:scale-110 ${
               user.status === "active" 
-                ? "bg-green-600 hover:bg-green-500 text-white" 
-                : "bg-gray-600 hover:bg-gray-500 text-white"
+                ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30" 
+                : "bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 border border-gray-500/30"
             }`}
             title={user.status === "active" ? "Desativar" : "Ativar"}
           >
-            {user.status === "active" ? <Eye className="w-3 h-3 sm:w-4 sm:h-4" /> : <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" />}
+            {user.status === "active" ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
           </button>
           <button
             onClick={() => handleEditUser(user)}
-            className="p-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+            className="p-3 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 transition-all duration-300 hover:scale-110"
             title="Editar"
           >
-            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+            <Edit className="w-5 h-5" />
           </button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
-                className="p-2 rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors"
+                className="p-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 transition-all duration-300 hover:scale-110"
                 title="Remover"
               >
-                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <Trash2 className="w-5 h-5" />
               </button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="glass-card border-white/20">
+            <AlertDialogContent className="glass-card border-white/20 bg-slate-800/95 backdrop-blur-sm">
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-dark-primary">Confirmar Remoção</AlertDialogTitle>
-                <AlertDialogDescription className="text-dark-secondary">
-                  Tem certeza que deseja remover o usuário <strong>{user.name}</strong>? 
+                <AlertDialogTitle className="text-white flex items-center gap-2">
+                  <Trash2 className="w-5 h-5 text-red-400" />
+                  Confirmar Remoção
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-slate-300">
+                  Tem certeza que deseja remover o usuário <strong className="text-white">{user.name}</strong>? 
                   Esta ação não pode ser desfeita.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="glass-card border-white/20 text-dark-primary hover:bg-white/10">
+              <AlertDialogFooter className="gap-3">
+                <AlertDialogCancel className="bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-600/50 px-6 py-2 rounded-xl">
                   Cancelar
                 </AlertDialogCancel>
                 <AlertDialogAction 
                   onClick={() => handleDeleteUser(user.id)}
-                  className="bg-red-600 hover:bg-red-500 text-white"
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-xl font-semibold"
                 >
                   Remover
                 </AlertDialogAction>
@@ -315,66 +323,82 @@ export function UserManagementPage() {
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">Gestão de Usuários</h1>
-            <p className="text-xs sm:text-sm text-dark-secondary mt-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+              <Users className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
+              Gestão de Usuários
+            </h1>
+            <p className="text-sm sm:text-base text-dark-secondary mt-2">
               Administre contas de usuário e permissões do sistema
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="glass-card text-center sm:text-left">
-              {filteredUsers.length} usuários
+            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
+              <span className="text-blue-300 font-bold text-lg">{filteredUsers.length}</span>
+              <span className="text-blue-200 ml-2">usuários</span>
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="dark-button-primary flex items-center justify-center space-x-2 px-4 py-2 text-sm">
-                  <Plus className="w-4 h-4" />
+                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
+                  <Plus className="w-5 h-5" />
                   <span>Adicionar Usuário</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="glass-card border-white/20 w-full max-w-md mx-auto">
+              <DialogContent className="glass-card border-white/20 w-full max-w-md mx-auto bg-slate-800/95 backdrop-blur-sm">
                 <DialogHeader>
-                  <DialogTitle className="text-dark-primary">Adicionar Novo Usuário</DialogTitle>
-                  <DialogDescription className="text-dark-secondary">
+                  <DialogTitle className="text-white flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-blue-400" />
+                    Adicionar Novo Usuário
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-300">
                     Preencha os dados do novo usuário do sistema.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-dark-primary">Nome Completo *</Label>
+                    <Label htmlFor="name" className="text-white font-medium flex items-center gap-2">
+                      <User className="w-4 h-4 text-blue-400" />
+                      Nome Completo *
+                    </Label>
                     <Input
                       id="name"
                       value={newUser.name}
                       onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                      className="glass-card border-white/20 text-dark-primary"
                       placeholder="Nome do usuário"
+                      className="bg-slate-700/50 border-slate-600 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-dark-primary">Email *</Label>
+                    <Label htmlFor="email" className="text-white font-medium flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-green-400" />
+                      Email *
+                    </Label>
                     <Input
                       id="email"
                       type="email"
                       value={newUser.email}
                       onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                      className="glass-card border-white/20 text-dark-primary"
                       placeholder="email@rcs.pt"
+                      className="bg-slate-700/50 border-slate-600 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-dark-primary">Senha Temporária</Label>
+                    <Label htmlFor="password" className="text-white font-medium flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-purple-400" />
+                      Senha Temporária
+                    </Label>
                     <div className="relative">
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         value={newUser.password}
                         onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                        className="glass-card border-white/20 text-dark-primary pr-12"
+                        className="pr-12 bg-slate-700/50 border-slate-600 text-white"
                         placeholder="Senha inicial"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-secondary hover:text-dark-primary"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -382,12 +406,15 @@ export function UserManagementPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="role" className="text-dark-primary">Função</Label>
+                      <Label htmlFor="role" className="text-white font-medium flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-purple-400" />
+                        Função
+                      </Label>
                       <Select value={newUser.role} onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}>
-                        <SelectTrigger className="glass-card border-white/20 text-dark-primary">
+                        <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="glass-card border-white/20">
+                        <SelectContent className="bg-slate-800 border-slate-600">
                           <SelectItem value="user">Usuário</SelectItem>
                           <SelectItem value="manager">Gestor</SelectItem>
                           <SelectItem value="admin">Administrador</SelectItem>
@@ -395,39 +422,47 @@ export function UserManagementPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="department" className="text-dark-primary">Departamento *</Label>
+                      <Label htmlFor="department" className="text-white font-medium flex items-center gap-2">
+                        <Building className="w-4 h-4 text-cyan-400" />
+                        Departamento *
+                      </Label>
                       <Input
                         id="department"
                         value={newUser.department}
                         onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
-                        className="glass-card border-white/20 text-dark-primary"
                         placeholder="Departamento"
+                        className="bg-slate-700/50 border-slate-600 text-white"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-dark-primary">Telefone</Label>
+                    <Label htmlFor="phone" className="text-white font-medium flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-yellow-400" />
+                      Telefone
+                    </Label>
                     <Input
                       id="phone"
                       value={newUser.phone}
                       onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-                      className="glass-card border-white/20 text-dark-primary"
                       placeholder="+351 912 345 678"
+                      className="bg-slate-700/50 border-slate-600 text-white"
                     />
                   </div>
                 </div>
-                <DialogFooter className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                <DialogFooter className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-6 border-t border-slate-700/50">
                   <Button
                     variant="outline"
                     onClick={() => setIsAddDialogOpen(false)}
-                    className="glass-card border-white/20 text-dark-primary hover:bg-white/10 w-full sm:w-auto"
+                    className="bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-600/50 px-6 py-2 rounded-xl flex items-center gap-2 w-full sm:w-auto"
                   >
+                    <X className="w-4 h-4" />
                     Cancelar
                   </Button>
                   <Button
                     onClick={handleAddUser}
-                    className="dark-button-primary w-full sm:w-auto"
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-xl font-semibold flex items-center gap-2 w-full sm:w-auto transition-all duration-300 hover:scale-105"
                   >
+                    <Plus className="w-4 h-4" />
                     Adicionar Usuário
                   </Button>
                 </DialogFooter>
@@ -437,63 +472,171 @@ export function UserManagementPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
         {/* Filters */}
         <div className="mb-6 lg:mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0 lg:space-x-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0 lg:space-x-6">
+            {/* Search Bar */}
+            <div className="relative flex-1 max-w-md group">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-cyan-400 transition-colors duration-300" />
               <Input
                 placeholder="Pesquisar usuários..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 glass-card border-white/20 text-dark-primary placeholder:text-dark-secondary"
+                className="pl-12 h-12 bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:border-cyan-400/50 focus:ring-cyan-400/20 rounded-xl backdrop-blur-sm transition-all duration-300 hover:bg-slate-700/50"
               />
             </div>
             
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            {/* Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-full sm:w-32 glass-card border-white/20 text-dark-primary text-sm">
-                  <SelectValue placeholder="Função" />
+                <SelectTrigger className="w-full sm:w-40 h-12 bg-slate-800/50 border-slate-600/50 text-white rounded-xl backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Shield className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                    <span className="truncate">
+                      <SelectValue placeholder="Função" />
+                    </span>
+                  </div>
                 </SelectTrigger>
-                <SelectContent className="glass-card border-white/20">
+                <SelectContent className="bg-slate-800/95 border-slate-600/50 backdrop-blur-sm rounded-xl">
                   {roles.map(role => (
-                    <SelectItem key={role} value={role} className="text-sm">
-                      {role === "Todos" ? "Todos" : 
-                       role === "user" ? "Usuário" :
-                       role === "manager" ? "Gestor" : "Administrador"}
+                    <SelectItem 
+                      key={role} 
+                      value={role} 
+                      className="text-white hover:bg-slate-700/50 focus:bg-slate-700/50 rounded-lg m-1"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {role === "user" && <User className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                        {role === "manager" && <UserCheck className="w-4 h-4 text-blue-400 flex-shrink-0" />}
+                        {role === "admin" && <Shield className="w-4 h-4 text-purple-400 flex-shrink-0" />}
+                        {role === "Todos" && <Users className="w-4 h-4 text-slate-400 flex-shrink-0" />}
+                        <span className="truncate">
+                          {role === "Todos" ? "Todos" : 
+                           role === "user" ? "Usuário" :
+                           role === "manager" ? "Gestor" : "Administrador"}
+                        </span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-32 glass-card border-white/20 text-dark-primary text-sm">
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className="w-full sm:w-36 h-12 bg-slate-800/50 border-slate-600/50 text-white rounded-xl backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Activity className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                    <span className="truncate">
+                      <SelectValue placeholder="Status" />
+                    </span>
+                  </div>
                 </SelectTrigger>
-                <SelectContent className="glass-card border-white/20">
+                <SelectContent className="bg-slate-800/95 border-slate-600/50 backdrop-blur-sm rounded-xl">
                   {statuses.map(status => (
-                    <SelectItem key={status} value={status} className="text-sm">
-                      {status === "Todos" ? "Todos" :
-                       status === "active" ? "Ativo" :
-                       status === "inactive" ? "Inativo" : "Suspenso"}
+                    <SelectItem 
+                      key={status} 
+                      value={status} 
+                      className="text-white hover:bg-slate-700/50 focus:bg-slate-700/50 rounded-lg m-1"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {status === "active" && <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>}
+                        {status === "inactive" && <div className="w-2 h-2 rounded-full bg-gray-500 flex-shrink-0"></div>}
+                        {status === "suspended" && <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>}
+                        {status === "Todos" && <div className="w-2 h-2 rounded-full bg-slate-400 flex-shrink-0"></div>}
+                        <span className="truncate">
+                          {status === "Todos" ? "Todos" :
+                           status === "active" ? "Ativo" :
+                           status === "inactive" ? "Inativo" : "Suspenso"}
+                        </span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                <SelectTrigger className="w-full sm:w-40 glass-card border-white/20 text-dark-primary text-sm">
-                  <SelectValue placeholder="Departamento" />
+                <SelectTrigger className="w-full sm:w-48 h-12 bg-slate-800/50 border-slate-600/50 text-white rounded-xl backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Building className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                    <span className="truncate">
+                      <SelectValue placeholder="Departamento" />
+                    </span>
+                  </div>
                 </SelectTrigger>
-                <SelectContent className="glass-card border-white/20">
+                <SelectContent className="bg-slate-800/95 border-slate-600/50 backdrop-blur-sm rounded-xl">
                   {departments.map(dept => (
-                    <SelectItem key={dept} value={dept} className="text-sm">{dept}</SelectItem>
+                    <SelectItem 
+                      key={dept} 
+                      value={dept} 
+                      className="text-white hover:bg-slate-700/50 focus:bg-slate-700/50 rounded-lg m-1"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Building className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                        <span className="truncate">{dept}</span>
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
+
+          {/* Filter Results Summary */}
+          {(searchTerm || roleFilter !== "Todos" || statusFilter !== "Todos" || departmentFilter !== "Todos") && (
+            <div className="mt-4 p-4 bg-slate-800/30 border border-slate-600/30 rounded-xl backdrop-blur-sm">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+                {/* Results Counter */}
+                <div className="flex items-center gap-2 text-slate-300 min-w-fit">
+                  <Users className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                  <span className="text-sm whitespace-nowrap">
+                    Exibindo <span className="font-bold text-white">{filteredUsers.length}</span> de <span className="font-bold text-white">{users.length}</span> usuários
+                  </span>
+                </div>
+                
+                {/* Active Filters */}
+                <div className="flex flex-wrap gap-2 flex-1">
+                  {searchTerm && (
+                    <div className="flex items-center gap-1 px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-cyan-300 text-xs min-w-fit">
+                      <Search className="w-3 h-3 flex-shrink-0" />
+                      <span className="max-w-[120px] truncate">"{searchTerm}"</span>
+                      <button onClick={() => setSearchTerm("")} className="ml-1 hover:text-cyan-100 flex-shrink-0">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  
+                  {roleFilter !== "Todos" && (
+                    <div className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-full text-purple-300 text-xs min-w-fit">
+                      <Shield className="w-3 h-3 flex-shrink-0" />
+                      <span className="whitespace-nowrap">{roleFilter === "user" ? "Usuário" : roleFilter === "manager" ? "Gestor" : "Administrador"}</span>
+                      <button onClick={() => setRoleFilter("Todos")} className="ml-1 hover:text-purple-100 flex-shrink-0">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  
+                  {statusFilter !== "Todos" && (
+                    <div className="flex items-center gap-1 px-3 py-1.5 bg-orange-500/20 border border-orange-500/30 rounded-full text-orange-300 text-xs min-w-fit">
+                      <Activity className="w-3 h-3 flex-shrink-0" />
+                      <span className="whitespace-nowrap">{statusFilter === "active" ? "Ativo" : statusFilter === "inactive" ? "Inativo" : "Suspenso"}</span>
+                      <button onClick={() => setStatusFilter("Todos")} className="ml-1 hover:text-orange-100 flex-shrink-0">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  
+                  {departmentFilter !== "Todos" && (
+                    <div className="flex items-center gap-1 px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-cyan-300 text-xs min-w-fit">
+                      <Building className="w-3 h-3 flex-shrink-0" />
+                      <span className="max-w-[100px] truncate">{departmentFilter}</span>
+                      <button onClick={() => setDepartmentFilter("Todos")} className="ml-1 hover:text-cyan-100 flex-shrink-0">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Users Grid */}
@@ -505,90 +648,180 @@ export function UserManagementPage() {
 
         {/* Edit User Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="glass-card border-white/20 w-full max-w-md mx-auto">
+          <DialogContent className="glass-card border-white/20 w-full max-w-2xl mx-auto bg-slate-800/95 backdrop-blur-sm">
             <DialogHeader>
-              <DialogTitle className="text-dark-primary">Editar Usuário</DialogTitle>
-              <DialogDescription className="text-dark-secondary">
-                Atualize os dados do usuário selecionado.
+              <DialogTitle className="text-white flex items-center gap-3 text-xl">
+                <Edit className="w-6 h-6 text-blue-400" />
+                Editar Usuário
+              </DialogTitle>
+              <DialogDescription className="text-slate-300">
+                Atualize os dados e permissões do usuário selecionado.
               </DialogDescription>
             </DialogHeader>
             {editingUser && (
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label className="text-dark-primary">Nome Completo</Label>
-                  <Input
-                    value={editingUser.name}
-                    onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
-                    className="glass-card border-white/20 text-dark-primary"
-                  />
+              <div className="space-y-6 py-6">
+                {/* Avatar e Info Básica */}
+                <div className="flex items-center space-x-4 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
+                    {getRoleIcon(editingUser.role)}
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold text-lg">{editingUser.name}</h3>
+                    <p className="text-slate-300">{editingUser.email}</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      {getRoleBadge(editingUser.role)}
+                      {getStatusBadge(editingUser.status)}
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-dark-primary">Email</Label>
-                  <Input
-                    type="email"
-                    value={editingUser.email}
-                    onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
-                    className="glass-card border-white/20 text-dark-primary"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                {/* Formulário em Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-dark-primary">Função</Label>
+                    <Label className="text-white font-medium flex items-center gap-2">
+                      <User className="w-4 h-4 text-blue-400" />
+                      Nome Completo
+                    </Label>
+                    <Input
+                      value={editingUser.name}
+                      onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                      placeholder="Nome do usuário"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white font-medium flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-green-400" />
+                      Email
+                    </Label>
+                    <Input
+                      type="email"
+                      value={editingUser.email}
+                      onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                      placeholder="email@rcs.pt"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white font-medium flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-purple-400" />
+                      Função
+                    </Label>
                     <Select value={editingUser.role} onValueChange={(value: any) => setEditingUser({ ...editingUser, role: value })}>
-                      <SelectTrigger className="glass-card border-white/20 text-dark-primary">
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="glass-card border-white/20">
-                        <SelectItem value="user">Usuário</SelectItem>
-                        <SelectItem value="manager">Gestor</SelectItem>
-                        <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectContent className="bg-slate-800 border-slate-600">
+                        <SelectItem value="user">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-gray-400" />
+                            Usuário
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="manager">
+                          <div className="flex items-center gap-2">
+                            <UserCheck className="w-4 h-4 text-blue-400" />
+                            Gestor
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="admin">
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-purple-400" />
+                            Administrador
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+
                   <div className="space-y-2">
-                    <Label className="text-dark-primary">Status</Label>
+                    <Label className="text-white font-medium flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-orange-400" />
+                      Status
+                    </Label>
                     <Select value={editingUser.status} onValueChange={(value: any) => setEditingUser({ ...editingUser, status: value })}>
-                      <SelectTrigger className="glass-card border-white/20 text-dark-primary">
+                      <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="glass-card border-white/20">
-                        <SelectItem value="active">Ativo</SelectItem>
-                        <SelectItem value="inactive">Inativo</SelectItem>
-                        <SelectItem value="suspended">Suspenso</SelectItem>
+                      <SelectContent className="bg-slate-800 border-slate-600">
+                        <SelectItem value="active">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            Ativo
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="inactive">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                            Inativo
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="suspended">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                            Suspenso
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white font-medium flex items-center gap-2">
+                      <Building className="w-4 h-4 text-cyan-400" />
+                      Departamento
+                    </Label>
+                    <Input
+                      value={editingUser.department}
+                      onChange={(e) => setEditingUser({ ...editingUser, department: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                      placeholder="Nome do departamento"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-white font-medium flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-yellow-400" />
+                      Telefone
+                    </Label>
+                    <Input
+                      value={editingUser.phone || ""}
+                      onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                      placeholder="+351 912 345 678"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-dark-primary">Departamento</Label>
-                  <Input
-                    value={editingUser.department}
-                    onChange={(e) => setEditingUser({ ...editingUser, department: e.target.value })}
-                    className="glass-card border-white/20 text-dark-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-dark-primary">Telefone</Label>
-                  <Input
-                    value={editingUser.phone || ""}
-                    onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
-                    className="glass-card border-white/20 text-dark-primary"
-                  />
+
+                {/* Informações Adicionais */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-700/30 border border-slate-600/50">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Calendar className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm">Criado em: {editingUser.createdAt}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Clock className="w-4 h-4 text-green-400" />
+                    <span className="text-sm">Último login: {editingUser.lastLogin}</span>
+                  </div>
                 </div>
               </div>
             )}
-            <DialogFooter className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            <DialogFooter className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-6 border-t border-slate-700/50">
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
-                className="glass-card border-white/20 text-dark-primary hover:bg-white/10 w-full sm:w-auto"
+                className="bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-600/50 px-6 py-2 rounded-xl flex items-center gap-2 w-full sm:w-auto"
               >
+                <X className="w-4 h-4" />
                 Cancelar
               </Button>
               <Button
                 onClick={handleUpdateUser}
-                className="dark-button-primary w-full sm:w-auto"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-xl font-semibold flex items-center gap-2 w-full sm:w-auto transition-all duration-300 hover:scale-105"
               >
+                <Save className="w-4 h-4" />
                 Salvar Alterações
               </Button>
             </DialogFooter>

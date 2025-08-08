@@ -253,28 +253,32 @@ export function ProductSearchPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-6 flex-shrink-0">
+      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-xl lg:text-2xl font-semibold text-dark-primary">Pesquisa de Produtos</h1>
-            <p className="text-sm text-dark-secondary mt-1">Explore e solicite cotações dos nossos fornecedores parceiros</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+              <Search className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
+              Pesquisa de Produtos
+            </h1>
+            <p className="text-sm sm:text-base text-dark-secondary mt-2">Explore e solicite cotações dos nossos fornecedores parceiros</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
+              <span className="text-blue-300 font-bold text-lg">{filteredProducts.length}</span>
+              <span className="text-blue-200 ml-2">produtos</span>
+            </div>
             <button
               onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="dark-button-secondary gap-2 flex items-center text-sm px-3 py-2"
+              className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm"
             >
               {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-              {viewMode === "grid" ? "Lista" : "Grade"}
+              <span>{viewMode === "grid" ? "Lista" : "Grade"}</span>
             </button>
-            <div className="dark-tag">
-              {filteredProducts.length} produtos
-            </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0 flex-shrink-0">
             <TabsList className="bg-dark-tag border border-dark-color">
@@ -297,7 +301,7 @@ export function ProductSearchPage() {
                   placeholder="Pesquisar produtos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full lg:w-64 glass-card border-white/20 text-dark-primary placeholder:text-dark-secondary"
+                  className="pl-10 w-full lg:w-64"
                 />
               </div>
               
@@ -340,7 +344,7 @@ export function ProductSearchPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 scrollable-content">
             <TabsContent value="all" className="h-full mt-0">
               <div className={`grid gap-6 ${
                 viewMode === "grid" 
