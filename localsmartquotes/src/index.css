@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-size: 14px;
+  
+  /* Dark Mode Color Palette */
+  --dark-bg: #0F172A;
+  --dark-card: #1E293B;
+  --dark-primary-text: #FFFFFF;
+  --dark-secondary-text: #94A3B8;
+  --dark-positive: #22C55E;
+  --dark-negative: #EF4444;
+  --dark-cta: #3B82F6;
+  --dark-tag: #334155;
+  --dark-hover: #1E2535;
+  --dark-table-hover: #1C2A3A;
+  --dark-border: #374151;
+  
+  /* Updated theme variables for dark mode */
+  --background: #0F172A;
+  --foreground: #FFFFFF;
+  --card: #1E293B;
+  --card-foreground: #FFFFFF;
+  --popover: #1E293B;
+  --popover-foreground: #FFFFFF;
+  --primary: #3B82F6;
+  --primary-foreground: #FFFFFF;
+  --secondary: #334155;
+  --secondary-foreground: #FFFFFF;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #3B82F6;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #374151;
+  --input: #1E293B;
+  --ring: #3B82F6;
+  
+  /* Chart colors */
+  --chart-1: #3B82F6;
+  --chart-2: #22C55E;
+  --chart-3: #94A3B8;
+  --chart-4: #F59E0B;
+  --chart-5: #EF4444;
+  
+  --radius: 0.75rem;
+}
