@@ -3,6 +3,7 @@ import { QuoteProcessingChart } from "../QuoteProcessingChart";
 import { SupplierPerformanceChart } from "../SupplierPerformanceChart";
 import { RecentQuotes } from "../RecentQuotes";
 import { PendingApprovals } from "../PendingApprovals";
+import { useTranslation } from 'react-i18next';
 
 interface DashboardPageProps {
   onNavigateToNotifications?: () => void;
@@ -66,6 +67,7 @@ const systemAlerts = [
 ];
 
 export function DashboardPage({ onNavigateToNotifications }: DashboardPageProps = {}) {
+  const { t } = useTranslation();
   // Simular notificações não lidas (em um app real, viria de um contexto ou API)
   const unreadNotifications = 3;
 
@@ -75,9 +77,9 @@ export function DashboardPage({ onNavigateToNotifications }: DashboardPageProps 
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary mb-1 sm:mb-2">Painel de Controle</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary mb-1 sm:mb-2">{t('admin.dashboard.title')}</h1>
             <p className="text-xs sm:text-sm lg:text-base text-dark-secondary font-medium">
-              Visão geral do processamento IA de cotações e gestão de fornecedores
+              {t('admin.dashboard.subtitle')}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">

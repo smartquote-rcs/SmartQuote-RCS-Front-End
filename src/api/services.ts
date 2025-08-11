@@ -1,3 +1,85 @@
+// Busca o papel/função do usuário por email
+export async function getUserRoleByEmail(email: string): Promise<{ role: string, origem: 'employees' | 'users' | null }> {
+  try {
+    // 1. Tenta encontrar na tabela employees
+    const empRes = await api.get(`/employee/by-email/${encodeURIComponent(email)}`);
+    if (empRes.data && empRes.data.position) {
+      return { role: 'admin', origem: 'employees' };
+    }
+  } catch (e) { /* ignora erro, tenta users */ }
+  try {
+    // 2. Tenta encontrar na tabela users
+    const userRes = await api.get(`/users/by-email/${encodeURIComponent(email)}`);
+    if (userRes.data && userRes.data.função) {
+      return { role: userRes.data.função, origem: 'users' };
+    }
+  } catch (e) { /* ignora erro */ }
+  return { role: 'user', origem: null };
+}
+// ...existing code...
+// Serviço de Usuários (novo padrão)
+export const userService = {
+  async create(userData: {
+    nome: string;
+    email: string;
+    password: string;
+    departamento: string;
+    função: string;
+    contacto: string;
+  }): Promise<AuthResponse> {
+    try {
+      console.log('📤 Enviando dados para criar usuário (tabela users):', userData);
+      // Cria sempre na tabela users, independente do papel
+      const response = await api.post('/users/create', userData);
+      if (response.status === 204 || response.status === 201 || response.status === 200) {
+        return { success: true, data: response.data || { message: 'Usuário criado com sucesso' } };
+      }
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao criar usuário:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao criar usuário'
+      };
+    }
+  },
+  async getAll(): Promise<AuthResponse> {
+    try {
+      console.log('📤 Fazendo requisição para buscar usuários (tabela users)...');
+      const response = await api.get('/users/');
+      console.log('📨 Resposta bruta da API (users):', response);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar usuários:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar usuários'
+      };
+    }
+  },
+  async deleteUser(id: string): Promise<AuthResponse> {
+    try {
+      const response = await api.delete(`/users/${id}`);
+      if (response.status === 204) {
+        return { success: true };
+      }
+      return { success: false, error: 'Erro ao remover usuário.' };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.error || 'Erro ao remover usuário.' };
+    }
+  },
+  async updateUser(id: string, userData: any): Promise<AuthResponse> {
+    try {
+      const response = await api.put(`/users/${id}`, userData);
+      if (response.status === 200) {
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: 'Erro ao atualizar usuário.' };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.error || 'Erro ao atualizar usuário.' };
+    }
+  }
+};
 import api from './client';
 
 // Tipos
@@ -248,3 +330,4 @@ export const employeeService = {
     }
   }
 };
+

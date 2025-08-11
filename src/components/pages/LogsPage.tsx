@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -104,6 +105,7 @@ const getLevelIcon = (nivel: string) => {
 };
 
 export function LogsPage() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState("Todos");
   const [categoryFilter, setCategoryFilter] = useState("Todas");
@@ -192,10 +194,10 @@ export function LogsPage() {
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <Activity className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              Logs do Sistema
+              {t('logs.title')}
             </h1>
             <p className="text-sm sm:text-base text-dark-secondary mt-2">
-              Monitore atividades e eventos do sistema em tempo real
+              {t('logs.subtitle')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">

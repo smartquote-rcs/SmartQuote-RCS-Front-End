@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BarChart3,
   FileText,
   Users,
   Settings,
-  CheckCircle,
   Activity,
   Database,
   Search,
@@ -15,13 +14,13 @@ import {
   Bell,
   Plus,
   Send,
-  RefreshCw
+  RefreshCw,
+  Check
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { DashboardPage } from "./pages/DashboardPage";
 import { QuoteRequestsPage } from "./pages/QuoteRequestsPage";
 import { SuppliersPage } from "./pages/SuppliersPage";
-import { ApprovalsPage } from "./pages/ApprovalsPage";
 import { LogsPage } from "./pages/LogsPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -29,6 +28,8 @@ import { ProductSearchPage } from "./pages/ProductSearchPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { useApp } from "../contexts/AppContext";
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 interface User {
   email: string;
@@ -44,45 +45,44 @@ interface AdminDashboardProps {
 const mainNavItems = [
   {
     icon: BarChart3,
-    label: "Painel Administrativo",
+    label: "admin.navigation.dashboard",
     key: "dashboard",
     active: true,
   },
   {
     icon: FileText,
-    label: "Solicitações de Cotação",
+    label: "admin.navigation.quotes",
     key: "quotes",
   },
   {
     icon: Plus,
-    label: "Nova Cotação",
+    label: "navigation.newQuote",
     key: "new-quote",
   },
   {
     icon: Search,
-    label: "Pesquisa de Produtos",
+    label: "navigation.productSearch",
     key: "product-search",
   },
-  { icon: Users, label: "Fornecedores", key: "suppliers" },
-  { icon: CheckCircle, label: "Aprovações", key: "approvals" },
+  { icon: Users, label: "admin.navigation.suppliers", key: "suppliers" },
 ];
 
 const systemItems = [
-  { icon: Activity, label: "Logs do Sistema", key: "logs" },
-  { icon: FileText, label: "Relatórios", key: "reports" },
-  { icon: Bell, label: "Notificações", key: "notifications" },
+  { icon: Activity, label: "admin.navigation.logs", key: "logs" },
+  { icon: FileText, label: "admin.navigation.reports", key: "reports" },
+  { icon: Bell, label: "navigation.notifications", key: "notifications" },
 ];
 
 const adminItems = [
-  { icon: Settings, label: "Configurações", key: "settings" },
+  { icon: Settings, label: "navigation.settings", key: "settings" },
   {
     icon: Database,
-    label: "Gestão de Dados",
+    label: "admin.navigation.dataManagement",
     key: "data-management",
   },
   {
     icon: Users,
-    label: "Gestão de Usuários",
+    label: "admin.navigation.userManagement",
     key: "user-management",
   },
 ];
@@ -91,10 +91,24 @@ export function AdminDashboard({
   user,
   onLogout,
 }: AdminDashboardProps) {
+  const { t } = useTranslation();
   const [activePage, setActivePage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
+  const [lastCreatedQuote, setLastCreatedQuote] = useState<any>(null);
+  const [quoteMessage, setQuoteMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  // Forçar atualização ao trocar idioma
+  const [, setForceUpdate] = useState(0);
+
+  // Ouvir mudanças de idioma
+  useEffect(() => {
+    const handleLanguageChange = () => setForceUpdate(f => f + 1);
+    i18n.on('languageChanged', handleLanguageChange);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, []);
   
   // Usar o contexto da aplicação
   const { addQuote, quotes: allQuotes } = useApp();
@@ -118,7 +132,7 @@ export function AdminDashboard({
           className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`}
         />
         <span className={`text-xs sm:text-sm truncate ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>
-          {item.label}
+          {t(item.label)}
         </span>
       </button>
     );
@@ -138,9 +152,9 @@ export function AdminDashboard({
                 <div className="min-w-0">
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary truncate flex items-center gap-3">
                     <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
-                    Nova Cotação - Admin
+                    {t('newQuote.title')} - Admin
                   </h1>
-                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">Crie cotações personalizadas usando IA para qualquer cliente</p>
+                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">{t('newQuote.subtitle')} para qualquer cliente</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="relative">
@@ -155,7 +169,7 @@ export function AdminDashboard({
                     </button>
                   </div>
                   <div className="dark-tag text-center sm:text-left flex-shrink-0">
-                    {allQuotes.length} cotações no sistema
+                    {allQuotes.length} {t('admin.dashboard.quotesInSystem')}
                   </div>
                 </div>
               </div>
@@ -170,8 +184,8 @@ export function AdminDashboard({
                       <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                     </div>
                     <div>
-                      <h2 className="text-base sm:text-lg font-bold text-white">Criar Nova Cotação com IA - Admin</h2>
-                      <p className="text-xs sm:text-sm text-blue-200">Crie cotações personalizadas para clientes usando nossa IA</p>
+			<h2 className="text-base sm:text-lg font-bold text-white">{t('newQuote.createWithAI')} - Admin</h2>
+                      <p className="text-xs sm:text-sm text-blue-200">{t('newQuote.aiDescription')}</p>
                     </div>
                   </div>
                   
@@ -180,7 +194,7 @@ export function AdminDashboard({
                       <textarea
                         value={newQuotePrompt}
                         onChange={(e) => setNewQuotePrompt(e.target.value)}
-                        placeholder="Ex: Cliente corporativo precisa de 100 laptops Dell Latitude 5520 para escritório em Lisboa, incluindo configuração e suporte técnico por 12 meses..."
+                        placeholder={t('newQuote.placeholder')}
                         className="w-full h-20 sm:h-24 bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 sm:p-4 text-white placeholder-slate-400 resize-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors text-xs sm:text-sm"
                         maxLength={500}
                       />
@@ -194,20 +208,52 @@ export function AdminDashboard({
                         onClick={() => {
                           if (newQuotePrompt.trim()) {
                             setIsCreatingQuote(true);
+                            setQuoteMessage(null);
+                            setLastCreatedQuote(null);
+                            
                             // Simular processamento de IA
                             setTimeout(() => {
+                              // Simular possível erro (5% de chance)
+                              const hasError = Math.random() < 0.05;
+                              
+                              if (hasError) {
+                                setQuoteMessage({
+                                  type: 'error',
+                                  text: t('newQuote.errorMessage')
+                                });
+                                setIsCreatingQuote(false);
+                                return;
+                              }
+                              
                               const newQuote = {
+                                id: `RCS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
                                 produto: `Admin: ${newQuotePrompt.substring(0, 30)}...`,
                                 fornecedor: "Admin SmartQuote",
                                 valor: "€" + (Math.random() * 10000 + 500).toFixed(2),
                                 status: "approved" as const,
                                 data: new Date().toLocaleDateString('pt-PT'),
-                                submittedAt: new Date().toLocaleString('pt-PT')
+                                submittedAt: new Date().toLocaleString('pt-PT'),
+                                cliente: "Cliente Administrativo",
+                                quantidade: "1 unidade",
+                                prioridade: "high",
+                                dataRecebido: new Date().toISOString().split('T')[0],
+                                prazoResposta: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                responsavel: user?.name || "Admin"
                               };
+                              
                               addQuote(newQuote);
+                              setLastCreatedQuote(newQuote);
+                              setQuoteMessage({
+                                type: 'success',
+                                text: t('newQuote.successMessage')
+                              });
                               setIsCreatingQuote(false);
                               setNewQuotePrompt("");
-                              setActivePage("quotes");
+                              
+                              // Remover a mensagem após 5 segundos
+                              setTimeout(() => {
+                                setQuoteMessage(null);
+                              }, 5000);
                             }, 3000);
                           }
                         }}
@@ -217,12 +263,12 @@ export function AdminDashboard({
                         {isCreatingQuote ? (
                           <>
                             <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Criando Cotação...</span>
+                            <span>{t('newQuote.creating')}</span>
                           </>
                         ) : (
                           <>
                             <Send className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>Gerar Cotação</span>
+                            <span>{t('newQuote.generate')}</span>
                           </>
                         )}
                       </button>
@@ -230,7 +276,7 @@ export function AdminDashboard({
                         onClick={() => setNewQuotePrompt("")}
                         className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm"
                       >
-                        Limpar
+                        {t('newQuote.clear')}
                       </button>
                       <button
                         onClick={() => setActivePage("quotes")}
@@ -249,6 +295,68 @@ export function AdminDashboard({
                         </div>
                       </div>
                     )}
+
+                    {/* Mensagem de Sucesso/Erro */}
+                    {quoteMessage && (
+                      <div className={`${
+                        quoteMessage.type === 'success' 
+                          ? 'bg-green-500/10 border-green-500/20 text-green-300' 
+                          : 'bg-red-500/10 border-red-500/20 text-red-300'
+                      } border rounded-lg p-3 sm:p-4 transition-all duration-300`}>
+                        <div className="flex items-center space-x-3">
+                          {quoteMessage.type === 'success' ? (
+                            <Check className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <X className="w-4 h-4 text-red-400" />
+                          )}
+                          <span className="text-xs sm:text-sm font-medium">{quoteMessage.text}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Cotação Criada */}
+                    {lastCreatedQuote && (
+                      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-green-500/30 backdrop-blur-sm">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="text-white font-bold text-sm mb-1">Cotação Criada</h4>
+                            <p className="text-green-400 font-mono text-xs">{lastCreatedQuote.id}</p>
+                          </div>
+                          <div className="bg-green-500/20 px-2 py-1 rounded-md">
+                            <span className="text-green-400 text-xs font-medium">Aprovada</span>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <span className="text-slate-400 block mb-1">Produto:</span>
+                            <span className="text-white">{lastCreatedQuote.produto}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block mb-1">Fornecedor:</span>
+                            <span className="text-white">{lastCreatedQuote.fornecedor}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block mb-1">Valor:</span>
+                            <span className="text-green-400 font-bold">{lastCreatedQuote.valor}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block mb-1">Data:</span>
+                            <span className="text-white">{lastCreatedQuote.data}</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-slate-700/50">
+                          <button
+                            onClick={() => setActivePage("quotes")}
+                            className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center space-x-2 font-medium"
+                          >
+                            <FileText className="w-3 h-3" />
+                            <span>Ver na Lista de Cotações</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -258,11 +366,11 @@ export function AdminDashboard({
                 <div className="glass-card p-4 bg-green-500/10 rounded-xl border border-green-500/20">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5 text-white" />
+                      <Check className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-green-400">{allQuotes.filter(q => q.status === 'approved').length}</h3>
-                      <p className="text-xs text-dark-secondary">Aprovadas</p>
+                      <p className="text-xs text-dark-secondary">{t('status.approved')}</p>
                     </div>
                   </div>
                 </div>
@@ -274,7 +382,7 @@ export function AdminDashboard({
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-yellow-400">{allQuotes.filter(q => q.status === 'pending').length}</h3>
-                      <p className="text-xs text-dark-secondary">Pendentes</p>
+                      <p className="text-xs text-dark-secondary">{t('status.pending')}</p>
                     </div>
                   </div>
                 </div>
@@ -286,7 +394,7 @@ export function AdminDashboard({
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-blue-400">{allQuotes.filter(q => q.status === 'processing').length}</h3>
-                      <p className="text-xs text-dark-secondary">Processando</p>
+                      <p className="text-xs text-dark-secondary">{t('status.processing')}</p>
                     </div>
                   </div>
                 </div>
@@ -298,7 +406,7 @@ export function AdminDashboard({
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-purple-400">{allQuotes.length}</h3>
-                      <p className="text-xs text-dark-secondary">Total</p>
+                      <p className="text-xs text-dark-secondary">{t('dashboard.total')}</p>
                     </div>
                   </div>
                 </div>
@@ -306,15 +414,15 @@ export function AdminDashboard({
 
               {/* Informações administrativas */}
               <div className="glass-card p-4 sm:p-6 bg-white/5 rounded-xl border border-white/20">
-                <h3 className="text-base sm:text-lg font-bold text-white mb-4">Ferramentas Administrativas</h3>
+                <h3 className="text-base sm:text-lg font-bold text-white mb-4">{t('admin.dashboard.adminTools')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <button 
                     onClick={() => setActivePage("user-management")}
                     className="glass-card p-4 bg-white/5 hover:bg-blue-500/20 hover:border-blue-400/50 transition-all duration-300 text-left"
                   >
                     <Users className="w-6 h-6 text-blue-400 mb-2" />
-                    <h4 className="font-medium text-white">Gestão de Usuários</h4>
-                    <p className="text-xs text-dark-secondary">Criar e gerenciar contas</p>
+                    <h4 className="font-medium text-white">{t('admin.navigation.userManagement')}</h4>
+                    <p className="text-xs text-dark-secondary">{t('admin.dashboard.userManagementDesc')}</p>
                   </button>
                   
                   <button 
@@ -322,8 +430,8 @@ export function AdminDashboard({
                     className="glass-card p-4 bg-white/5 hover:bg-green-500/20 hover:border-green-400/50 transition-all duration-300 text-left"
                   >
                     <Users className="w-6 h-6 text-green-400 mb-2" />
-                    <h4 className="font-medium text-white">Fornecedores</h4>
-                    <p className="text-xs text-dark-secondary">Gerenciar parceiros</p>
+                    <h4 className="font-medium text-white">{t('admin.navigation.suppliers')}</h4>
+                    <p className="text-xs text-dark-secondary">{t('admin.dashboard.suppliersDesc')}</p>
                   </button>
                   
                   <button 
@@ -331,8 +439,8 @@ export function AdminDashboard({
                     className="glass-card p-4 bg-white/5 hover:bg-purple-500/20 hover:border-purple-400/50 transition-all duration-300 text-left"
                   >
                     <FileText className="w-6 h-6 text-purple-400 mb-2" />
-                    <h4 className="font-medium text-white">Relatórios</h4>
-                    <p className="text-xs text-dark-secondary">Análises e estatísticas</p>
+                    <h4 className="font-medium text-white">{t('admin.navigation.reports')}</h4>
+                    <p className="text-xs text-dark-secondary">{t('admin.dashboard.reportsDesc')}</p>
                   </button>
                 </div>
               </div>
@@ -343,8 +451,6 @@ export function AdminDashboard({
         return <ProductSearchPage />;
       case "suppliers":
         return <SuppliersPage />;
-      case "approvals":
-        return <ApprovalsPage />;
       case "notifications":
         return <NotificationsPage />;
       case "logs":
@@ -363,16 +469,16 @@ export function AdminDashboard({
                 <div>
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
                     <Database className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-                    Gestão de Dados
+                    {t('admin.navigation.dataManagement')}
                   </h1>
                   <p className="text-sm sm:text-base text-dark-secondary mt-2">
-                    Administração avançada de dados do sistema
+                    {t('admin.dashboard.dataManagementDesc')}
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
                   <div className="glass-card px-4 py-2 text-center sm:text-left bg-purple-500/20 border-purple-500/30">
                     <span className="text-purple-300 font-bold text-lg">2.4GB</span>
-                    <span className="text-purple-200 ml-2">armazenados</span>
+                    <span className="text-purple-200 ml-2">{t('admin.dashboard.stored')}</span>
                   </div>
                 </div>
               </div>
@@ -391,7 +497,7 @@ export function AdminDashboard({
                         2.4GB
                       </h3>
                       <p className="text-xs text-dark-secondary truncate">
-                        Dados Armazenados
+                        {t('admin.dashboard.storedData')}
                       </p>
                     </div>
                   </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -87,6 +88,7 @@ const getPriorityIcon = (priority: string) => {
 };
 
 export function ApprovalsPage() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("Todas");
   const [responsavelFilter, setResponsavelFilter] = useState("Todos");
@@ -143,32 +145,32 @@ export function ApprovalsPage() {
               </div>
               <div className="flex items-center space-x-2">
                 <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <span className="text-slate-300 text-sm">Responsável: <span className="text-white font-medium">{aprovacao.responsavel}</span></span>
+                <span className="text-slate-300 text-sm">{t('approvals.responsible')}: <span className="text-white font-medium">{aprovacao.responsavel}</span></span>
               </div>
             </div>
 
             <div className="mt-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30 backdrop-blur-sm">
-              <p className="text-xs font-medium text-orange-400 mb-1">Motivo da Aprovação Manual:</p>
+              <p className="text-xs font-medium text-orange-400 mb-1">{t('approvals.reason')}:</p>
               <p className="text-xs text-slate-300">{aprovacao.motivo}</p>
             </div>
 
             <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
               <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
-                <span className="text-slate-400 text-xs block mb-1">Categoria:</span>
+                <span className="text-slate-400 text-xs block mb-1">{t('dashboard.category')}:</span>
                 <span className="text-white font-medium">{aprovacao.categoria}</span>
               </div>
               <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
-                <span className="text-slate-400 text-xs block mb-1">Fornecedor:</span>
+                <span className="text-slate-400 text-xs block mb-1">{t('dashboard.supplier')}:</span>
                 <span className="text-white font-medium">{aprovacao.fornecedor}</span>
               </div>
               <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
-                <span className="text-slate-400 text-xs block mb-1">Prazo:</span>
+                <span className="text-slate-400 text-xs block mb-1">{t('approvals.deadline')}:</span>
                 <span className="text-white font-medium">
                   {new Date(aprovacao.prazo).toLocaleDateString('pt-PT')}
                 </span>
               </div>
               <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
-                <span className="text-slate-400 text-xs block mb-1">Submetido:</span>
+                <span className="text-slate-400 text-xs block mb-1">{t('approvals.submitted')}:</span>
                 <span className="text-white font-medium">
                   {new Date(aprovacao.submetido).toLocaleDateString('pt-PT')}
                 </span>
@@ -184,20 +186,20 @@ export function ApprovalsPage() {
             className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none"
           >
             <CheckCircle className="w-3 h-3" />
-            <span>Aprovar</span>
+            <span>{t('approvals.approve')}</span>
           </Button>
           <Button
             onClick={() => handleReject(aprovacao.id)}
             className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none"
           >
             <X className="w-3 h-3" />
-            <span>Rejeitar</span>
+            <span>{t('approvals.reject')}</span>
           </Button>
           <Button
             variant="outline"
             className="px-3 py-1.5 text-xs bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 border border-slate-600/50 rounded-lg transition-all duration-200 font-medium flex-1 lg:flex-none"
           >
-            Detalhes
+            {t('approvals.viewDetails')}
           </Button>
         </div>
       </div>
@@ -212,16 +214,16 @@ export function ApprovalsPage() {
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <AlertTriangle className="w-6 h-6 sm:w-7 sm:h-7 text-orange-400" />
-              Aprovações Pendentes
+              {t('approvals.title')}
             </h1>
             <p className="text-sm sm:text-base text-dark-secondary mt-2">
-              Cotações que requerem revisão manual e aprovação
+              {t('approvals.subtitle')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
             <div className="glass-card px-4 py-2 text-center sm:text-left bg-orange-500/20 border-orange-500/30">
               <span className="text-orange-300 font-bold text-lg">{filteredAprovacoes.length}</span>
-              <span className="text-orange-200 ml-2">pendentes</span>
+              <span className="text-orange-200 ml-2">{t('dashboard.pending')}</span>
             </div>
           </div>
         </div>
@@ -234,7 +236,7 @@ export function ApprovalsPage() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
               <Input
-                placeholder="Pesquisar aprovações..."
+                placeholder={t('approvals.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"

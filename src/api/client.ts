@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuração da API do seu colega (agora em produção)
-const API_BASE_URL = 'https://testsmart-24vt.onrender.com/api';
+const API_BASE_URL = 'http://localhost:2000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -54,3 +54,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+

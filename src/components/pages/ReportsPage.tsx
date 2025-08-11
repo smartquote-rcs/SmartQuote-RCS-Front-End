@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -103,6 +104,7 @@ const getTypeIcon = (tipo: string) => {
 };
 
 export function ReportsPage() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("Todos");
   const [statusFilter, setStatusFilter] = useState("Todos");
@@ -198,20 +200,20 @@ export function ReportsPage() {
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              Relatórios
+              {t('reports.title')}
             </h1>
             <p className="text-sm sm:text-base text-dark-secondary mt-2">
-              Acesse e gere relatórios detalhados do sistema
+              {t('reports.subtitle')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
             <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
               <span className="text-blue-300 font-bold text-lg">{filteredRelatorios.length}</span>
-              <span className="text-blue-200 ml-2">relatórios</span>
+              <span className="text-blue-200 ml-2">{t('reports.title')}</span>
             </div>
             <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
               <FileText className="w-5 h-5" />
-              <span>Novo Relatório</span>
+              <span>{t('reports.generateReport')}</span>
             </button>
           </div>
         </div>

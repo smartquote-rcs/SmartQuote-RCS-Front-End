@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -107,6 +108,7 @@ const getStatusBadge = (status: string) => {
 };
 
 export function SuppliersPage() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Todas");
   const [statusFilter, setStatusFilter] = useState("Todos");
@@ -214,10 +216,10 @@ export function SuppliersPage() {
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <Building className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              Fornecedores
+              {t('suppliers.title')}
             </h1>
             <p className="text-sm sm:text-base text-dark-secondary mt-2">
-              Gerencie e monitore a performance dos seus fornecedores
+              {t('suppliers.subtitle')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">

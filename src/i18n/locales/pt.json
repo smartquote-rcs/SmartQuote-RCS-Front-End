@@ -1,0 +1,103 @@
+{
+  "test": "Teste em Português",
+  "navigation": {
+    "dashboard": "Painel Principal",
+    "productSearch": "Pesquisa de Produtos",
+    "myQuotes": "Minhas Cotações",
+    "newQuote": "Nova Cotação",
+    "history": "Histórico",
+    "favorites": "Favoritos",
+    "payments": "Pagamentos",
+    "appointments": "Agendamentos",
+    "support": "Suporte",
+    "notifications": "Notificações",
+    "settings": "Configurações"
+  },
+  "dashboard": {
+    "title": "Painel Principal",
+    "subtitle": "Bem-vindo ao seu painel de controle pessoal",
+    "activeQuotes": "Cotações Ativas",
+    "recentQuotes": "Cotações Recentes",
+    "viewAll": "Ver todas",
+    "goToNotifications": "Ir para Notificações"
+  },
+  "quotes": {
+    "title": "Minhas Cotações",
+    "subtitle": "Acompanhe o status das suas solicitações de cotação",
+    "approved": "Aprovadas",
+    "pending": "Pendentes",
+    "processing": "Em Processamento",
+    "rejected": "Rejeitadas",
+    "total": "Total",
+    "update": "Atualizar",
+    "viewDetails": "Ver Detalhes",
+    "noQuotesFound": "Nenhuma cotação encontrada",
+    "noQuotesMessage": "Você ainda não fez nenhuma solicitação de cotação",
+    "searchProducts": "Buscar Produtos",
+    "exploreProducts": "Explorar Produtos"
+  },
+  "newQuote": {
+    "title": "Nova Cotação",
+    "subtitle": "Crie cotações personalizadas usando IA",
+    "createWithAI": "Criar Nova Cotação com IA",
+    "aiDescription": "Descreva o que precisa e nossa IA irá gerar uma cotação personalizada",
+    "placeholder": "Ex: Preciso de 50 painéis solares de 400W para instalação residencial, incluindo inversores e sistema de montagem. O projeto é para uma residência de 200m² em Lisboa...",
+    "generate": "Gerar Cotação",
+    "creating": "Criando Cotação...",
+    "clear": "Limpar",
+    "aiAnalyzing": "Nossa IA está analisando sua solicitação e buscando os melhores fornecedores...",
+    "successMessage": "Cotação criada com sucesso!",
+    "errorMessage": "Erro ao gerar cotação. Tente novamente em alguns momentos.",
+    "quoteCreated": "Cotação Criada",
+    "viewMyQuotes": "Ver Minhas Cotações",
+    "activeQuotes": "cotações ativas"
+  },
+  "favorites": {
+    "title": "Produtos Favoritos",
+    "subtitle": "Seus produtos salvos para consulta rápida",
+    "noFavorites": "Nenhum produto favorito",
+    "noFavoritesMessage": "Explore nossos produtos e marque seus favoritos",
+    "removeFavorite": "Remover dos favoritos",
+    "viewDetails": "Ver detalhes",
+    "requestQuote": "Solicitar Cotação"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "subtitle": "Suas mensagens e alertos",
+    "new": "novas",
+    "markAllRead": "Marcar todas como lidas",
+    "noNotifications": "Nenhuma notificação",
+    "noNotificationsMessage": "Você está em dia com suas notificações",
+    "urgent": "Urgente"
+  },
+  "settings": {
+    "title": "Configurações",
+    "language": "Idioma",
+    "selectLanguage": "Selecionar Idioma",
+    "portuguese": "Português",
+    "english": "English"
+  },
+  "common": {
+    "product": "Produto",
+    "supplier": "Fornecedor",
+    "value": "Valor",
+    "date": "Data",
+    "status": "Status",
+    "quantity": "Quantidade",
+    "all": "Todas",
+    "filter": "Filtrar",
+    "search": "Pesquisar",
+    "close": "Fechar",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso"
+  },
+  "status": {
+    "pending": "Pendente",
+    "approved": "Aprovada",
+    "processing": "Processando",
+    "rejected": "Rejeitada"
+  }
+}

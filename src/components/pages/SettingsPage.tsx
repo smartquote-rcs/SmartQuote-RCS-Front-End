@@ -6,12 +6,12 @@ import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { useTranslation } from 'react-i18next';
 import { 
   User, 
   Settings, 
   Bell, 
   Shield, 
-  Database, 
   Save, 
   Eye, 
   EyeOff,
@@ -23,7 +23,6 @@ import {
   Mail,
   FileText,
   Users,
-  Zap,
   Lock,
   Activity
 } from 'lucide-react';
@@ -62,12 +61,7 @@ interface SecuritySettings {
   ipWhitelist: string;
 }
 
-interface IntegrationSettings {
-  apiEnabled: boolean;
-  webhooks: boolean;
-  externalSync: boolean;
-  rateLimiting: string;
-}
+//
 
 interface PasswordData {
   current: string;
@@ -79,6 +73,8 @@ interface PasswordData {
 }
 
 export default function SettingsPage() {
+  const { i18n } = useTranslation();
+  
   const [adminProfile, setAdminProfile] = useState<AdminProfile>({
     firstName: 'Admin',
     lastName: 'Sistema',
@@ -113,12 +109,6 @@ export default function SettingsPage() {
     ipWhitelist: ''
   });
 
-  const [integrationSettings, setIntegrationSettings] = useState<IntegrationSettings>({
-    apiEnabled: true,
-    webhooks: true,
-    externalSync: true,
-    rateLimiting: 'standard'
-  });
 
   const [passwordData, setPasswordData] = useState<PasswordData>({
     current: '',
@@ -144,10 +134,25 @@ export default function SettingsPage() {
     setSaveSuccess('Perfil atualizado com sucesso!');
   };
 
-  const handleSaveGeneral = () => {
-    // Aqui você salvaria as configurações gerais
-    console.log('Salvando configurações gerais:', generalSettings);
-    setSaveSuccess('Configurações gerais salvas com sucesso!');
+  const handleSaveGeneral = async () => {
+    // Mapear e alterar idioma
+    const newLang = generalSettings.language === 'pt-PT' || generalSettings.language === 'pt-BR' ? 'pt' : 'en';
+    
+    try {
+      // Salvar no localStorage
+      localStorage.setItem('i18nextLng', newLang);
+      
+      // Alterar idioma
+      await i18n.changeLanguage(newLang);
+      
+      // Sempre recarregar a página para garantir que todas as traduções sejam aplicadas
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Erro ao alterar idioma admin:', error);
+      // Mesmo com erro, recarregar para aplicar as configurações salvas
+      window.location.reload();
+    }
   };
 
   const handleSaveNotifications = () => {
@@ -162,11 +167,7 @@ export default function SettingsPage() {
     setSaveSuccess('Configurações de segurança salvas com sucesso!');
   };
 
-  const handleSaveIntegrations = () => {
-    // Aqui você salvaria as configurações de integrações
-    console.log('Salvando configurações de integrações:', integrationSettings);
-    setSaveSuccess('Configurações de integrações salvas com sucesso!');
-  };
+  // ...
 
   const handleChangePassword = () => {
     if (passwordData.new !== passwordData.confirm) {

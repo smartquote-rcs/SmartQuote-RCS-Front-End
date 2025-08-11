@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Search, ShoppingCart, Eye, Heart, Grid, List } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
+import { useTranslation } from 'react-i18next';
 
 const produtos = [
   {
@@ -111,6 +112,7 @@ const getDisponibilidadeBadge = (disponibilidade: string) => {
 };
 
 export function ProductSearchPage() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Todas");
   const [fornecedorFilter, setFornecedorFilter] = useState("Todos");
@@ -167,7 +169,7 @@ export function ProductSearchPage() {
         )}
         {produto.popular && (
           <div className="absolute top-3 right-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-            Popular
+            {t('productSearch.popular')}
           </div>
         )}
         <button
@@ -221,7 +223,7 @@ export function ProductSearchPage() {
             </button>
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-sm flex items-center justify-center space-x-2 rounded-lg transition-all duration-300 flex-1 min-h-[40px]">
               <ShoppingCart className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">Solicitar Cotação</span>
+              <span className="truncate">{t('productSearch.requestQuote')}</span>
             </button>
           </div>
         </div>
@@ -237,9 +239,9 @@ export function ProductSearchPage() {
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <Search className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              Pesquisa de Produtos
+              {t('productSearch.title')}
             </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">Explore e solicite cotações dos nossos fornecedores parceiros</p>
+            <p className="text-sm sm:text-base text-dark-secondary mt-2">{t('productSearch.subtitle')}</p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
             <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
