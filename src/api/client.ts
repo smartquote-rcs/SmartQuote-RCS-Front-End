@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuração da API do seu colega (agora em produção)
-const API_BASE_URL = 'https://testsmart-24vt.onrender.com/api';
+const API_BASE_URL = 'https://smartquote-backend.vercel.app/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
