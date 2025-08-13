@@ -219,7 +219,7 @@ export function NotificationsPage() {
             <Button 
               onClick={markAllAsRead}
               disabled={unreadCount === 0}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 sm:px-4 sm:py-2"
             >
               <Check className="w-4 h-4 mr-2" />
               Marcar Todas como Lidas
@@ -227,7 +227,7 @@ export function NotificationsPage() {
             <Button 
               onClick={clearAllRead}
               variant="outline"
-              className="border-white/20 text-white hover:bg-white/10"
+              className="border-white/20 text-white hover:bg-white/10 px-2 py-1 sm:px-4 sm:py-2"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Limpar Lidas
@@ -283,7 +283,7 @@ export function NotificationsPage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            {/* Search Bar */}
+            {/* Search Bar - sempre visível */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
               <Input
@@ -294,85 +294,91 @@ export function NotificationsPage() {
               />
             </div>
 
-            {/* Type Filter */}
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="glass-card border-white/20 text-white">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent className="glass-card bg-slate-900/95 border-slate-700/50">
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="info">
-                  <div className="flex items-center gap-2">
-                    <Info className="w-4 h-4 text-blue-400" />
-                    Informação
-                  </div>
-                </SelectItem>
-                <SelectItem value="success">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    Sucesso
-                  </div>
-                </SelectItem>
-                <SelectItem value="warning">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                    Aviso
-                  </div>
-                </SelectItem>
-                <SelectItem value="error">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-red-400" />
-                    Erro
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Category Filter */}
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="glass-card border-white/20 text-white">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent className="glass-card bg-slate-900/95 border-slate-700/50">
-                <SelectItem value="all">Todas as categorias</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>
+            {/* Type Filter - oculto no mobile */}
+            <div className="hidden sm:block">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="glass-card border-white/20 text-white">
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent className="glass-card bg-slate-900/95 border-slate-700/50">
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  <SelectItem value="info">
                     <div className="flex items-center gap-2">
-                      <Tag className="w-4 h-4 text-cyan-400" />
-                      {category}
+                      <Info className="w-4 h-4 text-blue-400" />
+                      Informação
                     </div>
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  <SelectItem value="success">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      Sucesso
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="warning">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                      Aviso
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="error">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-400" />
+                      Erro
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            {/* Period Filter */}
-            <Select value={filterPeriod} onValueChange={setFilterPeriod}>
-              <SelectTrigger className="glass-card border-white/20 text-white">
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent className="glass-card bg-slate-900/95 border-slate-700/50">
-                <SelectItem value="all">Todos os períodos</SelectItem>
-                <SelectItem value="today">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-green-400" />
-                    Hoje
-                  </div>
-                </SelectItem>
-                <SelectItem value="week">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-blue-400" />
-                    Última semana
-                  </div>
-                </SelectItem>
-                <SelectItem value="month">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-purple-400" />
-                    Último mês
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Category Filter - oculto no mobile */}
+            <div className="hidden sm:block">
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="glass-card border-white/20 text-white">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent className="glass-card bg-slate-900/95 border-slate-700/50">
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-cyan-400" />
+                        {category}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Period Filter - oculto no mobile */}
+            <div className="hidden sm:block">
+              <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+                <SelectTrigger className="glass-card border-white/20 text-white">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent className="glass-card bg-slate-900/95 border-slate-700/50">
+                  <SelectItem value="all">Todos os períodos</SelectItem>
+                  <SelectItem value="today">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-green-400" />
+                      Hoje
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="week">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-blue-400" />
+                      Última semana
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="month">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-purple-400" />
+                      Último mês
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Active Filters Display */}
@@ -488,13 +494,13 @@ export function NotificationsPage() {
                       <p className="text-sm text-dark-secondary mt-1 line-clamp-2">
                         {notification.message}
                       </p>
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center space-x-3 text-xs text-dark-secondary">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-3 space-y-2 sm:space-y-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-xs text-dark-secondary">
                           <div className="flex items-center space-x-1">
                             <Clock className="w-3 h-3" />
                             <span>{formatTimestamp(notification.timestamp)}</span>
                           </div>
-                          <Badge variant="outline" className="border-white/20 text-white text-xs">
+                          <Badge variant="outline" className="border-white/20 text-white text-xs w-fit">
                             {notification.category}
                           </Badge>
                         </div>
@@ -503,16 +509,17 @@ export function NotificationsPage() {
                             <Button
                               onClick={() => markAsRead(notification.id)}
                               size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 sm:px-3 sm:py-1.5"
                             >
-                              Marcar como lida
+                              <Check className="w-3 h-3 sm:mr-1" />
+                              <span className="hidden sm:inline">Marcar como lida</span>
                             </Button>
                           )}
                           <Button
                             onClick={() => deleteNotification(notification.id)}
                             size="sm"
                             variant="outline"
-                            className="border-white/20 text-white hover:bg-red-500/20 hover:border-red-500/50 text-xs"
+                            className="border-white/20 text-white hover:bg-red-500/20 hover:border-red-500/50 text-xs px-2 py-1 sm:px-3 sm:py-1.5"
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>

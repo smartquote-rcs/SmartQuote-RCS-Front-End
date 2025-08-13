@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuração da API do seu colega (agora em produção)
-const API_BASE_URL = 'http://localhost:2000/api';
+const API_BASE_URL = 'https://testsmart-24vt.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -53,4 +53,61 @@ api.interceptors.response.use(
   }
 );
 
+// Função para cadastrar novo usuário
+export const registerUser = async (userData: {
+  name: string;
+  email: string;
+  password: string;
+  role?: string;
+}) => {
+  try {
+    console.log('📤 Tentando cadastrar usuário:', { ...userData, password: '***' });
+    
+    const response = await api.post('/auth/register', userData);
+    
+    console.log('✅ Usuário cadastrado com sucesso:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Erro ao cadastrar usuário:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Função para fazer login
+export const loginUser = async (credentials: {
+  email: string;
+  password: string;
+}) => {
+  try {
+    console.log('📤 Tentando fazer login:', { ...credentials, password: '***' });
+    
+    const response = await api.post('/auth/login', credentials);
+    
+    // Salvar token se retornado
+    if (response.data.token) {
+      localStorage.setItem('auth_token', response.data.token);
+      console.log('🔑 Token salvo no localStorage');
+    }
+    
+    console.log('✅ Login realizado com sucesso:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Erro ao fazer login:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Função para testar um cadastro rápido (dados de exemplo)
+export const createTestUser = async () => {
+  const testUser = {
+    name: "João Silva",
+    email: "joao.silva@teste.com",
+    password: "123456",
+    role: "user"
+  };
+  
+  return await registerUser(testUser);
+};
+
 export default api;
+

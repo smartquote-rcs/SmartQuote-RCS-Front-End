@@ -1,178 +1,361 @@
-import { useState, useEffect } from "react";
-import { fornecedorService } from '../../api/services';
+import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Search, Building, Phone, Mail, MapPin, Download } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import { Search, Building, Phone, Mail, MapPin, Download, Plus, RefreshCw, Edit, Trash2, X, CheckCircle, AlertTriangle } from "lucide-react";
+import { useApp } from "../../contexts/AppContext";
+import { EditSupplierModal } from "../EditSupplierModal";
+import { Supplier } from "../../types";
 
-// Estado inicial vazio, será preenchido pelo backend
+// Interface para Toast Notifications
+interface ToastNotification {
+  id: string;
+  type: 'success' | 'error' | 'warning';
+  title: string;
+  message: string;
+  duration?: number;
+}
 
-const categorias = ["Todas", "Energia Solar", "Infraestrutura TI", "Equipamento de Impressão", "Energia", "Segurança de Dados"];
-
-
-export function SuppliersPage() {
-  const [fornecedores, setFornecedores] = useState<any[]>([]);
+export function SuppliersPage({ onNewSupplier }: { onNewSupplier?: () => void }) {
+  const { t } = useTranslation();
+  const { suppliers, isLoadingSuppliers, loadSuppliers, deleteSupplier, updateSupplier } = useApp();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Todas");
   const [statusFilter, setStatusFilter] = useState("Todos");
-  const [showForm, setShowForm] = useState(false);
-  const [editFornecedor, setEditFornecedor] = useState<any | null>(null);
-  const [form, setForm] = useState<any>({
-    nome: '',
-    contato_email: '',
-    contato_telefone: '',
-    site: '',
-    observacoes: '',
-    ativo: true,
-    cadastrado_em: '',
-    cadastrado_por: '',
-    atualizado_por: '',
-    atualizado_em: ''
-  });
+  
+  // Estados para o modal de edição
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedSupplierForEdit, setSelectedSupplierForEdit] = useState<Supplier | null>(null);
 
-  useEffect(() => {
-    fetchFornecedores();
-  }, []);
+  // Estados para toast notifications
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
 
-  async function fetchFornecedores() {
-    try {
-      const data = await fornecedorService.getAll();
-      setFornecedores(data || []);
-    } catch (e) {
-    } finally {
-    }
-  }
+  // Converter fornecedores do contexto para o formato esperado pela página
+  const fornecedores = suppliers.map(supplier => ({
+    id: `FORN-${String(supplier.id).padStart(3, '0')}`,
+    nome: supplier.nomeEmpresa,
+    categoria: supplier.categoriaMercado,
+    status: supplier.ativo ? 'active' : 'inactive',
+    rating: supplier.rating || 0,
+    localizacao: supplier.localizacao,
+    telefone: supplier.contactos.principal?.telefone || 'N/A',
+    email: supplier.contactos.principal?.email || 'N/A',
+    website: `www.${supplier.nomeEmpresa.toLowerCase().replace(/\s+/g, '')}.pt`,
+    especialidades: [supplier.categoriaMercado],
+    ultimaAtividade: supplier.atualizadoEm.substring(0, 10) // Formato YYYY-MM-DD
+  }));
 
-  function openAddForm() {
-    setForm({
-      nome: '',
-      contato_email: '',
-      contato_telefone: '',
-      site: '',
-      observacoes: '',
-      ativo: true,
-      cadastrado_em: '',
-      cadastrado_por: '',
-      atualizado_por: '',
-      atualizado_em: ''
-    });
-    setEditFornecedor(null);
-    setShowForm(true);
-  }
-  function openEditForm(fornecedor: any) {
-    setEditFornecedor(fornecedor);
-    setForm({
-      nome: fornecedor.nome ?? '',
-      contato_email: fornecedor.contato_email ?? '',
-      contato_telefone: fornecedor.contato_telefone ?? '',
-      site: fornecedor.site ?? '',
-      observacoes: fornecedor.observacoes ?? '',
-      ativo: fornecedor.ativo ?? true,
-      cadastrado_em: fornecedor.cadastrado_em ?? '',
-      cadastrado_por: fornecedor.cadastrado_por ?? '',
-      atualizado_por: fornecedor.atualizado_por ?? '',
-      atualizado_em: fornecedor.atualizado_em ?? ''
-    });
-    setShowForm(true);
-  }
-  async function handleDelete(id: any) {
-    if (window.confirm('Tem certeza que deseja remover este fornecedor?')) {
-      try {
-        await fornecedorService.delete(Number(id));
-        fetchFornecedores();
-      } catch (e: any) {
-        alert('Erro ao remover fornecedor: ' + (e?.response?.data?.error || e?.message || 'Erro desconhecido'));
-      }
-    }
-  }
-  async function handleSubmit(e: any) {
-    e.preventDefault();
-    if (editFornecedor) {
-      await fornecedorService.update(editFornecedor.id, form);
-    } else {
-      await fornecedorService.create(form);
-    }
-    setShowForm(false);
-    fetchFornecedores();
-  }
+  // Extrair categorias únicas dos fornecedores
+  const categorias = ["Todas", ...Array.from(new Set(fornecedores.map(f => f.categoria)))];
 
   const filteredFornecedores = fornecedores.filter((fornecedor) => {
-    const matchesSearch = fornecedor.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      fornecedor.contato_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      fornecedor.contato_telefone?.toLowerCase().includes(searchTerm.toLowerCase());
-    // Filtros de categoria e status removidos pois não existem no modelo real
-    return matchesSearch;
+    const matchesSearch = fornecedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         fornecedor.categoria.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         fornecedor.localizacao.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === "Todas" || fornecedor.categoria === categoryFilter;
+    const matchesStatus = statusFilter === "Todos" || fornecedor.status === statusFilter;
+    
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  // Funções para Toast Notifications
+  const showToast = (
+    type: 'success' | 'error' | 'warning',
+    title: string,
+    message: string,
+    duration: number = 5000
+  ) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newToast: ToastNotification = { id, type, title, message, duration };
+    setToasts((prev) => [...prev, newToast]);
+
+    // Auto remove toast após duração especificada
+    setTimeout(() => {
+      removeToast(id);
+    }, duration);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return (
+          <div className="flex items-center space-x-2">
+            <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-semibold px-3 py-1 border border-green-400/30 shadow-lg shadow-green-500/20">
+              <div className="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></div>
+              Ativo
+            </Badge>
+          </div>
+        );
+      case "inactive":
+        return (
+          <div className="flex items-center space-x-2">
+            <Badge className="bg-gradient-to-r from-gray-600 to-slate-600 text-white text-xs font-semibold px-3 py-1 border border-gray-500/30 shadow-lg shadow-gray-500/20">
+              <div className="w-2 h-2 bg-white/60 rounded-full mr-2"></div>
+              Inativo
+            </Badge>
+          </div>
+        );
+      default:
+        return (
+          <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-semibold px-3 py-1 border border-blue-400/30 shadow-lg shadow-blue-500/20">
+            {status}
+          </Badge>
+        );
+    }
+  };
+
+  // Função para recarregar a lista de fornecedores
+  const handleRefreshSuppliers = async () => {
+    await loadSuppliers();
+  };
+
+  // Função para editar fornecedor
+  const handleEditSupplier = (fornecedor: any) => {
+    console.log('Editando fornecedor:', fornecedor);
+    
+    // Extrair o ID numérico do formato "FORN-001"
+    const supplierId = parseInt(fornecedor.id.replace('FORN-', ''));
+    
+    // Encontrar o fornecedor original no contexto
+    const originalSupplier = suppliers.find(s => s.id === supplierId);
+    
+    if (originalSupplier) {
+      setSelectedSupplierForEdit(originalSupplier);
+      setIsEditModalOpen(true);
+    } else {
+      console.error('Fornecedor não encontrado:', supplierId);
+      alert('Erro: Fornecedor não encontrado.');
+    }
+  };
+
+  // Função para salvar as alterações do fornecedor
+  const handleSaveSupplier = async (updatedSupplier: Supplier) => {
+    try {
+      await updateSupplier(updatedSupplier);
+      
+      // Toast de sucesso
+      showToast(
+        'success',
+        'Fornecedor Atualizado',
+        `O fornecedor "${updatedSupplier.nomeEmpresa}" foi atualizado com sucesso!`
+      );
+      
+      // Fechar modal
+      handleCloseEditModal();
+    } catch (error) {
+      console.error('Erro ao atualizar fornecedor:', error);
+      
+      // Toast de erro
+      showToast(
+        'error',
+        'Erro ao Atualizar',
+        'Ocorreu um erro ao atualizar o fornecedor. Tente novamente.'
+      );
+    }
+  };
+
+  // Função para fechar o modal
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedSupplierForEdit(null);
+  };
+
+  // Função para deletar fornecedor
+  const handleDeleteSupplier = async (fornecedor: any) => {
+    try {
+      // Extrair o ID numérico do formato "FORN-001"
+      const supplierId = parseInt(fornecedor.id.replace('FORN-', ''));
+      await deleteSupplier(supplierId);
+      
+      // Toast de sucesso
+      showToast(
+        'success',
+        'Fornecedor Removido',
+        `O fornecedor "${fornecedor.nome}" foi removido com sucesso!`
+      );
+      
+      console.log('Fornecedor deletado com sucesso:', fornecedor);
+    } catch (error) {
+      console.error('Erro ao deletar fornecedor:', error);
+      
+      // Toast de erro
+      showToast(
+        'error',
+        'Erro ao Remover',
+        'Ocorreu um erro ao remover o fornecedor. Tente novamente.'
+      );
+    }
+  };
+
   const FornecedorCard = ({ fornecedor }: { fornecedor: any }) => (
-    <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-3 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300 group">
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-3 lg:space-y-0 lg:space-x-4">
-        <div className="flex items-start space-x-3 flex-1 min-w-0">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110">
-            <Building className="w-5 h-5 text-blue-400" />
+    <div className="group relative bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/10 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 cursor-pointer transform hover:-translate-y-1">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 space-y-3 sm:space-y-0">
+        <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+          <div className="relative flex-shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center backdrop-blur-sm border border-blue-400/20 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-blue-500/20">
+              <Building className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400 group-hover:text-cyan-300 transition-colors duration-300" />
+            </div>
+            {/* Status indicator */}
+            <div className={`absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-slate-800 ${
+              fornecedor.status === 'active' ? 'bg-green-500' : 'bg-gray-500'
+            }`}></div>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
-              <h3 className="font-bold text-white text-base group-hover:text-cyan-400 transition-colors duration-300">{fornecedor.nome}</h3>
-              <div className="flex items-center space-x-2 mt-1 sm:mt-0">
-                <Badge className={fornecedor.ativo ? 'bg-green-600 text-white text-xs' : 'bg-gray-600 text-white text-xs'}>{fornecedor.ativo ? 'Ativo' : 'Inativo'}</Badge>
+            <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-cyan-300 transition-colors duration-300 mb-1 truncate">
+              {fornecedor.nome}
+            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+              <span className="px-3 py-1 bg-slate-700/50 text-slate-300 text-xs sm:text-sm rounded-full border border-slate-600/50 w-fit">
+                {fornecedor.categoria}
+              </span>
+              <div className="flex items-center space-x-1">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${
+                        i < Math.floor(fornecedor.rating) ? 'bg-yellow-400' : 'bg-slate-600'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-yellow-400 ml-1">{fornecedor.rating}</span>
               </div>
-            </div>
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
-                <div className="flex items-center space-x-1 col-span-2">
-                  <Mail className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                  <span className="truncate">{fornecedor.contato_email}</span>
-                </div>
-                <div className="flex items-center space-x-1 col-span-2">
-                  <Phone className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                  <span className="truncate">{fornecedor.contato_telefone}</span>
-                </div>
-                <div className="flex items-center space-x-1 col-span-2">
-                  <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                  <span className="truncate">{fornecedor.site}</span>
-                </div>
-              </div>
-              {fornecedor.observacoes && (
-                <div className="mt-2 text-xs text-slate-400">Obs: {fornecedor.observacoes}</div>
-              )}
             </div>
           </div>
         </div>
-        {/* Botões de ação */}
-        <div className="flex flex-row gap-2 mt-2">
-          <button onClick={() => openEditForm(fornecedor)} className="p-2 rounded-full bg-yellow-400/20 hover:bg-yellow-400/40 flex items-center justify-center" title="Editar">
-            ✏️
-          </button>
-          <button onClick={() => handleDelete(fornecedor.id)} className="p-2 rounded-full bg-red-400/20 hover:bg-red-400/40 flex items-center justify-center" title="Excluir">
-            🗑️
-          </button>
+        <div className="flex-shrink-0 self-start">
+          {getStatusBadge(fornecedor.status)}
         </div>
+      </div>
 
-        <div className="flex flex-row lg:flex-col space-x-3 lg:space-x-0 lg:space-y-2 min-w-0 lg:min-w-[160px] bg-slate-800/30 rounded-lg p-3 border border-slate-700/50">
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 flex-1">
-            <div className="text-center lg:text-left">
-              <p className="text-xs text-slate-400 mb-0.5">Cotações</p>
-              <p className="text-base font-bold text-white">{fornecedor.totalCotacoes}</p>
+      {/* Contact Information */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-300">
+          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0" />
+          <span className="truncate">{fornecedor.localizacao}</span>
+        </div>
+        <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-300">
+          <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0" />
+          <span className="truncate">{fornecedor.telefone}</span>
+        </div>
+        <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-300 sm:col-span-2">
+          <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0" />
+          <span className="truncate">{fornecedor.email}</span>
+        </div>
+      </div>
+
+      {/* Specialties */}
+      <div className="mb-4 sm:mb-5">
+        <h4 className="text-xs sm:text-sm font-semibold text-slate-400 mb-2">Especialidades</h4>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          {fornecedor.especialidades.slice(0, 4).map((esp: string, index: number) => (
+            <span 
+              key={index} 
+              className="px-2 py-1 sm:px-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 text-xs rounded-full border border-blue-400/30 hover:bg-blue-500/30 transition-colors duration-200"
+            >
+              {esp}
+            </span>
+          ))}
+          {fornecedor.especialidades.length > 4 && (
+            <span className="px-2 py-1 sm:px-3 bg-slate-600/30 text-slate-300 text-xs rounded-full border border-slate-500/30">
+              +{fornecedor.especialidades.length - 4} mais
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Informações Básicas */}
+      <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/50">
+        <h4 className="text-xs sm:text-sm font-semibold text-slate-300 mb-3">Informações</h4>
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
+          <div className="text-center">
+            <div className="text-xs sm:text-sm font-medium text-slate-300 mb-1">
+              {new Date(fornecedor.ultimaAtividade).toLocaleDateString('pt-PT')}
             </div>
-            <div className="text-center lg:text-left">
-              <p className="text-xs text-slate-400 mb-0.5">Aprovação</p>
-              <p className="text-base font-bold text-green-400">
-                {Math.round((fornecedor.cotacoesAprovadas / fornecedor.totalCotacoes) * 100)}%
-              </p>
-            </div>
-            <div className="text-center lg:text-left">
-              <p className="text-xs text-slate-400 mb-0.5">Tempo Médio</p>
-              <p className="text-xs font-bold text-cyan-400">{fornecedor.tempoMedioResposta}</p>
-            </div>
-            <div className="text-center lg:text-left">
-              <p className="text-xs text-slate-400 mb-0.5">Atividade</p>
-              <p className="text-xs text-slate-300">
-                {new Date(fornecedor.ultimaAtividade).toLocaleDateString('pt-PT')}
-              </p>
-            </div>
+            <div className="text-xs text-slate-400">Última Atividade</div>
           </div>
+        </div>
+      </div>
+
+      {/* Action Buttons - appears on hover */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="flex space-x-1.5 sm:space-x-2">
+          <button 
+            onClick={() => handleEditSupplier(fornecedor)}
+            className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500/80 hover:bg-blue-500 rounded-full flex items-center justify-center text-white transition-colors duration-200"
+            title="Editar fornecedor"
+          >
+            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+          </button>
+          <button 
+            onClick={() => window.open(`mailto:${fornecedor.email}`)}
+            className="w-7 h-7 sm:w-8 sm:h-8 bg-green-500/80 hover:bg-green-500 rounded-full flex items-center justify-center text-white transition-colors duration-200"
+            title="Enviar email"
+          >
+            <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
+          </button>
+          <button 
+            onClick={() => window.open(`tel:${fornecedor.telefone}`)}
+            className="w-7 h-7 sm:w-8 sm:h-8 bg-cyan-500/80 hover:bg-cyan-500 rounded-full flex items-center justify-center text-white transition-colors duration-200"
+            title="Ligar para fornecedor"
+          >
+            <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
+          </button>
+          
+          {/* Botão de Deletar com AlertDialog */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500/80 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition-colors duration-200"
+                title="Remover fornecedor"
+              >
+                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="glass-card border-white/20 bg-slate-800/95 backdrop-blur-sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-white flex items-center gap-2">
+                  <Trash2 className="w-5 h-5 text-red-400" />
+                  Confirmar Remoção
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-slate-300">
+                  Tem certeza que deseja remover o fornecedor{" "}
+                  <strong className="text-white">{fornecedor.nome}</strong>? Esta ação
+                  não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="gap-3">
+                <AlertDialogCancel className="bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-600/50 px-6 py-2 rounded-xl">
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDeleteSupplier(fornecedor)}
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-xl font-semibold"
+                >
+                  Remover
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>
@@ -181,102 +364,110 @@ export function SuppliersPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
+      <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
-              <Building className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              Fornecedores
+            <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-dark-primary flex items-center gap-2 sm:gap-3">
+              <Building className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-blue-400" />
+              {t('suppliers.title')}
             </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">
-              Gerencie e monitore a performance dos seus fornecedores
+            <p className="text-xs sm:text-sm lg:text-base text-dark-secondary mt-1 sm:mt-2">
+              {t('suppliers.subtitle')}
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-lg">{filteredFornecedores.length}</span>
-              <span className="text-blue-200 ml-2">fornecedores</span>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-3">
+            <div className="glass-card px-3 py-2 sm:px-4 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
+              <span className="text-blue-300 font-bold text-sm sm:text-lg">{filteredFornecedores.length}</span>
+              <span className="text-blue-200 ml-1 sm:ml-2 text-xs sm:text-sm">fornecedores</span>
             </div>
-            <button onClick={openAddForm} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
-              <span>Adicionar Fornecedor</span>
+            <button 
+              onClick={handleRefreshSuppliers}
+              disabled={isLoadingSuppliers}
+              className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-2 py-1 sm:px-4 sm:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm sm:text-base"
+              title="Atualizar lista de fornecedores"
+            >
+              <RefreshCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isLoadingSuppliers ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">{isLoadingSuppliers ? "Carregando..." : "Atualizar"}</span>
             </button>
-      {/* Modal de formulário */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="w-full max-w-lg mx-auto bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-700 p-0 flex flex-col">
-            <div className="flex items-center justify-between px-8 pt-6 pb-2 border-b border-neutral-800">
-              <h2 className="text-xl md:text-2xl font-bold text-white">{editFornecedor ? 'Editar Fornecedor' : 'Adicionar Fornecedor'}</h2>
-              <button type="button" onClick={() => setShowForm(false)} className="text-neutral-400 hover:text-red-400 text-2xl font-bold focus:outline-none">&times;</button>
-            </div>
-            <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[70vh] px-8 py-6 flex flex-col gap-6">
-              <input name="nome" value={form.nome} onChange={e => setForm((f: any) => ({ ...f, nome: e.target.value }))} placeholder="Nome" required className="input bg-neutral-800 border border-neutral-700 text-white placeholder:text-neutral-400 focus:ring-2 focus:ring-cyan-400" />
-              <input name="contato_email" value={form.contato_email} onChange={e => setForm((f: any) => ({ ...f, contato_email: e.target.value }))} placeholder="Email de Contato" required className="input bg-neutral-800 border border-neutral-700 text-white placeholder:text-neutral-400 focus:ring-2 focus:ring-cyan-400" />
-              <input name="contato_telefone" value={form.contato_telefone} onChange={e => setForm((f: any) => ({ ...f, contato_telefone: e.target.value }))} placeholder="Telefone de Contato" className="input bg-neutral-800 border border-neutral-700 text-white placeholder:text-neutral-400 focus:ring-2 focus:ring-cyan-400" />
-              <input name="site" value={form.site} onChange={e => setForm((f: any) => ({ ...f, site: e.target.value }))} placeholder="Site" className="input bg-neutral-800 border border-neutral-700 text-white placeholder:text-neutral-400 focus:ring-2 focus:ring-cyan-400" />
-              <input name="observacoes" value={form.observacoes} onChange={e => setForm((f: any) => ({ ...f, observacoes: e.target.value }))} placeholder="Observações" className="input bg-neutral-800 border border-neutral-700 text-white placeholder:text-neutral-400 focus:ring-2 focus:ring-cyan-400" />
-              <div className="flex items-center gap-2">
-                <label className="text-white text-sm">Ativo:</label>
-                <input type="checkbox" checked={form.ativo} onChange={e => setForm((f: any) => ({ ...f, ativo: e.target.checked }))} />
-              </div>
-              <div className="flex gap-4 mt-6 justify-end">
-                <button type="submit" className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded-xl font-semibold shadow-lg transition-all duration-200 hover:scale-105">Salvar</button>
-                <button type="button" className="bg-neutral-700 hover:bg-neutral-800 text-white px-6 py-2 rounded-xl font-semibold transition-all duration-200" onClick={() => setShowForm(false)}>Cancelar</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <button 
+              onClick={onNewSupplier}
+              className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2 py-1 sm:px-6 sm:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-sm sm:text-base"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Novo Fornecedor</span>
+            </button>
+            <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-2 py-1 sm:px-6 sm:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm sm:text-base">
+              <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Exportar Relatório</span>
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0 flex-shrink-0">
-            <TabsList className="bg-dark-tag border border-dark-color">
-              <TabsTrigger value="all" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-4 sm:mb-6 space-y-4 xl:space-y-0 flex-shrink-0">
+            <TabsList className="bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-xl p-1 overflow-x-auto">
+              <TabsTrigger 
+                value="all" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
+              >
                 Todos ({fornecedores.length})
               </TabsTrigger>
-              <TabsTrigger value="active" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm">
+              <TabsTrigger 
+                value="active" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-green-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
+              >
                 Ativos ({fornecedores.filter(f => f.status === 'active').length})
               </TabsTrigger>
-              <TabsTrigger value="top" className="data-[state=active]:bg-dark-cta data-[state=active]:text-white text-dark-secondary text-sm">
+              <TabsTrigger 
+                value="top" 
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-yellow-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
+              >
                 Top Rated ({fornecedores.filter(f => f.rating >= 4.5).length})
               </TabsTrigger>
             </TabsList>
 
             {/* Filters */}
             <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-3 lg:space-y-0 lg:space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
+              {/* Pesquisa - sempre visível */}
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-slate-400 group-hover:text-blue-400 transition-colors duration-200" />
                 <Input
                   placeholder="Pesquisar fornecedores..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full lg:w-64"
+                  className="pl-9 sm:pl-10 w-full lg:w-80 bg-slate-800/50 border-slate-700/50 text-white placeholder-slate-400 focus:border-blue-400/50 focus:ring-blue-400/20 hover:border-slate-600/50 transition-all duration-200 text-sm"
                 />
               </div>
               
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+              {/* Filtros - ocultos no mobile */}
+              <div className="hidden sm:flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-40 glass-card border-white/20 text-dark-primary text-sm">
+                  <SelectTrigger className="w-full sm:w-48 bg-slate-800/50 border-slate-700/50 text-white hover:border-slate-600/50 hover:bg-slate-700/50 transition-all duration-200 text-xs sm:text-sm">
                     <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
-                  <SelectContent className="glass-card border-white/20">
+                  <SelectContent className="bg-slate-800 border-slate-700 backdrop-blur-md">
                     {categorias.map(cat => (
-                      <SelectItem key={cat} value={cat} className="text-sm">{cat}</SelectItem>
+                      <SelectItem 
+                        key={cat} 
+                        value={cat} 
+                        className="text-xs sm:text-sm text-white hover:bg-slate-700 focus:bg-slate-700"
+                      >
+                        {cat}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-32 glass-card border-white/20 text-dark-primary text-sm">
+                  <SelectTrigger className="w-full sm:w-36 bg-slate-800/50 border-slate-700/50 text-white hover:border-slate-600/50 hover:bg-slate-700/50 transition-all duration-200 text-xs sm:text-sm">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent className="glass-card border-white/20">
-                    <SelectItem value="Todos">Todos</SelectItem>
-                    <SelectItem value="active">Ativo</SelectItem>
-                    <SelectItem value="inactive">Inativo</SelectItem>
+                  <SelectContent className="bg-slate-800 border-slate-700 backdrop-blur-md">
+                    <SelectItem value="Todos" className="text-xs sm:text-sm text-white hover:bg-slate-700 focus:bg-slate-700">Todos</SelectItem>
+                    <SelectItem value="active" className="text-xs sm:text-sm text-white hover:bg-slate-700 focus:bg-slate-700">Ativo</SelectItem>
+                    <SelectItem value="inactive" className="text-xs sm:text-sm text-white hover:bg-slate-700 focus:bg-slate-700">Inativo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -284,40 +475,129 @@ export function SuppliersPage() {
           </div>
 
           <div className="flex-1 scrollable-content">
-            <TabsContent value="all" className="h-full mt-0">
-              <div className="grid gap-3 lg:gap-4">
-                {filteredFornecedores.map((fornecedor) => (
-                  <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
-                ))}
+            {isLoadingSuppliers ? (
+              <div className="text-center py-8 lg:py-12">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 animate-spin">
+                  <RefreshCw className="w-full h-full text-blue-400" />
+                </div>
+                <h3 className="text-base sm:text-lg font-medium text-white mb-2">Carregando fornecedores...</h3>
+                <p className="text-sm sm:text-base text-slate-400 px-4">Buscando dados da API</p>
               </div>
-            </TabsContent>
+            ) : (
+              <>
+                <TabsContent value="all" className="h-full mt-0">
+                  <div className="grid gap-4 lg:gap-6">
+                    {filteredFornecedores.map((fornecedor) => (
+                      <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
+                    ))}
+                  </div>
+                </TabsContent>
 
-            <TabsContent value="active" className="h-full mt-0">
-              <div className="grid gap-3 lg:gap-4">
-                {fornecedores.filter(f => f.status === 'active').map((fornecedor) => (
-                  <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
-                ))}
-              </div>
-            </TabsContent>
+                <TabsContent value="active" className="h-full mt-0">
+                  <div className="grid gap-4 lg:gap-6">
+                    {fornecedores.filter(f => f.status === 'active').map((fornecedor) => (
+                      <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
+                    ))}
+                  </div>
+                </TabsContent>
 
-            <TabsContent value="top" className="h-full mt-0">
-              <div className="grid gap-3 lg:gap-4">
-                {fornecedores.filter(f => f.rating >= 4.5).map((fornecedor) => (
-                  <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
-                ))}
-              </div>
-            </TabsContent>
+                <TabsContent value="top" className="h-full mt-0">
+                  <div className="grid gap-4 lg:gap-6">
+                    {fornecedores.filter(f => f.rating >= 4.5).map((fornecedor) => (
+                      <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
+                    ))}
+                  </div>
+                </TabsContent>
+
+                {!isLoadingSuppliers && filteredFornecedores.length === 0 && (
+                  <div className="text-center py-8 lg:py-12">
+                    <Building className="w-10 h-10 sm:w-12 sm:h-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-medium text-white mb-2">Nenhum fornecedor encontrado</h3>
+                    <p className="text-sm sm:text-base text-slate-400 px-4">Tente ajustar os filtros de pesquisa</p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-
-          {filteredFornecedores.length === 0 && (
-            <div className="text-center py-8 lg:py-12">
-              <Building className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />
-              <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhum fornecedor encontrado</h3>
-              <p className="text-sm sm:text-base text-dark-secondary px-4">Tente ajustar os filtros de pesquisa</p>
-            </div>
-          )}
         </Tabs>
       </main>
+      
+      {/* Modal de Edição de Fornecedor */}
+      <EditSupplierModal
+        supplier={selectedSupplierForEdit}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveSupplier}
+      />
+
+      {/* Toast Notifications */}
+      <div className="fixed top-4 right-4 z-[9999] space-y-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`
+              min-w-80 max-w-md p-4 rounded-lg shadow-lg backdrop-blur-md border
+              transform transition-all duration-300 ease-in-out
+              ${toast.type === 'success' 
+                ? 'bg-green-900/90 border-green-500/50 text-green-100' 
+                : toast.type === 'error'
+                ? 'bg-red-900/90 border-red-500/50 text-red-100'
+                : 'bg-yellow-900/90 border-yellow-500/50 text-yellow-100'
+              }
+            `}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  {toast.type === 'success' && (
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                  )}
+                  {toast.type === 'error' && (
+                    <AlertTriangle className="w-5 h-5 text-red-400" />
+                  )}
+                  {toast.type === 'warning' && (
+                    <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">{toast.title}</p>
+                  <p className="text-sm opacity-90 mt-1">{toast.message}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => removeToast(toast.id)}
+                className="flex-shrink-0 ml-4 p-1 rounded-md hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Progress bar */}
+            <div className="mt-3 w-full bg-black/20 rounded-full h-1">
+              <div 
+                className={`h-1 rounded-full transition-all duration-300 ${
+                  toast.type === 'success' 
+                    ? 'bg-green-400' 
+                    : toast.type === 'error'
+                    ? 'bg-red-400'
+                    : 'bg-yellow-400'
+                }`}
+                style={{
+                  animation: `shrink ${toast.duration || 5000}ms linear forwards`
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Keyframes CSS para a progress bar */}
+      <style jsx>{`
+        @keyframes shrink {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+      `}</style>
     </div>
   );
 }

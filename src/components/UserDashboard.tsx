@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Search, 
   ShoppingCart, 
@@ -21,18 +21,19 @@ import {
   RefreshCw,
   Plus,
   Send,
-  Heart
+  Heart,
+  Check
 } from "lucide-react";
 import { ProductSearchPage } from "./pages/ProductSearchPage";
 import { UserSettingsPage } from "./pages/UserSettingsPage";
-import { QuoteRequestsPage } from "./pages/QuoteRequestsPage";
 import { Badge } from "./ui/badge";
 import { useApp } from "../contexts/AppContext";
+import { useTranslation } from 'react-i18next';
 
 interface User {
   email: string;
-  name?: string;
-  role: 'user' | 'admin' | 'manager' | 'gestor';
+  name: string;
+  role: string;
 }
 
 interface UserDashboardProps {
@@ -43,65 +44,71 @@ interface UserDashboardProps {
 const mainNavItems = [
   {
     icon: BarChart3,
-    label: "Painel Principal",
+    label: "navigation.dashboard",
     key: "dashboard",
     active: true,
   },
   {
-    icon: FileText,
-    label: "Solicitações de Cotação",
-    key: "quotes",
-  },
-  {
     icon: Search,
-    label: "Pesquisa de Produtos",
+    label: "navigation.productSearch",
     key: "product-search",
   },
   {
     icon: ShoppingCart,
-    label: "Minhas Cotações",
+    label: "navigation.myQuotes",
     key: "my-quotes",
   },
   {
     icon: Package,
-    label: "Nova Cotação",
+    label: "navigation.newQuote",
     key: "orders",
   },
 ];
 
 const accountItems = [
-  { icon: FileText, label: "Histórico", key: "history" },
-  { icon: Star, label: "Favoritos", key: "favorites" },
-  { icon: CreditCard, label: "Pagamentos", key: "payments" },
-  { icon: Calendar, label: "Agendamentos", key: "appointments" },
+  { icon: FileText, label: "navigation.history", key: "history" },
+  { icon: Star, label: "navigation.favorites", key: "favorites" },
+  { icon: CreditCard, label: "navigation.payments", key: "payments" },
+  { icon: Calendar, label: "navigation.appointments", key: "appointments" },
 ];
 
 const supportItems = [
-  { icon: MessageSquare, label: "Suporte", key: "support" },
-  { icon: Bell, label: "Notificações", key: "notifications" },
-  { icon: Settings, label: "Configurações", key: "settings" },
+  { icon: MessageSquare, label: "navigation.support", key: "support" },
+  { icon: Bell, label: "navigation.notifications", key: "notifications" },
+  { icon: Settings, label: "navigation.settings", key: "settings" },
 ];
 
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "pending":
-      return <Badge className="bg-orange-600 text-white text-xs">Pendente</Badge>;
-    case "approved":
-      return <Badge className="bg-green-600 text-white text-xs">Aprovada</Badge>;
-    case "processing":
-      return <Badge className="bg-blue-600 text-white text-xs">Processando</Badge>;
-    case "rejected":
-      return <Badge className="bg-red-600 text-white text-xs">Rejeitada</Badge>;
-    default:
-      return <Badge className="text-xs">{status}</Badge>;
-  }
-};
-
 export function UserDashboard({ user, onLogout }: UserDashboardProps) {
+  const { t, i18n } = useTranslation();
   const [activePage, setActivePage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
+  const [lastCreatedQuote, setLastCreatedQuote] = useState<any>(null);
+  const [quoteMessage, setQuoteMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  // Forçar atualização ao trocar idioma
+  const [, setForceUpdate] = useState(0);
+
+  // Ouvir mudanças de idioma
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      setForceUpdate(prev => prev + 1);
+    };
+
+    window.addEventListener('languageChanged', handleLanguageChange);
+    
+    // Também ouvir mudanças do próprio i18n
+    const handleI18nChange = () => {
+      setForceUpdate(prev => prev + 1);
+    };
+    
+    i18n.on('languageChanged', handleI18nChange);
+    
+    return () => {
+      window.removeEventListener('languageChanged', handleLanguageChange);
+      i18n.off('languageChanged', handleI18nChange);
+    };
+  }, [i18n]);
   
   // Usar o contexto da aplicação
   const { 
@@ -115,6 +122,21 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
     quotes: myQuotes,
     addQuote
   } = useApp();
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Badge className="bg-orange-600 text-white text-xs">{t('status.pending')}</Badge>;
+      case "approved":
+        return <Badge className="bg-green-600 text-white text-xs">{t('status.approved')}</Badge>;
+      case "processing":
+        return <Badge className="bg-blue-600 text-white text-xs">{t('status.processing')}</Badge>;
+      case "rejected":
+        return <Badge className="bg-red-600 text-white text-xs">{t('status.rejected')}</Badge>;
+      default:
+        return <Badge className="text-xs">{status}</Badge>;
+    }
+  };
 
   const renderNavItem = (item: any, isActive: boolean) => {
     const Icon = item.icon;
@@ -132,7 +154,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
         }`}
       >
         <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`} />
-        <span className={`text-xs sm:text-sm truncate ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>{item.label}</span>
+        <span className={`text-xs sm:text-sm truncate ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>{t(item.label)}</span>
       </button>
     );
   };
@@ -145,8 +167,10 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
             <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                 <div>
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">Painel Principal</h1>
-                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">Bem-vindo ao seu painel de controle pessoal</p>
+                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">
+                    {t('dashboard.title')} - Debug: {t('test')}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">{t('dashboard.subtitle')}</p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <button 
@@ -163,14 +187,78 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                 </div>
               </div>
             </header>
-            {/* Fim do header, agora começa o main */}
+            
             <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
-              {/* ...restante do conteúdo do dashboard... */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 lg:mb-6">
+                {/* Minhas Cotações */}
+                <div className="glass-card p-4 sm:p-6 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 group cursor-pointer" onClick={() => setActivePage("my-quotes")}>
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-600 flex items-center justify-center group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                      <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-blue-400">{myQuotes.length}</h3>
+                      <p className="text-xs sm:text-sm text-blue-300 truncate">{t('dashboard.activeQuotes')}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Produtos Favoritos */}
+                <div className="glass-card p-4 sm:p-6 bg-yellow-500/10 rounded-xl border border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300 group cursor-pointer" onClick={() => setActivePage("favorites")}>
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-yellow-600 flex items-center justify-center group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                      <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-yellow-400">{favorites.length}</h3>
+                      <p className="text-xs sm:text-sm text-yellow-300 truncate">{t('navigation.favorites')}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notificações */}
+                <div className="glass-card p-4 sm:p-6 bg-green-500/10 rounded-xl border border-green-500/20 hover:border-green-500/40 transition-all duration-300 group cursor-pointer sm:col-span-2 xl:col-span-1" onClick={() => setActivePage("notifications")}>
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-600 flex items-center justify-center group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                      <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-green-400">{unreadCount}</h3>
+                      <p className="text-xs sm:text-sm text-green-300 truncate">{t('navigation.notifications')}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cotações Recentes */}
+              <div className="glass-card p-4 sm:p-6 bg-white/5 rounded-xl border border-white/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base sm:text-lg font-semibold text-white truncate min-w-0">{t('dashboard.recentQuotes')}</h2>
+                  <button 
+                    onClick={() => setActivePage("my-quotes")}
+                    className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm font-medium transition-colors duration-300 flex-shrink-0 ml-2"
+                  >
+                    {t('dashboard.viewAll')}
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {myQuotes.slice(0, 3).map((quote) => (
+                    <div key={quote.id} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors duration-300">
+                      <div className="min-w-0 flex-1 mr-3">
+                        <p className="text-white font-medium text-sm truncate">{quote.produto}</p>
+                        <p className="text-slate-400 text-xs truncate">{quote.fornecedor}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-white font-semibold text-sm whitespace-nowrap">{quote.valor}</p>
+                        {getStatusBadge(quote.status)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </main>
           </div>
         );
-      case "quotes":
-        return <QuoteRequestsPage />;
       case "product-search":
         return <ProductSearchPage />;
       case "my-quotes":
@@ -181,9 +269,9 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                 <div className="min-w-0">
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
                     <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400 flex-shrink-0" />
-                    <span className="truncate">Minhas Cotações</span>
+                    <span className="truncate">{t('quotes.title')}</span>
                   </h1>
-                  <p className="text-sm sm:text-base text-dark-secondary mt-2">Acompanhe o status das suas solicitações de cotação</p>
+                  <p className="text-sm sm:text-base text-dark-secondary mt-2">{t('quotes.subtitle')}</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 flex-shrink-0">
                   <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
@@ -409,20 +497,52 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                         onClick={() => {
                           if (newQuotePrompt.trim()) {
                             setIsCreatingQuote(true);
+                            setQuoteMessage(null);
+                            setLastCreatedQuote(null);
+                            
                             // Simular processamento de IA
                             setTimeout(() => {
+                              // Simular possível erro (5% de chance)
+                              const hasError = Math.random() < 0.05;
+                              
+                              if (hasError) {
+                                setQuoteMessage({
+                                  type: 'error',
+                                  text: t('newQuote.errorMessage')
+                                });
+                                setIsCreatingQuote(false);
+                                return;
+                              }
+                              
                               const newQuote = {
+                                id: `RCS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
                                 produto: `Produto personalizado (${newQuotePrompt.substring(0, 30)}...)`,
                                 fornecedor: "IA SmartQuote",
                                 valor: "€" + (Math.random() * 5000 + 100).toFixed(2),
                                 status: "pending" as const,
                                 data: new Date().toLocaleDateString('pt-PT'),
-                                submittedAt: new Date().toLocaleString('pt-PT')
+                                submittedAt: new Date().toLocaleString('pt-PT'),
+                                cliente: user?.name || "Cliente",
+                                quantidade: "1 unidade",
+                                prioridade: "medium",
+                                dataRecebido: new Date().toISOString().split('T')[0],
+                                prazoResposta: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                responsavel: "Sistema IA"
                               };
+                              
                               addQuote(newQuote);
+                              setLastCreatedQuote(newQuote);
+                              setQuoteMessage({
+                                type: 'success',
+                                text: t('newQuote.successMessage')
+                              });
                               setIsCreatingQuote(false);
                               setNewQuotePrompt("");
-                              setActivePage("my-quotes");
+                              
+                              // Remover a mensagem após 5 segundos
+                              setTimeout(() => {
+                                setQuoteMessage(null);
+                              }, 5000);
                             }, 3000);
                           }
                         }}
@@ -454,6 +574,68 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                         <div className="flex items-center space-x-3">
                           <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                           <span className="text-blue-300 text-xs sm:text-sm">Nossa IA está analisando sua solicitação e buscando os melhores fornecedores...</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mensagem de Sucesso/Erro */}
+                    {quoteMessage && (
+                      <div className={`${
+                        quoteMessage.type === 'success' 
+                          ? 'bg-green-500/10 border-green-500/20 text-green-300' 
+                          : 'bg-red-500/10 border-red-500/20 text-red-300'
+                      } border rounded-lg p-3 sm:p-4 transition-all duration-300`}>
+                        <div className="flex items-center space-x-3">
+                          {quoteMessage.type === 'success' ? (
+                            <Check className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <X className="w-4 h-4 text-red-400" />
+                          )}
+                          <span className="text-xs sm:text-sm font-medium">{quoteMessage.text}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Cotação Criada */}
+                    {lastCreatedQuote && (
+                      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-blue-500/30 backdrop-blur-sm">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="text-white font-bold text-sm mb-1">Cotação Criada</h4>
+                            <p className="text-blue-400 font-mono text-xs">{lastCreatedQuote.id}</p>
+                          </div>
+                          <div className="bg-orange-500/20 px-2 py-1 rounded-md">
+                            <span className="text-orange-400 text-xs font-medium">Pendente</span>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <span className="text-slate-400 block mb-1">Produto:</span>
+                            <span className="text-white">{lastCreatedQuote.produto}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block mb-1">Fornecedor:</span>
+                            <span className="text-white">{lastCreatedQuote.fornecedor}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block mb-1">Valor:</span>
+                            <span className="text-blue-400 font-bold">{lastCreatedQuote.valor}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block mb-1">Data:</span>
+                            <span className="text-white">{lastCreatedQuote.data}</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-slate-700/50">
+                          <button
+                            onClick={() => setActivePage("my-quotes")}
+                            className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center space-x-2 font-medium"
+                          >
+                            <FileText className="w-3 h-3" />
+                            <span>Ver Minhas Cotações</span>
+                          </button>
                         </div>
                       </div>
                     )}
@@ -856,20 +1038,23 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
         {/* Logo */}
         <div className="p-3 sm:p-4 lg:p-6 border-b border-dark-color flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gray-800 rounded-2xl flex items-center justify-center shadow-lg relative overflow-hidden flex-shrink-0 p-1">
+            <button
+              onClick={() => setActivePage('dashboard')}
+              className="flex items-center space-x-2 sm:space-x-3 min-w-0 hover:opacity-80 transition-opacity duration-200 group"
+            >
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gray-800 rounded-2xl flex items-center justify-center shadow-lg relative overflow-hidden flex-shrink-0 p-1 group-hover:scale-105 transition-transform duration-200">
                 <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain relative z-10" />
               </div>
                
               <div className="min-w-0">
-                <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-dark-primary truncate">
+                <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-dark-primary truncate group-hover:text-blue-400 transition-colors duration-200">
                   SMARTQUOTE
                 </h1>
                 <p className="text-xs text-dark-secondary font-medium truncate">
                   Portal do Cliente
                 </p>
               </div>
-            </div>
+            </button>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="lg:hidden p-2 rounded-lg hover:bg-dark-hover text-dark-secondary flex-shrink-0"
@@ -943,12 +1128,15 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
           >
             <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
-          <div className="flex items-center space-x-2 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-800 rounded-lg flex items-center justify-center p-1 flex-shrink-0">
+          <button
+            onClick={() => setActivePage('dashboard')}
+            className="flex items-center space-x-2 min-w-0 hover:opacity-80 transition-opacity duration-200 group"
+          >
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-800 rounded-lg flex items-center justify-center p-1 flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
               <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="font-bold text-dark-primary text-sm sm:text-base truncate">SMARTQUOTE</span>
-          </div>
+            <span className="font-bold text-dark-primary text-sm sm:text-base truncate group-hover:text-blue-400 transition-colors duration-200">SMARTQUOTE</span>
+          </button>
           <div className="w-9 sm:w-10 flex-shrink-0"></div>
         </div>
 

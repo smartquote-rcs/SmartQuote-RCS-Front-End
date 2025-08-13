@@ -1,24 +1,8 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { Supplier, Product } from '../types';
+import { supplierService, produtoService } from '../api/services';
 
 // Tipos
-interface Product {
-  id: string;
-  nome: string;
-  categoria: string;
-  fornecedor: string;
-  preco: string;
-  precoOriginal?: string;
-  avaliacao: number;
-  avaliacoes: number;
-  descricao: string;
-  especificacoes: string[];
-  disponibilidade: string;
-  prazoEntrega: string;
-  imagem: string;
-  desconto: number;
-  popular: boolean;
-}
-
 interface Notification {
   id: string;
   tipo: 'quote' | 'system' | 'supplier' | 'payment';
@@ -50,18 +34,7 @@ interface UserSettings {
   theme: string;
 }
 
-interface User {
-  email: string;
-  name?: string;
-  role: string;
-}
-
 interface AppContextType {
-  // Usuário logado
-  user: User | null;
-  login: (user: User) => void;
-  logout: () => void;
-
   // Favoritos
   favorites: string[];
   toggleFavorite: (productId: string) => void;
@@ -72,10 +45,28 @@ interface AppContextType {
   unreadCount: number;
   markAsRead: (notificationId: string) => void;
   markAllAsRead: () => void;
+  addNotification: (notification: Omit<Notification, 'id' | 'data' | 'lida'>) => void;
+  setToastCallback: (callback: (type: 'success' | 'error' | 'info', title: string, message: string) => void) => void;
   
   // Cotações
   quotes: Quote[];
   addQuote: (quote: Omit<Quote, 'id'>) => void;
+  
+  // Fornecedores
+  suppliers: Supplier[];
+  addSupplier: (supplier: Omit<Supplier, 'id'>) => Promise<void>;
+  loadSuppliers: () => Promise<void>;
+  deleteSupplier: (id: number) => Promise<void>;
+  updateSupplier: (supplier: Supplier) => Promise<void>;
+  isLoadingSuppliers: boolean;
+  
+  // Produtos
+  products: Product[];
+  addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+  loadProducts: () => Promise<void>;
+  deleteProduct: (id: number) => Promise<void>;
+  updateProduct: (product: Product) => Promise<void>;
+  isLoadingProducts: boolean;
   
   // Configurações
   userSettings: UserSettings;
@@ -83,60 +74,6 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// Dados mockados
-const mockProducts: Product[] = [
-  {
-    id: "PROD-001",
-    nome: "Painel Solar 400W Monocristalino",
-    categoria: "Energia Solar",
-    fornecedor: "EnerTech Solutions",
-    preco: "€285.00",
-    precoOriginal: "€320.00",
-    avaliacao: 4.8,
-    avaliacoes: 156,
-    descricao: "Painel solar de alta eficiência com tecnologia monocristalina, ideal para instalações residenciais e comerciais.",
-    especificacoes: ["Potência: 400W", "Eficiência: 20.9%", "Garantia: 25 anos", "Dimensões: 2008×1002×35mm"],
-    disponibilidade: "Em stock",
-    prazoEntrega: "3-5 dias úteis",
-    imagem: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop",
-    desconto: 11,
-    popular: true
-  },
-  {
-    id: "PROD-002", 
-    nome: "Servidor Dell PowerEdge R450",
-    categoria: "Infraestrutura TI",
-    fornecedor: "TechFlow Innovations",
-    preco: "€2,450.00",
-    avaliacao: 4.6,
-    avaliacoes: 89,
-    descricao: "Servidor rack 1U para aplicações empresariais críticas com processadores Intel Xeon de última geração.",
-    especificacoes: ["CPU: Intel Xeon Silver 4314", "RAM: 32GB DDR4", "Storage: 2x 480GB SSD", "Garantia: 3 anos"],
-    disponibilidade: "Sob consulta",
-    prazoEntrega: "7-10 dias úteis",
-    imagem: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop",
-    desconto: 0,
-    popular: false
-  },
-  {
-    id: "PROD-003",
-    nome: "Impressora Industrial HP PageWide",
-    categoria: "Equipamento de Impressão",
-    fornecedor: "PrintMax Industrial",
-    preco: "€1,850.00",
-    precoOriginal: "€2,100.00",
-    avaliacao: 4.2,
-    avaliacoes: 234,
-    descricao: "Impressora industrial de alto volume com tecnologia PageWide para impressão rápida e eficiente.",
-    especificacoes: ["Velocidade: 75 ppm", "Resolução: 1200 dpi", "Capacidade: 4,600 folhas", "Conectividade: Wi-Fi, Ethernet"],
-    disponibilidade: "Em stock",
-    prazoEntrega: "2-4 dias úteis",
-    imagem: "https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=400&h=300&fit=crop",
-    desconto: 12,
-    popular: true
-  }
-];
 
 const mockNotifications: Notification[] = [
   {
@@ -167,9 +104,15 @@ const mockNotifications: Notification[] = [
 ];
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
   const [favorites, setFavorites] = useState<string[]>(["PROD-001", "PROD-003"]);
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  
+  // Callback para exibir toasts
+  const [toastCallback, setToastCallback] = useState<((type: 'success' | 'error' | 'info', title: string, message: string) => void) | null>(null);
   const [quotes, setQuotes] = useState<Quote[]>([
     {
       id: "COT-2024-0045",
@@ -211,10 +154,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     theme: "dark"
   });
 
-  // Métodos de login/logout
-  const login = (user: User) => setUser(user);
-  const logout = () => setUser(null);
-
   const toggleFavorite = (productId: string) => {
     setFavorites(prev => 
       prev.includes(productId) 
@@ -224,7 +163,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const getFavoriteProducts = () => {
-    return mockProducts.filter(product => favorites.includes(product.id));
+    return products.filter(product => 
+      product.id && favorites.includes(product.id.toString())
+    );
   };
 
   const unreadCount = notifications.filter(n => !n.lida).length;
@@ -245,12 +186,443 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const addNotification = (notification: Omit<Notification, 'id' | 'data' | 'lida'>) => {
+    console.log('🔔 addNotification chamada com:', notification);
+    
+    const newNotification: Notification = {
+      ...notification,
+      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      data: new Date().toISOString(),
+      lida: false
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+    console.log('📝 Notificação adicionada ao estado:', newNotification);
+    
+    // Toast automático removido - notificações devem aparecer apenas na área de notificações
+    // Para mostrar toast manualmente use: window.debugSuppliers.testToast()
+  };
+
   const addQuote = (quote: Omit<Quote, 'id'>) => {
     const newQuote: Quote = {
       ...quote,
       id: `COT-2024-${String(quotes.length + 46).padStart(4, '0')}`
     };
     setQuotes(prev => [newQuote, ...prev]);
+  };
+
+  // Carregar fornecedores da API
+  const loadSuppliers = async () => {
+    setIsLoadingSuppliers(true);
+    try {
+      console.log('🔄 Carregando fornecedores da API...');
+      const response = await supplierService.getAll();
+      if (response.success && response.data) {
+        console.log('✅ Fornecedores carregados da API:', response.data);
+        setSuppliers(response.data);
+        // Salvar no localStorage como backup
+        localStorage.setItem('suppliers_backup', JSON.stringify(response.data));
+      } else {
+        console.log('⚠️ API não retornou dados, tentando localStorage...');
+        // Fallback para localStorage
+        const localSuppliers = localStorage.getItem('suppliers_backup');
+        if (localSuppliers) {
+          const suppliersData = JSON.parse(localSuppliers);
+          console.log('✅ Fornecedores carregados do localStorage:', suppliersData);
+          setSuppliers(suppliersData);
+        } else {
+          console.log('📝 Nenhum dado encontrado, iniciando com lista vazia');
+          setSuppliers([]);
+        }
+      }
+    } catch (error) {
+      console.error('💥 Erro ao carregar fornecedores da API:', error);
+      // Fallback para localStorage em caso de erro
+      const localSuppliers = localStorage.getItem('suppliers_backup');
+      if (localSuppliers) {
+        const suppliersData = JSON.parse(localSuppliers);
+        console.log('✅ Fallback: Fornecedores carregados do localStorage:', suppliersData);
+        setSuppliers(suppliersData);
+      } else {
+        console.log('📝 Nenhum backup encontrado, iniciando com lista vazia');
+        setSuppliers([]);
+      }
+    } finally {
+      setIsLoadingSuppliers(false);
+    }
+  };
+
+  // Carregar fornecedores e produtos ao inicializar
+  useEffect(() => {
+    loadSuppliers();
+    loadProducts();
+    
+    // Adicionar função de debug ao window para facilitar testes
+    (window as any).debugSuppliers = {
+      loadFromAPI: loadSuppliers,
+      getLocal: () => {
+        const local = localStorage.getItem('suppliers_backup');
+        return local ? JSON.parse(local) : null;
+      },
+      clearLocal: () => {
+        localStorage.removeItem('suppliers_backup');
+        console.log('🗑️ localStorage limpo');
+      },
+      showCurrent: () => {
+        console.log('📊 Estado atual dos fornecedores:', suppliers);
+      },
+      testAPI: async () => {
+        try {
+          const response = await supplierService.getAll();
+          console.log('🧪 Teste API:', response);
+          return response;
+        } catch (error) {
+          console.error('🧪 Erro no teste API:', error);
+          return { success: false, error };
+        }
+      },
+      // Novas funções para debug de notificações - toast removido para evitar toasts automáticos
+      testNotification: () => {
+        console.log('🧪 Testando notificação...');
+        addNotification({
+          tipo: 'supplier',
+          titulo: 'Teste de Notificação',
+          mensagem: 'Esta é uma notificação de teste para verificar o sistema.',
+          urgente: false
+        });
+        console.log('✅ Notificação de teste adicionada');
+      },
+      /*
+      testToast: () => {
+        console.log('🧪 Testando toast...');
+        console.log('📞 toastCallback disponível:', !!toastCallback);
+        if (toastCallback) {
+          toastCallback('success', 'Teste de Toast', 'Este é um toast de teste para verificar o sistema.');
+          console.log('✅ Toast de teste disparado');
+        } else {
+          console.log('❌ Toast callback não está disponível');
+        }
+      },
+      getToastCallback: () => {
+        console.log('📞 Estado do toastCallback:', !!toastCallback);
+        return !!toastCallback;
+      },
+      */
+      listSuppliers: () => {
+        console.log('📋 Lista de fornecedores:', suppliers);
+        return suppliers;
+      },
+      help: () => {
+        console.log('🔧 Ferramentas de Debug Disponíveis:');
+        console.log('  📊 window.debugSuppliers.showCurrent() - Ver estado atual dos fornecedores');
+        console.log('  🔄 window.debugSuppliers.loadFromAPI() - Recarregar da API');
+        console.log('  💾 window.debugSuppliers.getLocal() - Ver dados do localStorage');
+        console.log('  🗑️ window.debugSuppliers.clearLocal() - Limpar localStorage');
+        console.log('  🧪 window.debugSuppliers.testAPI() - Testar conexão com API');
+        console.log('  🔔 window.debugSuppliers.testNotification() - Testar sistema de notificações');
+        console.log('  🍞 window.debugSuppliers.testToast() - Testar sistema de toast');
+        console.log('  📞 window.debugSuppliers.getToastCallback() - Verificar se toast callback está registrado');
+        console.log('  📋 window.debugSuppliers.listSuppliers() - Listar todos os fornecedores');
+        console.log('  ❓ window.debugSuppliers.help() - Mostrar esta ajuda');
+      }
+    };
+    
+    console.log('🔧 Debug tools disponíveis em window.debugSuppliers:');
+    console.log('  - window.debugSuppliers.help() // Mostrar todas as ferramentas disponíveis');
+    // console.log('  - window.debugSuppliers.testToast() // Testar sistema de toast');
+    // console.log('  - window.debugSuppliers.testNotification() // Testar notificações');
+    // console.log('  - window.debugSuppliers.getToastCallback() // Verificar callback de toast');
+  }, []);
+
+  const addSupplier = async (supplier: Omit<Supplier, 'id'>) => {
+    try {
+      console.log('📤 Tentando salvar fornecedor na API...', supplier);
+      const response = await supplierService.create(supplier);
+      
+      if (response.success) {
+        console.log('✅ Fornecedor salvo na API, recarregando lista...');
+        // Recarregar a lista para pegar o ID correto da API
+        await loadSuppliers();
+      } else {
+        console.log('⚠️ API falhou, salvando localmente...', response.error);
+        // Se falhar na API, adiciona localmente
+        const newSupplier: Supplier = {
+          ...supplier,
+          id: Date.now() // Usar timestamp como ID temporário
+        };
+        const updatedSuppliers = [...suppliers, newSupplier];
+        setSuppliers(updatedSuppliers);
+        // Salvar no localStorage
+        localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
+        console.log('✅ Fornecedor salvo localmente:', newSupplier);
+      }
+    } catch (error) {
+      console.error('💥 Erro na API, salvando localmente:', error);
+      // Em caso de erro, adiciona localmente
+      const newSupplier: Supplier = {
+        ...supplier,
+        id: Date.now()
+      };
+      const updatedSuppliers = [...suppliers, newSupplier];
+      setSuppliers(updatedSuppliers);
+      // Salvar no localStorage
+      localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
+      console.log('✅ Fornecedor salvo localmente (fallback):', newSupplier);
+    }
+  };
+
+  const deleteSupplier = async (id: number) => {
+    try {
+      console.log('📤 Tentando deletar fornecedor da API...', id);
+      const response = await supplierService.delete(id.toString());
+      
+      if (response.success) {
+        console.log('✅ Fornecedor deletado da API, recarregando lista...');
+        // Recarregar a lista para sincronizar
+        await loadSuppliers();
+      } else {
+        console.log('⚠️ API falhou, removendo localmente...', response.error);
+        // Se falhar na API, remove localmente
+        const updatedSuppliers = suppliers.filter(s => s.id !== id);
+        setSuppliers(updatedSuppliers);
+        localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
+        console.log('✅ Fornecedor removido localmente');
+      }
+    } catch (error) {
+      console.error('💥 Erro na API, removendo localmente:', error);
+      // Em caso de erro, remove localmente
+      const updatedSuppliers = suppliers.filter(s => s.id !== id);
+      setSuppliers(updatedSuppliers);
+      localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
+      console.log('✅ Fornecedor removido localmente (fallback)');
+    }
+  };
+
+  const updateSupplier = async (supplier: Supplier) => {
+    try {
+      console.log('📤 Tentando atualizar fornecedor na API...', supplier);
+      const supplierId = supplier.id || 0;
+      const response = await supplierService.update(supplierId.toString(), {
+        nomeEmpresa: supplier.nomeEmpresa,
+        observacoes: supplier.observacoes,
+        ativo: supplier.ativo,
+        atualizadoPor: supplier.atualizadoPor,
+        categoriaMercado: supplier.categoriaMercado,
+        contactos: supplier.contactos,
+        localizacao: supplier.localizacao,
+        rating: supplier.rating
+      });
+      
+      if (response.success) {
+        console.log('✅ Fornecedor atualizado na API, recarregando lista...');
+        // Recarregar a lista para sincronizar
+        await loadSuppliers();
+      } else {
+        console.log('⚠️ API falhou, atualizando localmente...', response.error);
+        // Se falhar na API, atualiza localmente
+        const updatedSuppliers = suppliers.map(s => s.id === supplier.id ? supplier : s);
+        setSuppliers(updatedSuppliers);
+        localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
+        console.log('✅ Fornecedor atualizado localmente');
+      }
+    } catch (error) {
+      console.error('💥 Erro na API, atualizando localmente:', error);
+      // Em caso de erro, atualiza localmente
+      const updatedSuppliers = suppliers.map(s => s.id === supplier.id ? supplier : s);
+      setSuppliers(updatedSuppliers);
+      localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
+      console.log('✅ Fornecedor atualizado localmente (fallback)');
+    }
+  };
+
+  // ============== FUNÇÕES DE PRODUTOS ==============
+  
+  // Carregar produtos da API
+  const loadProducts = async () => {
+    setIsLoadingProducts(true);
+    try {
+      console.log('🔄 Carregando produtos da API...');
+      const response = await produtoService.getAll();
+      if (response.success && response.data) {
+        console.log('✅ Produtos carregados da API:', response.data);
+        setProducts(response.data);
+        // Salvar no localStorage como backup
+        localStorage.setItem('products_backup', JSON.stringify(response.data));
+      } else {
+        console.log('⚠️ API não retornou dados, tentando localStorage...');
+        // Fallback para localStorage
+        const localProducts = localStorage.getItem('products_backup');
+        if (localProducts) {
+          const productsData = JSON.parse(localProducts);
+          console.log('✅ Produtos carregados do localStorage:', productsData);
+          setProducts(productsData);
+        } else {
+          console.log('📝 Nenhum dado encontrado, iniciando com lista vazia');
+          setProducts([]);
+        }
+      }
+    } catch (error) {
+      console.error('💥 Erro ao carregar produtos da API:', error);
+      // Fallback para localStorage em caso de erro
+      const localProducts = localStorage.getItem('products_backup');
+      if (localProducts) {
+        const productsData = JSON.parse(localProducts);
+        console.log('✅ Fallback: Produtos carregados do localStorage:', productsData);
+        setProducts(productsData);
+      } else {
+        console.log('📝 Nenhum backup encontrado, iniciando com lista vazia');
+        setProducts([]);
+      }
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
+  const addProduct = async (product: Omit<Product, 'id'>) => {
+    try {
+      console.log('📤 Tentando salvar produto na API...', product);
+      const response = await produtoService.create(product);
+      
+      if (response.success) {
+        console.log('✅ Produto salvo na API, recarregando lista...');
+        // Recarregar a lista para pegar o ID correto da API
+        await loadProducts();
+        
+        // Adicionar notificação de sucesso
+        addNotification({
+          tipo: 'system',
+          titulo: 'Produto Adicionado',
+          mensagem: `O produto "${product.nome}" foi adicionado com sucesso.`,
+          urgente: false
+        });
+      } else {
+        console.log('⚠️ API falhou, salvando localmente...', response.error);
+        // Se falhar na API, adiciona localmente
+        const newProduct: Product = {
+          ...product,
+          id: Date.now() // Usar timestamp como ID temporário
+        };
+        const updatedProducts = [...products, newProduct];
+        setProducts(updatedProducts);
+        // Salvar no localStorage
+        localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
+        console.log('✅ Produto salvo localmente:', newProduct);
+        
+        // Adicionar notificação de sucesso local
+        addNotification({
+          tipo: 'system',
+          titulo: 'Produto Adicionado (Local)',
+          mensagem: `O produto "${product.nome}" foi adicionado localmente. As alterações serão sincronizadas quando a API estiver disponível.`,
+          urgente: false
+        });
+      }
+    } catch (error) {
+      console.error('💥 Erro na API, salvando localmente:', error);
+      // Em caso de erro, adiciona localmente
+      const newProduct: Product = {
+        ...product,
+        id: Date.now()
+      };
+      const updatedProducts = [...products, newProduct];
+      setProducts(updatedProducts);
+      // Salvar no localStorage
+      localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
+      console.log('✅ Produto salvo localmente (fallback):', newProduct);
+      
+      // Adicionar notificação de sucesso local (fallback)
+      addNotification({
+        tipo: 'system',
+        titulo: 'Produto Adicionado (Local)',
+        mensagem: `O produto "${product.nome}" foi adicionado localmente. As alterações serão sincronizadas quando a API estiver disponível.`,
+        urgente: false
+      });
+    }
+  };
+
+  const deleteProduct = async (id: number) => {
+    try {
+      console.log('📤 Tentando deletar produto da API...', id);
+      const response = await produtoService.delete(id.toString());
+      
+      if (response.success) {
+        console.log('✅ Produto deletado da API, recarregando lista...');
+        // Recarregar a lista para sincronizar
+        await loadProducts();
+      } else {
+        console.log('⚠️ API falhou, removendo localmente...', response.error);
+        // Se falhar na API, remove localmente
+        const updatedProducts = products.filter(p => p.id !== id);
+        setProducts(updatedProducts);
+        localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
+        console.log('✅ Produto removido localmente');
+      }
+    } catch (error) {
+      console.error('💥 Erro na API, removendo localmente:', error);
+      // Em caso de erro, remove localmente
+      const updatedProducts = products.filter(p => p.id !== id);
+      setProducts(updatedProducts);
+      localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
+      console.log('✅ Produto removido localmente (fallback)');
+    }
+  };
+
+  const updateProduct = async (product: Product) => {
+    try {
+      console.log('📤 Tentando atualizar produto na API...', product);
+      const productId = product.id || 0;
+      const response = await produtoService.update(productId.toString(), {
+        nome: product.nome,
+        descricao: product.descricao,
+        preco: product.preco,
+        quantidade: product.quantidade,
+        categoriaId: product.categoriaId,
+        atualizadoPor: product.atualizadoPor,
+        ativo: product.ativo
+      });
+      
+      if (response.success) {
+        console.log('✅ Produto atualizado na API, recarregando lista...');
+        // Recarregar a lista para sincronizar
+        await loadProducts();
+        
+        // Adicionar notificação de sucesso
+        addNotification({
+          tipo: 'system',
+          titulo: 'Produto Atualizado',
+          mensagem: `O produto "${product.nome}" foi atualizado com sucesso.`,
+          urgente: false
+        });
+      } else {
+        console.log('⚠️ API falhou, atualizando localmente...', response.error);
+        // Se falhar na API, atualiza localmente
+        const updatedProducts = products.map(p => p.id === product.id ? product : p);
+        setProducts(updatedProducts);
+        localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
+        console.log('✅ Produto atualizado localmente');
+        
+        // Adicionar notificação de sucesso local
+        addNotification({
+          tipo: 'system',
+          titulo: 'Produto Atualizado (Local)',
+          mensagem: `O produto "${product.nome}" foi atualizado localmente. As alterações serão sincronizadas quando a API estiver disponível.`,
+          urgente: false
+        });
+      }
+    } catch (error) {
+      console.error('💥 Erro na API, atualizando localmente:', error);
+      // Em caso de erro, atualiza localmente
+      const updatedProducts = products.map(p => p.id === product.id ? product : p);
+      setProducts(updatedProducts);
+      localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
+      console.log('✅ Produto atualizado localmente (fallback)');
+      
+      // Adicionar notificação de sucesso local (fallback)
+      addNotification({
+        tipo: 'system',
+        titulo: 'Produto Atualizado (Local)',
+        mensagem: `O produto "${product.nome}" foi atualizado localmente. As alterações serão sincronizadas quando a API estiver disponível.`,
+        urgente: false
+      });
+    }
   };
 
   const updateSettings = (newSettings: Partial<UserSettings>) => {
@@ -265,9 +637,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const value: AppContextType = {
-    user,
-    login,
-    logout,
     favorites,
     toggleFavorite,
     getFavoriteProducts,
@@ -275,8 +644,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     unreadCount,
     markAsRead,
     markAllAsRead,
+    addNotification,
+    setToastCallback,
     quotes,
     addQuote,
+    suppliers,
+    addSupplier,
+    loadSuppliers,
+    deleteSupplier,
+    updateSupplier,
+    isLoadingSuppliers,
+    products,
+    addProduct,
+    loadProducts,
+    deleteProduct,
+    updateProduct,
+    isLoadingProducts,
     userSettings,
     updateSettings
   };

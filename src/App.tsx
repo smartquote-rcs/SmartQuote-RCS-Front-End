@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { LoginPage } from "./components/LoginPage";
 import { UserDashboard } from "./components/UserDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
-import { AppProvider, useApp } from "./contexts/AppContext";
+import { AppProvider } from "./contexts/AppContext";
+import { emailService } from "./services/emailService";
 
 interface User {
   email: string;
@@ -10,88 +11,141 @@ interface User {
   role: "user" | "manager" | "admin";
 }
 
-function AppContent() {
-  const [isLoading, setIsLoading] = useState(true);
-  const { user, login, logout } = useApp();
+declare global {
+  interface Window {
+    chatbase?: any;
+  }
+}
+
+export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Verificar se o usuário já está logado (localStorage)
     const savedAuth = localStorage.getItem("smartquote_auth");
     const savedToken = localStorage.getItem("auth_token");
-    const validRoles = ["user", "admin", "manager", "gestor"];
+    
     if (savedAuth || savedToken) {
       try {
         if (savedAuth) {
+          // Dados salvos do sistema anterior
           const authData = JSON.parse(savedAuth);
-          let role: RoleType = "user";
-          if (authData.user && validRoles.includes(authData.user.role)) {
-            role = authData.user.role;
-          }
-          login({ ...authData.user, role });
           setIsAuthenticated(true);
+          setUser(authData.user);
         } else if (savedToken) {
-          login({
+          // Só tem token da API, criar dados de usuário básicos
+          setIsAuthenticated(true);
+          setUser({
             email: 'usuario@api.com',
             name: 'Usuário API',
             role: 'user'
           });
-          setIsAuthenticated(true);
         }
       } catch (error) {
         localStorage.removeItem("smartquote_auth");
         localStorage.removeItem("auth_token");
       }
     }
+
+    // Inicializar serviço de email
+    emailService.loadSavedConfig();
+
     setIsLoading(false);
-    // eslint-disable-next-line
   }, []);
 
-  type RoleType = 'user' | 'admin' | 'gestor' | 'manager';
-  const handleLogin = (credentials: { email: string; password: string; role?: RoleType }) => {
+  const handleLogin = (credentials: { email: string; password: string; role?: 'user' | 'admin' }) => {
+    console.log('🎯 App.tsx - handleLogin chamado com:', credentials);
+    
+    // Como o LoginPage já validou com a API, vamos aceitar o login
+    // e criar dados de usuário baseados no role selecionado ou email
     const userData = {
       email: credentials.email,
-      name: credentials.email.split('@')[0] || 'Usuário',
-      role: credentials.role || (credentials.email.includes('admin') ? 'admin' as RoleType : 'user' as RoleType)
+      name: credentials.email.split('@')[0] || 'Usuário', // Nome baseado no email
+      role: credentials.role || (credentials.email.includes('admin') ? 'admin' as const : 'user' as const)
     };
-    login(userData);
+
+    console.log('👤 Dados do usuário criados:', userData);
+
+    setUser(userData);
     setIsAuthenticated(true);
+    
+    // Salvar no localStorage
     localStorage.setItem("smartquote_auth", JSON.stringify({
       user: userData,
       timestamp: Date.now()
     }));
+    
+    console.log('✅ Login aceito no App.tsx, estado atualizado');
   };
 
   const handleLogout = () => {
+    // Limpar roles salvos para o usuário atual
     if (user?.email) {
       localStorage.removeItem('user_role_' + user.email);
     }
+    
     setIsAuthenticated(false);
-    logout();
+    setUser(null);
     localStorage.removeItem("smartquote_auth");
-    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_token"); // Limpar também o token da API
   };
 
   const renderDashboard = () => {
     if (!user) return null;
-    const validRoles: RoleType[] = ["user", "admin", "manager", "gestor"];
-    const safeUser = {
-      ...user,
-      role: validRoles.includes(user.role as RoleType) ? (user.role as RoleType) : "user"
-    };
-    switch (safeUser.role) {
+
+    switch (user.role) {
       case "user":
-        return <UserDashboard user={safeUser} onLogout={handleLogout} />;
+        return <UserDashboard user={user} onLogout={handleLogout} />;
       case "manager":
-        return <AdminDashboard user={safeUser} onLogout={handleLogout} />;
+        return <AdminDashboard user={user} onLogout={handleLogout} />;
       case "admin":
-        return <AdminDashboard user={safeUser} onLogout={handleLogout} />;
-      case "gestor":
-        return <AdminDashboard user={safeUser} onLogout={handleLogout} />;
+        return <AdminDashboard user={user} onLogout={handleLogout} />;
       default:
-        return <UserDashboard user={safeUser} onLogout={handleLogout} />;
+        return <UserDashboard user={user} onLogout={handleLogout} />;
     }
   };
+
+  useEffect(() => {
+    // Adiciona o script do Chatbase quando autenticado
+    if (isAuthenticated && !document.getElementById("1ifm9yY-KVOI8QcKpIm4x")) {
+      (function(){
+        if(!window.chatbase || window.chatbase("getState") !== "initialized"){
+          window.chatbase = (...args: any[]) => {
+            if(!window.chatbase.q) { window.chatbase.q = []; }
+            window.chatbase.q.push(args);
+          };
+          window.chatbase = new Proxy(window.chatbase, {
+            get(target: any, prop: any) {
+              if(prop === "q") { return target.q; }
+              return (...args: any[]) => target(prop, ...args);
+            }
+          });
+        }
+        const onLoad = function() {
+          const script = document.createElement("script");
+          script.src = "https://www.chatbase.co/embed.min.js";
+          script.id = "1ifm9yY-KVOI8QcKpIm4x";
+          script.setAttribute("domain", "www.chatbase.co");
+          document.body.appendChild(script);
+        };
+        if(document.readyState === "complete") { 
+          onLoad(); 
+        } else { 
+          window.addEventListener("load", onLoad); 
+        }
+      })();
+    }
+    
+    // Remove o script ao deslogar
+    if (!isAuthenticated) {
+      const script = document.getElementById("1ifm9yY-KVOI8QcKpIm4x");
+      if (script) script.remove();
+      const iframe = document.querySelector('iframe[src*="chatbase.co"]');
+      if (iframe) iframe.remove();
+    }
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -109,16 +163,10 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
-      {renderDashboard()}
-    </div>
-  );
-}
-
-export default function App() {
-  return (
     <AppProvider>
-      <AppContent />
+      <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
+        {renderDashboard()}
+      </div>
     </AppProvider>
   );
 }

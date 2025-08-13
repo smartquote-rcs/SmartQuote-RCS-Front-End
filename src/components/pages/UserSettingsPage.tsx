@@ -1,12 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings, User, Bell, Globe, Save, Eye, EyeOff } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { useApp } from "../../contexts/AppContext";
+import { useTranslation } from 'react-i18next';
 
 export function UserSettingsPage() {
+  const { t, i18n } = useTranslation();
   const { userSettings, updateSettings } = useApp();
   const [showSuccess, setShowSuccess] = useState(false);
   const [localSettings, setLocalSettings] = useState(userSettings);
+
+  // Sincronizar localSettings quando userSettings muda
+  useEffect(() => {
+    setLocalSettings(userSettings);
+  }, [userSettings]);
+
+  // Sincronizar i18n quando o componente é montado
+  useEffect(() => {
+    if (userSettings.language) {
+      const lang = userSettings.language === 'pt-PT' || userSettings.language === 'pt-BR' ? 'pt' : 'en';
+      i18n.changeLanguage(lang);
+      console.log('Sincronizando idioma inicial:', lang);
+    }
+  }, []);
+  
   const [profileData, setProfileData] = useState({
     name: "João Silva",
     email: "joao.silva@empresa.com",
@@ -22,10 +39,28 @@ export function UserSettingsPage() {
     showConfirm: false
   });
 
-  const handleSaveSettings = () => {
+    const handleSaveSettings = async () => {
+    // Atualizar o contexto
     updateSettings(localSettings);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    
+    // Mapear e alterar idioma
+    const newLang = localSettings.language === 'pt-PT' || localSettings.language === 'pt-BR' ? 'pt' : 'en';
+    
+    try {
+      // Salvar no localStorage
+      localStorage.setItem('i18nextLng', newLang);
+      
+      // Alterar idioma
+      await i18n.changeLanguage(newLang);
+      
+      // Sempre recarregar a página para garantir que todas as traduções sejam aplicadas
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Erro ao alterar idioma:', error);
+      // Mesmo com erro, recarregar para aplicar as configurações salvas
+      window.location.reload();
+    }
   };
 
   const handleSaveProfile = () => {
@@ -61,14 +96,14 @@ export function UserSettingsPage() {
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
           <div>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary flex items-center gap-3">
-              <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
-              Configurações da Conta
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+              <Settings className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
+              {t('settings.title')}
             </h1>
-            <p className="text-xs sm:text-sm text-dark-secondary mt-1">Personalize sua conta e preferências</p>
+            <p className="text-sm sm:text-base text-dark-secondary mt-1">Personalize sua conta e preferências</p>
           </div>
           {showSuccess && (
-            <Badge className="bg-green-600 text-white">
+            <Badge className="bg-green-600 text-white px-3 py-2 text-sm">
               Configurações salvas com sucesso!
             </Badge>
           )}
@@ -76,27 +111,27 @@ export function UserSettingsPage() {
       </header>
       
       <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg overflow-y-auto">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
           {/* Perfil do Usuário */}
-          <div className="glass-card p-6 rounded-xl border border-white/20">
-            <div className="flex items-center space-x-3 mb-6">
+          <div className="glass-card p-4 sm:p-6 rounded-xl border border-white/20">
+            <div className="flex items-center space-x-3 mb-4 sm:mb-6">
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <User className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Informações do Perfil</h2>
-                <p className="text-sm text-blue-200">Atualize seus dados pessoais</p>
+                <h2 className="text-base sm:text-lg font-bold text-white">Informações do Perfil</h2>
+                <p className="text-xs sm:text-sm text-blue-200">Atualize seus dados pessoais</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div>
                 <label className="block text-sm font-medium text-dark-primary mb-2">Nome Completo</label>
                 <input
                   type="text"
                   value={profileData.name}
                   onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                  className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors"
+                  className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors text-sm sm:text-base"
                 />
               </div>
               <div>
@@ -105,7 +140,7 @@ export function UserSettingsPage() {
                   type="email"
                   value={profileData.email}
                   onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                  className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors"
+                  className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors text-sm sm:text-base"
                 />
               </div>
               <div>
@@ -336,17 +371,14 @@ export function UserSettingsPage() {
 
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Idioma</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">{t('settings.language')}</label>
                 <select
                   value={localSettings.language}
                   onChange={(e) => setLocalSettings({...localSettings, language: e.target.value})}
                   className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors"
                 >
-                  <option value="pt-PT">Português (Portugal)</option>
-                  <option value="pt-BR">Português (Brasil)</option>
-                  <option value="en-US">English (US)</option>
-                  <option value="es-ES">Español</option>
-                  <option value="fr-FR">Français</option>
+                  <option value="pt-PT">{t('settings.portuguese')}</option>
+                  <option value="en-US">{t('settings.english')}</option>
                 </select>
               </div>
 
@@ -364,12 +396,12 @@ export function UserSettingsPage() {
               </div>
             </div>
 
-            <button
+                        <button
               onClick={handleSaveSettings}
               className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-lg transition-all duration-300 flex items-center space-x-2"
             >
               <Save className="w-5 h-5" />
-              <span>Salvar Todas as Configurações</span>
+              <span>Salvar Configurações</span>
             </button>
           </div>
         </div>

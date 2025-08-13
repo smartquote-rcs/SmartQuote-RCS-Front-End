@@ -5,27 +5,22 @@ import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../../hooks/useLanguage';
+import { emailService, EmailConfig } from '../../services/emailService';
 import { 
   User, 
   Settings, 
   Bell, 
   Shield, 
-  Database, 
   Save, 
   Eye, 
   EyeOff,
-  Globe,
-  Clock,
-  DollarSign,
-  HardDrive,
-  Wrench,
-  Mail,
-  FileText,
-  Users,
-  Zap,
   Lock,
-  Activity
+  Mail,
+  TestTube,
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 
 interface AdminProfile {
@@ -62,11 +57,15 @@ interface SecuritySettings {
   ipWhitelist: string;
 }
 
-interface IntegrationSettings {
-  apiEnabled: boolean;
-  webhooks: boolean;
-  externalSync: boolean;
-  rateLimiting: string;
+interface EmailSettings {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  secure: boolean;
+  checkInterval: number;
+  showPassword: boolean;
 }
 
 interface PasswordData {
@@ -79,6 +78,9 @@ interface PasswordData {
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
+  const { changeLanguage } = useLanguage();
+  
   const [adminProfile, setAdminProfile] = useState<AdminProfile>({
     firstName: 'Admin',
     lastName: 'Sistema',
@@ -113,12 +115,19 @@ export default function SettingsPage() {
     ipWhitelist: ''
   });
 
-  const [integrationSettings, setIntegrationSettings] = useState<IntegrationSettings>({
-    apiEnabled: true,
-    webhooks: true,
-    externalSync: true,
-    rateLimiting: 'standard'
+  const [emailSettings, setEmailSettings] = useState<EmailSettings>({
+    enabled: false,
+    host: '',
+    port: 993,
+    username: '',
+    password: '',
+    secure: true,
+    checkInterval: 5,
+    showPassword: false
   });
+
+  const [emailTestResult, setEmailTestResult] = useState<{ success?: boolean; message?: string } | null>(null);
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
 
   const [passwordData, setPasswordData] = useState<PasswordData>({
     current: '',
@@ -131,6 +140,38 @@ export default function SettingsPage() {
 
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
+  // Carregar configurações salvas
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('smartquote-general-settings');
+    const savedLanguage = localStorage.getItem('smartquote-language');
+    
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setGeneralSettings(parsed);
+      } catch (error) {
+        console.error('Erro ao carregar configurações salvas:', error);
+      }
+    } else if (savedLanguage) {
+      setGeneralSettings(prev => ({ ...prev, language: savedLanguage }));
+    }
+
+    // Carregar configurações de email
+    const savedEmailConfig = emailService.loadSavedConfig();
+    if (savedEmailConfig) {
+      setEmailSettings({
+        enabled: savedEmailConfig.enabled,
+        host: savedEmailConfig.host,
+        port: savedEmailConfig.port,
+        username: savedEmailConfig.username,
+        password: savedEmailConfig.password,
+        secure: savedEmailConfig.secure,
+        checkInterval: savedEmailConfig.checkInterval,
+        showPassword: false
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (saveSuccess) {
       const timer = setTimeout(() => setSaveSuccess(null), 3000);
@@ -139,47 +180,117 @@ export default function SettingsPage() {
   }, [saveSuccess]);
 
   const handleSaveProfile = () => {
-    // Aqui você salvaria os dados do perfil
     console.log('Salvando perfil do admin:', adminProfile);
-    setSaveSuccess('Perfil atualizado com sucesso!');
+    setSaveSuccess(t('settings.profileUpdated'));
   };
 
-  const handleSaveGeneral = () => {
-    // Aqui você salvaria as configurações gerais
-    console.log('Salvando configurações gerais:', generalSettings);
-    setSaveSuccess('Configurações gerais salvas com sucesso!');
+  const handleSaveGeneral = async () => {
+    const languageMap: { [key: string]: string } = {
+      'pt-PT': 'pt',
+      'pt-BR': 'pt', 
+      'en-US': 'en',
+      'en-GB': 'en',
+      'es-ES': 'es',
+      'fr-FR': 'fr',
+      'de-DE': 'de',
+      'it-IT': 'it'
+    };
+    
+    const newLang = languageMap[generalSettings.language] || 'pt';
+    
+    try {
+      localStorage.setItem('smartquote-language', generalSettings.language);
+      localStorage.setItem('smartquote-general-settings', JSON.stringify(generalSettings));
+      
+      const success = await changeLanguage(newLang);
+      
+      if (success) {
+        setSaveSuccess(t('settings.languageChanged'));
+      } else {
+        setSaveSuccess(t('settings.settingsSaved'));
+      }
+      
+    } catch (error) {
+      console.error('Erro ao alterar idioma:', error);
+      setSaveSuccess('Configurações salvas com erro na mudança de idioma.');
+    }
   };
 
   const handleSaveNotifications = () => {
-    // Aqui você salvaria as configurações de notificações
     console.log('Salvando configurações de notificações:', notificationSettings);
-    setSaveSuccess('Configurações de notificações salvas com sucesso!');
+    setSaveSuccess(t('settings.notificationsSaved'));
   };
 
   const handleSaveSecurity = () => {
-    // Aqui você salvaria as configurações de segurança
     console.log('Salvando configurações de segurança:', securitySettings);
-    setSaveSuccess('Configurações de segurança salvas com sucesso!');
+    setSaveSuccess(t('settings.securitySaved'));
   };
 
-  const handleSaveIntegrations = () => {
-    // Aqui você salvaria as configurações de integrações
-    console.log('Salvando configurações de integrações:', integrationSettings);
-    setSaveSuccess('Configurações de integrações salvas com sucesso!');
+  const handleTestEmailConnection = async () => {
+    setIsTestingEmail(true);
+    setEmailTestResult(null);
+
+    try {
+      const config: EmailConfig = {
+        host: emailSettings.host,
+        port: emailSettings.port,
+        username: emailSettings.username,
+        password: emailSettings.password,
+        secure: emailSettings.secure,
+        checkInterval: emailSettings.checkInterval,
+        enabled: emailSettings.enabled
+      };
+
+      const success = await emailService.configure(config);
+      
+      if (success) {
+        setEmailTestResult({ success: true, message: 'Conexão testada com sucesso!' });
+      } else {
+        setEmailTestResult({ success: false, message: 'Falha na conexão. Verifique as configurações.' });
+      }
+    } catch (error) {
+      setEmailTestResult({ success: false, message: 'Erro ao testar conexão.' });
+    } finally {
+      setIsTestingEmail(false);
+    }
+  };
+
+  const handleSaveEmail = async () => {
+    try {
+      const config: EmailConfig = {
+        host: emailSettings.host,
+        port: emailSettings.port,
+        username: emailSettings.username,
+        password: emailSettings.password,
+        secure: emailSettings.secure,
+        checkInterval: emailSettings.checkInterval,
+        enabled: emailSettings.enabled
+      };
+
+      const success = await emailService.configure(config);
+      
+      if (success) {
+        setSaveSuccess('Configurações de email salvas com sucesso!');
+      } else {
+        setSaveSuccess('Erro ao salvar configurações de email.');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar email:', error);
+      setSaveSuccess('Erro ao salvar configurações de email.');
+    }
   };
 
   const handleChangePassword = () => {
     if (passwordData.new !== passwordData.confirm) {
-      alert('As senhas não coincidem!');
+      alert(t('settings.passwordsDoNotMatch'));
       return;
     }
     
     if (passwordData.new.length < 8) {
-      alert('A nova senha deve ter pelo menos 8 caracteres!');
+      alert(t('settings.passwordTooShort'));
       return;
     }
 
-    // Aqui você processaria a mudança de senha
     console.log('Alterando senha do admin');
     setPasswordData({
       current: '',
@@ -189,509 +300,700 @@ export default function SettingsPage() {
       showNew: false,
       showConfirm: false
     });
-    setSaveSuccess('Senha alterada com sucesso!');
+    setSaveSuccess(t('settings.passwordChanged'));
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="min-h-screen bg-dark-bg flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-          <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
-              <Settings className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              Configurações do Sistema
-            </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">Gerencie todas as configurações administrativas do SmartQuote RCS</p>
+      <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-5 xl:py-6 flex-shrink-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <div className="p-2 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl">
+              <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-dark-primary-text">
+                {t('settings.systemSettings')}
+              </h1>
+              <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">
+                {t('settings.subtitle')}
+              </p>
+            </div>
           </div>
+          
+          {/* Status Notification */}
           {saveSuccess && (
-            <div className="inline-flex items-center px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400">
-              {saveSuccess}
+            <div className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-300 self-start sm:self-auto">
+              <div className="flex items-center space-x-2">
+                <Save className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="font-medium text-sm sm:text-base">{saveSuccess}</span>
+              </div>
             </div>
           )}
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
-        <div className="max-w-6xl mx-auto">
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Perfil do Administrador */}
-          <Card className="glass-card bg-white/5 rounded-xl border border-white/20 transition-all duration-300 hover:border-cyan-400/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-dark-primary">
-                <User className="w-6 h-6 text-blue-400" />
-                Perfil do Administrador
-              </CardTitle>
-              <CardDescription className="text-dark-secondary">
-                Informações pessoais e profissionais
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-dark-primary">Nome</Label>
-                  <Input
-                    id="firstName"
-                    value={adminProfile.firstName}
-                    onChange={(e) => setAdminProfile({...adminProfile, firstName: e.target.value})}
-                    className="bg-dark-bg border-dark-color text-dark-primary placeholder-dark-secondary"
-                  />
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto scrollable-content dashboard-main p-3 sm:p-4 lg:p-6 xl:p-8 bg-dark-bg max-h-[calc(100vh-80px)] sm:max-h-[calc(100vh-90px)] md:max-h-[calc(100vh-100px)] lg:max-h-[calc(100vh-110px)] xl:max-h-[calc(100vh-120px)]">
+        {/* Profile Section - Fluid Design */}
+        <div className="relative mb-4 sm:mb-6 lg:mb-8">
+          <div className="absolute inset-0 bg-dark-card backdrop-blur-3xl rounded-2xl sm:rounded-[2rem]"></div>
+          <div className="relative glass-card bg-dark-card rounded-2xl sm:rounded-[2rem] border border-dark-color overflow-hidden shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-purple-600/5 to-cyan-600/5"></div>
+            
+            <div className="relative p-4 sm:p-6 lg:p-8">
+              {/* Section Header */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-4 sm:mb-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+                    <User className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-dark-primary-text mb-1">{t('settings.adminProfile')}</h2>
+                    <p className="text-blue-200 text-sm">{t('settings.personalInfo')}</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-dark-primary">Sobrenome</Label>
-                  <Input
-                    id="lastName"
-                    value={adminProfile.lastName}
-                    onChange={(e) => setAdminProfile({...adminProfile, lastName: e.target.value})}
-                    className="bg-dark-bg border-dark-color text-dark-primary placeholder-dark-secondary"
-                  />
+                
+                <Button 
+                  onClick={handleSaveProfile}
+                  className="h-9 sm:h-10 px-4 sm:px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-xl text-sm sm:text-base w-full sm:w-auto"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar Perfil
+                </Button>
+              </div>
+
+              {/* Profile Form - Flowing Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+                <div className="space-y-3 sm:space-y-4 lg:space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                      <Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.firstName')}</Label>
+                      <Input
+                        value={adminProfile.firstName}
+                        onChange={(e) => setAdminProfile({...adminProfile, firstName: e.target.value})}
+                        className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.lastName')}</Label>
+                      <Input
+                        value={adminProfile.lastName}
+                        onChange={(e) => setAdminProfile({...adminProfile, lastName: e.target.value})}
+                        className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.email')}</Label>
+                    <Input
+                      type="email"
+                      value={adminProfile.email}
+                      onChange={(e) => setAdminProfile({...adminProfile, email: e.target.value})}
+                      className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 sm:space-y-4 lg:space-y-5">
+                  <div>
+                    <Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.company')}</Label>
+                    <Input
+                      value={adminProfile.company}
+                      onChange={(e) => setAdminProfile({...adminProfile, company: e.target.value})}
+                      className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.phone')}</Label>
+                    <Input
+                      value={adminProfile.phone}
+                      onChange={(e) => setAdminProfile({...adminProfile, phone: e.target.value})}
+                      className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+                    />
+                  </div>
+                  
+                  <div className="glass-card bg-gradient-to-br from-blue-900/30 to-cyan-900/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-500/20">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <Badge className="bg-blue-600/20 text-blue-300 border-blue-500/30 text-xs sm:text-sm">
+                        {adminProfile.role}
+                      </Badge>
+                    </div>
+                    <p className="text-blue-200 text-xs sm:text-sm">Nível de acesso administrativo completo</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Password & General Settings Row */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+          {/* Password Management */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-dark-card backdrop-blur-2xl rounded-2xl sm:rounded-3xl"></div>
+            <div className="relative glass-card bg-dark-card rounded-2xl sm:rounded-3xl border border-dark-color overflow-hidden shadow-2xl p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-4 sm:mb-6">
+                <div className="p-2 bg-gradient-to-br from-red-600/20 to-red-500/20 rounded-xl">
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-dark-primary-text">Alterar Senha</h3>
+                  <p className="text-red-200 text-xs sm:text-sm">Mantenha sua conta segura</p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-dark-primary">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={adminProfile.email}
-                  onChange={(e) => setAdminProfile({...adminProfile, email: e.target.value})}
-                  className="bg-dark-bg border-dark-color text-dark-primary placeholder-dark-secondary"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-dark-primary">Telefone</Label>
-                  <Input
-                    id="phone"
-                    value={adminProfile.phone}
-                    onChange={(e) => setAdminProfile({...adminProfile, phone: e.target.value})}
-                    className="bg-dark-bg border-dark-color text-dark-primary placeholder-dark-secondary"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-dark-primary">Papel</Label>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
-                    {adminProfile.role}
-                  </Badge>
-                </div>
-              </div>
-
-              <Button 
-                onClick={handleSaveProfile}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Perfil
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Alterar Senha */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-white">
-                <Lock className="w-6 h-6 text-red-400" />
-                Alterar Senha
-              </CardTitle>
-              <CardDescription className="text-slate-300">
-                Atualize sua senha de acesso
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-white">Senha Atual</Label>
+              <div className="space-y-4 sm:space-y-6">
                 <div className="relative">
-                  <Input
-                    type={passwordData.showCurrent ? "text" : "password"}
-                    value={passwordData.current}
-                    onChange={(e) => setPasswordData({...passwordData, current: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder-slate-400 pr-10"
-                    placeholder="Digite sua senha atual"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPasswordData({...passwordData, showCurrent: !passwordData.showCurrent})}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                  >
-                    {passwordData.showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <Label className="text-dark-primary-text mb-2 block text-sm">Senha Atual</Label>
+                  <div className="relative">
+                    <Input
+                      type={passwordData.showCurrent ? "text" : "password"}
+                      value={passwordData.current}
+                      onChange={(e) => setPasswordData({...passwordData, current: e.target.value})}
+                      className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary pr-12 text-sm sm:text-base"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPasswordData({...passwordData, showCurrent: !passwordData.showCurrent})}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-secondary hover:text-dark-primary-text"
+                    >
+                      {passwordData.showCurrent ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label className="text-white">Nova Senha</Label>
                 <div className="relative">
-                  <Input
-                    type={passwordData.showNew ? "text" : "password"}
-                    value={passwordData.new}
-                    onChange={(e) => setPasswordData({...passwordData, new: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder-slate-400 pr-10"
-                    placeholder="Digite sua nova senha"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPasswordData({...passwordData, showNew: !passwordData.showNew})}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                  >
-                    {passwordData.showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <Label className="text-dark-primary-text mb-2 block text-sm">Nova Senha</Label>
+                  <div className="relative">
+                    <Input
+                      type={passwordData.showNew ? "text" : "password"}
+                      value={passwordData.new}
+                      onChange={(e) => setPasswordData({...passwordData, new: e.target.value})}
+                      className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary pr-12 text-sm sm:text-base"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPasswordData({...passwordData, showNew: !passwordData.showNew})}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-secondary hover:text-dark-primary-text"
+                    >
+                      {passwordData.showNew ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label className="text-white">Confirmar Nova Senha</Label>
                 <div className="relative">
-                  <Input
-                    type={passwordData.showConfirm ? "text" : "password"}
-                    value={passwordData.confirm}
-                    onChange={(e) => setPasswordData({...passwordData, confirm: e.target.value})}
-                    className="bg-white/10 border-white/20 text-white placeholder-slate-400 pr-10"
-                    placeholder="Confirme sua nova senha"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPasswordData({...passwordData, showConfirm: !passwordData.showConfirm})}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                  >
-                    {passwordData.showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <Label className="text-dark-primary-text mb-2 block text-sm">Confirmar Nova Senha</Label>
+                  <div className="relative">
+                    <Input
+                      type={passwordData.showConfirm ? "text" : "password"}
+                      value={passwordData.confirm}
+                      onChange={(e) => setPasswordData({...passwordData, confirm: e.target.value})}
+                      className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary pr-12 text-sm sm:text-base"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPasswordData({...passwordData, showConfirm: !passwordData.showConfirm})}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-secondary hover:text-dark-primary-text"
+                    >
+                      {passwordData.showConfirm ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+                    </button>
+                  </div>
                 </div>
+
+                <Button 
+                  onClick={handleChangePassword}
+                  className="w-full h-9 sm:h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base"
+                >
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  Alterar Senha
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* General Settings */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-dark-card backdrop-blur-2xl rounded-2xl sm:rounded-3xl"></div>
+            <div className="relative glass-card bg-dark-card rounded-2xl sm:rounded-3xl border border-dark-color overflow-hidden shadow-2xl p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="p-2 bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-xl">
+                    <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-dark-primary-text">{t('settings.generalSettings')}</h3>
+                    <p className="text-green-200 text-xs sm:text-sm">Configurações globais do sistema</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleSaveGeneral}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 h-8 sm:h-9 text-sm sm:text-base w-full sm:w-auto"
+                >
+                  <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  Salvar
+                </Button>
               </div>
 
-              <Button
-                onClick={handleChangePassword}
-                disabled={!passwordData.current || !passwordData.new || !passwordData.confirm}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Alterar Senha
-              </Button>
-            </CardContent>
-          </Card>
+              <div className="space-y-3 sm:space-y-4">
+                <div>
+                  <Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.systemName')}</Label>
+                  <Input
+                    value={generalSettings.systemName}
+                    onChange={(e) => setGeneralSettings({...generalSettings, systemName: e.target.value})}
+                    className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary text-sm sm:text-base"
+                  />
+                </div>
 
-          {/* Configurações Gerais */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-white">
-                <Settings className="w-6 h-6 text-green-400" />
-                Configurações Gerais
-              </CardTitle>
-              <CardDescription className="text-slate-300">
-                Configurações básicas do sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="systemName" className="text-white">Nome do Sistema</Label>
-                <Input
-                  id="systemName"
-                  value={generalSettings.systemName}
-                  onChange={(e) => setGeneralSettings({...generalSettings, systemName: e.target.value})}
-                  className="bg-white/10 border-white/20 text-white placeholder-slate-400"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-white flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    Idioma
-                  </Label>
+                <div>
+                  <Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.language')}</Label>
                   <Select 
                     value={generalSettings.language} 
                     onValueChange={(value) => setGeneralSettings({...generalSettings, language: value})}
                   >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectTrigger className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900/95 border-slate-700/50">
-                      <SelectItem value="pt-PT" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Português (Portugal)</SelectItem>
-                      <SelectItem value="en-US" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">English (US)</SelectItem>
-                      <SelectItem value="es-ES" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Español</SelectItem>
+                    <SelectContent className="bg-dark-card border-dark-color">
+                      <SelectItem value="pt-PT" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Português (Portugal)</SelectItem>
+                      <SelectItem value="pt-BR" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Português (Brasil)</SelectItem>
+                      <SelectItem value="en-US" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">English (US)</SelectItem>
+                      <SelectItem value="en-GB" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">English (UK)</SelectItem>
+                      <SelectItem value="es-ES" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Español</SelectItem>
+                      <SelectItem value="fr-FR" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Français</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-white flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Fuso Horário
-                  </Label>
-                  <Select 
-                    value={generalSettings.timezone} 
-                    onValueChange={(value) => setGeneralSettings({...generalSettings, timezone: value})}
-                  >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900/95 border-slate-700/50">
-                      <SelectItem value="Europe/Lisbon" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Europe/Lisbon</SelectItem>
-                      <SelectItem value="Europe/London" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Europe/London</SelectItem>
-                      <SelectItem value="America/New_York" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">America/New_York</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-white flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Moeda Padrão
-                </Label>
-                <Select 
-                  value={generalSettings.currency} 
-                  onValueChange={(value) => setGeneralSettings({...generalSettings, currency: value})}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900/95 border-slate-700/50">
-                    <SelectItem value="EUR" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Euro (€)</SelectItem>
-                    <SelectItem value="USD" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Dollar ($)</SelectItem>
-                    <SelectItem value="GBP" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Pound (£)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <HardDrive className="w-4 h-4 text-slate-300" />
-                    <div>
-                      <Label className="text-white">Backup Automático</Label>
-                      <p className="text-sm text-slate-400">Realizar backup diário dos dados</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.timezone')}</Label>
+                    <Select 
+                      value={generalSettings.timezone} 
+                      onValueChange={(value) => setGeneralSettings({...generalSettings, timezone: value})}
+                    >
+                      <SelectTrigger className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-dark-card border-dark-color">
+                        <SelectItem value="Europe/Lisbon" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Lisboa</SelectItem>
+                        <SelectItem value="Europe/Madrid" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Madrid</SelectItem>
+                        <SelectItem value="Europe/London" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Londres</SelectItem>
+                        <SelectItem value="Europe/Paris" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Paris</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.currency')}</Label>
+                      <Select 
+                        value={generalSettings.currency} 
+                        onValueChange={(value) => setGeneralSettings({...generalSettings, currency: value})}
+                      >
+                        <SelectTrigger className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-dark-card border-dark-color">
+                          <SelectItem value="EUR" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Euro (€)</SelectItem>
+                          <SelectItem value="USD" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Dólar ($)</SelectItem>
+                          <SelectItem value="GBP" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Libra (£)</SelectItem>
+                          <SelectItem value="BRL" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Real (R$)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
+                </div>
+
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-dark-primary-text text-sm">{t('settings.autoBackup')}</Label>
+                    <p className="text-xs sm:text-sm text-dark-secondary">Backup automático diário</p>
                   </div>
                   <Switch
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 [&_span]:data-[state=checked]:bg-white"
                     checked={generalSettings.autoBackup}
                     onCheckedChange={(checked) => setGeneralSettings({...generalSettings, autoBackup: checked})}
+                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Wrench className="w-4 h-4 text-slate-300" />
-                    <div>
-                      <Label className="text-white">Modo de Manutenção</Label>
-                      <p className="text-sm text-slate-400">Desabilita temporariamente o sistema</p>
-                    </div>
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-dark-primary-text text-sm">{t('settings.maintenanceMode')}</Label>
+                    <p className="text-xs sm:text-sm text-dark-secondary">Modo de manutenção</p>
                   </div>
                   <Switch
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 [&_span]:data-[state=checked]:bg-white"
                     checked={generalSettings.maintenanceMode}
                     onCheckedChange={(checked) => setGeneralSettings({...generalSettings, maintenanceMode: checked})}
+                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              <Button 
-                onClick={handleSaveGeneral}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Configurações
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Email Configuration - Nova Seção */}
+        <div className="relative mb-4 sm:mb-6 lg:mb-8">
+          <div className="absolute inset-0 bg-dark-card backdrop-blur-3xl rounded-2xl sm:rounded-[2rem]"></div>
+          <div className="relative glass-card bg-dark-card rounded-2xl sm:rounded-[2rem] border border-dark-color overflow-hidden shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 via-blue-600/5 to-indigo-600/5"></div>
+            
+            <div className="relative p-4 sm:p-6 lg:p-8">
+              {/* Section Header */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-4 sm:mb-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="p-2 sm:p-3 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+                    <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-dark-primary-text mb-1">Recepção de Cotações via Email</h2>
+                    <p className="text-cyan-200 text-sm">Configure a recepção automática de pedidos de cotação por email</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button 
+                    onClick={handleTestEmailConnection}
+                    disabled={isTestingEmail || !emailSettings.host || !emailSettings.username}
+                    className="h-9 sm:h-10 px-3 sm:px-4 bg-cyan-600 hover:bg-cyan-700 text-white shadow-xl text-sm sm:text-base flex-1 sm:flex-none"
+                  >
+                    {isTestingEmail ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    ) : (
+                      <TestTube className="w-4 h-4 mr-2" />
+                    )}
+                    Testar
+                  </Button>
+                  <Button 
+                    onClick={handleSaveEmail}
+                    className="h-9 sm:h-10 px-4 sm:px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-xl text-sm sm:text-base flex-1 sm:flex-none"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Salvar
+                  </Button>
+                </div>
+              </div>
 
-          {/* Notificações */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-white">
-                <Bell className="w-6 h-6 text-orange-400" />
-                Notificações
-              </CardTitle>
-              <CardDescription className="text-slate-300">
-                Configure as notificações do sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-slate-300" />
+              {/* Test Result */}
+              {emailTestResult && (
+                <div className={`mb-4 sm:mb-6 px-4 py-3 rounded-xl border ${
+                  emailTestResult.success 
+                    ? 'bg-green-500/10 border-green-500/20 text-green-300' 
+                    : 'bg-red-500/10 border-red-500/20 text-red-300'
+                }`}>
+                  <div className="flex items-center space-x-2">
+                    {emailTestResult.success ? (
+                      <CheckCircle className="w-4 h-4" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4" />
+                    )}
+                    <span className="text-sm font-medium">{emailTestResult.message}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Enable/Disable Switch */}
+              <div className="flex items-center justify-between p-4 sm:p-6 bg-gradient-to-br from-cyan-900/30 to-blue-900/30 rounded-xl sm:rounded-2xl border border-cyan-500/20 mb-6">
+                <div>
+                  <Label className="text-dark-primary-text text-base font-medium">Ativar Recepção Automática</Label>
+                  <p className="text-cyan-200 text-sm mt-1">Monitore automaticamente emails para criar cotações</p>
+                </div>
+                <Switch
+                  checked={emailSettings.enabled}
+                  onCheckedChange={(checked) => setEmailSettings({...emailSettings, enabled: checked})}
+                  className="data-[state=checked]:bg-cyan-600"
+                />
+              </div>
+
+              {/* Email Configuration Form */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+                <div className="space-y-4 sm:space-y-5">
+                  <div>
+                    <Label className="text-dark-primary-text mb-2 block text-sm font-medium">Servidor IMAP *</Label>
+                    <Input
+                      value={emailSettings.host}
+                      onChange={(e) => setEmailSettings({...emailSettings, host: e.target.value})}
+                      placeholder="imap.gmail.com"
+                      className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-white">Notificações por Email</Label>
-                      <p className="text-sm text-slate-400">Receber alertas por email</p>
+                      <Label className="text-dark-primary-text mb-2 block text-sm font-medium">Porta</Label>
+                      <Input
+                        type="number"
+                        value={emailSettings.port}
+                        onChange={(e) => setEmailSettings({...emailSettings, port: parseInt(e.target.value) || 993})}
+                        className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+                      />
                     </div>
+                    <div className="flex items-end">
+                      <div className="flex items-center space-x-2 pb-2">
+                        <Switch
+                          checked={emailSettings.secure}
+                          onCheckedChange={(checked) => setEmailSettings({...emailSettings, secure: checked})}
+                          className="data-[state=checked]:bg-blue-600"
+                        />
+                        <Label className="text-dark-primary-text text-sm">SSL/TLS</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-dark-primary-text mb-2 block text-sm font-medium">Email/Username *</Label>
+                    <Input
+                      type="email"
+                      value={emailSettings.username}
+                      onChange={(e) => setEmailSettings({...emailSettings, username: e.target.value})}
+                      placeholder="cotacoes@empresa.com"
+                      className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 sm:space-y-5">
+                  <div>
+                    <Label className="text-dark-primary-text mb-2 block text-sm font-medium">Senha *</Label>
+                    <div className="relative">
+                      <Input
+                        type={emailSettings.showPassword ? "text" : "password"}
+                        value={emailSettings.password}
+                        onChange={(e) => setEmailSettings({...emailSettings, password: e.target.value})}
+                        placeholder="senha ou app password"
+                        className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary pr-12 text-sm sm:text-base"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setEmailSettings({...emailSettings, showPassword: !emailSettings.showPassword})}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-secondary hover:text-dark-primary-text"
+                      >
+                        {emailSettings.showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-dark-primary-text mb-2 block text-sm font-medium">Intervalo de Verificação</Label>
+                    <Select 
+                      value={emailSettings.checkInterval.toString()} 
+                      onValueChange={(value) => setEmailSettings({...emailSettings, checkInterval: parseInt(value)})}
+                    >
+                      <SelectTrigger className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-dark-card border-dark-color">
+                        <SelectItem value="1" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">1 minuto</SelectItem>
+                        <SelectItem value="5" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">5 minutos</SelectItem>
+                        <SelectItem value="10" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">10 minutos</SelectItem>
+                        <SelectItem value="15" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">15 minutos</SelectItem>
+                        <SelectItem value="30" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">30 minutos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="glass-card bg-gradient-to-br from-indigo-900/30 to-purple-900/30 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-indigo-500/20">
+                    <h4 className="text-sm font-semibold text-indigo-300 mb-2">Como Funciona:</h4>
+                    <ul className="text-xs text-indigo-200 space-y-1">
+                      <li>• Monitora emails automaticamente no intervalo configurado</li>
+                      <li>• Identifica pedidos de cotação por palavras-chave</li>
+                      <li>• Extrai dados (cliente, produto, quantidade) automaticamente</li>
+                      <li>• Cria cotações pendentes para aprovação</li>
+                      <li>• Notifica administradores sobre novas cotações</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Notifications & Security Bottom Row */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+          {/* Notifications */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-dark-card backdrop-blur-2xl rounded-2xl sm:rounded-3xl"></div>
+            <div className="relative glass-card bg-dark-card rounded-2xl sm:rounded-3xl border border-dark-color overflow-hidden shadow-2xl p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="p-2 bg-gradient-to-br from-yellow-600/20 to-orange-600/20 rounded-xl">
+                    <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-dark-primary-text">{t('settings.notifications')}</h3>
+                    <p className="text-yellow-200 text-xs sm:text-sm">Controle suas notificações</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleSaveNotifications}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 h-8 sm:h-9 text-sm sm:text-base w-full sm:w-auto"
+                >
+                  <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-dark-primary-text text-sm">{t('settings.emailNotifications')}</Label>
+                    <p className="text-xs sm:text-sm text-dark-secondary">Receber notificações por email</p>
                   </div>
                   <Switch
                     checked={notificationSettings.emailNotifications}
                     onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, emailNotifications: checked})}
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 [&_span]:data-[state=checked]:bg-white"
+                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-300" />
-                    <div>
-                      <Label className="text-white">Aprovação de Cotações</Label>
-                      <p className="text-sm text-slate-400">Notificar sobre cotações pendentes</p>
-                    </div>
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-dark-primary-text text-sm">{t('settings.quotesApproval')}</Label>
+                    <p className="text-xs sm:text-sm text-dark-secondary">Aprovações de cotações</p>
                   </div>
                   <Switch
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 [&_span]:data-[state=checked]:bg-white"
                     checked={notificationSettings.quotesApproval}
                     onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, quotesApproval: checked})}
+                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-slate-300" />
-                    <div>
-                      <Label className="text-white">Alertas do Sistema</Label>
-                      <p className="text-sm text-slate-400">Notificar sobre erros e problemas</p>
-                    </div>
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-dark-primary-text text-sm">{t('settings.systemAlerts')}</Label>
+                    <p className="text-xs sm:text-sm text-dark-secondary">Alertas do sistema</p>
                   </div>
                   <Switch
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 [&_span]:data-[state=checked]:bg-white"
                     checked={notificationSettings.systemAlerts}
                     onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, systemAlerts: checked})}
+                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-300" />
-                    <div>
-                      <Label className="text-white">Relatórios Semanais</Label>
-                      <p className="text-sm text-slate-400">Receber resumo semanal por email</p>
-                    </div>
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-dark-primary-text text-sm">{t('settings.weeklyReports')}</Label>
+                    <p className="text-xs sm:text-sm text-dark-secondary">Relatórios semanais</p>
                   </div>
                   <Switch
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 [&_span]:data-[state=checked]:bg-white"
                     checked={notificationSettings.weeklyReports}
                     onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, weeklyReports: checked})}
+                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-slate-300" />
-                    <div>
-                      <Label className="text-white">Atualizações de Fornecedores</Label>
-                      <p className="text-sm text-slate-400">Notificar sobre mudanças nos fornecedores</p>
-                    </div>
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-dark-primary-text text-sm">{t('settings.supplierUpdates')}</Label>
+                    <p className="text-xs sm:text-sm text-dark-secondary">Atualizações de fornecedores</p>
                   </div>
                   <Switch
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 [&_span]:data-[state=checked]:bg-white"
                     checked={notificationSettings.supplierUpdates}
                     onCheckedChange={(checked) => setNotificationSettings({...notificationSettings, supplierUpdates: checked})}
+                    className="data-[state=checked]:bg-blue-600"
                   />
                 </div>
               </div>
+            </div>
+          </div>
 
-              <Button 
-                onClick={handleSaveNotifications}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Notificações
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Segurança */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-white">
-                <Shield className="w-6 h-6 text-red-400" />
-                Segurança
-              </CardTitle>
-              <CardDescription className="text-slate-300">
-                Configurações de segurança do sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-white">Autenticação de Dois Fatores</Label>
-                  <p className="text-sm text-slate-400">Aumenta a segurança das contas</p>
+          {/* Security Settings */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-dark-card backdrop-blur-2xl rounded-2xl sm:rounded-3xl"></div>
+            <div className="relative glass-card bg-dark-card rounded-2xl sm:rounded-3xl border border-dark-color overflow-hidden shadow-2xl p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="p-2 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-xl">
+                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-dark-primary-text">{t('settings.security')}</h3>
+                    <p className="text-purple-200 text-xs sm:text-sm">Configurações de segurança</p>
+                  </div>
                 </div>
-                <Switch
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 [&_span]:data-[state=checked]:bg-white"
-                  checked={securitySettings.twoFactorAuth}
-                  onCheckedChange={(checked) => setSecuritySettings({...securitySettings, twoFactorAuth: checked})}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-white">Timeout de Sessão</Label>
-                <Select 
-                  value={securitySettings.sessionTimeout} 
-                  onValueChange={(value) => setSecuritySettings({...securitySettings, sessionTimeout: value})}
+                <Button 
+                  onClick={handleSaveSecurity}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 h-8 sm:h-9 text-sm sm:text-base w-full sm:w-auto"
                 >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900/95 border-slate-700/50">
-                    <SelectItem value="1" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">1 hora</SelectItem>
-                    <SelectItem value="2" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">2 horas</SelectItem>
-                    <SelectItem value="4" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">4 horas</SelectItem>
-                    <SelectItem value="8" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">8 horas</SelectItem>
-                    <SelectItem value="24" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">24 horas</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  Salvar
+                </Button>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-white">Política de Senhas</Label>
-                <Select 
-                  value={securitySettings.passwordPolicy} 
-                  onValueChange={(value) => setSecuritySettings({...securitySettings, passwordPolicy: value})}
-                >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900/95 border-slate-700/50">
-                    <SelectItem value="basic" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Básica</SelectItem>
-                    <SelectItem value="medium" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Média</SelectItem>
-                    <SelectItem value="strong" className="text-white hover:bg-blue-900/80 focus:bg-blue-900/80 data-[highlighted]:bg-blue-900/80 cursor-pointer">Forte</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-white">Log de Auditoria</Label>
-                  <p className="text-sm text-slate-400">Registrar todas as ações dos usuários</p>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-dark-primary-text text-sm">{t('settings.twoFactorAuth')}</Label>
+                    <p className="text-xs sm:text-sm text-dark-secondary">Autenticação de dois fatores</p>
+                  </div>
+                  <Switch
+                    checked={securitySettings.twoFactorAuth}
+                    onCheckedChange={(checked) => setSecuritySettings({...securitySettings, twoFactorAuth: checked})}
+                    className="data-[state=checked]:bg-blue-600"
+                  />
                 </div>
-                <Switch
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 [&_span]:data-[state=checked]:bg-white"
-                  checked={securitySettings.auditLogging}
-                  onCheckedChange={(checked) => setSecuritySettings({...securitySettings, auditLogging: checked})}
-                />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="ipWhitelist" className="text-white">Lista Branca de IPs</Label>
-                <Input
-                  id="ipWhitelist"
-                  value={securitySettings.ipWhitelist}
-                  onChange={(e) => setSecuritySettings({...securitySettings, ipWhitelist: e.target.value})}
-                  placeholder="192.168.1.0/24, 10.0.0.0/8"
-                  className="bg-white/10 border-white/20 text-white placeholder-slate-400"
-                />
-                <p className="text-xs text-slate-400">IPs permitidos separados por vírgula</p>
-              </div>
+                <div>
+                  <Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.sessionTimeout')}</Label>
+                  <Select 
+                    value={securitySettings.sessionTimeout} 
+                    onValueChange={(value) => setSecuritySettings({...securitySettings, sessionTimeout: value})}
+                  >
+                    <SelectTrigger className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-dark-card border-dark-color">
+                      <SelectItem value="1" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">1 hora</SelectItem>
+                      <SelectItem value="2" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">2 horas</SelectItem>
+                      <SelectItem value="4" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">4 horas</SelectItem>
+                      <SelectItem value="8" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">8 horas</SelectItem>
+                      <SelectItem value="24" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">24 horas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <Button 
-                onClick={handleSaveSecurity}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Segurança
-              </Button>
-            </CardContent>
-          </Card>
+                <div>
+                  <Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.passwordPolicy')}</Label>
+                  <Select 
+                    value={securitySettings.passwordPolicy} 
+                    onValueChange={(value) => setSecuritySettings({...securitySettings, passwordPolicy: value})}
+                  >
+                    <SelectTrigger className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-dark-card border-dark-color">
+                      <SelectItem value="basic" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Básica</SelectItem>
+                      <SelectItem value="medium" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Média</SelectItem>
+                      <SelectItem value="strong" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Forte</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-dark-primary-text text-sm">{t('settings.auditLogging')}</Label>
+                    <p className="text-xs sm:text-sm text-dark-secondary">Log de auditoria</p>
+                  </div>
+                  <Switch
+                    checked={securitySettings.auditLogging}
+                    onCheckedChange={(checked) => setSecuritySettings({...securitySettings, auditLogging: checked})}
+                    className="data-[state=checked]:bg-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.ipWhitelist')}</Label>
+                  <Input
+                    value={securitySettings.ipWhitelist}
+                    onChange={(e) => setSecuritySettings({...securitySettings, ipWhitelist: e.target.value})}
+                    placeholder="192.168.1.0/24, 10.0.0.0/8"
+                    className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary text-sm sm:text-base"
+                  />
+                  <p className="text-xs text-dark-secondary mt-2">Lista de IPs permitidos (separados por vírgula)</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>

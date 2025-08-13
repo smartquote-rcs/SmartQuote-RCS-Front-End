@@ -11,13 +11,13 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Eye, EyeOff, Lock, Mail, CheckCircle, AlertCircle, TrendingUp } from "lucide-react";
-import { authService, getUserRoleByEmail } from "../api/services.ts";
+import { authService } from "../api/services.ts";
 
 interface LoginPageProps {
   onLogin: (credentials: {
     email: string;
     password: string;
-    role?: 'user' | 'admin' | 'gestor';
+    role?: 'user' | 'admin';
   }) => void;
 }
 
@@ -57,8 +57,8 @@ const SpiderWebBackground = () => {
         pointsRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 1.2, // Faster movement
-          vy: (Math.random() - 0.5) * 1.2,
+          vx: (Math.random() - 0.5) * 1.4, // Faster movement
+          vy: (Math.random() - 0.5) * 1.4,
         });
       }
     };
@@ -84,12 +84,12 @@ const SpiderWebBackground = () => {
       // Draw points - larger and more visible
       pointsRef.current.forEach((point) => {
         ctx.beginPath();
-        ctx.arc(point.x, point.y, 4, 0, Math.PI * 2); // Larger points
-        ctx.fillStyle = "rgba(59, 130, 246, 0.2)"; // More opaque
+        ctx.arc(point.x, point.y, 4, 0, Math.PI * 1); // Larger points
+        ctx.fillStyle = "rgba(59, 130, 246, 0.1)"; // More opaque
         ctx.fill();
 
         // Add glow effect
-        ctx.shadowColor = "rgba(59, 130, 246, 0.8)";
+        ctx.shadowColor = "rgba(59, 130, 246, 0.5)";
         ctx.shadowBlur = 8;
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -111,9 +111,9 @@ const SpiderWebBackground = () => {
           ctx.moveTo(point.x, point.y);
           ctx.lineTo(mouseRef.current.x, mouseRef.current.y);
           const opacity = 1 - distToMouse / mouseDistance;
-          ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.6})`;
+          ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.2})`;
           ctx.lineWidth = 4; // Much thicker lines
-          ctx.shadowColor = "rgba(59, 130, 246, 0.2)";
+          ctx.shadowColor = "rgba(59, 130, 246, 0)";
           ctx.shadowBlur = 10;
           ctx.stroke();
           ctx.shadowBlur = 0;
@@ -127,8 +127,8 @@ const SpiderWebBackground = () => {
             0,
             Math.PI * 2,
           );
-          ctx.strokeStyle = `rgba(F, F, F, F)`;
-          ctx.lineWidth = 3;
+          ctx.strokeStyle = `rgba(255, 255, 255, 0.5)`;
+          ctx.lineWidth = 4;
           ctx.stroke();
         }
 
@@ -144,7 +144,7 @@ const SpiderWebBackground = () => {
             ctx.moveTo(point.x, point.y);
             ctx.lineTo(otherPoint.x, otherPoint.y);
             const opacity = 1 - distance / maxDistance;
-            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.8})`;
+            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.2})`;
             ctx.lineWidth = 1; // Thicker base lines
             ctx.stroke();
           }
@@ -182,46 +182,17 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
-  const [username, setUsername] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
   const [isLoginSuccess, setIsLoginSuccess] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState({
-    hasMinLength: false,
-    hasUpperCase: false,
-    hasLowerCase: false,
-    hasNumbers: false,
-    score: 0
-  });
 
-  // Função para calcular força da senha
-  const calculatePasswordStrength = (pwd: string) => {
-    const hasMinLength = pwd.length >= 8;
-    const hasUpperCase = /[A-Z]/.test(pwd);
-    const hasLowerCase = /[a-z]/.test(pwd);
-    const hasNumbers = /\d/.test(pwd);
-    
-    const score = [hasMinLength, hasUpperCase, hasLowerCase, hasNumbers].filter(Boolean).length;
-    
-    setPasswordStrength({
-      hasMinLength,
-      hasUpperCase,
-      hasLowerCase,
-      hasNumbers,
-      score
-    });
-  };
-
-  // Atualizar força da senha quando a senha mudar
+  // Atualizar senha quando a senha mudar
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
     setPassword(newPassword);
-    if (showRegister) {
-      calculatePasswordStrength(newPassword);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -270,19 +241,21 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       
       if (result.success) {
         console.log('✅ Login bem-sucedido!', result.data);
-        // Buscar o papel/função real do usuário
-        const roleResult = await getUserRoleByEmail(email);
-        const userRole = roleResult.role || 'user';
-        localStorage.setItem('user_role_' + email, userRole);
+        
+        // Determinar o role automaticamente baseado no email ou role salvo anteriormente
+        const savedRole = localStorage.getItem('user_role_' + email);
+        const userRole: 'admin' | 'user' = (savedRole as 'admin' | 'user') || (email.toLowerCase().includes('admin') || email.toLowerCase().includes('manager') ? 'admin' : 'user');
+        
         setFeedback({ 
           type: 'success', 
-          message: `Login realizado com sucesso! Entrando como ${userRole === 'admin' ? 'Administrador' : userRole === 'gestor' ? 'Gestor' : 'Usuário'}...` 
+          message: `Login realizado com sucesso! Entrando como ${userRole === 'admin' ? 'Administrador' : 'Usuário'}...` 
         });
         setIsLoginSuccess(true);
+        
         // Delay para mostrar a mensagem de sucesso antes de redirecionar
         setTimeout(() => {
           console.log('🚀 Chamando onLogin...');
-          onLogin({ email, password, role: userRole as 'user' | 'admin' | 'gestor' });
+          onLogin({ email, password, role: userRole });
         }, 2000);
       } else {
         console.error('❌ Erro no login:', result.error);
@@ -332,21 +305,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
   };
 
-  const handleRegister = async () => {
-    // Validações locais primeiro
-    if (!username || !email || !password) {
+  const handleForgotPassword = async () => {
+    // Validação do email
+    if (!email) {
       setFeedback({ 
         type: 'error', 
-        message: 'Por favor, preencha todos os campos obrigatórios.' 
-      });
-      return;
-    }
-
-    // Validação de nome
-    if (username.length < 2) {
-      setFeedback({ 
-        type: 'error', 
-        message: 'O nome deve ter pelo menos 2 caracteres.' 
+        message: 'Por favor, insira seu email para recuperar a senha.' 
       });
       return;
     }
@@ -361,136 +325,32 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       return;
     }
 
-    // Validação de senha forte
-    if (password.length < 8) {
-      setFeedback({ 
-        type: 'error', 
-        message: 'A senha deve ter pelo menos 8 caracteres.' 
-      });
-      return;
-    }
-
-    // Validação de complexidade da senha
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    
-    if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
-      setFeedback({ 
-        type: 'error', 
-        message: 'A senha deve conter pelo menos uma letra maiúscula, uma minúscula e um número.' 
-      });
-      return;
-    }
-
     setIsLoading(true);
     setFeedback({ type: null, message: '' });
     
     try {
-      const result = await authService.signup({ 
-        name: username, 
-        email, 
-        password 
+      // Simular envio de email de recuperação
+      // Aqui você poderia integrar com uma API real de recuperação de senha
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setFeedback({ 
+        type: 'success', 
+        message: 'Email de recuperação enviado! Verifique sua caixa de entrada e siga as instruções.' 
       });
       
-      if (result.success) {
-        setFeedback({ 
-          type: 'success', 
-          message: 'Conta criada com sucesso! Fazendo login automático...' 
-        });
-        
-        // Fazer login automático após criar a conta
-        setTimeout(async () => {
-          console.log('🔄 Fazendo login automático após registro...');
-          
-          try {
-            const loginResult = await authService.signin({ email, password });
-            
-            if (loginResult.success) {
-              console.log('✅ Login automático bem-sucedido!');
-              
-              // Determinar role como admin automaticamente para contas criadas
-              const userRole = 'admin';
-              
-              // Salvar informação de que esta conta é admin
-              localStorage.setItem('user_role_' + email, 'admin');
-              
-              setFeedback({ 
-                type: 'success', 
-                message: 'Conta criada e login realizado! Entrando como Administrador...' 
-              });
-              setIsLoginSuccess(true);
-              
-              // Redirecionar para o dashboard admin
-              setTimeout(() => {
-                console.log('🚀 Redirecionando para dashboard admin...');
-                onLogin({ email, password, role: userRole });
-              }, 1500);
-            } else {
-              setFeedback({ 
-                type: 'success', 
-                message: 'Conta criada com sucesso! Faça login para continuar.' 
-              });
-              setUsername('');
-              setEmail('');
-              setPassword('');
-              setTimeout(() => {
-                setShowRegister(false);
-                setFeedback({ type: null, message: '' });
-              }, 2000);
-            }
-          } catch (error) {
-            console.error('❌ Erro no login automático:', error);
-            setFeedback({ 
-              type: 'success', 
-              message: 'Conta criada com sucesso! Faça login para continuar.' 
-            });
-            setUsername('');
-            setEmail('');
-            setPassword('');
-            setTimeout(() => {
-              setShowRegister(false);
-              setFeedback({ type: null, message: '' });
-            }, 2000);
-          }
-        }, 1000);
-      } else {
-        console.error('❌ Erro no registro:', result.error);
-        
-        // Mensagens de erro específicas para registro
-        let errorMessage = 'Erro ao criar conta';
-        
-        if (result.error?.toLowerCase().includes('email') && result.error?.toLowerCase().includes('exists')) {
-          errorMessage = 'Este email já está registrado. Tente fazer login ou use outro email.';
-        } else if (result.error?.toLowerCase().includes('password')) {
-          errorMessage = 'Senha não atende aos critérios de segurança. Use uma senha mais forte.';
-        } else if (result.error?.toLowerCase().includes('invalid')) {
-          errorMessage = 'Dados inválidos. Verifique as informações e tente novamente.';
-        } else {
-          errorMessage = result.error || 'Erro ao criar conta. Tente novamente.';
-        }
-        
-        setFeedback({ 
-          type: 'error', 
-          message: errorMessage 
-        });
-      }
+      // Limpar o formulário e voltar para o login após 3 segundos
+      setTimeout(() => {
+        setEmail('');
+        setShowForgotPassword(false);
+        setFeedback({ type: null, message: '' });
+      }, 3000);
+      
     } catch (error) {
-      console.error('❌ Erro inesperado no registro:', error);
-      
-      let errorMessage = 'Erro de conexão ao criar conta';
-      
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        errorMessage = 'Erro de rede. Verifique sua conexão e tente novamente.';
-      } else if (error instanceof Error && error.message.includes('timeout')) {
-        errorMessage = 'Tempo limite excedido. Tente novamente.';
-      } else {
-        errorMessage = 'Erro inesperado ao criar conta. Tente novamente.';
-      }
+      console.error('❌ Erro ao enviar email de recuperação:', error);
       
       setFeedback({ 
         type: 'error', 
-        message: errorMessage 
+        message: 'Erro ao enviar email de recuperação. Tente novamente mais tarde.' 
       });
     } finally {
       setIsLoading(false);
@@ -500,14 +360,13 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
 
   return (
-    <div className="min-h-screen max-w-full bg-gradient-to-br from-gray-900 via-gray-900 to-gray-900 relative overflow-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-gray-900 to-gray-900 relative overflow-hidden">
       {/* Success Message - Centered */}
       {isLoginSuccess && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8, y: 50 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="fixed inset-0 flex items-center justify-center"
-          style={{ zIndex: 100 }}
+          className="fixed inset-0 flex items-center justify-center z-[100] p-3 sm:p-4"
         >
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
@@ -518,7 +377,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               damping: 20,
               delay: 0.2 
             }}
-            className="bg-white/20 backdrop-blur-lg border border-green-400/40 rounded-2xl p-6 text-center shadow-2xl min-w-[300px]"
+            className="bg-white/20 backdrop-blur-lg border border-green-400/40 rounded-lg sm:rounded-2xl p-3 sm:p-6 text-center shadow-2xl w-full max-w-xs sm:max-w-sm"
           >
             <motion.div
               animate={{ 
@@ -598,12 +457,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
       {/* Content */}
       <div
-        className="relative min-h-screen flex flex-col items-center justify-center p-4"
+        className="relative min-h-screen flex flex-col items-center justify-center lg:justify-start px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-6 md:py-8 lg:pt-16 xl:pt-20"
         style={{ zIndex: 4 }}
       >
         {/* Centered Title - 100% Responsive */}
         <motion.div
-          className="text-center mb-8 sm:mb-10 md:mb-12 lg:mb-16"
+          className="text-center mb-4 sm:mb-6 md:mb-8 lg:mb-6 xl:mb-8"
           initial={{ opacity: 0, y: -100, scale: 0.5 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{
@@ -614,24 +473,24 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           }}
         >
           <motion.div
-            className="flex items-center justify-center space-x-2 sm:space-x-3 md:space-x-4 mb-4 sm:mb-6"
-            whileHover={{ scale: 1.1 }}
+            className="flex items-center justify-center space-x-2 sm:space-x-3 md:space-x-4 mb-2 sm:mb-3"
+            whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 200 }}
           >
             <motion.div
-              className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 bg-gradient-to-br from-cyan-400 via-blue-300 to-indigo-400 rounded-2xl sm:rounded-3xl lg:rounded-4xl flex items-center justify-center shadow-2xl relative overflow-hidden p-2 sm:p-2 md:p-3"
+              className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 2xl:w-32 2xl:h-32 bg-gradient-to-br from-cyan-400 via-blue-300 to-indigo-400 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center shadow-2xl relative overflow-hidden p-1"
               whileHover={{
-                rotate: [0, 10, -10, 0],
-                scale: 1.15,
-                boxShadow: "0 0 60px rgba(59, 130, 246, 1)",
+                rotate: [0, 5, -5, 0],
+                scale: 1.1,
+                boxShadow: "0 0 40px rgba(59, 130, 246, 0.8)",
               }}
               animate={{
                 boxShadow: [
-                  "0 0 30px rgba(59, 130, 246, 0.3)",
-                  "0 0 60px rgba(59, 130, 246, 0.3)",
-                  "0 0 30px rgba(59, 130, 246, 0.3)",
+                  "0 0 20px rgba(59, 130, 246, 0.3)",
+                  "0 0 40px rgba(59, 130, 246, 0.3)",
+                  "0 0 20px rgba(59, 130, 246, 0.3)",
                 ],
-                rotate: [0, 2, -2, 0],
+                rotate: [0, 1, -1, 0],
               }}
               transition={{
                 boxShadow: {
@@ -668,13 +527,13 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               <motion.img
                 src="/RCS.png"
                 alt="RCS Angola Logo"
-                className="w-full h-full object-contain relative z-10 rounded-xl p-2"
+                className="w-full h-full object-contain relative z-10 rounded-lg p-2"
                 animate={{
-                  scale: [1, 1.05, 1],
+                  scale: [1, 1.02, 1],
                   filter: [
-                    "drop-shadow(0 0 10px rgba(255, 255, 255, 0.5))",
-                    "drop-shadow(0 0 20px rgba(255, 255, 255, 0.8))",
-                    "drop-shadow(0 0 10px rgba(255, 255, 255, 0.5))",
+                    "drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))",
+                    "drop-shadow(0 0 16px rgba(255, 255, 255, 0.6))",
+                    "drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))",
                   ],
                 }}
                 transition={{
@@ -687,20 +546,20 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           </motion.div>
 
           <motion.h1
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-200 bg-clip-text text-transparent mb-3 sm:mb-4 lg:mb-6"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-200 bg-clip-text text-transparent mb-1 sm:mb-2 text-center leading-tight"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.3 }}
             whileHover={{
-              scale: 1.05,
-              textShadow: "0 0 20px rgba(255, 255, 255, 0.5)",
+              scale: 1.02,
+              textShadow: "0 0 20px rgba(255, 255, 255, 0.4)",
             }}
           >
             SmartQuote RCS
           </motion.h1>
 
           <motion.div
-            className="mt-4 sm:mt-6 text-blue-200 text-sm sm:text-base md:text-lg lg:text-xl px-4"
+            className="mt-1 sm:mt-2 text-blue-200 text-xs sm:text-sm md:text-base px-2 sm:px-4 md:px-6 text-center font-medium leading-relaxed"
             initial={{ opacity: 0 }}
             animate={{
               opacity: [0.7, 1, 0.7],
@@ -717,7 +576,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         </motion.div>
 
         {/* Login Form Container - Responsive */}
-        <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mt-2 sm:mt-3 md:mt-4 px-3 sm:px-4 md:px-6"
+        >
           {/* Login Card */}
           <motion.div
             initial={{ opacity: 0, y: 100, scale: 0.8 }}
@@ -733,168 +593,94 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
             }}
           >
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-2xl">
-              <CardHeader className="space-y-3">
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-2xl rounded-lg sm:rounded-xl lg:rounded-2xl"
+            >
+              <CardHeader className="space-y-1 pb-2 sm:pb-3 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-5"
+              >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 1.4, duration: 0.6 }}
                 >
-                  <CardTitle className="text-xl sm:text-2xl text-center text-white">
-                    {showRegister ? 'Criar Conta' : 'Acesso ao Sistema'}
+                  <CardTitle className="text-lg sm:text-xl md:text-2xl text-center text-white font-semibold"
+                  >
+                    {showForgotPassword ? 'Recuperar Senha' : 'Acesso ao Sistema'}
                   </CardTitle>
-                  <CardDescription className="text-center text-blue-100 text-sm sm:text-base">
-                    {showRegister 
-                      ? 'Crie sua conta para acessar a plataforma'
+                  <CardDescription className="text-center text-blue-100 text-sm sm:text-base leading-relaxed mt-1"
+                  >
+                    {showForgotPassword 
+                      ? 'Digite seu email para receber as instruções de recuperação'
                       : 'Entre com suas credenciais para acessar a plataforma'
                     }
                   </CardDescription>
                 </motion.div>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-2 sm:space-y-3 pt-1 sm:pt-2 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-5"
+              >
                 <motion.form
                   onSubmit={handleSubmit}
-                  className="space-y-4"
+                  className="space-y-2 sm:space-y-3"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.6, duration: 0.6 }}
                 >
-                  {showRegister && (
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="username"
-                        className="text-white text-sm sm:text-base font-medium"
-                      >
-                        Nome
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400 z-10" />
-                        <Input
-                          id="username"
-                          type="text"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          className="pl-12 pr-4 h-12 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200"
-                          placeholder="Seu nome completo"
-                          required
-                        />
-                      </div>
-                    </div>
-                  )}
-                  <div className="space-y-2">
+                  {/* Campo de nome removido - não necessário para recuperação de senha */}
+                  <div className="space-y-1 sm:space-y-2">
                     <Label
                       htmlFor="email"
-                      className="text-white text-sm sm:text-base font-medium"
+                      className="text-white text-xs sm:text-sm md:text-base font-medium"
                     >
                       Email
                     </Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400 z-10" />
+                      <Mail className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-blue-400 z-10" />
                       <Input
                         id="email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-12 pr-4 h-12 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200"
+                        className="pl-8 sm:pl-10 md:pl-12 pr-3 sm:pr-4 h-8 sm:h-10 md:h-11 bg-slate-800/50 border border-slate-600/50 rounded-md sm:rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200 text-xs sm:text-sm md:text-base"
                         placeholder="seu@email.com"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="password"
-                      className="text-white text-sm sm:text-base font-medium"
-                    >
-                      Senha
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400 z-10" />
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={handlePasswordChange}
-                        className="pl-12 pr-12 h-12 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200"
-                        placeholder="••••••••"
-                        required
-                      />
-                      <motion.button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2 top-2 w-8 h-8 flex items-center justify-center rounded-full bg-slate-700/50 hover:bg-slate-600/70 text-blue-400 hover:text-white transition-all duration-200 z-10 border border-slate-600/30"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.98 }}
+                  {!showForgotPassword && (
+                    <div className="space-y-1 sm:space-y-2">
+                      <Label
+                        htmlFor="password"
+                        className="text-white text-xs sm:text-sm md:text-base font-medium"
                       >
-                        {showPassword ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </motion.button>
+                        Senha
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-blue-400 z-10" />
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={handlePasswordChange}
+                          className="pl-8 sm:pl-10 md:pl-12 pr-10 sm:pr-12 h-8 sm:h-10 md:h-11 bg-slate-800/50 border border-slate-600/50 rounded-md sm:rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200 text-xs sm:text-sm md:text-base"
+                          placeholder="••••••••"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full bg-slate-700/50 hover:bg-slate-600/70 text-blue-400 hover:text-white transition-colors duration-200 z-10 border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" />
+                          ) : (
+                            <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Indicador de Força da Senha - apenas para registro */}
-                  {showRegister && password.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="space-y-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-blue-200">Força da senha:</span>
-                        <div className="flex space-x-1">
-                          {[1, 2, 3, 4].map((level) => (
-                            <div
-                              key={level}
-                              className={`w-4 h-1 rounded-full transition-colors duration-300 ${
-                                level <= passwordStrength.score
-                                  ? level === 1
-                                    ? 'bg-red-500'
-                                    : level === 2
-                                    ? 'bg-yellow-500'
-                                    : level === 3
-                                    ? 'bg-blue-500'
-                                    : 'bg-green-500'
-                                  : 'bg-gray-600'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-blue-300">
-                          {passwordStrength.score === 1 && 'Fraca'}
-                          {passwordStrength.score === 2 && 'Regular'}
-                          {passwordStrength.score === 3 && 'Boa'}
-                          {passwordStrength.score === 4 && 'Forte'}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {[
-                          { key: 'hasMinLength', text: 'Pelo menos 8 caracteres' },
-                          { key: 'hasUpperCase', text: 'Uma letra maiúscula' },
-                          { key: 'hasLowerCase', text: 'Uma letra minúscula' },
-                          { key: 'hasNumbers', text: 'Um número' }
-                        ].map((requirement) => (
-                          <div key={requirement.key} className="flex items-center space-x-2">
-                            <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                              passwordStrength[requirement.key as keyof typeof passwordStrength] 
-                                ? 'bg-green-400' 
-                                : 'bg-gray-500'
-                            }`} />
-                            <span className={`text-xs transition-colors duration-300 ${
-                              passwordStrength[requirement.key as keyof typeof passwordStrength] 
-                                ? 'text-green-300' 
-                                : 'text-gray-400'
-                            }`}>
-                              {requirement.text}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
                   )}
+
+                  {/* Indicador de força da senha removido - não necessário para recuperação */}
 
                   <motion.div
                     whileHover={{ scale: 1.05 }}
@@ -902,9 +688,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   >
                     <Button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 sm:py-4 shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base"
+                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-300 text-xs sm:text-sm md:text-base rounded-md sm:rounded-lg h-8 sm:h-10 md:h-11"
                       disabled={isLoading}
-                      onClick={showRegister ? (e) => { e.preventDefault(); handleRegister(); } : undefined}
+                      onClick={showForgotPassword ? (e) => { e.preventDefault(); handleForgotPassword(); } : undefined}
                     >
                       {isLoading ? (
                         <motion.div
@@ -913,7 +699,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           animate={{ opacity: 1 }}
                         >
                           <motion.div
-                            className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full"
+                            className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full"
                             animate={{ rotate: 360 }}
                             transition={{
                               duration: 0.8,
@@ -921,10 +707,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                               ease: "linear",
                             }}
                           />
-                          <span>{showRegister ? 'Criando...' : 'Entrando...'}</span>
+                          <span>{showForgotPassword ? 'Enviando...' : 'Entrando...'}</span>
                         </motion.div>
                       ) : (
-                        showRegister ? "Criar Conta" : "Entrar no Sistema"
+                        showForgotPassword ? "Enviar Email de Recuperação" : "Entrar no Sistema"
                       )}
                     </Button>
                   </motion.div>
@@ -935,7 +721,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                       initial={{ opacity: 0, y: 20, scale: 0.8 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -20, scale: 0.8 }}
-                      className={`flex items-center space-x-3 p-4 rounded-lg backdrop-blur-sm border ${
+                      className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-md sm:rounded-lg backdrop-blur-sm border text-xs sm:text-sm ${
                         feedback.type === 'success' 
                           ? 'bg-green-500/20 border-green-400/30 text-green-100' 
                           : 'bg-red-500/20 border-red-400/30 text-red-100'
@@ -956,23 +742,39 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         }}
                       >
                         {feedback.type === 'success' ? (
-                          <CheckCircle className="w-5 h-5 text-green-400" />
+                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" />
                         ) : (
-                          <AlertCircle className="w-5 h-5 text-red-400" />
+                          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
                         )}
                       </motion.div>
-                      <span className="text-sm font-medium">{feedback.message}</span>
+                      <span className="text-xs sm:text-sm font-medium leading-relaxed">{feedback.message}</span>
                     </motion.div>
                   )}
 
-                  {/* Botão para alternar entre login e registro */}
+                  {/* Botão para alternar entre login e recuperação de senha */}
                   <motion.div
-                    className="text-center"
+                    className="text-center pt-1"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <p className="text-slate-400 text-sm">
-                      <span className="text-blue-300 font-medium">Novo usuário?</span> Entre em contato com o administrador para criar sua conta.
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowForgotPassword(!showForgotPassword);
+                        setFeedback({ type: null, message: '' });
+                        setPassword('');
+                      }}
+                      className="text-slate-400 text-xs sm:text-sm leading-relaxed hover:text-blue-300 transition-colors duration-200"
+                    >
+                      {showForgotPassword ? (
+                        <>
+                          <span className="text-blue-300 font-medium">Lembrou da senha?</span> Voltar ao login
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-blue-300 font-medium">Esqueceu a senha?</span> Clique aqui para recuperar
+                        </>
+                      )}
+                    </button>
                   </motion.div>
                 </motion.form>
               </CardContent>
@@ -980,39 +782,40 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           </motion.div>
         </div>
         
-        {/* Footer limpo e elegante */}
+        {/* Footer limpo e elegante - Responsivo */}
         <motion.div
-          className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900/90 to-transparent backdrop-blur-sm border-t border-slate-700/30"
+          className="absolute bottom-0 left-0 right-0 h-10 sm:h-12 bg-gradient-to-t from-slate-900/90 to-transparent backdrop-blur-sm border-t border-slate-700/30"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 2, duration: 0.8 }}
         >
-          <div className="h-full flex items-center justify-center px-6">
+          <div className="h-full flex items-center justify-center px-3 sm:px-4 md:px-6">
             <motion.div
-              className="flex items-center gap-4 text-slate-400"
+              className="flex items-center gap-2 sm:gap-3 md:gap-4 text-slate-400"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 2.5, duration: 0.6 }}
             >
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-medium">SmartQuote</span>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
+                <span className="text-xs sm:text-sm font-medium">SmartQuote</span>
               </div>
               
-              <div className="w-px h-4 bg-slate-600"></div>
+              <div className="w-px h-3 sm:h-4 bg-slate-600"></div>
               
               <motion.div
                 className="flex items-center gap-1"
                 animate={{ opacity: [1, 0.5, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                <span className="text-xs">Sistema Online</span>
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-400"></div>
+                <span className="text-xs hidden sm:inline">Sistema Online</span>
+                <span className="text-xs sm:hidden">Online</span>
               </motion.div>
               
-              <div className="w-px h-4 bg-slate-600"></div>
+              <div className="w-px h-3 sm:h-4 bg-slate-600 hidden md:block"></div>
               
-              <span className="text-xs">© 2025 - Plataforma de Cotações Inteligentes</span>
+              <span className="text-xs hidden md:inline">© 2025 - Plataforma de Cotações Inteligentes</span>
             </motion.div>
           </div>
         </motion.div>

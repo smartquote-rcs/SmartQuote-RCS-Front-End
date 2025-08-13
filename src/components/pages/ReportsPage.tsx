@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -103,6 +104,7 @@ const getTypeIcon = (tipo: string) => {
 };
 
 export function ReportsPage() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("Todos");
   const [statusFilter, setStatusFilter] = useState("Todos");
@@ -118,72 +120,73 @@ export function ReportsPage() {
   });
 
   const RelatorioCard = ({ relatorio }: { relatorio: any }) => (
-    <div className="glass-card p-6 lg:p-8 hover:border-dark-cta transition-colors bg-white/5 rounded-2xl border border-white/20">
+    <div className="glass-card p-4 sm:p-6 lg:p-8 hover:border-dark-cta transition-colors bg-white/5 rounded-2xl border border-white/20">
       <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-        <div className="flex items-start space-x-4 flex-1 min-w-0">
+        <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
           <div className="flex-shrink-0 mt-1">
             {getTypeIcon(relatorio.tipo)}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
-              <h3 className="font-bold text-dark-primary text-sm sm:text-base truncate">{relatorio.titulo}</h3>
+              <h3 className="font-bold text-dark-primary text-sm sm:text-base lg:text-lg truncate">{relatorio.titulo}</h3>
               <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                 {getStatusBadge(relatorio.status)}
                 <Badge className="bg-dark-tag text-white text-xs">{relatorio.tipo}</Badge>
               </div>
             </div>
             
-            <p className="text-xs sm:text-sm text-dark-secondary mb-4 break-words">{relatorio.descricao}</p>
+            <p className="text-xs sm:text-sm text-dark-secondary mb-4 break-words line-clamp-2">{relatorio.descricao}</p>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="text-dark-secondary">Período:</span>
-                <span className="text-dark-primary ml-2">{relatorio.periodo}</span>
+                <span className="text-dark-primary sm:ml-2 truncate">{relatorio.periodo}</span>
               </div>
-              <div>
+              <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="text-dark-secondary">Formato:</span>
-                <span className="text-dark-primary ml-2">{relatorio.formato}</span>
+                <span className="text-dark-primary sm:ml-2">{relatorio.formato}</span>
               </div>
-              <div>
+              <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="text-dark-secondary">Tamanho:</span>
-                <span className="text-dark-primary ml-2">{relatorio.tamanho}</span>
+                <span className="text-dark-primary sm:ml-2">{relatorio.tamanho}</span>
               </div>
-              <div>
+              <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="text-dark-secondary">Downloads:</span>
-                <span className="text-dark-primary ml-2">{relatorio.downloads}</span>
+                <span className="text-dark-primary sm:ml-2">{relatorio.downloads}</span>
               </div>
-              <div className="sm:col-span-2 lg:col-span-2">
+              <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2 flex flex-col sm:flex-row sm:items-center">
                 <span className="text-dark-secondary">Gerado:</span>
-                <span className="text-dark-primary ml-2">
+                <span className="text-dark-primary sm:ml-2 truncate">
                   {new Date(relatorio.gerado).toLocaleString('pt-PT')}
                 </span>
               </div>
-              <div className="sm:col-span-2 lg:col-span-2">
+              <div className="sm:col-span-2 lg:col-span-1 xl:col-span-2 flex flex-col sm:flex-row sm:items-center">
                 <span className="text-dark-secondary">Autor:</span>
-                <span className="text-dark-primary ml-2">{relatorio.autor}</span>
+                <span className="text-dark-primary sm:ml-2 truncate">{relatorio.autor}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col space-y-2 min-w-0 lg:min-w-[140px]">
+        <div className="flex flex-row sm:flex-col lg:flex-col space-x-2 sm:space-x-0 sm:space-y-2 min-w-0 lg:min-w-[140px]">
           {relatorio.status === "Concluído" && (
             <>
-              <button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-green-600/20">
-                <Download className="w-4 h-4" />
-                <span>Download</span>
+              <button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl font-medium flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-green-600/20 flex-1 sm:flex-none">
+                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Download</span>
               </button>
-              <button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-600/20">
-                <Eye className="w-4 h-4" />
-                <span>Visualizar</span>
+              <button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl font-medium flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-600/20 flex-1 sm:flex-none">
+                <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Visualizar</span>
               </button>
             </>
           )}
           {relatorio.status === "Em Processamento" && (
-            <button disabled className="bg-slate-600/50 text-slate-300 px-4 py-2 text-sm rounded-xl font-medium cursor-not-allowed backdrop-blur-sm border border-slate-500/30">
-              Processando...
-            </button>
+            <div className="glass-card px-3 py-2 sm:px-4 sm:py-2 bg-orange-500/20 border-orange-500/30 rounded-xl text-center flex-1 sm:flex-none">
+              <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400 animate-spin mx-auto mb-1" />
+              <span className="text-orange-300 text-xs">Processando...</span>
+            </div>
           )}
         </div>
       </div>
@@ -198,20 +201,20 @@ export function ReportsPage() {
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              Relatórios
+              {t('reports.title')}
             </h1>
             <p className="text-sm sm:text-base text-dark-secondary mt-2">
-              Acesse e gere relatórios detalhados do sistema
+              {t('reports.subtitle')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
             <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
               <span className="text-blue-300 font-bold text-lg">{filteredRelatorios.length}</span>
-              <span className="text-blue-200 ml-2">relatórios</span>
+              <span className="text-blue-200 ml-2">{t('reports.title')}</span>
             </div>
             <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
               <FileText className="w-5 h-5" />
-              <span>Novo Relatório</span>
+              <span>{t('reports.generateReport')}</span>
             </button>
           </div>
         </div>
@@ -219,50 +222,50 @@ export function ReportsPage() {
 
       <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
-          <div className="glass-card p-6 lg:p-8 bg-white/5 rounded-2xl border border-white/20">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 lg:mb-8">
+          <div className="glass-card p-4 sm:p-6 lg:p-8 bg-white/5 rounded-2xl border border-white/20">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-xl sm:text-2xl font-bold text-dark-primary">28</h3>
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">28</h3>
                 <p className="text-xs sm:text-sm text-dark-secondary truncate">Total de Relatórios</p>
               </div>
             </div>
           </div>
           
-          <div className="glass-card p-6 lg:p-8 bg-white/5 rounded-2xl">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-600 flex items-center justify-center flex-shrink-0">
-                <Download className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="glass-card p-4 sm:p-6 lg:p-8 bg-white/5 rounded-2xl">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-green-600 flex items-center justify-center flex-shrink-0">
+                <Download className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-xl sm:text-2xl font-bold text-dark-primary">156</h3>
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">156</h3>
                 <p className="text-xs sm:text-sm text-dark-secondary truncate">Downloads este Mês</p>
               </div>
             </div>
           </div>
 
-          <div className="glass-card p-6 lg:p-8 bg-white/5 rounded-2xl">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-600 flex items-center justify-center flex-shrink-0">
-                <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="glass-card p-4 sm:p-6 lg:p-8 bg-white/5 rounded-2xl">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-orange-600 flex items-center justify-center flex-shrink-0">
+                <Activity className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-xl sm:text-2xl font-bold text-dark-primary">3</h3>
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">3</h3>
                 <p className="text-xs sm:text-sm text-dark-secondary truncate">Em Processamento</p>
               </div>
             </div>
           </div>
 
-          <div className="glass-card p-6 lg:p-8 bg-white/5 rounded-2xl">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
-                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="glass-card p-4 sm:p-6 lg:p-8 bg-white/5 rounded-2xl">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-xl sm:text-2xl font-bold text-dark-primary">12</h3>
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">12</h3>
                 <p className="text-xs sm:text-sm text-dark-secondary truncate">Automáticos</p>
               </div>
             </div>
@@ -272,6 +275,7 @@ export function ReportsPage() {
         {/* Filters */}
         <div className="mb-6 lg:mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0 lg:space-x-4">
+            {/* Pesquisa - sempre visível */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
               <Input
@@ -282,7 +286,8 @@ export function ReportsPage() {
               />
             </div>
             
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            {/* Filtros - ocultos no mobile */}
+            <div className="hidden sm:flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-full sm:w-40 bg-dark-card border-dark-color text-dark-primary text-sm">
                   <SelectValue placeholder="Tipo" />
