@@ -178,6 +178,88 @@ const SpiderWebBackground = () => {
   );
 };
 
+const AnimatedTitle = () => {
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const initAnimation = () => {
+      if (!titleRef.current) return;
+
+      // Dividir o texto em caracteres individuais
+      const text = "SmartQuote RCS";
+      const titleElement = titleRef.current;
+      
+      // Limpar o conteúdo existente
+      titleElement.innerHTML = "";
+      
+      // Criar spans para cada caractere
+      const chars = text.split("").map((char, index) => {
+        const span = document.createElement("span");
+        span.textContent = char === " " ? "\u00A0" : char; // Usar espaço não-quebrável
+        span.style.display = "inline-block";
+        span.style.opacity = "0";
+        span.style.transform = "translateY(-44px) rotate(-360deg)";
+        span.style.transition = `all 1.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)`;
+        span.style.transitionDelay = `${index * 50}ms`;
+        // Aplicar o mesmo gradiente de cores
+        span.style.background = "linear-gradient(to right, rgb(255, 255, 255), rgb(207, 250, 254), rgb(186, 230, 253))";
+        span.style.backgroundClip = "text";
+        span.style.webkitBackgroundClip = "text";
+        span.style.color = "transparent";
+        span.className = "char";
+        titleElement.appendChild(span);
+        return span;
+      });
+
+      // Animar os caracteres
+      const animateChars = () => {
+        chars.forEach((char, index) => {
+          setTimeout(() => {
+            // Primeira fase: subir e girar
+            char.style.transform = "translateY(-44px) rotate(0deg)";
+            char.style.opacity = "1";
+            
+            // Segunda fase: descer com bounce
+            setTimeout(() => {
+              char.style.transform = "translateY(0px) rotate(360deg)";
+              char.style.transition = `all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)`;
+            }, 600);
+          }, index * 50);
+        });
+      };
+      setTimeout(animateChars, 100);
+    };
+
+    initAnimation();
+
+    // Cleanup function
+    return () => {
+      if (titleRef.current) {
+        titleRef.current.innerHTML = "SmartQuote RCS"; // Restaurar o texto original
+      }
+    };
+  }, []);
+
+  return (
+    <motion.h1
+      ref={titleRef}
+      className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-200 bg-clip-text text-transparent mb-1 sm:mb-2 text-center leading-tight"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1, duration: 0.3 }}
+      whileHover={{
+        scale: 1.02,
+        textShadow: "0 0 20px rgba(255, 255, 255, 0.4)",
+      }}
+      style={{
+        letterSpacing: '0.06em'
+      }}
+    >
+      SmartQuote RCS
+    </motion.h1>
+  );
+};
+
 export function LoginPage({ onLogin }: LoginPageProps) {
   // Atualizar senha quando a senha mudar
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -547,18 +629,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </motion.div>
           </motion.div>
 
-          <motion.h1
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-200 bg-clip-text text-transparent mb-1 sm:mb-2 text-center leading-tight"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.3 }}
-            whileHover={{
-              scale: 1.02,
-              textShadow: "0 0 20px rgba(255, 255, 255, 0.4)",
-            }}
-          >
-            SmartQuote RCS
-          </motion.h1>
+          <AnimatedTitle />
 
           <motion.div
             className="mt-1 sm:mt-2 text-blue-200 text-xs sm:text-sm md:text-base px-2 sm:px-4 md:px-6 text-center font-medium leading-relaxed"

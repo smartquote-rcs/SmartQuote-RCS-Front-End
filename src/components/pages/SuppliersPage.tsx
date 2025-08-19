@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -63,8 +64,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
   }));
 
   // Não há mais categorias no schema atual
-  const categorias: string[] = ["Todas"];
-
+  
   const filteredFornecedores = fornecedores.filter((fornecedor) => {
     const matchesSearch = fornecedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.email.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.telefone.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "Todos" || fornecedor.status === statusFilter;
@@ -313,41 +313,61 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6 flex-shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-          <div>
-            <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-dark-primary flex items-center gap-2 sm:gap-3">
-              <Building className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-blue-400" />
+      {/* Header - Compacto no mobile */}
+      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-1 md:space-y-4 lg:space-y-0">
+          <div className="hidden md:block">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+              <Building className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               {t('suppliers.title')}
             </h1>
-            <p className="text-xs sm:text-sm lg:text-base text-dark-secondary mt-1 sm:mt-2">
+            <p className="text-sm sm:text-base text-dark-secondary mt-2">
               {t('suppliers.subtitle')}
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-3">
-            <div className="glass-card px-3 py-2 sm:px-4 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-sm sm:text-lg">{filteredFornecedores.length}</span>
-              <span className="text-blue-200 ml-1 sm:ml-2 text-xs sm:text-sm">fornecedores</span>
-            </div>
-            <button 
-              onClick={handleRefreshSuppliers}
-              disabled={isLoadingSuppliers}
-              className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-2 py-1 sm:px-4 sm:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm sm:text-base"
-              title="Atualizar lista de fornecedores"
-            >
-              <RefreshCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isLoadingSuppliers ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">{isLoadingSuppliers ? "Carregando..." : "Atualizar"}</span>
-            </button>
+          
+          {/* Header mobile compacto */}
+          <div className="md:hidden flex items-center justify-between">
+            <h1 className="text-lg font-bold text-dark-primary flex items-center gap-2">
+              <Building className="w-5 h-5 text-blue-400" />
+              Fornecedores
+            </h1>
+            <span className="text-blue-300 font-bold text-sm">
+              {filteredFornecedores.length}
+            </span>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
             {user?.role === 'admin' && (
               <button 
                 onClick={() => setIsEditModalOpen(true)}
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2 py-1 sm:px-6 sm:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-sm sm:text-base"
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-sm md:text-base"
               >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Plus className="w-4 h-4" />
                 <span>Novo Fornecedor</span>
               </button>
             )}
+            
+            {/* Botões extras - ocultos no mobile */}
+            <div className="hidden md:block glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
+              <span className="text-blue-300 font-bold text-lg">{filteredFornecedores.length}</span>
+              <span className="text-blue-200 ml-2">fornecedores</span>
+            </div>
+            
+            <button 
+              onClick={handleRefreshSuppliers}
+              disabled={isLoadingSuppliers}
+              className="hidden md:flex glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-4 md:py-3 rounded-xl font-medium items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm"
+              title="Atualizar lista de fornecedores"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoadingSuppliers ? "animate-spin" : ""}`} />
+              <span>{isLoadingSuppliers ? "Carregando..." : "Atualizar"}</span>
+            </button>
+            
+            <button className="hidden md:flex bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm">
+              <Download className="w-4 h-4" />
+              <span>Exportar Relatório</span>
+            </button>
       {/* Modal de novo fornecedor para admin */}
       {isEditModalOpen && user?.role === 'admin' && (
         <EditSupplierModal
@@ -375,10 +395,11 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-3 md:p-4 lg:p-8 bg-dark-bg">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-4 sm:mb-6 space-y-4 xl:space-y-0 flex-shrink-0">
-            <TabsList className="bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-xl p-1 overflow-x-auto">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 xl:space-y-0 flex-shrink-0">
+            {/* Tabs - ocultas no mobile */}
+            <TabsList className="hidden md:flex bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-xl p-1 overflow-x-auto">
               <TabsTrigger 
                 value="all" 
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
@@ -391,56 +412,60 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
               >
                 Ativos ({fornecedores.filter(f => f.status === 'active').length})
               </TabsTrigger>
-              <TabsTrigger 
-                value="top" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-yellow-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
-              >
-                {/* Top Rated removido pois rating não existe mais no schema */}
-              </TabsTrigger>
             </TabsList>
 
             {/* Filters */}
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-3 lg:space-y-0 lg:space-x-4">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center space-y-1 md:space-y-3 md:space-y-0 md:space-x-4">
               {/* Pesquisa - sempre visível */}
-              <div className="relative group">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-slate-400 group-hover:text-blue-400 transition-colors duration-200" />
+              <div className="relative group flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors duration-200" />
                 <Input
                   placeholder="Pesquisar fornecedores..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 sm:pl-10 w-full lg:w-80 bg-slate-800/50 border-slate-700/50 text-white placeholder-slate-400 focus:border-blue-400/50 focus:ring-blue-400/20 hover:border-slate-600/50 transition-all duration-200 text-sm"
+                  className="pl-10 w-full bg-slate-800/50 border-slate-700/50 text-white placeholder-slate-400 focus:border-blue-400/50 focus:ring-blue-400/20 hover:border-slate-600/50 transition-all duration-200 text-sm h-10 md:h-auto"
                 />
               </div>
               
               {/* Filtros - ocultos no mobile */}
-              <div className="hidden sm:flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-48 bg-slate-800/50 border-slate-700/50 text-white hover:border-slate-600/50 hover:bg-slate-700/50 transition-all duration-200 text-xs sm:text-sm">
-                    <SelectValue placeholder="Categoria" />
+              <div className="hidden md:flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-40 bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-400/50 focus:ring-blue-400/20">
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700 backdrop-blur-md">
-                    {categorias.map(cat => (
-                      <SelectItem 
-                        key={cat} 
-                        value={cat} 
-                        className="text-xs sm:text-sm text-white hover:bg-slate-700 focus:bg-slate-700"
-                      >
-                        {cat}
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="inactive">Inativo</SelectItem>
                   </SelectContent>
                 </Select>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-36 bg-slate-800/50 border-slate-700/50 text-white hover:border-slate-600/50 hover:bg-slate-700/50 transition-all duration-200 text-xs sm:text-sm">
-                    <SelectValue placeholder="Status" />
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-full sm:w-44 bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-400/50 focus:ring-blue-400/20">
+                    <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700 backdrop-blur-md">
-                    <SelectItem value="Todos" className="text-xs sm:text-sm text-white hover:bg-slate-700 focus:bg-slate-700">Todos</SelectItem>
-                    <SelectItem value="active" className="text-xs sm:text-sm text-white hover:bg-slate-700 focus:bg-slate-700">Ativo</SelectItem>
-                    <SelectItem value="inactive" className="text-xs sm:text-sm text-white hover:bg-slate-700 focus:bg-slate-700">Inativo</SelectItem>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    <SelectItem value="all">Todas as categorias</SelectItem>
+                    <SelectItem value="eletrônicos">Eletrônicos</SelectItem>
+                    <SelectItem value="materiais">Materiais</SelectItem>
+                    <SelectItem value="equipamentos">Equipamentos</SelectItem>
+                    <SelectItem value="serviços">Serviços</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('all');
+                    setCategoryFilter('all');
+                  }}
+                  className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200"
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  Limpar
+                </Button>
               </div>
             </div>
           </div>

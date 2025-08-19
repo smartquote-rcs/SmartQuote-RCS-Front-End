@@ -630,6 +630,113 @@ export const produtoService = {
   }
 }
 
+// Serviço de Dashboard - Estatísticas
+export const dashboardService = {
+  async getStats(): Promise<AuthResponse> {
+    try {
+      console.log('📤 Fazendo requisição para buscar estatísticas do dashboard (GET /dashboard/stats)...');
+      const response = await api.get('/dashboard/stats');
+      if (response.status === 200) {
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: 'Erro ao buscar estatísticas.' };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar estatísticas:', error);
+      let errorMessage = 'Erro ao buscar estatísticas.';
+      if (error.response) {
+        errorMessage = error.response.data?.error || error.response.data?.message || errorMessage;
+      } else if (error.request) {
+        errorMessage = 'Erro de conexão. Verifique sua internet.';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  },
+
+  async getQuoteStats(): Promise<AuthResponse> {
+    try {
+      console.log('📤 Fazendo requisição para buscar estatísticas de cotações (GET /cotacoes/stats)...');
+      const response = await api.get('/cotacoes/stats');
+      if (response.status === 200) {
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: 'Erro ao buscar estatísticas de cotações.' };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar estatísticas de cotações:', error);
+      // Fallback: tentar buscar todas as cotações e calcular estatísticas localmente
+      try {
+        const cotacoesResponse = await cotacaoService.getAll();
+        if (cotacoesResponse.success && cotacoesResponse.data) {
+          const cotacoes = Array.isArray(cotacoesResponse.data) ? cotacoesResponse.data : cotacoesResponse.data.data || [];
+          const stats = {
+            total: cotacoes.length,
+            approved: cotacoes.filter((c: any) => c.status === 'approved' || c.status === 'aprovada').length,
+            pending: cotacoes.filter((c: any) => c.status === 'pending' || c.status === 'pendente').length,
+            processing: cotacoes.filter((c: any) => c.status === 'processing' || c.status === 'processando').length,
+            rejected: cotacoes.filter((c: any) => c.status === 'rejected' || c.status === 'rejeitada').length
+          };
+          return { success: true, data: stats };
+        }
+      } catch (fallbackError) {
+        console.error('💥 Erro no fallback de estatísticas:', fallbackError);
+      }
+      
+      let errorMessage = 'Erro ao buscar estatísticas de cotações.';
+      if (error.response) {
+        errorMessage = error.response.data?.error || error.response.data?.message || errorMessage;
+      } else if (error.request) {
+        errorMessage = 'Erro de conexão. Verifique sua internet.';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  },
+
+  async getUserStats(): Promise<AuthResponse> {
+    try {
+      console.log('📤 Fazendo requisição para buscar estatísticas de usuários (GET /users/stats)...');
+      const response = await api.get('/users/stats');
+      if (response.status === 200) {
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: 'Erro ao buscar estatísticas de usuários.' };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar estatísticas de usuários:', error);
+      // Fallback: tentar buscar todos os usuários e calcular estatísticas localmente
+      try {
+        const usersResponse = await userService.getAll();
+        if (usersResponse.success && usersResponse.data) {
+          const users = Array.isArray(usersResponse.data) ? usersResponse.data : usersResponse.data.data || [];
+          const stats = {
+            total: users.length,
+            admin: users.filter((u: any) => u.role === 'admin' || u.position === 'admin').length,
+            manager: users.filter((u: any) => u.role === 'manager' || u.position === 'manager').length,
+            user: users.filter((u: any) => u.role === 'user' || u.position === 'user' || (!u.role && !u.position)).length
+          };
+          return { success: true, data: stats };
+        }
+      } catch (fallbackError) {
+        console.error('💥 Erro no fallback de estatísticas de usuários:', fallbackError);
+      }
+      
+      let errorMessage = 'Erro ao buscar estatísticas de usuários.';
+      if (error.response) {
+        errorMessage = error.response.data?.error || error.response.data?.message || errorMessage;
+      } else if (error.request) {
+        errorMessage = 'Erro de conexão. Verifique sua internet.';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  }
+};
+
 // Serviço de Fornecedores
 export const supplierService = {
   async getAll(): Promise<AuthResponse> {

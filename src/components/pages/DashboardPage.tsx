@@ -1,4 +1,4 @@
-import { Mail, Users, Clock, Download, TrendingUp, Bell } from "lucide-react";
+import { Mail, Users, Clock, Download, TrendingUp, Bell, Shield, RefreshCw } from "lucide-react";
 import { QuoteProcessingChart } from "../QuoteProcessingChart";
 import { SupplierPerformanceChart } from "../SupplierPerformanceChart";
 import { RecentQuotes } from "../RecentQuotes";
@@ -7,50 +7,51 @@ import { useTranslation } from 'react-i18next';
 import { EmailStatus } from "../EmailStatus";
 import { EmailNotifications } from "../EmailNotifications";
 
+interface Metric {
+  title: string;
+  value: string;
+  change: string;
+  period: string;
+  icon: any;
+  iconColor: string;
+  isPositive: boolean;
+  isLoading?: boolean;
+  isError?: boolean;
+}
+
 interface DashboardPageProps {
   onNavigateToNotifications?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToQuotes?: () => void;
+  onRefreshStats?: () => void;
+  dashboardStats?: {
+    quotes: {
+      total: number;
+      approved: number;
+      pending: number;
+      processing: number;
+      rejected: number;
+    };
+    suppliers: {
+      total: number;
+      active: number;
+      inactive: number;
+    };
+    products: {
+      total: number;
+      inStock: number;
+      outOfStock: number;
+    };
+    users: {
+      total: number;
+      admin: number;
+      manager: number;
+      user: number;
+    };
+  } | null;
+  isLoadingStats?: boolean;
+  statsError?: string | null;
 }
-
-const metrics = [
-  {
-    title: "Solicitações de Cotação",
-    value: "147",
-    change: "+12",
-    period: "este mês",
-    icon: Mail,
-    iconColor: "text-blue-400",
-    isPositive: true
-  },
-  {
-    title: "Fornecedores Ativos", 
-    value: "342",
-    change: "+8",
-    period: "este mês",
-    icon: Users,
-    iconColor: "text-green-400",
-    isPositive: true
-  },
-  {
-    title: "Aprovações Pendentes",
-    value: "23",
-    change: "-5",
-    period: "vs ontem",
-    icon: Clock,
-    iconColor: "text-orange-400",
-    isPositive: true
-  },
-  {
-    title: "Tempo Médio Processamento",
-    value: "2.4h",
-    change: "-0.8h",
-    period: "vs semana passada",
-    icon: TrendingUp,
-    iconColor: "text-purple-400",
-    isPositive: true
-  },
-];
 
 const systemAlerts = [
   {
@@ -70,10 +71,194 @@ const systemAlerts = [
   }
 ];
 
-export function DashboardPage({ onNavigateToNotifications, onNavigateToSettings, onNavigateToQuotes }: DashboardPageProps = {}) {
+export function DashboardPage({
+  onNavigateToNotifications, 
+  onNavigateToSettings, 
+  onNavigateToQuotes,
+  onRefreshStats,
+  dashboardStats,
+  isLoadingStats = false,
+  statsError = null
+}: DashboardPageProps = {}) {
   const { t } = useTranslation();
   // Simular notificações não lidas (em um app real, viria de um contexto ou API)
   const unreadNotifications = 3;
+
+  // Função para gerar métricas dinâmicas
+  const generateDynamicMetrics = (): Metric[] => {
+    if (isLoadingStats) {
+      return [
+        {
+          title: "Solicitações de Cotação",
+          value: "...",
+          change: "...",
+          period: "carregando",
+          icon: Mail,
+          iconColor: "text-blue-400",
+          isPositive: true,
+          isLoading: true
+        },
+        {
+          title: "Fornecedores Ativos",
+          value: "...",
+          change: "...",
+          period: "carregando",
+          icon: Users,
+          iconColor: "text-green-400",
+          isPositive: true,
+          isLoading: true
+        },
+        {
+          title: "Aprovações Pendentes",
+          value: "...",
+          change: "...",
+          period: "carregando",
+          icon: Clock,
+          iconColor: "text-orange-400",
+          isPositive: true,
+          isLoading: true
+        },
+        {
+          title: "Total de Produtos",
+          value: "...",
+          change: "...",
+          period: "carregando",
+          icon: TrendingUp,
+          iconColor: "text-purple-400",
+          isPositive: true,
+          isLoading: true
+        }
+      ];
+    }
+
+    if (statsError) {
+      return [
+        {
+          title: "Solicitações de Cotação",
+          value: "Erro",
+          change: "N/A",
+          period: "erro de conexão",
+          icon: Mail,
+          iconColor: "text-red-400",
+          isPositive: false,
+          isError: true
+        },
+        {
+          title: "Fornecedores Ativos",
+          value: "Erro",
+          change: "N/A",
+          period: "erro de conexão",
+          icon: Users,
+          iconColor: "text-red-400",
+          isPositive: false,
+          isError: true
+        },
+        {
+          title: "Total de Usuários",
+          value: "Erro",
+          change: "N/A",
+          period: "erro de conexão",
+          icon: Shield,
+          iconColor: "text-red-400",
+          isPositive: false,
+          isError: true
+        },
+        {
+          title: "Total de Produtos",
+          value: "Erro",
+          change: "N/A",
+          period: "erro de conexão",
+          icon: TrendingUp,
+          iconColor: "text-red-400",
+          isPositive: false,
+          isError: true
+        }
+      ];
+    }
+
+    if (dashboardStats) {
+      return [
+        {
+          title: "Solicitações de Cotação",
+          value: dashboardStats.quotes.total.toString(),
+          change: `+${dashboardStats.quotes.approved}`,
+          period: "aprovadas",
+          icon: Mail,
+          iconColor: "text-blue-400",
+          isPositive: true
+        },
+        {
+          title: "Fornecedores Ativos",
+          value: dashboardStats.suppliers.total.toString(),
+          change: `${dashboardStats.suppliers.active}`,
+          period: "ativos",
+          icon: Users,
+          iconColor: "text-green-400",
+          isPositive: true
+        },
+        {
+          title: "Total de Usuários",
+          value: dashboardStats.users.total.toString(),
+          change: `${dashboardStats.users.admin + dashboardStats.users.manager}`,
+          period: "admin/manager",
+          icon: Shield,
+          iconColor: "text-purple-400",
+          isPositive: true
+        },
+        {
+          title: "Total de Produtos",
+          value: dashboardStats.products.total.toString(),
+          change: `${dashboardStats.products.inStock}`,
+          period: "em estoque",
+          icon: TrendingUp,
+          iconColor: "text-purple-400",
+          isPositive: true
+        }
+      ];
+    }
+
+    // Fallback para dados estáticos quando não há dados da API
+    return [
+      {
+        title: "Solicitações de Cotação",
+        value: "---",
+        change: "---",
+        period: "carregando...",
+        icon: Mail,
+        iconColor: "text-blue-400",
+        isPositive: true
+      },
+      {
+        title: "Fornecedores Ativos", 
+        value: "---",
+        change: "---",
+        period: "carregando...",
+        icon: Users,
+        iconColor: "text-green-400",
+        isPositive: true
+      },
+      {
+        title: "Total de Usuários",
+        value: "---",
+        change: "---",
+        period: "carregando...",
+        icon: Shield,
+        iconColor: "text-purple-400",
+        isPositive: true
+      },
+      {
+        title: "Total de Produtos",
+        value: "---",
+        change: "---",
+        period: "carregando...",
+        icon: TrendingUp,
+        iconColor: "text-purple-400",
+        isPositive: true
+      }
+    ];
+  };
+
+  const dynamicMetrics = generateDynamicMetrics();
 
   return (
     <div className="flex flex-col h-full max-w-full overflow-hidden">
@@ -101,6 +286,18 @@ export function DashboardPage({ onNavigateToNotifications, onNavigateToSettings,
                 )}
               </button>
             )}
+            {onRefreshStats && (
+              <button 
+                onClick={onRefreshStats}
+                disabled={isLoadingStats}
+                className="bg-green-600/20 hover:bg-green-600/30 disabled:bg-gray-600/20 text-green-400 disabled:text-gray-400 px-3 py-2 sm:px-4 rounded-lg border border-green-500/30 disabled:border-gray-500/30 transition-colors duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm disabled:cursor-not-allowed"
+                title={isLoadingStats ? "Atualizando..." : "Atualizar Estatísticas"}
+              >
+                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoadingStats ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{isLoadingStats ? 'Atualizando...' : 'Atualizar'}</span>
+                <span className="sm:hidden">{isLoadingStats ? '...' : 'Atualizar'}</span>
+              </button>
+            )}
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 sm:px-4 rounded-lg border border-blue-500 transition-colors duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Download className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Exportar Relatório</span>
@@ -113,7 +310,7 @@ export function DashboardPage({ onNavigateToNotifications, onNavigateToSettings,
       <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-6 xl:p-8 bg-dark-bg overflow-y-auto">
         {/* Top-level Metrics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-          {metrics.map((metric) => {
+          {dynamicMetrics.map((metric: Metric) => {
             const Icon = metric.icon;
             
             return (

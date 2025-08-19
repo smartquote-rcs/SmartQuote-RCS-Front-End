@@ -90,42 +90,32 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
   // Usar os produtos reais do backend para os cards, não apenas o objeto de display
   const displayProducts = products;
 
-  // Extrair categorias únicas dos produtos reais
-  const categorias = ["Todas", ...Array.from(new Set(products.map(p => `Categoria ${p.categoriaId}`)))];
+  // Extrair categorias únicas dos produtos reais (usando modelo como categoria temporariamente)
+  const categorias = ["Todas", ...Array.from(new Set(products.map(p => p.modelo || "Sem Categoria").filter(Boolean)))];
   
   // Para fornecedores, vamos usar uma lista simples por enquanto (pode ser expandida depois)
   const fornecedores = ["Todos"];
 
-  const getDisponibilidadeBadge = (disponibilidade: string) => {
-    switch (disponibilidade) {
-      case "Em stock":
-        return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Em Stock</Badge>;
-      case "Sob consulta":
-        return <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Sob Consulta</Badge>;
-      case "Limitado":
-        return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Limitado</Badge>;
-      case "Indisponível":
-        return <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Indisponível</Badge>;
-      default:
-        return <Badge className="bg-gradient-to-r from-gray-500 to-gray-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">{disponibilidade}</Badge>;
+  const getDisponibilidadeBadge = (estoque: number) => {
+    if (estoque > 10) {
+      return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Em Stock</Badge>;
+    } else if (estoque > 0) {
+      return <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Limitado</Badge>;
+    } else {
+      return <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Indisponível</Badge>;
     }
   };
 
   const filteredProducts = displayProducts.filter((produto) => {
     const matchesSearch = produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (produto.categoria?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      (produto.fornecedor?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-    const matchesCategory = categoryFilter === "Todas" || produto.categoria === categoryFilter;
-    const matchesFornecedor = fornecedorFilter === "Todos" || produto.fornecedor === fornecedorFilter;
+      (produto.modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (produto.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+    const matchesCategory = categoryFilter === "Todas" || produto.modelo === categoryFilter;
+    const matchesFornecedor = fornecedorFilter === "Todos" || produto.fornecedorId?.toString() === fornecedorFilter;
     
     let matchesPrice = true;
     if (priceRange !== "all") {
-      let price = 0;
-      if (typeof produto.preco === 'string') {
-        price = parseFloat((produto.preco as string).replace(/[€,]/g, ''));
-      } else if (typeof produto.preco === 'number') {
-        price = produto.preco;
-      }
+      const price = produto.preco || 0;
       switch (priceRange) {
         case "0-500":
           matchesPrice = price <= 500;
@@ -152,7 +142,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
       {/* Image */}
       <div className={`relative ${viewMode === "list" ? "w-full lg:w-32 h-48 lg:h-24" : "w-full h-48"} bg-gray-800 rounded-xl overflow-hidden mb-4 ${viewMode === "list" ? "lg:mb-0" : ""} group`}>
         <img 
-          src={produto.imagem || "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop"} 
+          src="https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop"
           alt={produto.nome}
           className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
         />
@@ -171,11 +161,11 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
             <h3 className={`font-bold text-dark-primary hover:text-cyan-400 transition-colors duration-300 ${viewMode === "list" ? "text-lg" : "text-base"} leading-tight line-clamp-2`}>
               {produto.nome}
             </h3>
-            {getDisponibilidadeBadge(produto.disponibilidade)}
+            {getDisponibilidadeBadge(produto.estoque)}
           </div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-blue-300 font-medium truncate mr-2">Categoria {produto.categoriaId}</p>
-            <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[120px]">{produto.fornecedor || "Fornecedor"}</span>
+            <p className="text-sm text-blue-300 font-medium truncate mr-2">{produto.modelo || "Sem Categoria"}</p>
+            <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[120px]">Fornecedor {produto.fornecedorId || "N/A"}</span>
           </div>
         </div>
 
@@ -193,7 +183,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
               </div>
               <p className="text-xs text-dark-secondary mt-1 flex items-center">
                 <span className="w-2 h-2 bg-green-400 rounded-full mr-2 flex-shrink-0"></span>
-                <span className="truncate">{produto.prazoEntrega || "3-5 dias úteis"}</span>
+                <span className="truncate">3-5 dias úteis</span>
               </p>
             </div>
           </div>
@@ -250,39 +240,56 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-          <div>
+      {/* Header - Compacto no mobile */}
+      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-1 md:space-y-4 lg:space-y-0">
+          <div className="hidden md:block">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <Search className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               {t('productSearch.title')}
             </h1>
             <p className="text-sm sm:text-base text-dark-secondary mt-2">{t('productSearch.subtitle')}</p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+          
+          {/* Header mobile compacto */}
+          <div className="md:hidden flex items-center justify-between">
+            <h1 className="text-lg font-bold text-dark-primary flex items-center gap-2">
+              <Search className="w-5 h-5 text-blue-400" />
+              Produtos
+            </h1>
+            <span className="text-blue-300 font-bold text-sm">
+              {displayProducts.length}
+            </span>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
             <button
               onClick={() => onNavigateToNewProduct?.()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 sm:px-4 sm:py-2 rounded-lg font-medium flex items-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 text-sm md:text-base"
             >
               <Plus className="w-4 h-4" />
               <span>Novo Produto</span>
             </button>
+            
+            {/* Botões extras - ocultos no mobile */}
             <button
               onClick={handleRefreshProducts}
               disabled={isLoadingProducts}
-              className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-2 py-1 sm:px-4 sm:py-2 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm"
+              className="hidden md:flex glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-4 md:py-2 rounded-xl font-medium items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm"
             >
               <RefreshCw className={`w-4 h-4 ${isLoadingProducts ? 'animate-spin' : ''}`} />
               <span>{isLoadingProducts ? 'Carregando...' : 'Atualizar'}</span>
             </button>
-            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
+            
+            {/* Card de info - oculto no mobile */}
+            <div className="hidden md:block glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
               <span className="text-blue-300 font-bold text-lg">{displayProducts.length}</span>
               <span className="text-blue-200 ml-2">produtos</span>
             </div>
+            
             <button
               onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-2 py-1 sm:px-4 sm:py-2 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg"
+              className="hidden md:flex glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-4 md:py-2 rounded-xl font-medium items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg"
             >
               {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
               <span>{viewMode === "grid" ? "Lista" : "Grade"}</span>
@@ -291,7 +298,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-3 md:p-4 lg:p-8 bg-dark-bg">
         {isLoadingProducts ? (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
@@ -299,8 +306,9 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
           </div>
         ) : (
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0 flex-shrink-0">
-            <TabsList className="glass-card bg-white/5 border border-white/20 rounded-xl p-1">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
+            {/* Tabs - ocultas no mobile */}
+            <TabsList className="hidden md:flex glass-card bg-white/5 border border-white/20 rounded-xl p-1">
               <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300">
                 Todos os Produtos ({displayProducts.length})
               </TabsTrigger>
@@ -308,20 +316,20 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
             </TabsList>
 
             {/* Search and Filters */}
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-3 lg:space-y-0 lg:space-x-4">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-1 md:space-y-3 lg:space-y-0 lg:space-x-4">
               {/* Pesquisa - sempre visível */}
-              <div className="relative group">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
+              <div className="relative group flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
                 <Input
                   placeholder="Pesquisar produtos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-11 w-full lg:w-64 bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400"
+                  className="pl-10 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:border-blue-400/50 focus:ring-blue-400/20 hover:border-slate-500/50 transition-all duration-200 h-10 md:h-auto"
                 />
               </div>
               
               {/* Filtros - ocultos no mobile */}
-              <div className="hidden sm:flex flex-col lg:flex-row space-y-2 lg:space-y-0 lg:space-x-2">
+              <div className="hidden md:flex flex-col lg:flex-row space-y-2 lg:space-y-0 lg:space-x-2">
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="w-full lg:w-40 glass-card border-white/20 text-dark-primary text-sm">
                     <SelectValue placeholder="Categoria" />

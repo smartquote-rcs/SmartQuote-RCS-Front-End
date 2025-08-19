@@ -31,7 +31,7 @@ import { ProductSearchPage } from "./pages/ProductSearchPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { useApp } from "../contexts/AppContext";
-import { produtoService, supplierService } from "../api/services";
+import { produtoService, supplierService, dashboardService } from "../api/services";
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 
@@ -104,6 +104,35 @@ export function AdminDashboard({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
+
+  // Estado para estatísticas da API
+  const [dashboardStats, setDashboardStats] = useState<{
+    quotes: {
+      total: number;
+      approved: number;
+      pending: number;
+      processing: number;
+      rejected: number;
+    };
+    suppliers: {
+      total: number;
+      active: number;
+      inactive: number;
+    };
+    products: {
+      total: number;
+      inStock: number;
+      outOfStock: number;
+    };
+    users: {
+      total: number;
+      admin: number;
+      manager: number;
+      user: number;
+    };
+  } | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   // Estado para lista de fornecedores
   const [fornecedores, setFornecedores] = useState<any[]>([]);
@@ -320,16 +349,21 @@ export function AdminDashboard({
     
     try {
       // Mapear os campos do formulário para o payload esperado pelo produtoService.create
+      const currentDate = new Date().toISOString();
       const productData = {
         nome: newProduct.nome,
         descricao: typeof newProduct.descricao === 'string' ? newProduct.descricao : '',
         preco: newProduct.preco,
-        quantidade: newProduct.estoque,
-        categoriaId: 1,
-        cadastradoPor: newProduct.cadastrado_por,
-        atualizadoPor: newProduct.atualizado_por,
-        ativo: true,
-        fornecedorId: Number(newProduct.fornecedorId)
+        unidade: newProduct.unidade || 'unidade',
+        estoque: newProduct.estoque,
+        fornecedorId: Number(newProduct.fornecedorId),
+        codigo: newProduct.codigo || '',
+        modelo: newProduct.modelo || '',
+        origem: newProduct.origem || '',
+        cadastrado_por: newProduct.cadastrado_por,
+        cadastrado_em: currentDate,
+        atualizado_por: newProduct.atualizado_por,
+        atualizado_em: currentDate
       };
       const { success, error } = await produtoService.create(productData);
       if (!success) {
@@ -447,6 +481,218 @@ export function AdminDashboard({
   // Usar o contexto da aplicação
   const { addQuote, quotes: allQuotes, addSupplier } = useApp();
 
+  // Função para atualizar estatísticas manualmente
+  const refreshStats = async () => {
+    setIsLoadingStats(true);
+    setStatsError(null);
+    
+    try {
+      // Tentar buscar estatísticas específicas do dashboard
+      const statsResponse = await dashboardService.getStats();
+      if (statsResponse.success) {
+        setDashboardStats(statsResponse.data);
+      } else {
+        // Fallback: buscar dados individuais e compor estatísticas
+        const [quoteStatsResponse, suppliersResponse, productsResponse, userStatsResponse] = await Promise.allSettled([
+          dashboardService.getQuoteStats(),
+          supplierService.getAll(),
+          produtoService.getAll ? produtoService.getAll() : Promise.resolve({ success: false }),
+          dashboardService.getUserStats()
+        ]);
+
+        // Processar dados das cotações
+        let quotesStats = {
+          total: allQuotes.length,
+          approved: allQuotes.filter(q => q.status === 'approved').length,
+          pending: allQuotes.filter(q => q.status === 'pending').length,
+          processing: allQuotes.filter(q => q.status === 'processing').length,
+          rejected: allQuotes.filter(q => q.status === 'rejected').length,
+        };
+
+        if (quoteStatsResponse.status === 'fulfilled' && quoteStatsResponse.value.success) {
+          quotesStats = {
+            total: quoteStatsResponse.value.data.total || quotesStats.total,
+            approved: quoteStatsResponse.value.data.approved || quotesStats.approved,
+            pending: quoteStatsResponse.value.data.pending || quotesStats.pending,
+            processing: quoteStatsResponse.value.data.processing || quotesStats.processing,
+            rejected: quoteStatsResponse.value.data.rejected || quotesStats.rejected,
+          };
+        }
+
+        // Processar dados dos fornecedores
+        let suppliersCount = fornecedores.length;
+        if (suppliersResponse.status === 'fulfilled' && suppliersResponse.value.success) {
+          const suppliersData = Array.isArray(suppliersResponse.value.data) 
+            ? suppliersResponse.value.data 
+            : suppliersResponse.value.data?.data || [];
+          suppliersCount = suppliersData.length;
+        }
+
+        // Processar dados dos produtos
+        let productsCount = 0;
+        if (productsResponse.status === 'fulfilled' && productsResponse.value.success) {
+          const productsValue = productsResponse.value as any;
+          const productsData = Array.isArray(productsValue.data) 
+            ? productsValue.data 
+            : productsValue.data?.data || [];
+          productsCount = productsData.length;
+        }
+
+        // Processar dados dos usuários
+        let usersStats = { total: 0, admin: 0, manager: 0, user: 0 };
+        if (userStatsResponse.status === 'fulfilled' && userStatsResponse.value.success) {
+          usersStats = {
+            total: userStatsResponse.value.data.total || 0,
+            admin: userStatsResponse.value.data.admin || 0,
+            manager: userStatsResponse.value.data.manager || 0,
+            user: userStatsResponse.value.data.user || 0,
+          };
+        }
+
+        setDashboardStats({
+          quotes: quotesStats,
+          suppliers: { 
+            total: suppliersCount, 
+            active: suppliersCount,
+            inactive: 0 
+          },
+          products: { 
+            total: productsCount, 
+            inStock: productsCount,
+            outOfStock: 0 
+          },
+          users: usersStats
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar estatísticas:', error);
+      setStatsError('Erro ao atualizar estatísticas');
+      // Fallback final: usar dados locais disponíveis
+      setDashboardStats({
+        quotes: {
+          total: allQuotes.length,
+          approved: allQuotes.filter(q => q.status === 'approved').length,
+          pending: allQuotes.filter(q => q.status === 'pending').length,
+          processing: allQuotes.filter(q => q.status === 'processing').length,
+          rejected: allQuotes.filter(q => q.status === 'rejected').length,
+        },
+        suppliers: { total: fornecedores.length, active: fornecedores.length, inactive: 0 },
+        products: { total: 0, inStock: 0, outOfStock: 0 },
+        users: { total: 0, admin: 0, manager: 0, user: 0 }
+      });
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  // Buscar estatísticas da API
+  useEffect(() => {
+    async function fetchDashboardStats() {
+      setIsLoadingStats(true);
+      setStatsError(null);
+      
+      try {
+        // Tentar buscar estatísticas específicas do dashboard
+        const statsResponse = await dashboardService.getStats();
+        if (statsResponse.success) {
+          setDashboardStats(statsResponse.data);
+        } else {
+          // Fallback: buscar dados individuais e compor estatísticas
+          const [quoteStatsResponse, suppliersResponse, productsResponse, userStatsResponse] = await Promise.allSettled([
+            dashboardService.getQuoteStats(),
+            supplierService.getAll(),
+            produtoService.getAll ? produtoService.getAll() : Promise.resolve({ success: false }),
+            dashboardService.getUserStats()
+          ]);
+
+          // Processar dados das cotações
+          let quotesStats = {
+            total: allQuotes.length,
+            approved: allQuotes.filter(q => q.status === 'approved').length,
+            pending: allQuotes.filter(q => q.status === 'pending').length,
+            processing: allQuotes.filter(q => q.status === 'processing').length,
+            rejected: allQuotes.filter(q => q.status === 'rejected').length,
+          };
+
+          if (quoteStatsResponse.status === 'fulfilled' && quoteStatsResponse.value.success) {
+            quotesStats = {
+              total: quoteStatsResponse.value.data.total || quotesStats.total,
+              approved: quoteStatsResponse.value.data.approved || quotesStats.approved,
+              pending: quoteStatsResponse.value.data.pending || quotesStats.pending,
+              processing: quoteStatsResponse.value.data.processing || quotesStats.processing,
+              rejected: quoteStatsResponse.value.data.rejected || quotesStats.rejected,
+            };
+          }
+
+          // Processar dados dos fornecedores
+          let suppliersCount = fornecedores.length;
+          if (suppliersResponse.status === 'fulfilled' && suppliersResponse.value.success) {
+            const suppliersData = Array.isArray(suppliersResponse.value.data) 
+              ? suppliersResponse.value.data 
+              : suppliersResponse.value.data?.data || [];
+            suppliersCount = suppliersData.length;
+          }
+
+          // Processar dados dos produtos
+          let productsCount = 0;
+          if (productsResponse.status === 'fulfilled' && productsResponse.value.success) {
+            const productsValue = productsResponse.value as any; // Type assertion para contornar tipo limitado
+            const productsData = Array.isArray(productsValue.data) 
+              ? productsValue.data 
+              : productsValue.data?.data || [];
+            productsCount = productsData.length;
+          }
+
+          // Processar dados dos usuários
+          let usersStats = { total: 0, admin: 0, manager: 0, user: 0 };
+          if (userStatsResponse.status === 'fulfilled' && userStatsResponse.value.success) {
+            usersStats = {
+              total: userStatsResponse.value.data.total || 0,
+              admin: userStatsResponse.value.data.admin || 0,
+              manager: userStatsResponse.value.data.manager || 0,
+              user: userStatsResponse.value.data.user || 0,
+            };
+          }
+
+          setDashboardStats({
+            quotes: quotesStats,
+            suppliers: { 
+              total: suppliersCount, 
+              active: suppliersCount, // Assumir todos ativos por padrão
+              inactive: 0 
+            },
+            products: { 
+              total: productsCount, 
+              inStock: productsCount, // Assumir todos em stock por padrão
+              outOfStock: 0 
+            },
+            users: usersStats
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar estatísticas:', error);
+        setStatsError('Erro ao carregar estatísticas');
+        // Fallback final: usar dados locais disponíveis
+        setDashboardStats({
+          quotes: {
+            total: allQuotes.length,
+            approved: allQuotes.filter(q => q.status === 'approved').length,
+            pending: allQuotes.filter(q => q.status === 'pending').length,
+            processing: allQuotes.filter(q => q.status === 'processing').length,
+            rejected: allQuotes.filter(q => q.status === 'rejected').length,
+          },
+          suppliers: { total: fornecedores.length, active: fornecedores.length, inactive: 0 },
+          products: { total: 0, inStock: 0, outOfStock: 0 },
+          users: { total: 0, admin: 0, manager: 0, user: 0 }
+        });
+      } finally {
+        setIsLoadingStats(false);
+      }
+    }
+
+    fetchDashboardStats();
+  }, [fornecedores, allQuotes]); // Recarregar quando fornecedores ou cotações mudarem
+
   // Registrar função de toast no contexto - DESABILITADO para evitar toasts automáticos
   /*
   useEffect(() => {
@@ -489,6 +735,10 @@ export function AdminDashboard({
             onNavigateToNotifications={() => setActivePage("notifications")}
             onNavigateToSettings={() => setActivePage("settings")}
             onNavigateToQuotes={() => setActivePage("quotes")}
+            onRefreshStats={refreshStats}
+            dashboardStats={dashboardStats}
+            isLoadingStats={isLoadingStats}
+            statsError={statsError}
           />
         );
       case "quotes":
@@ -705,55 +955,235 @@ export function AdminDashboard({
                 </div>
               </div>
 
+              {/* Header das Estatísticas com botão de atualizar */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <BarChart3 className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Estatísticas em Tempo Real</h2>
+                    <p className="text-xs text-slate-300">Dados atualizados da API</p>
+                  </div>
+                </div>
+                <button
+                  onClick={refreshStats}
+                  disabled={isLoadingStats}
+                  className="flex items-center space-x-2 px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 rounded-lg transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoadingStats ? 'animate-spin' : ''}`} />
+                  <span>{isLoadingStats ? 'Atualizando...' : 'Atualizar'}</span>
+                </button>
+              </div>
+
               {/* Estatísticas Rápidas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="glass-card p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center">
-                      <Check className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-green-400">{allQuotes.filter(q => q.status === 'approved').length}</h3>
-                      <p className="text-xs text-dark-secondary">{t('status.approved')}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="glass-card p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-yellow-600 flex items-center justify-center">
-                      <RefreshCw className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-yellow-400">{allQuotes.filter(q => q.status === 'pending').length}</h3>
-                      <p className="text-xs text-dark-secondary">{t('status.pending')}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="glass-card p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-                      <Activity className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-blue-400">{allQuotes.filter(q => q.status === 'processing').length}</h3>
-                      <p className="text-xs text-dark-secondary">{t('status.processing')}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+                {/* Loading State */}
+                {isLoadingStats ? (
+                  <>
+                    {[...Array(6)].map((_, index) => (
+                      <div key={index} className="glass-card p-4 bg-slate-500/10 rounded-xl border border-slate-500/20">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-xl bg-slate-600 flex items-center justify-center animate-pulse">
+                            <div className="w-5 h-5 bg-slate-400 rounded"></div>
+                          </div>
+                          <div>
+                            <div className="h-6 w-8 bg-slate-600 animate-pulse rounded mb-1"></div>
+                            <div className="h-3 w-16 bg-slate-600 animate-pulse rounded"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                ) : statsError ? (
+                  /* Error State */
+                  <div className="col-span-full glass-card p-4 bg-red-500/10 rounded-xl border border-red-500/20">
+                    <div className="flex items-center space-x-3 text-red-400">
+                      <X className="w-5 h-5" />
+                      <span className="text-sm">{statsError} - Usando dados locais</span>
                     </div>
                   </div>
-                </div>
-                
-                <div className="glass-card p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-white" />
+                ) : dashboardStats ? (
+                  /* Stats Cards com dados da API */
+                  <>
+                    {/* Cotações Aprovadas */}
+                    <div className="glass-card p-4 bg-green-500/10 rounded-xl border border-green-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center">
+                          <Check className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-green-400">
+                            {dashboardStats.quotes.approved}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">{t('status.approved')}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-purple-400">{allQuotes.length}</h3>
-                      <p className="text-xs text-dark-secondary">{t('dashboard.total')}</p>
+                    
+                    {/* Cotações Pendentes */}
+                    <div className="glass-card p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-yellow-600 flex items-center justify-center">
+                          <RefreshCw className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-yellow-400">
+                            {dashboardStats.quotes.pending}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">{t('status.pending')}</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                    
+                    {/* Cotações Processando */}
+                    <div className="glass-card p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+                          <Activity className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-blue-400">
+                            {dashboardStats.quotes.processing}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">{t('status.processing')}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Total de Cotações */}
+                    <div className="glass-card p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-purple-400">
+                            {dashboardStats.quotes.total}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">{t('dashboard.total')}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Fornecedores */}
+                    <div className="glass-card p-4 bg-orange-500/10 rounded-xl border border-orange-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center">
+                          <Users className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-orange-400">
+                            {dashboardStats.suppliers.total}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">Fornecedores</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Produtos */}
+                    <div className="glass-card p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-cyan-600 flex items-center justify-center">
+                          <Database className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-cyan-400">
+                            {dashboardStats.products.total}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">Produtos</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* Fallback para dados locais */
+                  <>
+                    <div className="glass-card p-4 bg-green-500/10 rounded-xl border border-green-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center">
+                          <Check className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-green-400">
+                            {allQuotes.filter(q => q.status === 'approved').length}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">{t('status.approved')}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="glass-card p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-yellow-600 flex items-center justify-center">
+                          <RefreshCw className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-yellow-400">
+                            {allQuotes.filter(q => q.status === 'pending').length}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">{t('status.pending')}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="glass-card p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+                          <Activity className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-blue-400">
+                            {allQuotes.filter(q => q.status === 'processing').length}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">{t('status.processing')}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="glass-card p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-purple-400">
+                            {allQuotes.length}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">{t('dashboard.total')}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="glass-card p-4 bg-orange-500/10 rounded-xl border border-orange-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center">
+                          <Users className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-orange-400">
+                            {fornecedores.length}
+                          </h3>
+                          <p className="text-xs text-dark-secondary">Fornecedores</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="glass-card p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-cyan-600 flex items-center justify-center">
+                          <Database className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-cyan-400">
+                            0
+                          </h3>
+                          <p className="text-xs text-dark-secondary">Produtos</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Lista de Cotações Criadas */}
@@ -1331,7 +1761,7 @@ export function AdminDashboard({
       case "product-search":
         return <ProductSearchPage onNavigateToNewProduct={navigateToNewProduct} />;
       case "suppliers":
-        return <SuppliersPage onNewSupplier={navigateToNewSupplier} user={user} />;
+        return <SuppliersPage user={user} />;
       case "notifications":
         return <NotificationsPage />;
       case "logs":

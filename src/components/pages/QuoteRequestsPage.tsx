@@ -780,10 +780,10 @@ export function QuoteRequestsPage({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-          <div>
+      {/* Header - Compacto no mobile */}
+      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-1 md:space-y-4 lg:space-y-0">
+          <div className="hidden md:block">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               {t("quoteRequests.title")}
@@ -804,11 +804,23 @@ export function QuoteRequestsPage({
               )}
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+          
+          {/* Header mobile compacto */}
+          <div className="md:hidden flex items-center justify-between">
+            <h1 className="text-lg font-bold text-dark-primary flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-400" />
+              Cotações
+            </h1>
+            <span className="text-blue-300 font-bold text-sm">
+              {filteredCotacoes.length}
+            </span>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
             {onNavigateToNewQuote ? (
               <Button
                 onClick={onNavigateToNewQuote}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 sm:px-4 sm:py-2 rounded-lg font-medium flex items-center space-x-2 transition-all duration-300"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 text-sm md:text-base"
               >
                 <Plus className="w-4 h-4" />
                 <span>Nova Cotação</span>
@@ -816,7 +828,7 @@ export function QuoteRequestsPage({
             ) : (
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 sm:px-4 sm:py-2 rounded-lg font-medium flex items-center space-x-2">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium flex items-center justify-center space-x-2 text-sm md:text-base">
                     <Plus className="w-4 h-4" />
                     <span>Nova Cotação</span>
                   </Button>
@@ -1011,7 +1023,8 @@ export function QuoteRequestsPage({
                 </DialogContent>
               </Dialog>
             )}
-            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
+            {/* Card de info - oculto no mobile */}
+            <div className="hidden md:block glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
               <span className="text-blue-300 font-bold text-lg">
                 {filteredCotacoes.length}
               </span>
@@ -1026,10 +1039,11 @@ export function QuoteRequestsPage({
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-3 md:p-4 lg:p-8 bg-dark-bg">
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0 flex-shrink-0">
-            <TabsList className="bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-xl p-1 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
+            {/* Tabs - ocultas no mobile */}
+            <TabsList className="hidden md:flex bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-xl p-1 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
               <TabsTrigger
                 value="all"
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
@@ -1076,9 +1090,9 @@ export function QuoteRequestsPage({
             </TabsList>
 
             {/* Filtros Melhorados */}
-            <div className="flex flex-col space-y-4">
+            <div className="flex flex-col space-y-1 md:space-y-4">
               {/* Linha Principal de Filtros */}
-              <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-3 lg:space-y-0 lg:space-x-4">
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-1 md:space-y-3 lg:space-y-0 lg:space-x-4">
                 {/* Pesquisa - sempre visível */}
                 <div className="relative group flex-1 min-w-0">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
@@ -1086,12 +1100,12 @@ export function QuoteRequestsPage({
                     placeholder="Pesquisar por cliente, produto, ID ou fornecedor..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400"
+                    className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 md:h-auto"
                   />
                 </div>
 
-                {/* Filtros Básicos - responsivos */}
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                {/* Filtros Básicos - ocultos no mobile */}
+                <div className="hidden md:flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full sm:w-40 bg-dark-card border-dark-color text-dark-primary text-sm hover:bg-slate-700/70 hover:border-blue-500/50 transition-all duration-200">
                       <SelectValue placeholder="Status" />
@@ -1174,7 +1188,7 @@ export function QuoteRequestsPage({
                     </SelectContent>
                   </Select>
 
-                  {/* Botão de Filtros Avançados - visível em todas as telas */}
+                  {/* Botão de Filtros Avançados - oculto no mobile */}
                   <button
                     onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                     className={`flex px-3 py-2 text-xs sm:text-sm rounded-lg transition-all duration-200 items-center space-x-1 font-medium ${
@@ -1190,9 +1204,9 @@ export function QuoteRequestsPage({
                 </div>
               </div>
 
-              {/* Filtros Avançados (Expansíveis) */}
+              {/* Filtros Avançados (Expansíveis) - ocultos no mobile */}
               {showAdvancedFilters && (
-                <div className="glass-card bg-slate-800/30 rounded-lg p-3 sm:p-4 border border-slate-700/50 space-y-4">
+                <div className="hidden md:block glass-card bg-slate-800/30 rounded-lg p-3 sm:p-4 border border-slate-700/50 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {/* Filtro por Fornecedor */}
                     <div>
