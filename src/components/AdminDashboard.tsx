@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, ChangeEvent } from "react";
 import {
   BarChart3,
   FileText,
@@ -17,8 +17,8 @@ import {
   Send,
   RefreshCw,
   Check,
-  // Upload,
-  // Image
+  Upload,
+  Image
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -34,8 +34,6 @@ import { useApp } from "../contexts/AppContext";
 import { produtoService, supplierService, dashboardService } from "../api/services";
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
-
-
 
 
 interface User {
@@ -202,7 +200,7 @@ export function AdminDashboard({
   function getNavConfig(position: string) {
     let role = "user";
     if (position === "admin") role = "admin";
-  else if (position === "manager") role = "manager";
+    else if (position === "manager") role = "manager";
     const perms = PERMISSIONS[role];
     return {
       filteredMainNavItems: mainNavItems.filter(item => perms.main.includes(item.key)),
@@ -228,7 +226,7 @@ export function AdminDashboard({
     }
   }, [activePage, allowedPages, defaultPage]);
   const [lastCreatedQuote, setLastCreatedQuote] = useState<any>(null);
-  const [quoteMessage, setQuoteMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [quoteMessage, setQuoteMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [shouldFocusPrompt, setShouldFocusPrompt] = useState(false);
   // Estados para novo produto
   const [newProduct, setNewProduct] = useState({
@@ -247,7 +245,7 @@ export function AdminDashboard({
     atualizado_em: '',
   });
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
-  
+
   // Estados para novo fornecedor
   const [newSupplier, setNewSupplier] = useState({
     nome: '',
@@ -282,7 +280,7 @@ export function AdminDashboard({
       i18n.off('languageChanged', handleLanguageChange);
     };
   }, []);
-  
+
   // Efeito para dar foco ao textarea quando navegar para new-quote
   useEffect(() => {
     if (activePage === "new-quote" && shouldFocusPrompt && newQuoteTextareaRef.current) {
@@ -290,44 +288,44 @@ export function AdminDashboard({
       setShouldFocusPrompt(false);
     }
   }, [activePage, shouldFocusPrompt]);
-  
+
   // Função para navegar para new-quote com foco
   const navigateToNewQuote = () => {
     setActivePage("new-quote");
     setShouldFocusPrompt(true);
   };
-  
+
   // Função para navegar para new-product
   const navigateToNewProduct = () => {
     setActivePage("new-product");
   };
-  
+
   // Função para navegar para new-supplier
   const navigateToNewSupplier = () => {
     setActivePage("new-supplier");
   };
-  
+
   // Função para mostrar toast
   const showToast = (type: "success" | "error" | "info", title: string, message: string, duration: number = 5000) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast = { id, type, title, message, duration };
-    
+
     setToasts(prev => [...prev, newToast]);
-    
+
     setTimeout(() => {
       setToasts(prev => prev.filter(toast => toast.id !== id));
     }, duration);
   };
-  
+
   // Função para remover toast
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
-  
+
   // Função para validar e salvar produto
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validar campos obrigatórios
     const requiredFields = ['fornecedorId', 'nome', 'descricao', 'preco', 'estoque'];
     const emptyFields = requiredFields.filter(field => {
@@ -343,10 +341,10 @@ export function AdminDashboard({
       );
       return;
     }
-    
+
     // Criar produto através da API
     setIsCreatingProduct(true);
-    
+
     try {
       // Mapear os campos do formulário para o payload esperado pelo produtoService.create
       const currentDate = new Date().toISOString();
@@ -382,7 +380,7 @@ export function AdminDashboard({
       );
       // Limpar formulário
       setNewProduct({
-  fornecedorId: '',
+        fornecedorId: '',
         codigo: '',
         nome: '',
         modelo: '',
@@ -396,7 +394,7 @@ export function AdminDashboard({
         atualizado_por: 1,
         atualizado_em: '',
       });
-      
+
     } catch (error) {
       console.error('Erro ao criar produto:', error);
       showToast(
@@ -408,11 +406,11 @@ export function AdminDashboard({
       setIsCreatingProduct(false);
     }
   };
-  
+
   // Função para validar e salvar fornecedor
   const handleSaveSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validar campos obrigatórios
     if (!newSupplier.nome.trim() || !newSupplier.contato_email.trim()) {
       showToast(
@@ -432,10 +430,10 @@ export function AdminDashboard({
       );
       return;
     }
-    
+
     // Salvar fornecedor
     setIsCreatingSupplier(true);
-    
+
     try {
       // Criar objeto completo do fornecedor com campos de auditoria
       const currentDate = new Date().toISOString();
@@ -477,7 +475,7 @@ export function AdminDashboard({
       setIsCreatingSupplier(false);
     }
   };
-  
+
   // Usar o contexto da aplicação
   const { addQuote, quotes: allQuotes, addSupplier } = useApp();
 
@@ -485,7 +483,7 @@ export function AdminDashboard({
   const refreshStats = async () => {
     setIsLoadingStats(true);
     setStatsError(null);
-    
+
     try {
       // Tentar buscar estatísticas específicas do dashboard
       const statsResponse = await dashboardService.getStats();
@@ -522,8 +520,8 @@ export function AdminDashboard({
         // Processar dados dos fornecedores
         let suppliersCount = fornecedores.length;
         if (suppliersResponse.status === 'fulfilled' && suppliersResponse.value.success) {
-          const suppliersData = Array.isArray(suppliersResponse.value.data) 
-            ? suppliersResponse.value.data 
+          const suppliersData = Array.isArray(suppliersResponse.value.data)
+            ? suppliersResponse.value.data
             : suppliersResponse.value.data?.data || [];
           suppliersCount = suppliersData.length;
         }
@@ -532,8 +530,8 @@ export function AdminDashboard({
         let productsCount = 0;
         if (productsResponse.status === 'fulfilled' && productsResponse.value.success) {
           const productsValue = productsResponse.value as any;
-          const productsData = Array.isArray(productsValue.data) 
-            ? productsValue.data 
+          const productsData = Array.isArray(productsValue.data)
+            ? productsValue.data
             : productsValue.data?.data || [];
           productsCount = productsData.length;
         }
@@ -551,15 +549,15 @@ export function AdminDashboard({
 
         setDashboardStats({
           quotes: quotesStats,
-          suppliers: { 
-            total: suppliersCount, 
+          suppliers: {
+            total: suppliersCount,
             active: suppliersCount,
-            inactive: 0 
+            inactive: 0
           },
-          products: { 
-            total: productsCount, 
+          products: {
+            total: productsCount,
             inStock: productsCount,
-            outOfStock: 0 
+            outOfStock: 0
           },
           users: usersStats
         });
@@ -590,7 +588,7 @@ export function AdminDashboard({
     async function fetchDashboardStats() {
       setIsLoadingStats(true);
       setStatsError(null);
-      
+
       try {
         // Tentar buscar estatísticas específicas do dashboard
         const statsResponse = await dashboardService.getStats();
@@ -627,8 +625,8 @@ export function AdminDashboard({
           // Processar dados dos fornecedores
           let suppliersCount = fornecedores.length;
           if (suppliersResponse.status === 'fulfilled' && suppliersResponse.value.success) {
-            const suppliersData = Array.isArray(suppliersResponse.value.data) 
-              ? suppliersResponse.value.data 
+            const suppliersData = Array.isArray(suppliersResponse.value.data)
+              ? suppliersResponse.value.data
               : suppliersResponse.value.data?.data || [];
             suppliersCount = suppliersData.length;
           }
@@ -637,8 +635,8 @@ export function AdminDashboard({
           let productsCount = 0;
           if (productsResponse.status === 'fulfilled' && productsResponse.value.success) {
             const productsValue = productsResponse.value as any; // Type assertion para contornar tipo limitado
-            const productsData = Array.isArray(productsValue.data) 
-              ? productsValue.data 
+            const productsData = Array.isArray(productsValue.data)
+              ? productsValue.data
               : productsValue.data?.data || [];
             productsCount = productsData.length;
           }
@@ -656,15 +654,15 @@ export function AdminDashboard({
 
           setDashboardStats({
             quotes: quotesStats,
-            suppliers: { 
-              total: suppliersCount, 
+            suppliers: {
+              total: suppliersCount,
               active: suppliersCount, // Assumir todos ativos por padrão
-              inactive: 0 
+              inactive: 0
             },
-            products: { 
-              total: productsCount, 
+            products: {
+              total: productsCount,
               inStock: productsCount, // Assumir todos em stock por padrão
-              outOfStock: 0 
+              outOfStock: 0
             },
             users: usersStats
           });
@@ -711,11 +709,10 @@ export function AdminDashboard({
           setActivePage(item.key);
           setIsMobileMenuOpen(false);
         }}
-        className={`flex items-center space-x-2 p-2 rounded-md w-full text-left transition-all duration-300 ${
-          isActive 
-            ? "bg-white/10 backdrop-blur-md border border-blue-400 text-blue-400" 
-            : "hover:bg-white/5 hover:backdrop-blur-md border border-transparent hover:border-blue-400/30 text-dark-secondary hover:text-blue-300"
-        }`}
+        className={`flex items-center space-x-2 p-2 rounded-md w-full text-left transition-all duration-300 ${isActive
+          ? "bg-white/10 backdrop-blur-md border border-blue-400 text-blue-400"
+          : "hover:bg-white/5 hover:backdrop-blur-md border border-transparent hover:border-blue-400/30 text-dark-secondary hover:text-blue-300"
+          }`}
       >
         <Icon
           className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`}
@@ -731,7 +728,7 @@ export function AdminDashboard({
     switch (activePage) {
       case "dashboard":
         return (
-          <DashboardPage 
+          <DashboardPage
             onNavigateToNotifications={() => setActivePage("notifications")}
             onNavigateToSettings={() => setActivePage("settings")}
             onNavigateToQuotes={() => setActivePage("quotes")}
@@ -757,7 +754,7 @@ export function AdminDashboard({
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <button 
+                    <button
                       onClick={() => setActivePage("notifications")}
                       className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
                     >
@@ -773,7 +770,7 @@ export function AdminDashboard({
                 </div>
               </div>
             </header>
-            
+
             <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
               {/* Nova Cotação com IA */}
               <div className="mb-8">
@@ -783,11 +780,11 @@ export function AdminDashboard({
                       <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                     </div>
                     <div>
-			<h2 className="text-base sm:text-lg font-bold text-white">{t('newQuote.createWithAI')} - Admin</h2>
+                      <h2 className="text-base sm:text-lg font-bold text-white">{t('newQuote.createWithAI')} - Admin</h2>
                       <p className="text-xs sm:text-sm text-blue-200">{t('newQuote.aiDescription')}</p>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div className="relative">
                       <textarea
@@ -802,7 +799,7 @@ export function AdminDashboard({
                         {newQuotePrompt.length}/500
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                       <button
                         onClick={() => {
@@ -810,12 +807,12 @@ export function AdminDashboard({
                             setIsCreatingQuote(true);
                             setQuoteMessage(null);
                             setLastCreatedQuote(null);
-                            
+
                             // Simular processamento de IA
                             setTimeout(() => {
                               // Simular possível erro (5% de chance)
                               const hasError = Math.random() < 0.05;
-                              
+
                               if (hasError) {
                                 setQuoteMessage({
                                   type: 'error',
@@ -824,7 +821,7 @@ export function AdminDashboard({
                                 setIsCreatingQuote(false);
                                 return;
                               }
-                              
+
                               const newQuote = {
                                 id: `RCS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
                                 produto: `Admin: ${newQuotePrompt.substring(0, 30)}...`,
@@ -834,7 +831,7 @@ export function AdminDashboard({
                                 data: new Date().toLocaleDateString('pt-PT'),
                                 submittedAt: new Date().toLocaleString('pt-PT')
                               };
-                              
+
                               addQuote(newQuote);
                               setLastCreatedQuote(newQuote);
                               setQuoteMessage({
@@ -843,7 +840,7 @@ export function AdminDashboard({
                               });
                               setIsCreatingQuote(false);
                               setNewQuotePrompt("");
-                              
+
                               // Remover a mensagem após 5 segundos
                               setTimeout(() => {
                                 setQuoteMessage(null);
@@ -880,7 +877,7 @@ export function AdminDashboard({
                         <span>Ver Todas</span>
                       </button>
                     </div>
-                    
+
                     {isCreatingQuote && (
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 sm:p-4">
                         <div className="flex items-center space-x-3">
@@ -892,11 +889,10 @@ export function AdminDashboard({
 
                     {/* Mensagem de Sucesso/Erro */}
                     {quoteMessage && (
-                      <div className={`${
-                        quoteMessage.type === 'success' 
-                          ? 'bg-green-500/10 border-green-500/20 text-green-300' 
-                          : 'bg-red-500/10 border-red-500/20 text-red-300'
-                      } border rounded-lg p-3 sm:p-4 transition-all duration-300`}>
+                      <div className={`${quoteMessage.type === 'success'
+                        ? 'bg-green-500/10 border-green-500/20 text-green-300'
+                        : 'bg-red-500/10 border-red-500/20 text-red-300'
+                        } border rounded-lg p-3 sm:p-4 transition-all duration-300`}>
                         <div className="flex items-center space-x-3">
                           {quoteMessage.type === 'success' ? (
                             <Check className="w-4 h-4 text-green-400" />
@@ -920,7 +916,7 @@ export function AdminDashboard({
                             <span className="text-green-400 text-xs font-medium">Aprovada</span>
                           </div>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-3 text-xs">
                           <div>
                             <span className="text-slate-400 block mb-1">Produto:</span>
@@ -1020,7 +1016,7 @@ export function AdminDashboard({
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Cotações Pendentes */}
                     <div className="glass-card p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
                       <div className="flex items-center space-x-3">
@@ -1035,7 +1031,7 @@ export function AdminDashboard({
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Cotações Processando */}
                     <div className="glass-card p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
                       <div className="flex items-center space-x-3">
@@ -1050,7 +1046,7 @@ export function AdminDashboard({
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Total de Cotações */}
                     <div className="glass-card p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
                       <div className="flex items-center space-x-3">
@@ -1112,7 +1108,7 @@ export function AdminDashboard({
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="glass-card p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-xl bg-yellow-600 flex items-center justify-center">
@@ -1126,7 +1122,7 @@ export function AdminDashboard({
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="glass-card p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
@@ -1140,7 +1136,7 @@ export function AdminDashboard({
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="glass-card p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center">
@@ -1215,15 +1211,14 @@ export function AdminDashboard({
                             <div className="flex-1">
                               <div className="flex items-center space-x-3 mb-2">
                                 <h4 className="text-white font-semibold text-sm">{quote.produto}</h4>
-                                <div className={`px-2 py-1 rounded-md text-xs font-medium ${
-                                  quote.status === 'approved' 
-                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                    : quote.status === 'pending'
+                                <div className={`px-2 py-1 rounded-md text-xs font-medium ${quote.status === 'approved'
+                                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                  : quote.status === 'pending'
                                     ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
                                     : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                                }`}>
-                                  {quote.status === 'approved' ? 'Aprovada' : 
-                                   quote.status === 'pending' ? 'Pendente' : 'Processando'}
+                                  }`}>
+                                  {quote.status === 'approved' ? 'Aprovada' :
+                                    quote.status === 'pending' ? 'Pendente' : 'Processando'}
                                 </div>
                               </div>
                               <p className="text-slate-400 text-xs font-mono mb-2">ID: {quote.id}</p>
@@ -1234,15 +1229,14 @@ export function AdminDashboard({
                                 </div>
                                 <div>
                                   <span className="text-slate-500 block mb-1">Status:</span>
-                                  <span className={`${
-                                    quote.status === 'approved' 
-                                      ? 'text-green-400'
-                                      : quote.status === 'pending'
+                                  <span className={`${quote.status === 'approved'
+                                    ? 'text-green-400'
+                                    : quote.status === 'pending'
                                       ? 'text-yellow-400'
                                       : 'text-blue-400'
-                                  }`}>
-                                    {quote.status === 'approved' ? 'Aprovada' : 
-                                     quote.status === 'pending' ? 'Pendente' : 'Processando'}
+                                    }`}>
+                                    {quote.status === 'approved' ? 'Aprovada' :
+                                      quote.status === 'pending' ? 'Pendente' : 'Processando'}
                                   </span>
                                 </div>
                                 <div>
@@ -1294,11 +1288,15 @@ export function AdminDashboard({
                   </div>
                 </div>
               )}
-             
+
             </main>
           </div>
         );
       case "new-product":
+        function handleImageUpload(event: ChangeEvent<HTMLInputElement>): void {
+          throw new Error("Function not implemented.");
+        }
+
         return (
           <div className="flex flex-col h-full w-full">
             <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
@@ -1312,7 +1310,7 @@ export function AdminDashboard({
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <button 
+                    <button
                       onClick={() => setActivePage("notifications")}
                       className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
                     >
@@ -1328,7 +1326,7 @@ export function AdminDashboard({
                 </div>
               </div>
             </header>
-            
+
             <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
               {/* Formulário de Novo Produto */}
               <div className="mb-8">
@@ -1343,7 +1341,7 @@ export function AdminDashboard({
                       <p className="text-xs text-yellow-300 mt-1">* Campos obrigatórios</p>
                     </div>
                   </div>
-                  <form onSubmit={handleSaveProduct} className="space-y-6">
+                  <form onSubmit={handleSaveProduct} className="space-y-1">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor *</label>
@@ -1414,8 +1412,36 @@ export function AdminDashboard({
                         <label className="block text-sm font-medium text-slate-300 mb-2">Atualizado em</label>
                         <input type="datetime-local" value={newProduct.atualizado_em ? newProduct.atualizado_em.substring(0, 16) : ''} onChange={e => setNewProduct(prev => ({ ...prev, atualizado_em: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" disabled={isCreatingProduct} />
                       </div>
+
+                      {/** Imagens do Produto **/}
+                      <div className="border-t border-slate-600 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-0 gap-4 mb-4">
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-slate-300 mb-3">Imagens do Produto</label>
+                            <div className="flex justify-center">
+                              <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
+                                <div className="flex flex-col items-center space-y-2">
+                                  <Upload className="w-8 h-8 text-slate-400" />
+                                  <span className="text-sm text-slate-400">Clique para adicionar</span>
+                                  <span className="text-xs text-slate-500">PNG, JPG, GIF até 10MB</span>
+                                </div>
+                                <input
+                                  type="file"
+                                  multiple
+                                  accept="image/*"
+                                  onChange={handleImageUpload}
+                                  className="hidden"
+                                  disabled={isCreatingProduct}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+
                     </div>
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-5 pt-0">
                       <button
                         type="submit"
                         disabled={isCreatingProduct}
@@ -1535,7 +1561,7 @@ export function AdminDashboard({
                 </div>
                 <div className="flex items-center gap-3 sm:gap-4">
                   <div className="relative">
-                    <button 
+                    <button
                       onClick={() => setActivePage("notifications")}
                       className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
                     >
@@ -1551,7 +1577,7 @@ export function AdminDashboard({
                 </div>
               </div>
             </header>
-            
+
             <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
               {/* Formulário de Novo Fornecedor */}
               <div className="mb-6 sm:mb-8">
@@ -1925,7 +1951,7 @@ export function AdminDashboard({
               <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gray-800 rounded-2xl flex items-center justify-center shadow-lg relative overflow-hidden flex-shrink-0 p-1 group-hover:scale-105 transition-transform duration-200">
                 <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain relative z-10" />
               </div>
-               
+
               <div className="min-w-0">
                 <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-dark-primary truncate group-hover:text-blue-400 transition-colors duration-200">
                   SMARTQUOTE
@@ -2018,8 +2044,8 @@ export function AdminDashboard({
                 {userPosition === "admin"
                   ? "Administrador do Sistema"
                   : userPosition === "manager"
-                  ? "Gestor"
-                  : "Usuário"}
+                    ? "Gestor"
+                    : "Usuário"}
               </p>
             </div>
             <button
@@ -2071,23 +2097,21 @@ export function AdminDashboard({
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`transform transition-all duration-500 ease-in-out animate-in slide-in-from-right glass-card backdrop-blur-xl border-2 rounded-2xl p-5 shadow-2xl hover:scale-105 pointer-events-auto ${
-              toast.type === "success" 
-                ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-50 shadow-emerald-500/20" 
-                : toast.type === "error" 
+            className={`transform transition-all duration-500 ease-in-out animate-in slide-in-from-right glass-card backdrop-blur-xl border-2 rounded-2xl p-5 shadow-2xl hover:scale-105 pointer-events-auto ${toast.type === "success"
+              ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-50 shadow-emerald-500/20"
+              : toast.type === "error"
                 ? "bg-red-500/15 border-red-400/40 text-red-50 shadow-red-500/20"
                 : "bg-cyan-500/15 border-cyan-400/40 text-cyan-50 shadow-cyan-500/20"
-            }`}
+              }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                  toast.type === "success" 
-                    ? "bg-emerald-500/80 ring-2 ring-emerald-400/30" 
-                    : toast.type === "error" 
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${toast.type === "success"
+                  ? "bg-emerald-500/80 ring-2 ring-emerald-400/30"
+                  : toast.type === "error"
                     ? "bg-red-500/80 ring-2 ring-red-400/30"
                     : "bg-cyan-500/80 ring-2 ring-cyan-400/30"
-                }`}>
+                  }`}>
                   {toast.type === "success" && <Check className="w-5 h-5 text-white" />}
                   {toast.type === "error" && <X className="w-5 h-5 text-white" />}
                   {toast.type === "info" && <Activity className="w-5 h-5 text-white" />}
@@ -2105,22 +2129,20 @@ export function AdminDashboard({
               </button>
             </div>
             {/* Progress bar para mostrar tempo restante */}
-            <div className={`mt-4 h-1.5 rounded-full overflow-hidden ${
-              toast.type === "success" 
-                ? "bg-emerald-500/20" 
-                : toast.type === "error" 
+            <div className={`mt-4 h-1.5 rounded-full overflow-hidden ${toast.type === "success"
+              ? "bg-emerald-500/20"
+              : toast.type === "error"
                 ? "bg-red-500/20"
                 : "bg-cyan-500/20"
-            }`}>
-              <div 
-                className={`h-full rounded-full transition-all duration-100 ${
-                  toast.type === "success" 
-                    ? "bg-emerald-400" 
-                    : toast.type === "error" 
+              }`}>
+              <div
+                className={`h-full rounded-full transition-all duration-100 ${toast.type === "success"
+                  ? "bg-emerald-400"
+                  : toast.type === "error"
                     ? "bg-red-400"
                     : "bg-cyan-400"
-                }`}
-                style={{ 
+                  }`}
+                style={{
                   animation: `shrink ${toast.duration || 5000}ms linear forwards`,
                   width: '100%'
                 }}

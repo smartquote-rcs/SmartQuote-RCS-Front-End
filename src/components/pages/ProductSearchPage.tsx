@@ -263,37 +263,34 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
           </div>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
-            <button
-              onClick={() => onNavigateToNewProduct?.()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 text-sm md:text-base"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Novo Produto</span>
-            </button>
-            
-            {/* Botões extras - ocultos no mobile */}
-            <button
-              onClick={handleRefreshProducts}
-              disabled={isLoadingProducts}
-              className="hidden md:flex glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-4 md:py-2 rounded-xl font-medium items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoadingProducts ? 'animate-spin' : ''}`} />
-              <span>{isLoadingProducts ? 'Carregando...' : 'Atualizar'}</span>
-            </button>
-            
-            {/* Card de info - oculto no mobile */}
-            <div className="hidden md:block glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-lg">{displayProducts.length}</span>
-              <span className="text-blue-200 ml-2">produtos</span>
+            <div className="hidden md:flex items-center gap-3 w-full justify-center">
+              <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[160px] h-[44px]">
+                <span className="font-bold text-lg">{displayProducts.length}</span>
+                <span className="ml-2 text-blue-200">produtos</span>
+              </div>
+              <button
+                onClick={handleRefreshProducts}
+                disabled={isLoadingProducts}
+                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm min-w-[160px] h-[44px]"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoadingProducts ? 'animate-spin' : ''}`} />
+                <span>{isLoadingProducts ? 'Carregando...' : 'Atualizar'}</span>
+              </button>
+              <button
+                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg min-w-[160px] h-[44px]"
+              >
+                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
+                <span>{viewMode === "grid" ? "Lista" : "Grade"}</span>
+              </button>
+              <button
+                onClick={() => onNavigateToNewProduct?.()}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm md:text-base min-w-[160px] h-[44px]"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Novo Produto</span>
+              </button>
             </div>
-            
-            <button
-              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="hidden md:flex glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-4 md:py-2 rounded-xl font-medium items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg"
-            >
-              {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-              <span>{viewMode === "grid" ? "Lista" : "Grade"}</span>
-            </button>
           </div>
         </div>
       </header>

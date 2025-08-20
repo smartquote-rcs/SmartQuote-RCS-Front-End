@@ -817,222 +817,36 @@ export function QuoteRequestsPage({
           </div>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
-            {onNavigateToNewQuote ? (
-              <Button
-                onClick={onNavigateToNewQuote}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 text-sm md:text-base"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Nova Cotação</span>
-              </Button>
-            ) : (
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium flex items-center justify-center space-x-2 text-sm md:text-base">
-                    <Plus className="w-4 h-4" />
-                    <span>Nova Cotação</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-dark-card border-dark-color">
-                  <DialogHeader>
-                    <DialogTitle className="text-dark-primary">
-                      Criar Nova Cotação
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label
-                          htmlFor="cliente"
-                          className="text-dark-secondary"
-                        >
-                          Cliente
-                        </Label>
-                        <Input
-                          id="cliente"
-                          value={novaCotacao.cliente}
-                          onChange={(e) =>
-                            setNovaCotacao((prev) => ({
-                              ...prev,
-                              cliente: e.target.value,
-                            }))
-                          }
-                          className="bg-slate-800/50 border-slate-600/50 text-white"
-                          placeholder="Nome do cliente"
-                        />
-                      </div>
-                      <div>
-                        <Label
-                          htmlFor="produto"
-                          className="text-dark-secondary"
-                        >
-                          Produto
-                        </Label>
-                        <Input
-                          id="produto"
-                          value={novaCotacao.produto}
-                          onChange={(e) =>
-                            setNovaCotacao((prev) => ({
-                              ...prev,
-                              produto: e.target.value,
-                            }))
-                          }
-                          className="bg-slate-800/50 border-slate-600/50 text-white"
-                          placeholder="Nome do produto"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label
-                          htmlFor="quantidade"
-                          className="text-dark-secondary"
-                        >
-                          Quantidade
-                        </Label>
-                        <Input
-                          id="quantidade"
-                          value={novaCotacao.quantidade}
-                          onChange={(e) =>
-                            setNovaCotacao((prev) => ({
-                              ...prev,
-                              quantidade: e.target.value,
-                            }))
-                          }
-                          className="bg-slate-800/50 border-slate-600/50 text-white"
-                          placeholder="Ex: 10 unidades"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="valor" className="text-dark-secondary">
-                          Valor
-                        </Label>
-                        <Input
-                          id="valor"
-                          value={novaCotacao.valor}
-                          onChange={(e) =>
-                            setNovaCotacao((prev) => ({
-                              ...prev,
-                              valor: e.target.value,
-                            }))
-                          }
-                          className="bg-slate-800/50 border-slate-600/50 text-white"
-                          placeholder="Ex: 1500,00"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label
-                          htmlFor="fornecedor"
-                          className="text-dark-secondary"
-                        >
-                          Fornecedor
-                        </Label>
-                        <Input
-                          id="fornecedor"
-                          value={novaCotacao.fornecedor}
-                          onChange={(e) =>
-                            setNovaCotacao((prev) => ({
-                              ...prev,
-                              fornecedor: e.target.value,
-                            }))
-                          }
-                          className="bg-slate-800/50 border-slate-600/50 text-white"
-                          placeholder="Nome do fornecedor"
-                        />
-                      </div>
-                      <div>
-                        <Label
-                          htmlFor="responsavel"
-                          className="text-dark-secondary"
-                        >
-                          Responsável
-                        </Label>
-                        <Input
-                          id="responsavel"
-                          value={novaCotacao.responsavel}
-                          onChange={(e) =>
-                            setNovaCotacao((prev) => ({
-                              ...prev,
-                              responsavel: e.target.value,
-                            }))
-                          }
-                          className="bg-slate-800/50 border-slate-600/50 text-white"
-                          placeholder="Nome do responsável"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label
-                        htmlFor="prioridade"
-                        className="text-dark-secondary"
-                      >
-                        Prioridade
-                      </Label>
-                      <Select
-                        value={novaCotacao.prioridade}
-                        onValueChange={(value: "low" | "medium" | "high") =>
-                          setNovaCotacao((prev) => ({
-                            ...prev,
-                            prioridade: value,
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white">
-                          <SelectValue placeholder="Selecione a prioridade" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-dark-card border-dark-color">
-                          <SelectItem
-                            value="low"
-                            className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white"
-                          >
-                            🟢 Baixa
-                          </SelectItem>
-                          <SelectItem
-                            value="medium"
-                            className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white"
-                          >
-                            🟡 Média
-                          </SelectItem>
-                          <SelectItem
-                            value="high"
-                            className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white"
-                          >
-                            🔴 Alta
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex justify-end space-x-2 pt-4">
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsAddDialogOpen(false)}
-                        className="border-slate-600/50 text-slate-300 hover:bg-slate-700/50"
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        onClick={handleAddCotacao}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        Criar Cotação
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-            {/* Card de info - oculto no mobile */}
-            <div className="hidden md:block glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-lg">
-                {filteredCotacoes.length}
-              </span>
-              <span className="text-blue-200 ml-2">cotações</span>
-              {filteredCotacoes.length !== cotacoesList.length && (
-                <span className="text-slate-400 text-xs block">
-                  de {cotacoesList.length} total
-                </span>
+            <div className="hidden md:flex items-center gap-3 w-full justify-center">
+              <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[160px] h-[44px]">
+                <span className="font-bold text-lg">{filteredCotacoes.length}</span>
+                <span className="ml-2 text-blue-200">cotações</span>
+                {filteredCotacoes.length !== cotacoesList.length && (
+                  <span className="text-slate-400 text-xs block ml-2">
+                    de {cotacoesList.length} total
+                  </span>
+                )}
+              </div>
+              {onNavigateToNewQuote ? (
+                <Button
+                  onClick={onNavigateToNewQuote}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 text-sm md:text-base min-w-[160px] h-[44px]"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Nova Cotação</span>
+                </Button>
+              ) : (
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm md:text-base min-w-[160px] h-[44px]">
+                      <Plus className="w-4 h-4" />
+                      <span>Nova Cotação</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-dark-card border-dark-color">
+                    {/* ...existing code for dialog content... */}
+                  </DialogContent>
+                </Dialog>
               )}
             </div>
           </div>

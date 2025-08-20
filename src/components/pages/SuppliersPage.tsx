@@ -338,36 +338,35 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
           </div>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
-            {user?.role === 'admin' && (
+            {/* Linha centralizada com contador e botões do mesmo tamanho */}
+            <div className="hidden md:flex items-center gap-3 w-full justify-center">
+              <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[160px] h-[44px]">
+                <span className="font-bold text-lg">{filteredFornecedores.length}</span>
+                <span className="ml-2 text-blue-200">fornecedores</span>
+              </div>
               <button 
-                onClick={() => setIsEditModalOpen(true)}
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-sm md:text-base"
+                onClick={handleRefreshSuppliers}
+                disabled={isLoadingSuppliers}
+                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm min-w-[160px] h-[44px]"
+                title="Atualizar lista de fornecedores"
               >
-                <Plus className="w-4 h-4" />
-                <span>Novo Fornecedor</span>
+                <RefreshCw className={`w-4 h-4 ${isLoadingSuppliers ? 'animate-spin' : ''}`} />
+                <span>{isLoadingSuppliers ? 'Carregando...' : 'Atualizar'}</span>
               </button>
-            )}
-            
-            {/* Botões extras - ocultos no mobile */}
-            <div className="hidden md:block glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-lg">{filteredFornecedores.length}</span>
-              <span className="text-blue-200 ml-2">fornecedores</span>
+              {user?.role === 'admin' && (
+                <button 
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-sm md:text-base min-w-[160px] h-[44px]"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Novo Fornecedor</span>
+                </button>
+              )}
+              <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm min-w-[160px] h-[44px]">
+                <Download className="w-4 h-4" />
+                <span>Exportar Relatório</span>
+              </button>
             </div>
-            
-            <button 
-              onClick={handleRefreshSuppliers}
-              disabled={isLoadingSuppliers}
-              className="hidden md:flex glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-4 md:py-3 rounded-xl font-medium items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm"
-              title="Atualizar lista de fornecedores"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoadingSuppliers ? "animate-spin" : ""}`} />
-              <span>{isLoadingSuppliers ? "Carregando..." : "Atualizar"}</span>
-            </button>
-            
-            <button className="hidden md:flex bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm">
-              <Download className="w-4 h-4" />
-              <span>Exportar Relatório</span>
-            </button>
       {/* Modal de novo fornecedor para admin */}
       {isEditModalOpen && user?.role === 'admin' && (
         <EditSupplierModal
@@ -387,10 +386,6 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
           }}
         />
       )}
-            <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-2 py-1 sm:px-6 sm:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm sm:text-base">
-              <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Exportar Relatório</span>
-            </button>
           </div>
         </div>
       </header>
