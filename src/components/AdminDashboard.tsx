@@ -18,7 +18,7 @@ import {
   RefreshCw,
   Check,
   Upload,
-  Image
+  Mail
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -30,6 +30,8 @@ import SettingsPage from "./pages/SettingsPage";
 import { ProductSearchPage } from "./pages/ProductSearchPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import { EmailsPage } from "./pages/EmailsPage";
+import { ProcessesPage } from "./pages/ProcessesPage";
 import { useApp } from "../contexts/AppContext";
 import { produtoService, supplierService, dashboardService } from "../api/services";
 import { useTranslation } from 'react-i18next';
@@ -77,6 +79,8 @@ const systemItems = [
   { icon: Activity, label: "admin.navigation.logs", key: "logs" },
   { icon: FileText, label: "admin.navigation.reports", key: "reports" },
   { icon: Bell, label: "navigation.notifications", key: "notifications" },
+  { icon: Mail, label: "navigation.emails", key: "emails" },
+  { icon: Activity, label: "navigation.processes", key: "processes" },
 ];
 
 const adminItems = [
@@ -176,13 +180,13 @@ export function AdminDashboard({
   } = {
     user: {
       main: ["quotes", "new-quote", "product-search"],
-      system: ["logs", "reports", "notifications"],
+      system: ["logs", "reports", "notifications", "emails", "processes"],
       admin: ["settings", "data-management"],
       defaultPage: "quotes"
     },
     manager: {
       main: ["quotes", "new-quote", "product-search", "dashboard", "suppliers"],
-      system: ["logs", "reports", "notifications"],
+      system: ["logs", "reports", "notifications", "emails", "processes"],
       admin: ["settings", "data-management"],
       defaultPage: "dashboard"
     },
@@ -298,11 +302,6 @@ export function AdminDashboard({
   // Função para navegar para new-product
   const navigateToNewProduct = () => {
     setActivePage("new-product");
-  };
-
-  // Função para navegar para new-supplier
-  const navigateToNewSupplier = () => {
-    setActivePage("new-supplier");
   };
 
   // Função para mostrar toast
@@ -740,6 +739,8 @@ export function AdminDashboard({
         );
       case "quotes":
         return <QuoteRequestsPage onNavigateToNewQuote={navigateToNewQuote} />;
+      case "processes":
+        return <ProcessesPage />;
       case "new-quote":
         return (
           <div className="flex flex-col h-full w-full">
@@ -1293,7 +1294,7 @@ export function AdminDashboard({
           </div>
         );
       case "new-product":
-        function handleImageUpload(event: ChangeEvent<HTMLInputElement>): void {
+        function handleImageUpload(_event: ChangeEvent<HTMLInputElement>): void {
           throw new Error("Function not implemented.");
         }
 
@@ -1351,6 +1352,7 @@ export function AdminDashboard({
                           className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
                           required
                           disabled={isCreatingProduct}
+                          title="Selecione o fornecedor do produto"
                         >
                           <option value="">Selecione o fornecedor</option>
                           {fornecedores && fornecedores.map((f: any) => {
@@ -1402,7 +1404,15 @@ export function AdminDashboard({
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">Cadastrado em</label>
-                        <input type="datetime-local" value={newProduct.cadastrado_em ? newProduct.cadastrado_em.substring(0, 16) : ''} onChange={e => setNewProduct(prev => ({ ...prev, cadastrado_em: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" disabled={isCreatingProduct} />
+                        <input 
+                          type="datetime-local" 
+                          value={newProduct.cadastrado_em ? newProduct.cadastrado_em.substring(0, 16) : ''} 
+                          onChange={e => setNewProduct(prev => ({ ...prev, cadastrado_em: e.target.value }))} 
+                          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" 
+                          disabled={isCreatingProduct}
+                          title="Data e hora de cadastro do produto"
+                          placeholder="Selecione a data de cadastro"
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">Atualizado por</label>
@@ -1410,7 +1420,15 @@ export function AdminDashboard({
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">Atualizado em</label>
-                        <input type="datetime-local" value={newProduct.atualizado_em ? newProduct.atualizado_em.substring(0, 16) : ''} onChange={e => setNewProduct(prev => ({ ...prev, atualizado_em: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" disabled={isCreatingProduct} />
+                        <input 
+                          type="datetime-local" 
+                          value={newProduct.atualizado_em ? newProduct.atualizado_em.substring(0, 16) : ''} 
+                          onChange={e => setNewProduct(prev => ({ ...prev, atualizado_em: e.target.value }))} 
+                          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" 
+                          disabled={isCreatingProduct}
+                          title="Data e hora da última atualização do produto"
+                          placeholder="Selecione a data de atualização"
+                        />
                       </div>
 
                       {/** Imagens do Produto **/}
@@ -1790,6 +1808,8 @@ export function AdminDashboard({
         return <SuppliersPage user={user} />;
       case "notifications":
         return <NotificationsPage />;
+      case "emails":
+        return <EmailsPage />;
       case "logs":
         return <LogsPage />;
       case "reports":
@@ -1964,6 +1984,7 @@ export function AdminDashboard({
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="lg:hidden p-2 rounded-lg hover:bg-dark-hover text-dark-secondary flex-shrink-0"
+              title="Fechar menu"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
@@ -2124,6 +2145,7 @@ export function AdminDashboard({
               <button
                 onClick={() => removeToast(toast.id)}
                 className="ml-2 p-1.5 rounded-full hover:bg-white/15 transition-all duration-200 flex-shrink-0 hover:scale-110"
+                title="Fechar notificação"
               >
                 <X className="w-4 h-4" />
               </button>

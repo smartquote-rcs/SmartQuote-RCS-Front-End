@@ -54,6 +54,7 @@ export default {
         // Custom dark theme colors
         'dark-bg': '#0F172A',
         'dark-card': '#1E293B',
+        'dark-primary': '#FFFFFF',
         'dark-primary-text': '#FFFFFF',
         'dark-secondary': '#94A3B8',
         'dark-positive': '#22C55E',
@@ -64,6 +65,9 @@ export default {
         'dark-table-hover': '#1C2A3A',
         'dark-border': '#374151',
         'dark-color': '#374151',
+        'dark-success': '#22C55E',
+        'dark-error': '#EF4444',
+        'dark-warning': '#F59E0B',
       },
       borderRadius: {
         lg: "var(--radius)",

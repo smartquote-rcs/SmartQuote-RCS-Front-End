@@ -10,13 +10,15 @@ const ptTranslations = {
     productSearch: "Pesquisa de Produtos",
     myQuotes: "Minhas Cotações",
     newQuote: "Nova Cotação",
+    processes: "Processos",
     history: "Histórico",
     favorites: "Favoritos",
     payments: "Pagamentos",
     appointments: "Agendamentos",
     support: "Suporte",
     notifications: "Notificações",
-    settings: "Configurações"
+    settings: "Configurações",
+    emails: "Emails de Cotação"
   },
   dashboard: {
     title: "Painel Principal",
@@ -330,13 +332,15 @@ const enTranslations = {
     productSearch: "Product Search",
     myQuotes: "My Quotes",
     newQuote: "New Quote",
+    processes: "Processes",
     history: "History",
     favorites: "Favorites",
     payments: "Payments",
     appointments: "Appointments",
     support: "Support",
     notifications: "Notifications",
-    settings: "Settings"
+    settings: "Settings",
+    emails: "Quote Emails"
   },
   dashboard: {
     title: "Main Dashboard",
