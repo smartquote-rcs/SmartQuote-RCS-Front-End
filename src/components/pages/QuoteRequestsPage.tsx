@@ -1,7 +1,53 @@
+// Componente para exibir detalhes do item e submodal
+import React from 'react';
+
+type ItemDetalheCardProps = { item: any };
+const ItemDetalheCard = ({ item }: ItemDetalheCardProps) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="bg-slate-800/60 border border-cyan-900/30 rounded-lg p-4 flex flex-col gap-2">
+      <div className="flex flex-wrap gap-4 items-center justify-between">
+        <div>
+          <div className="text-white font-semibold text-base">{item.item_nome}</div>
+          <div className="text-slate-400 text-xs">Fornecedor: <span className="text-cyan-300">{item.provider || item.fornecedor || '-'}</span></div>
+          <div className="text-slate-400 text-xs">Origem: <span className="text-cyan-300">{item.origem || '-'}</span></div>
+        </div>
+        <div className="text-right">
+          <div className="text-slate-300 text-sm">Qtd: <b>{item.quantidade}</b></div>
+          <div className="text-slate-300 text-sm">Preço: <b>{item.item_preco} {item.item_moeda}</b></div>
+          <div className="text-slate-300 text-sm">Subtotal: <b>{(item.quantidade * item.item_preco).toLocaleString('pt-BR', { style: 'currency', currency: item.item_moeda || 'EUR' })}</b></div>
+        </div>
+        <div>
+          <button onClick={() => setOpen(true)} className="ml-auto bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border border-cyan-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">Ver detalhes</button>
+        </div>
+      </div>
+      <div className="text-slate-300 text-xs mt-2">{item.item_descricao}</div>
+      {/* Submodal para detalhes completos */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg bg-slate-900/95 border border-cyan-400/30">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-300 text-base">Detalhes do Item</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <div><b>Nome:</b> {item.item_nome}</div>
+            <div><b>Fornecedor:</b> {item.provider || item.fornecedor || '-'}</div>
+            <div><b>Origem:</b> {item.origem || '-'}</div>
+            <div><b>Descrição:</b> {item.item_descricao}</div>
+            <div><b>Preço:</b> {item.item_preco} {item.item_moeda}</div>
+            <div><b>Quantidade:</b> {item.quantidade}</div>
+            <div><b>Subtotal:</b> {(item.quantidade * item.item_preco).toLocaleString('pt-BR', { style: 'currency', currency: item.item_moeda || 'EUR' })}</div>
+            <div><b>Moeda:</b> {item.item_moeda}</div>
+            <div><b>Condições:</b> <pre className="bg-slate-800 rounded p-2 text-xs whitespace-pre-wrap">{item.condicoes ? JSON.stringify(item.condicoes, null, 2) : '-'}</pre></div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
 import { useState, useEffect } from "react";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
-import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
@@ -40,113 +86,12 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useApp } from "../../contexts/AppContext";
+import { cotacaoService } from "../../api/services";
+import api from '../../api/client';
 
 interface QuoteRequestsPageProps {
   onNavigateToNewQuote?: () => void;
 }
-
-const cotacoes = [
-  {
-    id: "RCS-2024-0892",
-    cliente: "Energia Verde Lda",
-    produto: "Painéis Solares 400W",
-    quantidade: "150 unidades",
-    valor: "€42.750,00",
-    status: "pending_approval",
-    prioridade: "high",
-    fornecedor: "EnerTech Solutions",
-    dataRecebido: "2024-01-24",
-    prazoResposta: "2024-01-26",
-    responsavel: "João Silva",
-  },
-  {
-    id: "RCS-2024-0891",
-    cliente: "TechFlow Solutions",
-    produto: "Servidores Dell PowerEdge",
-    quantidade: "5 unidades",
-    valor: "€12.250,00",
-    status: "processed",
-    prioridade: "medium",
-    fornecedor: "TechFlow Innovations",
-    dataRecebido: "2024-01-24",
-    prazoResposta: "2024-01-25",
-    responsavel: "Maria Santos",
-  },
-  {
-    id: "RCS-2024-0890",
-    cliente: "Impressões Digitais",
-    produto: "Impressoras HP PageWide",
-    quantidade: "3 unidades",
-    valor: "€5.550,00",
-    status: "sent",
-    prioridade: "low",
-    fornecedor: "PrintMax Industrial",
-    dataRecebido: "2024-01-23",
-    prazoResposta: "2024-01-24",
-    responsavel: "Carlos Mendes",
-  },
-  {
-    id: "RCS-2024-0889",
-    cliente: "Industrial Power Corp",
-    produto: "Geradores a Diesel",
-    quantidade: "2 unidades",
-    valor: "€31.000,00",
-    status: "processing",
-    prioridade: "high",
-    fornecedor: "PowerGen Systems",
-    dataRecebido: "2024-01-23",
-    prazoResposta: "2024-01-25",
-    responsavel: "Ana Costa",
-  },
-  {
-    id: "RCS-2024-1234",
-    cliente: "MegaCorp Industries",
-    produto: "Sistema ERP Empresarial Completo",
-    quantidade: "1 licença corporativa",
-    valor: "€2.750.000,00",
-    status: "pending_approval",
-    prioridade: "high",
-    fornecedor: "SAP Solutions",
-    dataRecebido: "2024-01-20",
-    prazoResposta: "2024-02-05",
-    responsavel: "Director Comercial",
-    approvedBy: [],
-    approvalLevel: "executive",
-    requiresSpecialApproval: true
-  },
-  {
-    id: "RCS-2024-5678",
-    cliente: "Global Infrastructure Ltd",
-    produto: "Infraestrutura de Data Center",
-    quantidade: "1 projeto completo",
-    valor: "€5.200.000,00",
-    status: "pending_approval",
-    prioridade: "high",
-    fornecedor: "TechInfra Solutions",
-    dataRecebido: "2024-01-18",
-    prazoResposta: "2024-02-10",
-    responsavel: "CEO",
-    approvedBy: ["Gestor Comercial"],
-    approvalLevel: "executive",
-    requiresSpecialApproval: true
-  },
-  {
-    id: "RCS-2024-9999",
-    cliente: "Enterprise Solutions Group",
-    produto: "Transformação Digital Completa",
-    quantidade: "1 projeto",
-    valor: "€850.000,00",
-    status: "pending_approval",
-    prioridade: "medium",
-    fornecedor: "Digital Transform Corp",
-    dataRecebido: "2024-01-22",
-    prazoResposta: "2024-01-30",
-    responsavel: "Gestor Regional",
-    approvedBy: [],
-    approvalLevel: "manager"
-  },
-];
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -206,9 +151,17 @@ const getStatusIcon = (status: string) => {
 };
 
 // Sistema de Validação por Valor
-const getValidationLevel = (valor: string) => {
-  // Converter valor para número (remover €, pontos e vírgulas)
-  const numericValue = parseFloat(valor.replace(/[€.,]/g, ""));
+const getValidationLevel = (valor: string | number) => {
+  let numericValue = 0;
+  if (typeof valor === 'number') {
+    numericValue = valor;
+  } else if (typeof valor === 'string') {
+    // Remove caracteres não numéricos e converte para número
+    const cleaned = valor.replace(/[^\d,\.]/g, '').replace(/\./g, '').replace(/,/g, '.');
+    numericValue = parseFloat(cleaned) || 0;
+  } else {
+    numericValue = 0;
+  }
 
   if (numericValue >= 2000000) {
     return {
@@ -300,7 +253,6 @@ export function QuoteRequestsPage({
   onNavigateToNewQuote,
 }: QuoteRequestsPageProps = {}) {
   const { t } = useTranslation();
-  const { quotes: allQuotes } = useApp();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [priorityFilter, setPriorityFilter] = useState("Todas");
@@ -310,44 +262,41 @@ export function QuoteRequestsPage({
   const [sortBy, setSortBy] = useState("data");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [cotacoesList, setCotacoesList] = useState<any[]>(cotacoes);
+  const [cotacoesList, setCotacoesList] = useState<any[]>([]);
 
   // Sincronizar cotações locais com o contexto global
   useEffect(() => {
-    // Sempre começar com as cotações estáticas
-    let combinedQuotes: any[] = [...cotacoes];
-
-    // Adicionar cotações do contexto global se existirem, convertendo para o formato local
-    if (allQuotes && allQuotes.length > 0) {
-      const convertedGlobalQuotes = allQuotes.map((quote) => ({
-        id: quote.id,
-        cliente: "Cliente Admin", // Valor padrão para cotações do admin
-        produto: quote.produto,
-        quantidade: "1 unidade", // Valor padrão
-        valor: quote.valor,
-        status: quote.status,
-        prioridade: "medium", // Valor padrão
-        fornecedor: quote.fornecedor,
-        dataRecebido:
-          quote.data?.split("/").reverse().join("-") ||
-          new Date().toISOString().split("T")[0],
-        prazoResposta: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split("T")[0],
-        responsavel: "Admin Sistema",
-      }));
-
-      combinedQuotes = [...convertedGlobalQuotes, ...cotacoes];
+    async function fetchCotacoes() {
+      try {
+        const response = await cotacaoService.getAll();
+        // Corrigir para acessar o array de cotações em response.data.data
+        const cotacoesArr = Array.isArray(response.data?.data) ? response.data.data : [];
+        console.log('Cotações recebidas da API:', cotacoesArr);
+        // Mapeia os campos para garantir compatibilidade com o frontend
+        const mappedCotacoes = cotacoesArr.map((c: any) => ({
+          ...c,
+          cliente: c.cliente || c.nome_cliente || c.solicitante || '',
+          produto: c.produto || c.nome_produto || '',
+          fornecedor: c.fornecedor || c.nome_fornecedor || '',
+          prioridade: c.prioridade || c.priority || '',
+          status: c.status || '',
+          valor: c.valor || c.orcamento_geral || '',
+          quantidade: c.quantidade || '',
+          aprovado_por: c.aprovado_por || c.aprovador || '',
+          motivo: c.motivo || '',
+          condicoes: c.condicoes || '',
+          dataRecebido: c.dataRecebido || c.cadastrado_em || c.data_solicitacao || '',
+          prazoResposta: c.prazoResposta || c.prazo_validade || '',
+          orcamento_geral: c.orcamento_geral || c.valor || '',
+        }));
+        setCotacoesList(mappedCotacoes);
+      } catch (error) {
+        setCotacoesList([]);
+        console.error('Erro ao buscar cotações:', error);
+      }
     }
-
-    // Remover duplicatas baseado no ID
-    const uniqueQuotes = combinedQuotes.filter(
-      (quote, index, self) => index === self.findIndex((q) => q.id === quote.id)
-    );
-
-    console.log("Cotações carregadas:", uniqueQuotes.length, uniqueQuotes);
-    setCotacoesList(uniqueQuotes);
-  }, [allQuotes]);
+    fetchCotacoes();
+  }, []);
 
   // Estados para o modal de detalhes
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -355,15 +304,18 @@ export function QuoteRequestsPage({
 
   // Estados para o formulário de nova cotação
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [novaCotacao, setNovaCotacao] = useState({
-    cliente: "",
-    produto: "",
-    quantidade: "",
-    valor: "",
-    fornecedor: "",
-    prioridade: "medium" as "low" | "medium" | "high",
-    responsavel: "",
-  });
+
+  // Estado para os itens da cotação
+  const [cotacaoItens, setCotacaoItens] = useState<any[]>([]);
+
+  // Buscar itens ao abrir detalhes
+  useEffect(() => {
+    if (selectedCotacao) {
+      api.get(`/cotacoes-itens?cotacao_id=${selectedCotacao.id}`)
+        .then(res => setCotacaoItens(res.data))
+        .catch(() => setCotacaoItens([]));
+    }
+  }, [selectedCotacao]);
 
   // Extrair valores únicos para os filtros
   const uniqueFornecedores = [
@@ -382,46 +334,6 @@ export function QuoteRequestsPage({
     setSortOrder("desc");
   };
 
-  // Função para adicionar nova cotação
-  const handleAddCotacao = () => {
-    try {
-      // Criar nova cotação com dados do formulário
-      const novaCotacaoData = {
-        id: `RCS-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
-        cliente: novaCotacao.cliente,
-        produto: novaCotacao.produto,
-        quantidade: novaCotacao.quantidade,
-        valor: `€${novaCotacao.valor}`,
-        fornecedor: novaCotacao.fornecedor,
-        prioridade: novaCotacao.prioridade,
-        responsavel: novaCotacao.responsavel,
-        status: "pending_approval",
-        dataRecebido: new Date().toISOString().split("T")[0],
-        prazoResposta: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split("T")[0], // 7 dias a partir de hoje
-      };
-
-      // Adicionar imediatamente à lista local para UX instantâneo
-      setCotacoesList((prev) => [novaCotacaoData, ...prev]);
-
-      // Limpar formulário
-      setNovaCotacao({
-        cliente: "",
-        produto: "",
-        quantidade: "",
-        valor: "",
-        fornecedor: "",
-        prioridade: "medium",
-        responsavel: "",
-      });
-
-      // Fechar dialog
-      setIsAddDialogOpen(false);
-    } catch (error) {
-      console.error("Erro ao adicionar cotação:", error);
-    }
-  };
 
   // Função para aprovar cotação com validação por nível
   const handleApprove = (cotacaoId: string, approver?: string) => {
@@ -565,13 +477,13 @@ export function QuoteRequestsPage({
               <div className="flex items-center space-x-2">
                 <Building className="w-4 h-4 text-slate-400 flex-shrink-0" />
                 <span className="font-medium text-white text-sm">
-                  {cotacao.cliente}
+                  {cotacao.aprovado_por}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
                 <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
                 <span className="text-slate-300 text-sm">
-                  {cotacao.produto} - {cotacao.quantidade}
+                  {cotacao.motivo}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
@@ -579,7 +491,7 @@ export function QuoteRequestsPage({
                 <span className="text-slate-300 text-sm">
                   {t("approvals.responsible")}:{" "}
                   <span className="text-white font-medium">
-                    {cotacao.responsavel}
+                    {cotacao.aprovado_por}
                   </span>
                 </span>
               </div>
@@ -591,7 +503,7 @@ export function QuoteRequestsPage({
                   {t("dashboard.supplier")}:
                 </span>
                 <span className="text-white font-medium">
-                  {cotacao.fornecedor}
+                  {cotacao.condicoes ? JSON.stringify(cotacao.condicoes) : '-'}
                 </span>
               </div>
               <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
@@ -624,7 +536,7 @@ export function QuoteRequestsPage({
               </span>
             </div>
             <div className="text-lg font-bold text-green-400">
-              {cotacao.valor}
+              {cotacao.orcamento_geral}
             </div>
           </div>
 
@@ -1340,266 +1252,37 @@ export function QuoteRequestsPage({
               Detalhes da Cotação {selectedCotacao?.id}
             </DialogTitle>
           </DialogHeader>
-          
-          {selectedCotacao && (
-            <div className="space-y-3 mt-3">
-              {/* Sistema de Validação - Destaque Principal */}
-              {(() => {
-                const validation = getValidationLevel(selectedCotacao.valor);
-                const validationStatus = getValidationStatus(selectedCotacao);
-                
-                return (
-                  <div className={`p-3 rounded-lg border ${
-                    validation.level === "executive" ? "bg-red-500/10 border-red-500/40" :
-                    validation.level === "director" ? "bg-orange-500/10 border-orange-500/40" :
-                    validation.level === "manager" ? "bg-yellow-500/10 border-yellow-500/40" :
-                    validation.level === "supervisor" ? "bg-blue-500/10 border-blue-500/40" :
-                    "bg-green-500/10 border-green-500/40"
-                  }`}>
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="text-xl">{validation.icon}</div>
-                        <div>
-                          <h3 className="text-base font-bold text-white">{validation.description}</h3>
-                          <p className="text-slate-400 text-xs">Valor: {selectedCotacao.valor}</p>
-                        </div>
-                      </div>
-                      
-                      <Badge className={`px-2 py-1 text-xs font-bold ${
-                        validationStatus.isFullyApproved 
-                          ? "bg-green-500/20 text-green-400 border border-green-500/50" 
-                          : "bg-orange-500/20 text-orange-400 border border-orange-500/50"
-                      }`}>
-                        {validationStatus.isFullyApproved ? "✅ APROVADA" : "⏳ PENDENTE"}
-                      </Badge>
-                    </div>
-                    
-                    {validation.requiresMultipleApprovals && (
-                      <div className="bg-slate-800/60 rounded-lg p-2 border border-slate-700/50">
-                        <h4 className="text-white font-semibold mb-1 flex items-center gap-1 text-xs">
-                          <User className="h-3 w-3" />
-                          Aprovadores Necessários (≥ €2.000.000):
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
-                          {validation.approvers.map((approver) => (
-                            <div key={approver} className={`p-1.5 rounded-lg border text-xs ${
-                              validationStatus.approvedBy.includes(approver) 
-                                ? "bg-green-500/20 border-green-500/50 text-green-400" 
-                                : "bg-slate-500/20 border-slate-500/50 text-slate-400"
-                            }`}>
-                              <div className="flex items-center gap-1">
-                                {validationStatus.approvedBy.includes(approver) ? (
-                                  <Check className="h-3 w-3 text-green-400" />
-                                ) : (
-                                  <Clock className="h-3 w-3 text-orange-400" />
-                                )}
-                                <span className="font-medium">{approver}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        {validationStatus.pendingApprovals.length > 0 && (
-                          <div className="mt-2 p-1.5 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-                            <p className="text-orange-400 text-xs">
-                              🔔 Aguardando: {validationStatus.pendingApprovals.join(", ")}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
 
-              {/* Informações Principais em Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-4 border border-white/10">
-                  <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
-                    <Info className="h-4 w-4 text-cyan-400" />
-                    Informações da Cotação
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center border-b border-slate-700/30 pb-1">
-                      <span className="text-slate-300 text-sm">Cliente:</span>
-                      <span className="text-white font-semibold text-sm">{selectedCotacao.cliente}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-slate-700/30 pb-1">
-                      <span className="text-slate-300 text-sm">Produto:</span>
-                      <span className="text-white font-semibold text-right text-sm">{selectedCotacao.produto}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-slate-700/30 pb-1">
-                      <span className="text-slate-300 text-sm">Quantidade:</span>
-                      <span className="text-white font-semibold text-sm">{selectedCotacao.quantidade}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-slate-700/30 pb-1">
-                      <span className="text-slate-300 text-sm">Fornecedor:</span>
-                      <span className="text-white font-semibold text-sm">{selectedCotacao.fornecedor}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-300 text-sm">Responsável:</span>
-                      <span className="text-white font-semibold text-sm">{selectedCotacao.responsavel}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-4 border border-white/10">
-                  <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-orange-400" />
-                    Status e Cronograma
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center border-b border-slate-700/30 pb-1">
-                      <span className="text-slate-300 text-sm">Status Atual:</span>
-                      <Badge className={
-                        selectedCotacao.status === "pending_approval" 
-                          ? "bg-orange-500/20 text-orange-300 border-orange-400/30 text-xs" 
-                          : selectedCotacao.status === "approved" 
-                            ? "bg-green-500/20 text-green-300 border-green-400/30 text-xs"
-                            : selectedCotacao.status === "rejected"
-                              ? "bg-red-500/20 text-red-300 border-red-400/30 text-xs"
-                              : "bg-blue-500/20 text-blue-300 border-blue-400/30 text-xs"
-                      }>
-                        {selectedCotacao.status === "pending_approval" ? "Pendente" :
-                         selectedCotacao.status === "approved" ? "Aprovada" :
-                         selectedCotacao.status === "rejected" ? "Rejeitada" : selectedCotacao.status}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-slate-700/30 pb-1">
-                      <span className="text-slate-300 text-sm">Prioridade:</span>
-                      <Badge className={
-                        selectedCotacao.prioridade === "high" 
-                          ? "bg-red-500/20 text-red-300 border-red-400/30 text-xs" 
-                          : selectedCotacao.prioridade === "medium"
-                            ? "bg-yellow-500/20 text-yellow-300 border-yellow-400/30 text-xs"
-                            : "bg-green-500/20 text-green-300 border-green-400/30 text-xs"
-                      }>
-                        {selectedCotacao.prioridade === "high" ? "Alta" :
-                         selectedCotacao.prioridade === "medium" ? "Média" : "Baixa"}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-slate-700/30 pb-1">
-                      <span className="text-slate-300 text-sm">Data Recebido:</span>
-                      <span className="text-white font-semibold text-sm">
-                        {new Date(selectedCotacao.dataRecebido).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-300 text-sm">Prazo Resposta:</span>
-                      <span className="text-white font-semibold text-sm">
-                        {new Date(selectedCotacao.prazoResposta).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Histórico de Aprovações */}
-              {selectedCotacao.approvedBy && selectedCotacao.approvedBy.length > 0 && (
-                <div className="glass-card bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-xl p-3 border border-green-500/30">
-                  <h3 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400" />
-                    Histórico de Aprovações ({selectedCotacao.approvedBy.length})
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedCotacao.approvedBy.map((approver: string, index: number) => (
-                      <Badge key={index} className="bg-green-500/20 text-green-400 border border-green-500/50 px-2 py-1 text-xs">
-                        <Check className="h-3 w-3 mr-1" />
-                        {approver}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Ações de Aprovação */}
-              <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-4 border border-white/10">
-                <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
-                  <Building className="h-4 w-4 text-purple-400" />
-                  Ações Disponíveis
-                </h3>
-                
-                <div className="flex flex-wrap gap-3">
-                  {selectedCotacao.status === "pending_approval" && (
-                    <>
-                      {/* Botões de aprovação para diferentes níveis */}
-                      {(() => {
-                        const validation = getValidationLevel(selectedCotacao.valor);
-                        if (validation.requiresMultipleApprovals) {
-                          return validation.approvers.map((approver) => (
-                            <button
-                              key={approver}
-                              onClick={() => {
-                                handleApprove(selectedCotacao.id, approver);
-                                setIsDetailModalOpen(false);
-                              }}
-                              disabled={selectedCotacao.approvedBy?.includes(approver)}
-                              className={`px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all text-sm ${
-                                selectedCotacao.approvedBy?.includes(approver)
-                                  ? "bg-green-500/20 text-green-400 border border-green-500/50 cursor-not-allowed"
-                                  : "bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30 text-green-400 border border-green-500/50 hover:border-green-400/70 hover:scale-105"
-                              }`}
-                            >
-                              {selectedCotacao.approvedBy?.includes(approver) ? (
-                                <CheckCircle className="h-4 w-4" />
-                              ) : (
-                                <Check className="h-4 w-4" />
-                              )}
-                              {selectedCotacao.approvedBy?.includes(approver) 
-                                ? `✓ ${approver}` 
-                                : `Aprovar como ${approver}`}
-                            </button>
-                          ));
-                        } else {
-                          return (
-                            <button
-                              onClick={() => {
-                                handleApprove(selectedCotacao.id);
-                                setIsDetailModalOpen(false);
-                              }}
-                              className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30 text-green-400 border border-green-500/50 hover:border-green-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm"
-                            >
-                              <Check className="h-4 w-4" />
-                              Aprovar Cotação
-                            </button>
-                          );
-                        }
-                      })()}
-                      
-                      <button
-                        onClick={() => {
-                          handleReject(selectedCotacao.id);
-                          setIsDetailModalOpen(false);
-                        }}
-                        className="bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30 text-red-400 border border-red-500/50 hover:border-red-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm"
-                      >
-                        <X className="h-4 w-4" />
-                        Rejeitar Cotação
-                      </button>
-                    </>
-                  )}
-                  
-                  <button className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-400 border border-blue-500/50 hover:border-blue-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm">
-                    <Download className="h-4 w-4" />
-                    Baixar PDF
-                  </button>
-                  
-                  <button className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border border-purple-500/50 hover:border-purple-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm">
-                    <Mail className="h-4 w-4" />
-                    Enviar Email
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleIncreaseQuantity(selectedCotacao.id)}
-                    className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 hover:from-yellow-500/30 hover:to-amber-500/30 text-yellow-400 border border-yellow-500/50 hover:border-yellow-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Quantidade
-                  </button>
-                </div>
+          {/* Exibir itens da cotação com todos os campos fundamentais */}
+          {cotacaoItens.length > 0 ? (
+            <div className="mt-6">
+              <h3 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
+                <Info className="h-4 w-4 text-cyan-400" />
+                Itens da Cotação
+              </h3>
+              <div className="space-y-4">
+                {cotacaoItens.map(item => (
+                  <ItemDetalheCard key={item.id} item={item} />
+                ))}
               </div>
             </div>
+          ) : (
+            <div className="mt-6 text-slate-400 text-sm">Nenhum item encontrado para esta cotação.</div>
           )}
+
+// ...existing code...
+          <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-4 border border-white/10 mt-6">
+            <div className="flex flex-wrap gap-3">
+              <button className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-400 border border-blue-500/50 hover:border-blue-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm">
+                <Download className="h-4 w-4" />
+                Baixar PDF
+              </button>
+              <button className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border border-purple-500/50 hover:border-purple-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm">
+                <Mail className="h-4 w-4" />
+                Enviar Email
+              </button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
