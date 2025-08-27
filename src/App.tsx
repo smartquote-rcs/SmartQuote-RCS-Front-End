@@ -4,6 +4,7 @@ import { UserDashboard } from "./components/UserDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AppProvider } from "./contexts/AppContext";
 import { emailService } from "./services/emailService";
+import { saveLog } from "./services/logService";
 
 interface User {
   email: string;
@@ -59,11 +60,15 @@ export default function App() {
   const handleLogin = (credentials: { email: string; password: string; role?: 'user' | 'admin' | 'manager'; position?: string }) => {
     console.log('🎯 App.tsx - handleLogin chamado com:', credentials);
     // Usa o valor de position vindo do backend, se existir
-    const userData = {
+    const role: 'user' | 'admin' | 'manager' =
+      credentials.role === 'admin' || credentials.role === 'manager'
+        ? credentials.role
+        : 'user';
+    const userData: User = {
       email: credentials.email,
       name: credentials.email.split('@')[0] || 'Usuário',
-      role: credentials.role === 'admin' || credentials.role === 'manager' ? credentials.role : 'user',
-      position: credentials.position || credentials.role || 'user'
+      role,
+      position: credentials.position || role
     };
     console.log('👤 Dados do usuário criados:', userData);
     setUser(userData);
@@ -72,7 +77,13 @@ export default function App() {
       user: userData,
       timestamp: Date.now()
     }));
-    
+    // Salva log de entrada do usuário
+    saveLog({
+      type: 'login',
+      userEmail: userData.email,
+      userName: userData.name,
+      details: { role: userData.role, position: userData.position }
+    });
     console.log('✅ Login aceito no App.tsx, estado atualizado');
   };
 

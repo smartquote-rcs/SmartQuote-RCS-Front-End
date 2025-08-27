@@ -138,6 +138,7 @@ const ptTranslations = {
       quotes: "Solicitações de Cotação",
       suppliers: "Fornecedores",
       logs: "Logs do Sistema",
+      loginLogs: "Logs de Login",
       reports: "Relatórios",
       workflow: "Configuração de Workflow",
       dataManagement: "Gestão de Dados",

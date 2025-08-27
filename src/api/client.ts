@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuração da API do seu colega (agora em produção)
-const API_BASE_URL = 'https://testsmart-24vt.onrender.com/';
+const API_BASE_URL = 'https://testsmart-24vt.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -110,4 +110,3 @@ export const createTestUser = async () => {
 };
 
 export default api;
-

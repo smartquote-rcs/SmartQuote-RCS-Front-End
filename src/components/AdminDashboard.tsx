@@ -25,6 +25,8 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { QuoteRequestsPage } from "./pages/QuoteRequestsPage";
 import { SuppliersPage } from "./pages/SuppliersPage";
 import { LogsPage } from "./pages/LogsPage";
+import { LogIn } from "lucide-react";
+import { LoginLogsPage } from "./pages/LoginLogsPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import { ProductSearchPage } from "./pages/ProductSearchPage";
@@ -84,16 +86,17 @@ const systemItems = [
 ];
 
 const adminItems = [
-  { icon: Settings, label: "navigation.settings", key: "settings" },
-  {
-    icon: Database,
-    label: "admin.navigation.dataManagement",
-    key: "data-management",
-  },
   {
     icon: Users,
     label: "admin.navigation.userManagement",
     key: "user-management",
+  },
+  { icon: Settings, label: "navigation.settings", key: "settings" },
+  { icon: LogIn, label: "admin.navigation.loginLogs", key: "login-logs" },
+  {
+    icon: Database,
+    label: "admin.navigation.dataManagement",
+    key: "data-management",
   },
 ];
 
@@ -730,7 +733,8 @@ export function AdminDashboard({
           <DashboardPage
             onNavigateToNotifications={() => setActivePage("notifications")}
             onNavigateToSettings={() => setActivePage("settings")}
-            onNavigateToQuotes={() => setActivePage("quotes")}
+            onNavigateToQuotes={() => setActivePage("emails")}
+            onNavigateToLoginLogs={() => setActivePage("login-logs")}
             onRefreshStats={refreshStats}
             dashboardStats={dashboardStats}
             isLoadingStats={isLoadingStats}
@@ -951,238 +955,7 @@ export function AdminDashboard({
                   </div>
                 </div>
               </div>
-
-              {/* Header das Estatísticas com botão de atualizar */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-500/20 rounded-lg">
-                    <BarChart3 className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-white">Estatísticas em Tempo Real</h2>
-                    <p className="text-xs text-slate-300">Dados atualizados da API</p>
-                  </div>
-                </div>
-                <button
-                  onClick={refreshStats}
-                  disabled={isLoadingStats}
-                  className="flex items-center space-x-2 px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 rounded-lg transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <RefreshCw className={`w-4 h-4 ${isLoadingStats ? 'animate-spin' : ''}`} />
-                  <span>{isLoadingStats ? 'Atualizando...' : 'Atualizar'}</span>
-                </button>
-              </div>
-
-              {/* Estatísticas Rápidas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
-                {/* Loading State */}
-                {isLoadingStats ? (
-                  <>
-                    {[...Array(6)].map((_, index) => (
-                      <div key={index} className="glass-card p-4 bg-slate-500/10 rounded-xl border border-slate-500/20">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-xl bg-slate-600 flex items-center justify-center animate-pulse">
-                            <div className="w-5 h-5 bg-slate-400 rounded"></div>
-                          </div>
-                          <div>
-                            <div className="h-6 w-8 bg-slate-600 animate-pulse rounded mb-1"></div>
-                            <div className="h-3 w-16 bg-slate-600 animate-pulse rounded"></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                ) : statsError ? (
-                  /* Error State */
-                  <div className="col-span-full glass-card p-4 bg-red-500/10 rounded-xl border border-red-500/20">
-                    <div className="flex items-center space-x-3 text-red-400">
-                      <X className="w-5 h-5" />
-                      <span className="text-sm">{statsError} - Usando dados locais</span>
-                    </div>
-                  </div>
-                ) : dashboardStats ? (
-                  /* Stats Cards com dados da API */
-                  <>
-                    {/* Cotações Aprovadas */}
-                    <div className="glass-card p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center">
-                          <Check className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-green-400">
-                            {dashboardStats.quotes.approved}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">{t('status.approved')}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Cotações Pendentes */}
-                    <div className="glass-card p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-yellow-600 flex items-center justify-center">
-                          <RefreshCw className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-yellow-400">
-                            {dashboardStats.quotes.pending}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">{t('status.pending')}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Cotações Processando */}
-                    <div className="glass-card p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-                          <Activity className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-blue-400">
-                            {dashboardStats.quotes.processing}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">{t('status.processing')}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Total de Cotações */}
-                    <div className="glass-card p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-purple-400">
-                            {dashboardStats.quotes.total}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">{t('dashboard.total')}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Fornecedores */}
-                    <div className="glass-card p-4 bg-orange-500/10 rounded-xl border border-orange-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-orange-400">
-                            {dashboardStats.suppliers.total}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">Fornecedores</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Produtos */}
-                    <div className="glass-card p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-600 flex items-center justify-center">
-                          <Database className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-cyan-400">
-                            {dashboardStats.products.total}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">Produtos</p>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  /* Fallback para dados locais */
-                  <>
-                    <div className="glass-card p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center">
-                          <Check className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-green-400">
-                            {allQuotes.filter(q => q.status === 'approved').length}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">{t('status.approved')}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="glass-card p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-yellow-600 flex items-center justify-center">
-                          <RefreshCw className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-yellow-400">
-                            {allQuotes.filter(q => q.status === 'pending').length}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">{t('status.pending')}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="glass-card p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-                          <Activity className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-blue-400">
-                            {allQuotes.filter(q => q.status === 'processing').length}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">{t('status.processing')}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="glass-card p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-purple-400">
-                            {allQuotes.length}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">{t('dashboard.total')}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="glass-card p-4 bg-orange-500/10 rounded-xl border border-orange-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-orange-400">
-                            {fornecedores.length}
-                          </h3>
-                          <p className="text-xs text-dark-secondary">Fornecedores</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="glass-card p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-600 flex items-center justify-center">
-                          <Database className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-cyan-400">
-                            0
-                          </h3>
-                          <p className="text-xs text-dark-secondary">Produtos</p>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
+        
               {/* Lista de Cotações Criadas */}
               {allQuotes.length > 0 && (
                 <div className="mb-8">
@@ -1812,6 +1585,8 @@ export function AdminDashboard({
         return <EmailsPage />;
       case "logs":
         return <LogsPage />;
+      case "login-logs":
+        return <LoginLogsPage />;
       case "reports":
         return <ReportsPage />;
       case "settings":

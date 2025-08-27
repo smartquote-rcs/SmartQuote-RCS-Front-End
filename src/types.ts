@@ -82,6 +82,7 @@ export interface Product {
   modelo?: string;
   descricao: string;
   preco: number;
+  image_url?: string; // URL da imagem do produto
   unidade?: string;
   estoque: number;
   origem?: string;

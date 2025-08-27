@@ -4,6 +4,7 @@ import { SupplierPerformanceChart } from "../SupplierPerformanceChart";
 import { RecentQuotes } from "../RecentQuotes";
 import { PendingApprovals } from "../PendingApprovals";
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 import { EmailStatus } from "../EmailStatus";
 import { EmailNotifications } from "../EmailNotifications";
 
@@ -23,6 +24,7 @@ interface DashboardPageProps {
   onNavigateToNotifications?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToQuotes?: () => void;
+  onNavigateToLoginLogs?: () => void;
   onRefreshStats?: () => void;
   dashboardStats?: {
     quotes: {
@@ -53,28 +55,22 @@ interface DashboardPageProps {
   statsError?: string | null;
 }
 
-const systemAlerts = [
-  {
-    type: "success",
-    message: "Processamento IA concluiu 15 cotações na última hora",
-    time: "5 min atrás"
-  },
-  {
-    type: "warning", 
-    message: "Cotação #RCS-2024-0892 requer revisão manual (>€2M)",
-    time: "12 min atrás"
-  },
-  {
-    type: "info",
-    message: "Nova validação de fornecedor concluída: TechFlow Solutions",
-    time: "1 hora atrás"
-  }
-];
+
+function getRelativeTime(dateString: string) {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diff < 60) return `${diff}s atrás`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} min atrás`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hora${Math.floor(diff / 3600) > 1 ? 's' : ''} atrás`;
+  return date.toLocaleString();
+}
 
 export function DashboardPage({
   onNavigateToNotifications, 
   onNavigateToSettings, 
   onNavigateToQuotes,
+  onNavigateToLoginLogs,
   onRefreshStats,
   dashboardStats,
   isLoadingStats = false,
@@ -83,6 +79,25 @@ export function DashboardPage({
   const { t } = useTranslation();
   // Simular notificações não lidas (em um app real, viria de um contexto ou API)
   const unreadNotifications = 3;
+
+  // Estado para logs de login
+  const [loginAlerts, setLoginAlerts] = useState<Array<any>>([]);
+
+  useEffect(() => {
+    // Buscar logs de login do localStorage
+    let logs: any[] = [];
+    try {
+      const offlineLogs = JSON.parse(localStorage.getItem('offline_logs') || '[]');
+      logs = offlineLogs.concat();
+    } catch {}
+    // Se houver endpoint de logs futuramente, buscar aqui
+    // Filtrar apenas logs de login
+    const loginLogs = logs.filter(l => l.type === 'login');
+    // Ordenar do mais recente para o mais antigo
+    loginLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    // Pegar os 3 mais recentes
+    setLoginAlerts(loginLogs.slice(0, 3));
+  }, []);
 
   // Função para gerar métricas dinâmicas
   const generateDynamicMetrics = (): Metric[] => {
@@ -345,35 +360,41 @@ export function DashboardPage({
           />
         </div>
 
-        {/* System Alerts */}
+        {/* System Alerts dinâmicos com logs de login */}
         <div className="mb-4 sm:mb-6 lg:mb-8">
           <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-3 sm:p-4 border border-white/10 backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 sm:pb-4 space-y-2 sm:space-y-0">
               <div className="min-w-0 flex-1">
                 <h3 className="text-base sm:text-lg font-bold text-white mb-1">Alertas do Sistema</h3>
                 <p className="text-xs sm:text-sm text-slate-300">
-                  Atualizações em tempo real do processamento e notificações
+                  Atualizações em tempo real de inicio de sessão
                 </p>
               </div>
-              <button className="px-3 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs sm:text-sm rounded-lg border border-slate-600/50 transition-all duration-200 self-start sm:self-auto whitespace-nowrap">Ver Todos</button>
+              <button
+                className="px-3 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs sm:text-sm rounded-lg border border-slate-600/50 transition-all duration-200 self-start sm:self-auto whitespace-nowrap"
+                onClick={onNavigateToLoginLogs}
+                type="button"
+              >
+                Ver Todos
+              </button>
             </div>
             <div className="space-y-2">
-              {systemAlerts.map((alert, index) => (
+              {loginAlerts.length === 0 && (
+                <div className="text-slate-400 text-xs">Nenhum alerta de login recente.</div>
+              )}
+              {loginAlerts.map((log, index) => (
                 <div key={index} className="glass-card bg-gradient-to-r from-white/5 to-white/2 rounded-lg p-3 border border-white/10 hover:border-cyan-400/30 transition-all duration-300">
                   <div className="flex items-start space-x-3">
-                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                      alert.type === 'success' ? 'bg-green-400' : 
-                      alert.type === 'warning' ? 'bg-orange-400' : 'bg-blue-400'
-                    }`}></div>
+                    <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0 bg-blue-400"></div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-white break-words">{alert.message}</p>
-                      <p className="text-xs text-slate-400 mt-1">{alert.time}</p>
+                      <p className="text-xs sm:text-sm font-medium text-white break-words">
+                        Login realizado por <span className="font-bold">{log.userName || log.userEmail}</span>
+                        {log.details?.role && (
+                          <span className="ml-1 text-blue-300">({log.details.role})</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">{getRelativeTime(log.timestamp)}</p>
                     </div>
-                    {alert.type === 'warning' && (
-                      <button className="px-2 sm:px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 text-xs rounded-lg border border-orange-500/30 transition-all duration-200 flex-shrink-0 whitespace-nowrap">
-                        Revisar
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
