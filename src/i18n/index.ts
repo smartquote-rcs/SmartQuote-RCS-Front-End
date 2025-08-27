@@ -168,7 +168,7 @@ const ptTranslations = {
     rejected: "Rejeitada"
   },
   productSearch: {
-    title: "Pesquisa de Produtos",
+    title: "Produtos",
     subtitle: "Encontre os melhores produtos para suas necessidades",
     searchPlaceholder: "Pesquisar produtos, fornecedores ou categorias...",
     categories: "Categorias",

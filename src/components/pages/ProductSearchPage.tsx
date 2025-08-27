@@ -457,6 +457,13 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                   try {
                     if (typeof productToDelete.id === 'number') {
                       await deleteProduct(productToDelete.id);
+                      // Toast de sucesso
+                      showToast(
+                        'success',
+                        'Produto Apagado',
+                        `Produto "${productToDelete.nome}" foi apagado com sucesso!`,
+                        4000
+                      );
                     } else {
                       alert('ID do produto inválido.');
                     }
