@@ -119,6 +119,22 @@ export const userService = {
     }
   },
 
+  async upsert(email: string, name?: string, role?: string, position?: string): Promise<AuthResponse> {
+    try {
+      const payload: any = { email };
+      if (name) payload.name = name;
+      if (position || role) payload.position = position || role;
+      const response = await api.post('/users-public/upsert', payload);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro no upsert de usuário:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Erro no upsert de usuário'
+      };
+    }
+  },
+
   async deleteUser(id: string): Promise<AuthResponse> {
     try {
       console.log(`📤 Fazendo requisição para deletar usuário (DELETE /users/${id})...`);
@@ -533,15 +549,41 @@ export const produtoService = {
     try {
       console.log(`📤 Fazendo requisição para deletar produto (DELETE /products/${id})...`);
       const response = await api.delete(`/products/${id}`);
-      if (response.status === 204 || response.status === 200) {
-        return { success: true, data: { message: 'Produto removido com sucesso' } };
+      const status = response.status;
+      console.log('📥 Resposta delete produto:', status, response.data);
+      if (status === 200 || status === 204) {
+        return { success: true, data: response.data || { message: 'Produto removido com sucesso' } };
       }
-      return { success: false, error: 'Erro ao remover produto.' };
+      return { success: false, error: `Resposta inesperada ao remover produto (status ${status}).` };
     } catch (error: any) {
       console.error('💥 Erro ao deletar produto:', error);
+      // Tratar conflito de FK (status 409 do backend)
+      if (error.response?.status === 409) {
+        return {
+          success: false,
+            error: error.response.data?.error || 'Produto vinculado a cotações/itens e não pode ser removido.'
+        };
+      }
       return { 
         success: false, 
         error: error.response?.data?.error || error.response?.data?.message || 'Erro ao remover produto.' 
+      };
+    }
+  },
+  async forceDelete(id: string): Promise<AuthResponse> {
+    try {
+      console.log(`📤 Fazendo requisição para deletar FORÇADO produto (DELETE /products/${id}/force)...`);
+      const response = await api.delete(`/products/${id}/force`);
+      const status = response.status;
+      if (status === 200 || status === 204) {
+        return { success: true, data: response.data || { message: 'Produto removido (forçado).' } };
+      }
+      return { success: false, error: `Resposta inesperada ao remover produto (status ${status}).` };
+    } catch (error: any) {
+      console.error('💥 Erro ao deletar produto (force):', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao remover produto (force).' 
       };
     }
   },
@@ -789,6 +831,13 @@ export const supplierService = {
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro ao criar fornecedor:', error);
+      if (error.response) {
+        console.error('🧪 Detalhes response.status:', error.response.status);
+        console.error('🧪 Detalhes response.data:', JSON.stringify(error.response.data, null, 2));
+        console.error('🧪 Payload reenviado debug:', JSON.stringify(supplierData, null, 2));
+      } else if (error.request) {
+        console.error('🧪 Nenhuma resposta recebida. Request:', error.request);
+      }
       let errorMessage = 'Erro ao criar fornecedor';
       if (error.response) {
         if (error.response.data?.error) {

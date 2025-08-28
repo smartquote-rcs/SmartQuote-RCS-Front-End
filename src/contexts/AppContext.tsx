@@ -46,7 +46,6 @@ interface AppContextType {
   markAsRead: (notificationId: string) => void;
   markAllAsRead: () => void;
   addNotification: (notification: Omit<Notification, 'id' | 'data' | 'lida'>) => void;
-  setToastCallback: (callback: (type: 'success' | 'error' | 'info', title: string, message: string) => void) => void;
   
   // Cotações
   quotes: Quote[];
@@ -71,6 +70,10 @@ interface AppContextType {
   // Configurações
   userSettings: UserSettings;
   updateSettings: (settings: Partial<UserSettings>) => void;
+
+  // Usuário logado (mínimo necessário para auditoria)
+  user: { id: number; name?: string; email?: string } | null;
+  setUser: (u: { id: number; name?: string; email?: string } | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -108,11 +111,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  // Usuário logado (placeholder - em integração real substituir pela autenticação)
+  const [user, setUser] = useState<{ id: number; name?: string; email?: string } | null>({ id: 1, name: 'Usuário Demo' });
   const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   
   // Callback para exibir toasts
-  const [toastCallback, setToastCallback] = useState<((type: 'success' | 'error' | 'info', title: string, message: string) => void) | null>(null);
+  // (toastCallback removido - não utilizado)
   const [quotes, setQuotes] = useState<Quote[]>([
     {
       id: "COT-2024-0045",
@@ -338,19 +343,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addSupplier = async (supplier: Omit<Supplier, 'id'>) => {
     try {
       console.log('📤 Tentando salvar fornecedor na API...', supplier);
+      // Garantir datas válidas (backend não aceita string vazia)
+  const now = new Date().toISOString();
+      const normalizeDate = (d?: string) => {
+        if (!d || d.trim() === '') return now;
+        // Se já parecer ISO completo, manter
+        if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z?$/.test(d)) return d.endsWith('Z') ? d : d + 'Z';
+        // Caso seja uma data parcial, tentar construir ISO
+        try { return new Date(d).toISOString(); } catch { return now; }
+      };
+      const cadastradoEm = supplier.cadastrado_em && supplier.cadastrado_em.trim() !== '' ? normalizeDate(supplier.cadastrado_em) : now;
+      const atualizadoEm = supplier.atualizado_em && supplier.atualizado_em.trim() !== '' ? normalizeDate(supplier.atualizado_em) : now;
       // Mapear para os campos esperados pela API
-      const response = await supplierService.create({
+      const payload = {
         nome: supplier.nome,
         contato_email: supplier.contato_email,
-        contato_telefone: supplier.contato_telefone,
-        site: supplier.site,
-        observacoes: supplier.observacoes,
-        ativo: supplier.ativo,
-        cadastrado_em: supplier.cadastrado_em,
+        contato_telefone: supplier.contato_telefone || '',
+        site: supplier.site || '',
+        observacoes: supplier.observacoes || '',
+        ativo: supplier.ativo ?? true,
+        cadastrado_em: cadastradoEm,
         cadastrado_por: supplier.cadastrado_por,
-        atualizado_em: supplier.atualizado_em,
+        atualizado_em: atualizadoEm,
         atualizado_por: supplier.atualizado_por
-      });
+      };
+      console.log('🛰️ Payload final POST /suppliers:', JSON.stringify(payload, null, 2));
+      const response = await supplierService.create(payload);
       
       if (response.success) {
         console.log('✅ Fornecedor salvo na API, recarregando lista...');
@@ -415,6 +433,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       console.log('📤 Tentando atualizar fornecedor na API...', supplier);
       const supplierId = supplier.id || 0;
+      if (!supplierId || supplierId <= 0) {
+        console.warn('⚠️ updateSupplier chamado com ID inválido, convertendo para criação (POST). Dados:', supplier);
+        const { id, ...rest } = supplier as any;
+        // Reusar caminho de criação
+        await addSupplier(rest);
+        return;
+      }
       const response = await supplierService.update(supplierId.toString(), {
         nome: supplier.nome,
         contato_email: supplier.contato_email,
@@ -459,11 +484,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.log('🔄 Carregando produtos da API...');
       const response = await produtoService.getAll();
       if (response.success && response.data) {
-    console.log('✅ Produtos carregados da API:', response.data);
-    // Garante que products sempre será um array
-    setProducts(Array.isArray(response.data) ? response.data : response.data.data || []);
-        // Salvar no localStorage como backup
-        localStorage.setItem('products_backup', JSON.stringify(response.data));
+        console.log('✅ Produtos carregados da API:', response.data);
+        // Extrai sempre o array independentemente do wrapper
+        const apiProducts = Array.isArray(response.data) ? response.data : response.data.data || [];
+        setProducts(apiProducts);
+        // Salvar somente o array no localStorage como backup (evita wrapper antigo reintroduzir registros)
+        localStorage.setItem('products_backup', JSON.stringify(apiProducts));
       } else {
         console.log('⚠️ API não retornou dados, tentando localStorage...');
         // Fallback para localStorage
@@ -571,30 +597,49 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const deleteProduct = async (id: number) => {
+  const deleteProduct = async (id: number, options?: { force?: boolean }) => {
+    console.log('�️ Iniciando exclusão de produto (optimistic UI)...', id);
+    // Optimistic update: remove imediatamente
+    const prevProducts = products;
+    const updatedProductsOptimistic = products.filter(p => p.id !== id);
+    setProducts(updatedProductsOptimistic);
+    localStorage.setItem('products_backup', JSON.stringify(updatedProductsOptimistic));
+
     try {
-      console.log('📤 Tentando deletar produto da API...', id);
-      const response = await produtoService.delete(id.toString());
-      
+      const response = options?.force
+        ? await produtoService.forceDelete(id.toString())
+        : await produtoService.delete(id.toString());
       if (response.success) {
-        console.log('✅ Produto deletado da API, recarregando lista...');
-        // Recarregar a lista para sincronizar
+        console.log('✅ Produto deletado confirmado pela API');
+        // Recarrega para garantir sincronização real (por ex. triggers, etc.)
         await loadProducts();
       } else {
-        console.log('⚠️ API falhou, removendo localmente...', response.error);
-        // Se falhar na API, remove localmente
-        const updatedProducts = products.filter(p => p.id !== id);
-        setProducts(updatedProducts);
-        localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
-        console.log('✅ Produto removido localmente');
+        console.warn('⚠️ Falha ao deletar na API, revertendo alteração local:', response.error);
+        setProducts(prevProducts); // rollback
+        localStorage.setItem('products_backup', JSON.stringify(prevProducts));
+        if (response.error?.includes('vinculado') && !options?.force) {
+          // Tenta exclusão forçada automaticamente uma vez
+          console.log('🔁 Tentando exclusão forçada do produto', id);
+          return await deleteProduct(id, { force: true });
+        } else {
+          addNotification({
+            tipo: 'system',
+            titulo: 'Não foi possível excluir',
+            mensagem: response.error || 'Erro ao excluir produto.',
+            urgente: false
+          });
+        }
       }
     } catch (error) {
-      console.error('💥 Erro na API, removendo localmente:', error);
-      // Em caso de erro, remove localmente
-      const updatedProducts = products.filter(p => p.id !== id);
-      setProducts(updatedProducts);
-      localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
-      console.log('✅ Produto removido localmente (fallback)');
+      console.error('💥 Erro inesperado ao deletar produto, revertendo:', error);
+      setProducts(prevProducts); // rollback
+      localStorage.setItem('products_backup', JSON.stringify(prevProducts));
+      addNotification({
+        tipo: 'system',
+        titulo: 'Erro ao excluir produto',
+        mensagem: 'Falha inesperada na comunicação com a API.',
+        urgente: false
+      });
     }
   };
 
@@ -685,7 +730,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     markAsRead,
     markAllAsRead,
     addNotification,
-    setToastCallback,
     quotes,
     addQuote,
     suppliers,
@@ -701,7 +745,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateProduct,
     isLoadingProducts,
     userSettings,
-    updateSettings
+  updateSettings,
+  user,
+  setUser
   };
 
   return (

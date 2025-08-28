@@ -16,8 +16,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import { Search, Building, Phone, Mail, MapPin, Download, Plus, RefreshCw, Edit, Trash2, X, CheckCircle, AlertTriangle } from "lucide-react";
+import { Search, Building, Phone, Mail, Download, Plus, RefreshCw, Edit, Trash2, X, CheckCircle, AlertTriangle } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
+import { exportSuppliersPdf } from "../../utils/exportSuppliersPdf";
 import { EditSupplierModal } from "../EditSupplierModal";
 import { Supplier } from "../../types";
 
@@ -126,48 +127,44 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
     await loadSuppliers();
   };
 
-  // Função para editar fornecedor
-  const handleEditSupplier = (fornecedor: any) => {
-    console.log('Editando fornecedor:', fornecedor);
-    
-    // Extrair o ID numérico do formato "FORN-001"
-    const supplierId = parseInt(fornecedor.id.replace('FORN-', ''));
-    
-    // Encontrar o fornecedor original no contexto
-    const originalSupplier = suppliers.find(s => s.id === supplierId);
-    
-    if (originalSupplier) {
-      setSelectedSupplierForEdit(originalSupplier);
-      setIsEditModalOpen(true);
-    } else {
-      console.error('Fornecedor não encontrado:', supplierId);
-      alert('Erro: Fornecedor não encontrado.');
+  const handleExportPdf = () => {
+    try {
+      exportSuppliersPdf(suppliers, { companyName: 'RCS', username: (user as any)?.name || 'Usuário' });
+    } catch (e) {
+      console.error('Erro ao exportar PDF fornecedores:', e);
+      showToast('error','Falha na Exportação','Não foi possível gerar o PDF.');
     }
   };
 
-  // Função para salvar as alterações do fornecedor
-  const handleSaveSupplier = async (updatedSupplier: Supplier) => {
+  // Função para editar fornecedor
+  const handleEditSupplier = (fornecedor: any) => {
+    console.log('✏️ Editando fornecedor:', fornecedor);
+    const supplierId = Number(fornecedor.id);
+    const originalSupplier = suppliers.find(s => s.id === supplierId);
+    if (!originalSupplier) {
+      console.error('Fornecedor não encontrado para edição:', supplierId);
+      showToast('error','Fornecedor não encontrado','Não foi possível localizar o fornecedor para edição.');
+      return;
+    }
+    setSelectedSupplierForEdit(originalSupplier);
+    setIsEditModalOpen(true);
+  };
+
+  // Função central para salvar fornecedor (novo ou edição) usada pelo modal único
+  const handleSaveSupplier = async (supplierData: Supplier, isNew: boolean) => {
     try {
-      await updateSupplier(updatedSupplier);
-      
-      // Toast de sucesso
-      showToast(
-        'success',
-        'Fornecedor Atualizado',
-        `O fornecedor "${updatedSupplier.nome}" foi atualizado com sucesso!`
-      );
-      
-      // Fechar modal
+      if (isNew) {
+        const { id, ...rest } = supplierData; // remover id 0
+        await addSupplier(rest as any);
+        showToast('success','Fornecedor cadastrado',`Fornecedor "${supplierData.nome}" foi criado com sucesso!`);
+      } else {
+        await updateSupplier(supplierData);
+        showToast('success','Fornecedor atualizado',`Fornecedor "${supplierData.nome}" foi atualizado com sucesso!`);
+      }
       handleCloseEditModal();
     } catch (error) {
-      console.error('Erro ao atualizar fornecedor:', error);
-      
-      // Toast de erro
-      showToast(
-        'error',
-        'Erro ao Atualizar',
-        'Ocorreu um erro ao atualizar o fornecedor. Tente novamente.'
-      );
+      console.error('Erro ao salvar fornecedor:', error);
+      showToast('error','Erro ao salvar','Não foi possível salvar o fornecedor.');
     }
   };
 
@@ -355,37 +352,27 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
               </button>
               {user?.role === 'admin' && (
                 <button 
-                  onClick={() => setIsEditModalOpen(true)}
+                  onClick={() => { setSelectedSupplierForEdit(null); setIsEditModalOpen(true); }}
                   className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-sm md:text-base min-w-[160px] h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Novo Fornecedor</span>
                 </button>
               )}
-              <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm min-w-[160px] h-[44px]">
+              <button onClick={handleExportPdf} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm min-w-[160px] h-[44px]">
                 <Download className="w-4 h-4" />
                 <span>Exportar Relatório</span>
               </button>
             </div>
-      {/* Modal de novo fornecedor para admin */}
-      {isEditModalOpen && user?.role === 'admin' && (
-        <EditSupplierModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          supplier={null}
-          onSave={async (newSupplier, isNew) => {
-            if (isNew) {
-              const { id, ...supplierData } = newSupplier;
-              await addSupplier(supplierData);
-              showToast('success', 'Fornecedor cadastrado', 'Fornecedor adicionado com sucesso!');
-            } else {
-              await updateSupplier(newSupplier);
-              showToast('success', 'Fornecedor atualizado', 'Fornecedor atualizado com sucesso!');
-            }
-            setIsEditModalOpen(false);
-          }}
-        />
-      )}
+      {/* Modal único para criar ou editar fornecedor */}
+      <EditSupplierModal
+        supplier={selectedSupplierForEdit}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+  onSave={handleSaveSupplier}
+  onDelete={handleDeleteSupplier}
+  userId={(user as any)?.id}
+      />
           </div>
         </div>
       </header>
@@ -511,13 +498,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
         </Tabs>
       </main>
       
-      {/* Modal de Edição de Fornecedor */}
-      <EditSupplierModal
-        supplier={selectedSupplierForEdit}
-        isOpen={isEditModalOpen}
-        onClose={handleCloseEditModal}
-        onSave={handleSaveSupplier}
-      />
+  {/* (Modal movido para cima - remoção do modal duplicado) */}
 
       {/* Toast Notifications */}
       <div className="fixed top-4 right-4 z-[9999] space-y-2">
@@ -581,7 +562,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
       </div>
 
       {/* Keyframes CSS para a progress bar */}
-      <style jsx>{`
+  <style>{`
         @keyframes shrink {
           from { width: 100%; }
           to { width: 0%; }

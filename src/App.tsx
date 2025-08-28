@@ -3,10 +3,12 @@ import { LoginPage } from "./components/LoginPage";
 import { UserDashboard } from "./components/UserDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AppProvider } from "./contexts/AppContext";
+import { userService } from './api/services';
 import { emailService } from "./services/emailService";
 import { saveLog } from "./services/logService";
 
 interface User {
+  id: number; // id numérico usado em FK/auditoria
   email: string;
   name: string;
   role: "user" | "manager" | "admin";
@@ -24,6 +26,17 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Gera id determinístico simples baseado no email (fallback se backend não retornar id)
+  const deriveUserId = (email: string): number => {
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+      hash = ((hash << 5) - hash) + email.charCodeAt(i);
+      hash |= 0;
+    }
+    // garante positivo e limita tamanho
+    return Math.abs(hash) % 1000000 + 1;
+  };
+
   useEffect(() => {
     // Verificar se o usuário já está logado (localStorage)
     const savedAuth = localStorage.getItem("smartquote_auth");
@@ -34,16 +47,43 @@ export default function App() {
         if (savedAuth) {
           // Dados salvos do sistema anterior
           const authData = JSON.parse(savedAuth);
+          const storedUser = authData.user || {};
+          const ensuredUser: User = {
+            id: typeof storedUser.id === 'number' ? storedUser.id : deriveUserId(storedUser.email || 'anon@local'),
+            email: storedUser.email || 'anon@local',
+            name: storedUser.name || (storedUser.email ? storedUser.email.split('@')[0] : 'Usuário'),
+            role: storedUser.role || 'user',
+            position: storedUser.position || storedUser.role || 'user'
+          };
           setIsAuthenticated(true);
-          setUser(authData.user);
+          setUser(ensuredUser);
+          // Persistir novamente com id caso não existisse
+          localStorage.setItem('smartquote_auth', JSON.stringify({ user: ensuredUser, timestamp: authData.timestamp || Date.now() }));
+          // Se id era sintético (derivado), tentar upsert para obter id real
+          if (!storedUser.id && ensuredUser.email && ensuredUser.email !== 'anon@local') {
+            userService.upsert(ensuredUser.email, ensuredUser.name, ensuredUser.role, ensuredUser.position)
+              .then(res => {
+                if (res.success && res.data?.data?.id) {
+                  const realId = Number(res.data.data.id);
+                  const withReal: User = { ...ensuredUser, id: realId };
+                  setUser(withReal);
+                  localStorage.setItem('smartquote_auth', JSON.stringify({ user: withReal, timestamp: Date.now() }));
+                }
+              })
+              .catch(()=>{});
+          }
         } else if (savedToken) {
           // Só tem token da API, criar dados de usuário básicos
           setIsAuthenticated(true);
-          setUser({
+          const basicUser: User = {
+            id: deriveUserId('usuario@api.com'),
             email: 'usuario@api.com',
             name: 'Usuário API',
-            role: 'user'
-          });
+            role: 'user',
+            position: 'user'
+          };
+          setUser(basicUser);
+          localStorage.setItem('smartquote_auth', JSON.stringify({ user: basicUser, timestamp: Date.now() }));
         }
       } catch (error) {
         localStorage.removeItem("smartquote_auth");
@@ -64,27 +104,38 @@ export default function App() {
       credentials.role === 'admin' || credentials.role === 'manager'
         ? credentials.role
         : 'user';
-    const userData: User = {
+    const provisional: User = {
+      id: deriveUserId(credentials.email),
       email: credentials.email,
       name: credentials.email.split('@')[0] || 'Usuário',
       role,
       position: credentials.position || role
     };
-    console.log('👤 Dados do usuário criados:', userData);
-    setUser(userData);
+    setUser(provisional);
     setIsAuthenticated(true);
-    localStorage.setItem("smartquote_auth", JSON.stringify({
-      user: userData,
-      timestamp: Date.now()
-    }));
+    localStorage.setItem('smartquote_auth', JSON.stringify({ user: provisional, timestamp: Date.now() }));
+    // Upsert assíncrono para obter id real
+    userService.upsert(provisional.email, provisional.name, provisional.role, provisional.position)
+      .then(res => {
+        if (res.success && res.data?.data?.id) {
+          const realId = Number(res.data.data.id);
+          if (realId && realId !== provisional.id) {
+            const realUser: User = { ...provisional, id: realId };
+            setUser(realUser);
+            localStorage.setItem('smartquote_auth', JSON.stringify({ user: realUser, timestamp: Date.now() }));
+          }
+        }
+      })
+      .catch(()=>{});
+    console.log('👤 Dados do usuário (provisional):', provisional);
     // Salva log de entrada do usuário
     saveLog({
       type: 'login',
-      userEmail: userData.email,
-      userName: userData.name,
-      details: { role: userData.role, position: userData.position }
+      userEmail: provisional.email,
+      userName: provisional.name,
+      details: { role: provisional.role, position: provisional.position }
     });
-    console.log('✅ Login aceito no App.tsx, estado atualizado');
+    console.log('✅ Login aceito no App.tsx (provisional), aguardando upsert para id real');
   };
 
   const handleLogout = () => {

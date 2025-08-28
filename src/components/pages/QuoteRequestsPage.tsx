@@ -1,5 +1,4 @@
 // Componente para exibir detalhes do item e submodal
-import React from 'react';
 
 type ItemDetalheCardProps = { item: any };
 const ItemDetalheCard = ({ item }: ItemDetalheCardProps) => {
@@ -62,6 +61,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import {
@@ -84,6 +84,7 @@ import {
   SortDesc,
   Plus,
   ShieldAlert,
+  RefreshCw,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cotacaoService } from "../../api/services";
@@ -263,6 +264,18 @@ export function QuoteRequestsPage({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [cotacoesList, setCotacoesList] = useState<any[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<number|null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('smartquote_auth');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const uid = parsed?.user?.id;
+        if (typeof uid === 'number') setCurrentUserId(uid);
+      }
+    } catch {}
+  }, []);
 
   // Sincronizar cotações locais com o contexto global
   useEffect(() => {
@@ -310,10 +323,12 @@ export function QuoteRequestsPage({
 
   // Buscar itens ao abrir detalhes
   useEffect(() => {
-    if (selectedCotacao) {
+    if (selectedCotacao && selectedCotacao.id) {
       api.get(`/cotacoes-itens?cotacao_id=${selectedCotacao.id}`)
-        .then(res => setCotacaoItens(res.data))
+        .then(res => setCotacaoItens(Array.isArray(res.data) ? res.data : []))
         .catch(() => setCotacaoItens([]));
+    } else {
+      setCotacaoItens([]);
     }
   }, [selectedCotacao]);
 
@@ -335,110 +350,80 @@ export function QuoteRequestsPage({
   };
 
 
-  // Função para aprovar cotação com validação por nível
-  const handleApprove = (cotacaoId: string, approver?: string) => {
-    setCotacoesList((prev) =>
-      prev.map((cotacao) => {
-        if (cotacao.id === cotacaoId) {
-          const validation = getValidationLevel(cotacao.valor);
-          
-          if (validation.requiresMultipleApprovals) {
-            // Para cotações que precisam de múltiplas aprovações
-            const currentApprovers = cotacao.approvedBy || [];
-            const newApprovers = approver && !currentApprovers.includes(approver) 
-              ? [...currentApprovers, approver] 
-              : currentApprovers;
-            
-            const allApproved = validation.approvers.every(req => newApprovers.includes(req));
-            
-            return {
-              ...cotacao,
-              approvedBy: newApprovers,
-              status: allApproved ? "approved" : "pending_approval",
-              lastApprover: approver || "Sistema",
-              approvalLevel: validation.level
-            };
-          } else {
-            // Aprovação simples
-            return {
-              ...cotacao,
-              status: "approved",
-              approvedBy: [approver || validation.approver],
-              lastApprover: approver || validation.approver,
-              approvalLevel: validation.level
-            };
-          }
-        }
-        return cotacao;
-      })
-    );
-    
-    // Notificação baseada no nível de validação
-    const cotacao = cotacoesList.find(c => c.id === cotacaoId);
-    if (cotacao) {
-      const validation = getValidationLevel(cotacao.valor);
-      const status = getValidationStatus({...cotacao, approvedBy: cotacao.approvedBy || []});
-      
-      if (validation.requiresMultipleApprovals && !status.isFullyApproved) {
-        console.log(`Cotação ${cotacaoId} aprovada por ${approver || 'Sistema'}. Pendentes: ${status.pendingApprovals.join(', ')}`);
-      } else {
-        console.log(`Cotação ${cotacaoId} totalmente aprovada! Nível: ${validation.description}`);
+  // Modal de motivo para aprovar / rejeitar / reativar
+  const [approvalModal, setApprovalModal] = useState<{open:boolean; action:'approve'|'reject'|'reactivate'; cotacaoId:string|null}>({open:false, action:'approve', cotacaoId:null});
+  const [motivoInput, setMotivoInput] = useState('');
+  const openApproval = (id:string, action:'approve'|'reject'|'reactivate') => {
+    setMotivoInput('');
+    setApprovalModal({open:true, action, cotacaoId:id});
+  };
+  const closeApproval = () => setApprovalModal(p=>({...p, open:false}));
+  const submitApproval = async () => {
+    if (!approvalModal.cotacaoId) return;
+    const id = approvalModal.cotacaoId;
+    const action = approvalModal.action;
+    const isApprove = action === 'approve' || action === 'reactivate';
+    const isReject = action === 'reject';
+    try {
+      if (!motivoInput.trim()) {
+        alert('Informe o motivo');
+        return;
       }
+      const payload:any = { aprovacao: isApprove, motivo: motivoInput };
+      if (currentUserId != null) {
+        payload.aprovado_por = currentUserId; // envia id do usuário logado
+      }
+      if (isReject) {
+        payload.status = 'rejected';
+        payload.data_aprovacao = null;
+      } else if (isApprove) {
+        payload.status = 'completa';
+      }
+      const resp = await cotacaoService.update(String(id), payload);
+      if (resp.success) {
+        setCotacoesList(prev => prev.map(c => {
+          if (String(c.id) !== String(id)) return c;
+            return {
+              ...c,
+              aprovacao: isApprove,
+              status: isReject ? 'rejected' : 'completa',
+              motivo: motivoInput,
+              data_aprovacao: isReject ? null : new Date().toISOString(),
+              aprovado_por: currentUserId != null ? currentUserId : c.aprovado_por
+            };
+        }));
+      } else {
+        alert(resp.error || 'Falha ao atualizar aprovação');
+      }
+    } catch (e) {
+      console.error('Erro ao atualizar aprovação:', e);
+      alert('Erro ao atualizar aprovação');
+    } finally {
+      closeApproval();
     }
   };
 
-  // Função para rejeitar cotação
-  const handleReject = (cotacaoId: string) => {
-    setCotacoesList((prev) =>
-      prev.map((cotacao) =>
-        cotacao.id === cotacaoId ? { ...cotacao, status: "rejected" } : cotacao
-      )
-    );
-    console.log(`Cotação ${cotacaoId} rejeitada`);
-  };
-
-  // Função para aumentar quantidade
-  const handleIncreaseQuantity = (cotacaoId: string) => {
-    setCotacoesList((prev) =>
-      prev.map((cotacao) => {
-        if (cotacao.id === cotacaoId) {
-          // Extrair o número da quantidade atual
-          const currentQuantity = cotacao.quantidade;
-          const numberMatch = currentQuantity.match(/(\d+)/);
-          
-          if (numberMatch) {
-            const currentNumber = parseInt(numberMatch[1]);
-            const newNumber = currentNumber + 1;
-            const newQuantity = currentQuantity.replace(/\d+/, newNumber.toString());
-            
-            console.log(`Quantidade da cotação ${cotacaoId} aumentada de ${currentQuantity} para ${newQuantity}`);
-            
-            return { ...cotacao, quantidade: newQuantity };
-          }
-        }
-        return cotacao;
-      })
-    );
-  };
+  // (removido handleIncreaseQuantity não utilizado)
 
   // Função para visualizar detalhes
-  const handleViewDetails = (cotacaoId: string) => {
-    const cotacao = cotacoesList.find(c => c.id === cotacaoId);
+  const handleViewDetails = (cotacaoId: string | number) => {
+    const idStr = String(cotacaoId);
+    const cotacao = cotacoesList.find(c => String(c.id) === idStr);
     if (cotacao) {
       setSelectedCotacao(cotacao);
+      setIsDetailModalOpen(true);
+    } else {
+      setSelectedCotacao(null);
+      setCotacaoItens([]);
       setIsDetailModalOpen(true);
     }
   };
 
   const QuoteCard = ({
     cotacao,
-    onApprove,
-    onReject,
     onViewDetails,
   }: {
     cotacao: any;
-    onApprove: (id: string) => void;
-    onReject: (id: string) => void;
     onViewDetails: (id: string) => void;
   }) => (
     <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300 group relative">
@@ -570,17 +555,17 @@ export function QuoteRequestsPage({
 
           <div className="flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-2">
             {/* Botões de ação baseados no status */}
-            {cotacao.status === "pending_approval" ? (
+    {(cotacao.status === "pending_approval" || cotacao.status === 'incompleta') ? (
               <>
                 <button
-                  onClick={() => onApprove(cotacao.id)}
+      onClick={() => openApproval(String(cotacao.id),'approve')}
                   className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
                 >
                   <Check className="w-3 h-3" />
                   <span>{t("approvals.approve")}</span>
                 </button>
                 <button
-                  onClick={() => onReject(cotacao.id)}
+      onClick={() => openApproval(String(cotacao.id),'reject')}
                   className="bg-red-600/20 hover:bg-red-600/40 hover:border-red-400/60 border border-red-500/30 text-red-400 hover:text-red-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
                 >
                   <X className="w-3 h-3" />
@@ -594,7 +579,7 @@ export function QuoteRequestsPage({
                   <span>{t("approvals.viewDetails")}</span>
                 </button>
               </>
-            ) : cotacao.status === "approved" ||
+            ) : cotacao.status === "approved" || cotacao.status === 'completa' ||
               cotacao.status === "processed" ? (
               <>
                 <button
@@ -609,7 +594,7 @@ export function QuoteRequestsPage({
                   <span>PDF</span>
                 </button>
                 <button
-                  onClick={() => onReject(cotacao.id)}
+                  onClick={() => openApproval(String(cotacao.id),'reject')}
                   className="bg-orange-600/20 hover:bg-orange-600/40 hover:border-orange-400/60 border border-orange-500/30 text-orange-400 hover:text-orange-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
                 >
                   <X className="w-3 h-3" />
@@ -626,7 +611,7 @@ export function QuoteRequestsPage({
                   <span>Detalhes</span>
                 </button>
                 <button
-                  onClick={() => onApprove(cotacao.id)}
+                  onClick={() => openApproval(String(cotacao.id),'reactivate')}
                   className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
                 >
                   <Check className="w-3 h-3" />
@@ -651,7 +636,7 @@ export function QuoteRequestsPage({
                   <span>PDF</span>
                 </button>
                 <button
-                  onClick={() => onApprove(cotacao.id)}
+                  onClick={() => openApproval(String(cotacao.id),'approve')}
                   className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
                 >
                   <Check className="w-3 h-3" />
@@ -780,32 +765,15 @@ export function QuoteRequestsPage({
                 value="pending"
                 className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-orange-500/20 hover:text-orange-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                Pendentes (
-                {
-                  cotacoesList.filter((c) => c.status === "pending_approval")
-                    .length
-                }
-                )
+                Pendentes ({cotacoesList.filter((c) => c.status === 'pending_approval' || c.status === 'incompleta').length})
               </TabsTrigger>
               <TabsTrigger
                 value="approved"
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-green-500/20 hover:text-green-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                Aprovadas (
-                {
-                  cotacoesList.filter(
-                    (c) => c.status === "approved" || c.status === "processed"
-                  ).length
-                }
-                )
+                Aprovadas ({cotacoesList.filter((c) => c.status === 'approved' || c.status === 'processed' || c.status === 'completa').length})
               </TabsTrigger>
-              <TabsTrigger
-                value="processing"
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
-              >
-                Processando (
-                {cotacoesList.filter((c) => c.status === "processing").length})
-              </TabsTrigger>
+              {/* Removido tab Processando conforme solicitação */}
               <TabsTrigger
                 value="rejected"
                 className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
@@ -1143,8 +1111,6 @@ export function QuoteRequestsPage({
                   <QuoteCard
                     key={cotacao.id}
                     cotacao={cotacao}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
                     onViewDetails={handleViewDetails}
                   />
                 ))}
@@ -1154,13 +1120,11 @@ export function QuoteRequestsPage({
             <TabsContent value="pending" className="h-full mt-0">
               <div className="grid gap-4">
                 {cotacoesList
-                  .filter((c) => c.status === "pending_approval")
+                  .filter((c) => c.status === 'pending_approval' || c.status === 'incompleta')
                   .map((cotacao) => (
                     <QuoteCard
                       key={cotacao.id}
                       cotacao={cotacao}
-                      onApprove={handleApprove}
-                      onReject={handleReject}
                       onViewDetails={handleViewDetails}
                     />
                   ))}
@@ -1171,30 +1135,12 @@ export function QuoteRequestsPage({
               <div className="grid gap-4">
                 {cotacoesList
                   .filter(
-                    (c) => c.status === "approved" || c.status === "processed"
+                    (c) => c.status === 'approved' || c.status === 'processed' || c.status === 'completa'
                   )
                   .map((cotacao) => (
                     <QuoteCard
                       key={cotacao.id}
                       cotacao={cotacao}
-                      onApprove={handleApprove}
-                      onReject={handleReject}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="processing" className="h-full mt-0">
-              <div className="grid gap-4">
-                {cotacoesList
-                  .filter((c) => c.status === "processing")
-                  .map((cotacao) => (
-                    <QuoteCard
-                      key={cotacao.id}
-                      cotacao={cotacao}
-                      onApprove={handleApprove}
-                      onReject={handleReject}
                       onViewDetails={handleViewDetails}
                     />
                   ))}
@@ -1209,8 +1155,6 @@ export function QuoteRequestsPage({
                     <QuoteCard
                       key={cotacao.id}
                       cotacao={cotacao}
-                      onApprove={handleApprove}
-                      onReject={handleReject}
                       onViewDetails={handleViewDetails}
                     />
                   ))}
@@ -1242,6 +1186,45 @@ export function QuoteRequestsPage({
           </div>
         </Tabs>
       </main>
+
+      {/* Modal de Motivo para Aprovar / Rejeitar / Reativar */}
+      <Dialog open={approvalModal.open} onOpenChange={(o)=>!o && closeApproval()}>
+        <DialogContent className="max-w-md bg-slate-900/95 border border-cyan-500/30">
+          <DialogHeader>
+            <DialogTitle className="text-white font-semibold flex items-center gap-2">
+              {approvalModal.action === 'approve' && <Check className="w-4 h-4 text-green-400"/>}
+              {approvalModal.action === 'reject' && <X className="w-4 h-4 text-red-400"/>}
+              {approvalModal.action === 'reactivate' && <RefreshCw className="w-4 h-4 text-emerald-400"/>}
+              {approvalModal.action === 'approve' && 'Aprovar Cotação'}
+              {approvalModal.action === 'reject' && 'Rejeitar Cotação'}
+              {approvalModal.action === 'reactivate' && 'Reativar Cotação'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 text-sm">
+              Informe o motivo. Esse registro ficará salvo no histórico.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <textarea
+              value={motivoInput}
+              onChange={(e)=>setMotivoInput(e.target.value)}
+              placeholder="Descreva o motivo..."
+              className="w-full h-28 rounded-md bg-slate-800/70 border border-slate-600/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm text-white p-3 resize-none outline-none"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={closeApproval} className="px-4 py-2 text-sm rounded-md bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 border border-slate-600/60">Cancelar</button>
+              <button
+                onClick={submitApproval}
+                className={`px-4 py-2 text-sm rounded-md font-semibold flex items-center gap-1 border transition-colors ${approvalModal.action==='reject' ? 'bg-red-600/30 hover:bg-red-600/50 text-red-300 border-red-500/40' : approvalModal.action==='reactivate' ? 'bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border-emerald-500/40' : 'bg-green-600/30 hover:bg-green-600/50 text-green-300 border-green-500/40'}`}
+              >
+                {approvalModal.action==='approve' && <Check className="w-4 h-4"/>}
+                {approvalModal.action==='reject' && <X className="w-4 h-4"/>}
+                {approvalModal.action==='reactivate' && <RefreshCw className="w-4 h-4"/>}
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Detalhes da Cotação com Sistema de Validação */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>

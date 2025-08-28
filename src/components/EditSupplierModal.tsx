@@ -7,9 +7,26 @@ interface EditSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (updatedSupplier: Supplier, isNew: boolean) => Promise<void>;
+  onDelete?: (id: number) => Promise<void>; // nova callback para exclusão
+  userId?: number | string; // passar id já resolvido do usuário logado
 }
 
-export function EditSupplierModal({ supplier, isOpen, onClose, onSave }: EditSupplierModalProps) {
+export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete, userId }: EditSupplierModalProps) {
+  let currentUserId: number = 0;
+  if (typeof userId === 'number') currentUserId = userId;
+  else if (typeof userId === 'string' && userId.trim() !== '' && !isNaN(Number(userId))) currentUserId = Number(userId);
+  else {
+    // fallback como último recurso: tentar localStorage (mantido mas não preferido)
+    try {
+      const storedUserRaw = typeof window !== 'undefined' ? localStorage.getItem('currentUser') : null;
+      if (storedUserRaw) {
+        const parsed = JSON.parse(storedUserRaw);
+        const rawId = parsed?.id;
+        if (typeof rawId === 'number') currentUserId = rawId;
+        else if (typeof rawId === 'string' && rawId.trim() !== '' && !isNaN(Number(rawId))) currentUserId = Number(rawId);
+      }
+    } catch {}
+  }
   const [formData, setFormData] = useState<Supplier>({
     id: supplier?.id || 0,
     nome: supplier?.nome || '',
@@ -19,16 +36,19 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave }: EditSup
     observacoes: supplier?.observacoes || '',
     ativo: supplier?.ativo ?? true,
     cadastrado_em: supplier?.cadastrado_em || '',
-    cadastrado_por: supplier?.cadastrado_por || 1,
+    // Para novo registro usar sempre o usuário logado (currentUserId) se disponível
+    cadastrado_por: supplier ? (supplier.cadastrado_por || 0) : (currentUserId || 0),
     atualizado_em: supplier?.atualizado_em || '',
-    atualizado_por: supplier?.atualizado_por || 1,
+	atualizado_por: supplier?.atualizado_por || currentUserId,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Atualizar dados do formulário quando supplier mudar
   useEffect(() => {
     if (supplier) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         id: supplier.id || 0,
         nome: supplier.nome || '',
         contato_email: supplier.contato_email || '',
@@ -36,11 +56,19 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave }: EditSup
         site: supplier.site || '',
         observacoes: supplier.observacoes || '',
         ativo: supplier.ativo ?? true,
-        cadastrado_em: supplier.cadastrado_em || '',
-        cadastrado_por: supplier.cadastrado_por || 1,
+        cadastrado_em: supplier.cadastrado_em || prev.cadastrado_em || '',
+        // Mantém cadastrado_por original do registro (não mudar em edição)
+        cadastrado_por: supplier.cadastrado_por || prev.cadastrado_por || 0,
         atualizado_em: supplier.atualizado_em || '',
-        atualizado_por: supplier.atualizado_por || 1,
-      });
+        atualizado_por: supplier.atualizado_por || currentUserId || 0,
+      }));
+    } else {
+      // Novo registro: garantir cadastrado_por = usuário logado
+      setFormData(prev => ({
+        ...prev,
+        cadastrado_por: currentUserId || 0,
+        atualizado_por: currentUserId || 0,
+      }));
     }
   }, [supplier]);
 
@@ -65,21 +93,56 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave }: EditSup
     try {
       console.log('📝 EditSupplierModal: Iniciando salvamento...', formData.nome);
       // Atualizar campos de auditoria
-      const updatedSupplier: Supplier = {
-        ...formData,
-        atualizado_em: new Date().toISOString(),
-        atualizado_por: 1 // TODO: Pegar do usuário logado
-      };
-      const isNew = !supplier;
+  const isNew = !supplier;
+  const updatedSupplier: Supplier = {
+    ...formData,
+    // Garante cadastrado_por correto em criação
+    cadastrado_por: isNew ? (currentUserId || formData.cadastrado_por || 0) : formData.cadastrado_por,
+    atualizado_em: new Date().toISOString(),
+	atualizado_por: currentUserId || formData.atualizado_por || 0 // fallback 0 se não resolvido
+  };
       console.log('📤 EditSupplierModal: Chamando onSave...', updatedSupplier, isNew);
       await onSave(updatedSupplier, isNew);
       console.log('✅ EditSupplierModal: onSave executado com sucesso');
+      if (isNew) {
+        // Limpar campos após criação
+        setFormData({
+          id: 0,
+            nome: '',
+            contato_email: '',
+            contato_telefone: '',
+            site: '',
+            observacoes: '',
+            ativo: true,
+            cadastrado_em: '',
+            cadastrado_por: currentUserId || 0,
+            atualizado_em: '',
+            atualizado_por: currentUserId || 0,
+        });
+      }
       onClose();
     } catch (error) {
       console.error('💥 EditSupplierModal: Erro ao salvar fornecedor:', error);
       alert('Erro ao salvar fornecedor. Tente novamente.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!supplier || !supplier.id) return;
+    if (!onDelete) return;
+    const confirmed = window.confirm('Tem certeza que deseja eliminar este fornecedor? Esta ação não pode ser desfeita.');
+    if (!confirmed) return;
+    try {
+      setIsDeleting(true);
+      await onDelete(supplier.id);
+      onClose();
+    } catch (err) {
+      console.error('Erro ao deletar fornecedor no modal:', err);
+      alert('Erro ao eliminar fornecedor. Tente novamente.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -202,18 +265,30 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave }: EditSup
           </div>
 
           {/* Botões */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
+          <div className="flex justify-between space-x-3 pt-4 border-t border-slate-700">
+            <div>
+              {supplier?.id ? (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="px-4 py-2 bg-red-600/90 hover:bg-red-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                  disabled={isSaving || isDeleting}
+                >
+                  {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              ) : null}
+            </div>
             <button
               type="button"
               onClick={onClose}
               className="px-6 py-2 text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-              disabled={isSaving}
+              disabled={isSaving || isDeleting}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || isDeleting}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50"
             >
               {isSaving ? (

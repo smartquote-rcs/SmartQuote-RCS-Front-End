@@ -41,6 +41,7 @@ import i18n from '../i18n';
 
 
 interface User {
+  id: number; // adiciona id para auditoria
   email: string;
   name: string;
   role: string;
@@ -246,10 +247,9 @@ export function AdminDashboard({
     unidade: '',
     estoque: 0,
     origem: '',
-    cadastrado_por: 1,
-    cadastrado_em: '',
-    atualizado_por: 1,
-    atualizado_em: '',
+  image_url: '',
+    // cadastrado_por e atualizado_por serão preenchidos automaticamente
+    // cadastrado_em será preenchido automaticamente
   });
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
 
@@ -262,10 +262,27 @@ export function AdminDashboard({
     observacoes: '',
     ativo: true,
     cadastrado_em: '',
-    cadastrado_por: 1,
+    cadastrado_por: user?.id ?? 0,
     atualizado_em: '',
-    atualizado_por: 1,
+    atualizado_por: user?.id ?? 0,
   });
+
+  // Aplica máscara simples de telefone (ex: +351 90000-0000)
+  const formatTelefone = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    if (digits.startsWith('351')) {
+      // Portugal
+      if (digits.length <= 3) return '+351 ';
+      const rest = digits.slice(3);
+      if (rest.length <= 3) return '+351 ' + rest;
+      if (rest.length <= 6) return '+351 ' + rest.slice(0,3) + ' ' + rest.slice(3);
+      return '+351 ' + rest.slice(0,3) + ' ' + rest.slice(3,6) + '-' + rest.slice(6,10);
+    }
+    // Genérico
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 6) return '(' + digits.slice(0,2) + ') ' + digits.slice(2);
+    return '(' + digits.slice(0,2) + ') ' + digits.slice(2,7) + '-' + digits.slice(7,11);
+  };
   const [isCreatingSupplier, setIsCreatingSupplier] = useState(false);
   // Estados para Toast Notifications
   const [toasts, setToasts] = useState<Array<{
@@ -349,20 +366,34 @@ export function AdminDashboard({
 
     try {
       // Mapear os campos do formulário para o payload esperado pelo produtoService.create
-      const currentDate = new Date().toISOString();
+  const currentDate = new Date().toISOString().replace(/\..+Z$/, '');
+      // Obtém id do usuário logado; se não existir aborta (evita violar FK com 0)
+      const userIdRaw = (user as any)?.id;
+      const userId = typeof userIdRaw === 'number' ? userIdRaw : Number(userIdRaw);
+      if (!userId || isNaN(userId)) {
+        showToast(
+          'error',
+          'Sessão inválida',
+          'Não foi possível identificar o usuário logado. Faça login novamente.'
+        );
+        setIsCreatingProduct(false);
+        return;
+      }
       const productData = {
         nome: newProduct.nome,
         descricao: typeof newProduct.descricao === 'string' ? newProduct.descricao : '',
         preco: newProduct.preco,
         unidade: newProduct.unidade || 'unidade',
         estoque: newProduct.estoque,
+        // Envia fornecedorId; backend converte e remove a chave antiga antes de inserir
         fornecedorId: Number(newProduct.fornecedorId),
         codigo: newProduct.codigo || '',
         modelo: newProduct.modelo || '',
         origem: newProduct.origem || '',
-        cadastrado_por: newProduct.cadastrado_por,
+  image_url: newProduct.image_url || '',
+        cadastrado_por: userId,
         cadastrado_em: currentDate,
-        atualizado_por: newProduct.atualizado_por,
+        atualizado_por: userId,
         atualizado_em: currentDate
       };
       const { success, error } = await produtoService.create(productData);
@@ -391,10 +422,9 @@ export function AdminDashboard({
         unidade: '',
         estoque: 0,
         origem: '',
-        cadastrado_por: 1,
-        cadastrado_em: '',
-        atualizado_por: 1,
-        atualizado_em: '',
+  image_url: '',
+        // cadastrado_por e atualizado_por serão preenchidos automaticamente
+        // cadastrado_em será preenchido automaticamente
       });
 
     } catch (error) {
@@ -439,7 +469,17 @@ export function AdminDashboard({
     try {
       // Criar objeto completo do fornecedor com campos de auditoria
       const currentDate = new Date().toISOString();
-      const currentUserId = 1; // Simular ID do usuário atual (em produção viria da autenticação)
+      const currentUserIdRaw = (user as any)?.id;
+      const currentUserId = typeof currentUserIdRaw === 'number' ? currentUserIdRaw : Number(currentUserIdRaw);
+      if (!currentUserId || isNaN(currentUserId)) {
+        showToast(
+          'error',
+          'Sessão inválida',
+          'Usuário não identificado. Refaça login antes de cadastrar fornecedor.'
+        );
+        setIsCreatingSupplier(false);
+        return;
+      }
       const supplierData = {
         ...newSupplier,
         cadastrado_em: currentDate,
@@ -447,6 +487,7 @@ export function AdminDashboard({
         atualizado_em: currentDate,
         atualizado_por: currentUserId
       };
+  console.log('🛰️ [AdminDashboard] Payload fornecedor antes de addSupplier:', supplierData);
       await addSupplier(supplierData);
       showToast(
         "success",
@@ -462,9 +503,9 @@ export function AdminDashboard({
         observacoes: '',
         ativo: true,
         cadastrado_em: '',
-        cadastrado_por: 1,
+        cadastrado_por: currentUserId,
         atualizado_em: '',
-        atualizado_por: 1,
+        atualizado_por: currentUserId,
       });
     } catch (error) {
       console.error('Erro ao salvar fornecedor:', error);
@@ -1067,10 +1108,37 @@ export function AdminDashboard({
           </div>
         );
       case "new-product":
-        function handleImageUpload(_event: ChangeEvent<HTMLInputElement>): void {
-          throw new Error("Function not implemented.");
+        function handleImageUpload(event: ChangeEvent<HTMLInputElement>): void {
+          try {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const maxBytes = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxBytes) {
+              showToast(
+                'error',
+                'Imagem muito grande',
+                'Tamanho máximo permitido é 10MB.'
+              );
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              setNewProduct(prev => ({ ...prev, image_url: result }));
+            };
+            reader.onerror = () => {
+              showToast(
+                'error',
+                'Falha ao carregar imagem',
+                'Não foi possível ler o arquivo.'
+              );
+            };
+            reader.readAsDataURL(file);
+          } catch (err) {
+            console.error('Erro upload imagem', err);
+            showToast('error','Erro','Erro inesperado ao processar a imagem.');
+          }
         }
-
         return (
           <div className="flex flex-col h-full w-full">
             <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
@@ -1100,7 +1168,6 @@ export function AdminDashboard({
                 </div>
               </div>
             </header>
-
             <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
               {/* Formulário de Novo Produto */}
               <div className="mb-8">
@@ -1172,59 +1239,29 @@ export function AdminDashboard({
                         <input type="text" value={newProduct.origem || ''} onChange={e => setNewProduct(prev => ({ ...prev, origem: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Origem" disabled={isCreatingProduct} />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Cadastrado por</label>
-                        <input type="number" value={newProduct.cadastrado_por} onChange={e => setNewProduct(prev => ({ ...prev, cadastrado_por: parseInt(e.target.value) || 1 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="ID usuário" disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Cadastrado em</label>
-                        <input 
-                          type="datetime-local" 
-                          value={newProduct.cadastrado_em ? newProduct.cadastrado_em.substring(0, 16) : ''} 
-                          onChange={e => setNewProduct(prev => ({ ...prev, cadastrado_em: e.target.value }))} 
-                          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" 
-                          disabled={isCreatingProduct}
-                          title="Data e hora de cadastro do produto"
-                          placeholder="Selecione a data de cadastro"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Atualizado por</label>
-                        <input type="number" value={newProduct.atualizado_por} onChange={e => setNewProduct(prev => ({ ...prev, atualizado_por: parseInt(e.target.value) || 1 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="ID usuário" disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Atualizado em</label>
-                        <input 
-                          type="datetime-local" 
-                          value={newProduct.atualizado_em ? newProduct.atualizado_em.substring(0, 16) : ''} 
-                          onChange={e => setNewProduct(prev => ({ ...prev, atualizado_em: e.target.value }))} 
-                          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" 
-                          disabled={isCreatingProduct}
-                          title="Data e hora da última atualização do produto"
-                          placeholder="Selecione a data de atualização"
-                        />
-                      </div>
-
-                      {/** Imagens do Produto **/}
-                      <div className="border-t border-slate-600 pt-4">
-                        <div className="grid grid-cols-1 md:grid-cols-0 gap-4 mb-4">
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-slate-300 mb-3">Imagens do Produto</label>
-                            <div className="flex justify-center">
-                              <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
-                                <div className="flex flex-col items-center space-y-2">
-                                  <Upload className="w-8 h-8 text-slate-400" />
-                                  <span className="text-sm text-slate-400">Clique para adicionar</span>
-                                  <span className="text-xs text-slate-500">PNG, JPG, GIF até 10MB</span>
-                                </div>
-                                <input
-                                  type="file"
-                                  multiple
-                                  accept="image/*"
-                                  onChange={handleImageUpload}
-                                  className="hidden"
-                                  disabled={isCreatingProduct}
-                                />
-                              </label>
+                        {/* Campos de auditoria removidos do formulário visual */}
+                        {/** Imagens do Produto **/}
+                        <div className="border-t border-slate-600 pt-4">
+                          <div className="grid grid-cols-1 md:grid-cols-0 gap-4 mb-4">
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-3">Imagens do Produto</label>
+                              <div className="flex justify-center">
+                                <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
+                                  <div className="flex flex-col items-center space-y-2">
+                                    <Upload className="w-8 h-8 text-slate-400" />
+                                    <span className="text-sm text-slate-400">Clique para adicionar</span>
+                                    <span className="text-xs text-slate-500">PNG, JPG, GIF até 10MB</span>
+                                  </div>
+                                  <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                    disabled={isCreatingProduct}
+                                  />
+                                </label>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1262,10 +1299,7 @@ export function AdminDashboard({
                           unidade: '',
                           estoque: 0,
                           origem: '',
-                          cadastrado_por: 1,
-                          cadastrado_em: '',
-                          atualizado_por: 1,
-                          atualizado_em: '',
+                          image_url: '',
                         })}
                         disabled={isCreatingProduct}
                         className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1283,16 +1317,13 @@ export function AdminDashboard({
                       </button>
                     </div>
                   </form>
-                </div>
-              </div>
-
-              {/* Dicas para Novos Produtos */}
-              <div className="mb-8">
+                  {/* Dicas para Novos Produtos */}
+                  <div className="mb-8">
                 <div className="glass-card bg-gradient-to-br from-slate-900/50 to-slate-800/50 rounded-xl border border-slate-500/20 p-4 sm:p-6">
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="p-2 bg-blue-500/20 rounded-lg">
                       <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
-                    </div>
+                    </div> 
                     <div>
                       <h2 className="text-base sm:text-lg font-bold text-white">Dicas para Cadastro</h2>
                       <p className="text-xs sm:text-sm text-slate-200">Boas práticas para adicionar produtos</p>
@@ -1333,11 +1364,15 @@ export function AdminDashboard({
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                  </div> {/* fim dicas */}
+                </div> {/* fim glass-card wrapper principal */}
+              </div> {/* fim bloco mb-8 principal */}
+              </div> {/* fechamento da div.mb-8 aberta após comentário Formulário de Novo Produto */}
             </main>
           </div>
         );
+
+  // case "notifications" removido (duplicado) - já tratado mais abaixo
       case "new-supplier":
         return (
           <div className="flex flex-col h-full w-full">
@@ -1392,7 +1427,7 @@ export function AdminDashboard({
                           value={newSupplier.nome}
                           onChange={e => setNewSupplier(prev => ({ ...prev, nome: e.target.value }))}
                           className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-2.5 sm:p-3 text-white placeholder-slate-400 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors text-sm"
-                          placeholder="Nome do fornecedor"
+                          placeholder="Razão social / Nome fantasia"
                           required
                           disabled={isCreatingSupplier}
                         />
@@ -1404,64 +1439,61 @@ export function AdminDashboard({
                           value={newSupplier.contato_email}
                           onChange={e => setNewSupplier(prev => ({ ...prev, contato_email: e.target.value }))}
                           className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-2.5 sm:p-3 text-white placeholder-slate-400 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors text-sm"
-                          placeholder="contato@empresa.com"
+                          placeholder="exemplo@fornecedor.com"
                           required
                           disabled={isCreatingSupplier}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Telefone de Contato</label>
+                        <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Telefone</label>
                         <input
                           type="tel"
                           value={newSupplier.contato_telefone}
-                          onChange={e => setNewSupplier(prev => ({ ...prev, contato_telefone: e.target.value }))}
+                          onChange={e => setNewSupplier(prev => ({ ...prev, contato_telefone: formatTelefone(e.target.value) }))}
                           className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-2.5 sm:p-3 text-white placeholder-slate-400 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors text-sm"
-                          placeholder="Telefone do fornecedor"
+                          placeholder="(+351) 90000-0000"
                           disabled={isCreatingSupplier}
                         />
                       </div>
                       <div>
                         <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Site</label>
                         <input
-                          type="text"
+                          type="url"
                           value={newSupplier.site}
                           onChange={e => setNewSupplier(prev => ({ ...prev, site: e.target.value }))}
                           className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-2.5 sm:p-3 text-white placeholder-slate-400 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors text-sm"
-                          placeholder="www.empresa.com"
+                          placeholder="https://www.fornecedor.com"
                           disabled={isCreatingSupplier}
                         />
                       </div>
-                      <div className="flex items-center">
-                        <label className="flex items-center space-x-3 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={newSupplier.ativo}
-                            onChange={e => setNewSupplier(prev => ({ ...prev, ativo: e.target.checked }))}
-                            className="w-4 h-4 text-purple-600 bg-slate-800 border-slate-600 rounded focus:ring-purple-500 focus:ring-2"
-                            disabled={isCreatingSupplier}
-                          />
-                          <span className="text-xs sm:text-sm font-medium text-slate-300">Fornecedor Ativo</span>
-                        </label>
+                      <div className="lg:col-span-2">
+                        <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Observações</label>
+                        <textarea
+                          rows={3}
+                          value={newSupplier.observacoes}
+                          onChange={e => setNewSupplier(prev => ({ ...prev, observacoes: e.target.value }))}
+                          className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-2.5 sm:p-3 text-white placeholder-slate-400 resize-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors text-sm"
+                          placeholder="Observações sobre o fornecedor, histórico, características especiais..."
+                          disabled={isCreatingSupplier}
+                        />
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Observações</label>
-                      <textarea
-                        rows={3}
-                        value={newSupplier.observacoes}
-                        onChange={e => setNewSupplier(prev => ({ ...prev, observacoes: e.target.value }))}
-                        className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-2.5 sm:p-3 text-white placeholder-slate-400 resize-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-colors text-sm"
-                        placeholder="Observações sobre o fornecedor, histórico, características especiais..."
-                        disabled={isCreatingSupplier}
-                      />
-                    </div>
-                    {/* Campos de auditoria (apenas leitura) */}
-                    <div className="space-y-2 text-xs text-slate-400">
-                      <div>Cadastrado em: {newSupplier.cadastrado_em ? new Date(newSupplier.cadastrado_em).toLocaleString() : '-'}</div>
-                      <div>Cadastrado por: {newSupplier.cadastrado_por}</div>
-                      <div>Atualizado em: {newSupplier.atualizado_em ? new Date(newSupplier.atualizado_em).toLocaleString() : '-'}</div>
-                      <div>Atualizado por: {newSupplier.atualizado_por}</div>
-                    </div>
+                      <div className="flex items-center space-x-2 pt-2">
+                        <input
+                          id="supplier-ativo"
+                          type="checkbox"
+                          checked={newSupplier.ativo}
+                          onChange={e => setNewSupplier(prev => ({ ...prev, ativo: e.target.checked }))}
+                          className="h-4 w-4 rounded border-slate-600 text-purple-500 focus:ring-purple-500/50 bg-slate-800"
+                          disabled={isCreatingSupplier}
+                        />
+                        <label htmlFor="supplier-ativo" className="text-xs sm:text-sm text-slate-300 select-none">Ativo</label>
+                      </div>
+                    </div> {/* fecha grid de campos principais */}
+                    {/* Campos de auditoria ocultos (preenchidos automaticamente) */}
+                    <input type="hidden" value={newSupplier.cadastrado_por} readOnly />
+                    <input type="hidden" value={newSupplier.atualizado_por} readOnly />
+                    <input type="hidden" value={newSupplier.cadastrado_em} readOnly />
+                    <input type="hidden" value={newSupplier.atualizado_em} readOnly />
                     {/* Indicador de Loading */}
                     {isCreatingSupplier && (
                       <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3 sm:p-4">
@@ -1500,9 +1532,9 @@ export function AdminDashboard({
                           observacoes: '',
                           ativo: true,
                           cadastrado_em: '',
-                          cadastrado_por: 1,
+                          cadastrado_por: user?.id ?? 0,
                           atualizado_em: '',
-                          atualizado_por: 1,
+                          atualizado_por: user?.id ?? 0,
                         })}
                         disabled={isCreatingSupplier}
                         className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1700,19 +1732,9 @@ export function AdminDashboard({
       default:
         return <DashboardPage />;
     }
-  };
+  }
 
   // Definições para controle de acesso por posição
-  const isUser = userPosition === "user";
-  const allowedForUser = [
-    "quotes",
-    "new-quote",
-    "product-search",
-    "logs",
-    "reports",
-    "notifications",
-    "settings"
-  ];
 
   return (
     <div
@@ -1882,9 +1904,7 @@ export function AdminDashboard({
         {/* Page Content */}
         <div className="flex-1 overflow-hidden">
           {/* Impede acesso a páginas não permitidas para user comum */}
-          {isUser && !allowedForUser.includes(activePage)
-            ? renderContent()
-            : renderContent()}
+          {renderContent()}
         </div>
       </div>
 

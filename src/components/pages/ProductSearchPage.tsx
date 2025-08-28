@@ -7,7 +7,7 @@ import { Search, Heart, Grid, List, Plus, Edit2, Trash2, RefreshCw, CheckCircle,
 import { useApp } from "../../contexts/AppContext";
 import { useTranslation } from 'react-i18next';
 import { Product } from "../../types";
-import { EditProductModal } from "../EditProductModal";
+// Modal de edição antigo substituído por formulário inline
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +40,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
   const [priceRange, setPriceRange] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditingInline, setIsEditingInline] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   
@@ -215,8 +215,14 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
   const handleEditProduct = async (productId: number) => {
     const product = products.find(p => p.id === productId);
     if (product) {
-      setEditingProduct(product);
-      setIsEditModalOpen(true);
+      // Clona para estado editável
+      setEditingProduct({ ...product });
+      setIsEditingInline(true);
+      // Scroll para topo para ver formulário
+      setTimeout(() => {
+        const el = document.getElementById('edit-product-form');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
     }
   };
 
@@ -303,6 +309,158 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
           </div>
         ) : (
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
+          {isEditingInline && editingProduct && (
+            <div id="edit-product-form" className="mb-6 glass-card bg-gradient-to-br from-blue-900/30 to-cyan-900/30 rounded-xl border border-blue-500/30 p-4 md:p-6 animate-in">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <Edit2 className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Editar Produto</h2>
+                    <p className="text-xs text-blue-200">Atualize as informações e salve para aplicar mudanças</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setIsEditingInline(false); setEditingProduct(null); }}
+                  className="text-slate-400 hover:text-white text-sm"
+                >Cancelar</button>
+              </div>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!editingProduct || editingProduct.id === undefined) return;
+                  try {
+                    const now = new Date().toISOString();
+                    const updated: Product = {
+                      ...editingProduct,
+                      atualizado_em: now,
+                      // mantém atualizado_por existente; se ausente reaproveita cadastrado_por
+                      atualizado_por: editingProduct.atualizado_por || editingProduct.cadastrado_por,
+                    };
+                    await updateProduct(updated);
+                    showToast('success', 'Produto Atualizado', `Produto "${updated.nome}" salvo com sucesso!`, 4000);
+                    setIsEditingInline(false);
+                    setEditingProduct(null);
+                  } catch (err) {
+                    console.error('Erro ao atualizar produto:', err);
+                    showToast('error', 'Erro', 'Não foi possível salvar alterações.', 5000);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor</label>
+                    <input
+                      type="number"
+                      value={editingProduct.fornecedorId || ''}
+                      onChange={e => setEditingProduct(p => p ? { ...p, fornecedorId: parseInt(e.target.value) || undefined } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="ID fornecedor"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Código</label>
+                    <input
+                      type="text"
+                      value={editingProduct.codigo || ''}
+                      onChange={e => setEditingProduct(p => p ? { ...p, codigo: e.target.value } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="Código/SKU"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Nome *</label>
+                    <input
+                      required
+                      type="text"
+                      value={editingProduct.nome}
+                      onChange={e => setEditingProduct(p => p ? { ...p, nome: e.target.value } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="Nome do produto"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Modelo</label>
+                    <input
+                      type="text"
+                      value={editingProduct.modelo || ''}
+                      onChange={e => setEditingProduct(p => p ? { ...p, modelo: e.target.value } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="Modelo"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Descrição *</label>
+                    <textarea
+                      required
+                      rows={2}
+                      value={editingProduct.descricao}
+                      onChange={e => setEditingProduct(p => p ? { ...p, descricao: e.target.value } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="Descrição"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Preço *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={editingProduct.preco}
+                      onChange={e => setEditingProduct(p => p ? { ...p, preco: parseFloat(e.target.value) || 0 } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Unidade</label>
+                    <input
+                      type="text"
+                      value={editingProduct.unidade || ''}
+                      onChange={e => setEditingProduct(p => p ? { ...p, unidade: e.target.value } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="Unidade"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Estoque</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editingProduct.estoque}
+                      onChange={e => setEditingProduct(p => p ? { ...p, estoque: parseInt(e.target.value) || 0 } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="Estoque"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Origem</label>
+                    <input
+                      type="text"
+                      value={editingProduct.origem || ''}
+                      onChange={e => setEditingProduct(p => p ? { ...p, origem: e.target.value } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="Origem"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-4 py-2 rounded-lg font-medium transition-all"
+                  >Salvar Alterações</button>
+                  <button
+                    type="button"
+                    onClick={() => { setIsEditingInline(false); setEditingProduct(null); }}
+                    className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-all"
+                  >Cancelar</button>
+                </div>
+              </form>
+            </div>
+          )}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
             {/* Tabs - ocultas no mobile */}
             <TabsList className="hidden md:flex glass-card bg-white/5 border border-white/20 rounded-xl p-1">
@@ -397,41 +555,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
         )}
       </main>
 
-      {/* Modal de Edição */}
-      <EditProductModal
-        product={editingProduct}
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setEditingProduct(null);
-        }}
-        onSave={async (updatedProduct) => {
-          try {
-            await updateProduct(updatedProduct);
-            setIsEditModalOpen(false);
-            setEditingProduct(null);
-            
-            // Toast de sucesso
-            showToast(
-              'success',
-              'Produto Atualizado',
-              `Produto "${updatedProduct.nome}" foi atualizado com sucesso!`,
-              4000
-            );
-            
-          } catch (error) {
-            console.error('Erro ao atualizar produto:', error);
-            
-            // Toast de erro
-            showToast(
-              'error',
-              'Erro na Atualização',
-              'Não foi possível atualizar o produto. Tente novamente.',
-              5000
-            );
-          }
-        }}
-      />
+  {/* Modal de Edição removido em favor de formulário inline */}
 
       {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
