@@ -1,19 +1,62 @@
+
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-const processingData = [
-  { date: "18 Jan", received: 75, processed: 72, pending: 3, efficiency: 93.3 },
-  { date: "19 Jan", received: 82, processed: 78, pending: 4, efficiency: 92.3 },
-  { date: "20 Jan", received: 68, processed: 66, pending: 2, efficiency: 94.7 },
-  { date: "21 Jan", received: 97, processed: 92, pending: 5, efficiency: 92.5 },
-  { date: "22 Jan", received: 104, processed: 99, pending: 5, efficiency: 93.2 },
-  { date: "23 Jan", received: 89, processed: 85, pending: 4, efficiency: 93.2 },
-  { date: "24 Jan", received: 111, processed: 106, pending: 5, efficiency: 93.8 },
-];
+// Espera receber as cotações já filtradas por período, status, etc.
+// Cada cotação deve ter pelo menos: { status, dataRecebido }
+export interface Cotacao {
+  status: string;
+  dataRecebido: string; // ISO ou data parseável
+}
 
-export function QuoteProcessingChart() {
+interface QuoteProcessingChartProps {
+  cotacoes: Cotacao[];
+}
+
+
+// Utilitário para formatar datas para o gráfico (ex: "28 Ago")
+function formatDateLabel(date: Date) {
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+}
+
+// Função para processar as cotações e gerar dados para o gráfico
+function getProcessingData(cotacoes: Cotacao[], dias: number = 7) {
+  // Gera array de datas dos últimos N dias
+  const today = new Date();
+  const daysArr = Array.from({ length: dias }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (dias - 1 - i));
+    return d;
+  });
+
+  // Inicializa estrutura para cada dia
+  const data = daysArr.map((date) => {
+    const label = formatDateLabel(date);
+    // Filtra cotações do dia
+    const cotacoesDoDia = cotacoes.filter((c) => {
+      if (!c.dataRecebido) return false;
+      const d = new Date(c.dataRecebido);
+      return d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
+    });
+    const received = cotacoesDoDia.length;
+    const processed = cotacoesDoDia.filter((c) => c.status === "processed" || c.status === "completa" || c.status === "approved").length;
+    const pending = received - processed;
+    const efficiency = received > 0 ? Number(((processed / received) * 100).toFixed(1)) : 0;
+    return { date: label, received, processed, pending, efficiency };
+  });
+  return data;
+}
+
+export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Filtra por período digitado (ex: "Ago", "Jul", "28")
+  const processingData = useMemo(() => {
+    const allData = getProcessingData(cotacoes, 7);
+    if (!searchTerm) return allData;
+    return allData.filter((d) => d.date.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [cotacoes, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -25,7 +68,6 @@ export function QuoteProcessingChart() {
               <h3 className="text-xl font-bold text-white mb-2">Processamento de Cotações</h3>
               <p className="text-sm text-slate-300">Volume e eficiência dos últimos 7 dias</p>
             </div>
-            
             {/* Campo de Pesquisa */}
             <div className="relative max-w-md group">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-cyan-400 transition-colors duration-300 z-10 pointer-events-none" />

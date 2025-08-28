@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -51,6 +51,49 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
 
   // Converter fornecedores do contexto para o formato esperado pela página (usando apenas campos válidos do Supabase)
+  // Ratings: persist in localStorage
+  const [ratings, setRatings] = useState<{ [id: number]: number }>({});
+  const [ratingsLoaded, setRatingsLoaded] = useState(false);
+
+  // Salvar fornecedores no localStorage para o dashboard de performance
+  useEffect(() => {
+    if (suppliers.length > 0) {
+      try {
+        // Salva apenas os campos essenciais para o dashboard
+        const minimalSuppliers = suppliers.map(s => ({
+          id: Number(s.id),
+          nome: s.nome
+        }));
+        localStorage.setItem('suppliers', JSON.stringify(minimalSuppliers));
+      } catch (e) { /* ignore */ }
+    }
+  }, [suppliers]);
+
+  // Load ratings from localStorage only after suppliers are loaded
+  useEffect(() => {
+    if (!ratingsLoaded && suppliers.length > 0) {
+      try {
+        const stored = localStorage.getItem('supplierRatings');
+        if (stored) {
+          setRatings(JSON.parse(stored));
+        }
+      } catch (e) {
+        // ignore
+      }
+      setRatingsLoaded(true);
+    }
+  }, [suppliers, ratingsLoaded]);
+
+  // Save ratings to localStorage whenever they change (but not on first load)
+  useEffect(() => {
+    if (ratingsLoaded) {
+      try {
+        localStorage.setItem('supplierRatings', JSON.stringify(ratings));
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [ratings, ratingsLoaded]);
   const fornecedores = suppliers.map(supplier => ({
     id: supplier.id, // manter id numérico real
     nome: supplier.nome,
@@ -61,8 +104,15 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
     ultimaAtividade: supplier.atualizado_em ? supplier.atualizado_em.substring(0, 10) : 'N/A',
     observacoes: supplier.observacoes || '',
     cadastrado_por: supplier.cadastrado_por,
-    atualizado_por: supplier.atualizado_por
+    atualizado_por: supplier.atualizado_por,
+    rating: ratings[supplier.id] || 0
   }));
+
+  // Função para atualizar nota
+  const handleRating = (id: number, nota: number) => {
+    setRatings(prev => ({ ...prev, [id]: nota }));
+    // Persist handled by useEffect
+  };
 
   // Não há mais categorias no schema atual
   
@@ -195,7 +245,6 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
   };
 
   const FornecedorCard = ({ fornecedor }: { fornecedor: any }) => (
-
     <div className="group relative bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/10 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 cursor-pointer transform hover:-translate-y-1">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 space-y-3 sm:space-y-0">
@@ -213,6 +262,30 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
             <div className="text-xs text-slate-400 truncate">ID: {fornecedor.id}</div>
           </div>
         </div>
+      </div>
+      {/* Performance/Avaliação tipo barra */}
+      <div className="flex items-center gap-2 mt-2">
+        <span className="text-xs text-slate-400">Performance:</span>
+        <div className="flex gap-1">
+          {[1,2,3,4,5].map(level => (
+            <button
+              key={level}
+              type="button"
+              onClick={e => { e.stopPropagation(); handleRating(fornecedor.id, level); }}
+              className={`w-5 h-3 sm:w-7 sm:h-3 rounded transition-all duration-200 border focus:outline-none ${
+                fornecedor.rating >= level
+                  ? level >= 4
+                    ? 'bg-green-400 border-green-500'
+                    : level === 3
+                      ? 'bg-yellow-400 border-yellow-500'
+                      : 'bg-orange-400 border-orange-500'
+                  : 'bg-slate-600 border-slate-500'
+              }`}
+              title={`Performance nível ${level}`}
+            />
+          ))}
+        </div>
+        <span className="text-xs text-slate-400 ml-2">{fornecedor.rating}/5</span>
       </div>
 
       {/* Contact Information */}

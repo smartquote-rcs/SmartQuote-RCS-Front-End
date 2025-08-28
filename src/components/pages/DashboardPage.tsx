@@ -1,5 +1,6 @@
 import { Mail, Users, Clock, Download, TrendingUp, Bell, Shield, RefreshCw } from "lucide-react";
 import { QuoteProcessingChart } from "../QuoteProcessingChart";
+import type { Cotacao } from "../QuoteProcessingChart";
 import { SupplierPerformanceChart } from "../SupplierPerformanceChart";
 import { RecentQuotes } from "../RecentQuotes";
 import { PendingApprovals } from "../PendingApprovals";
@@ -404,16 +405,36 @@ export function DashboardPage({
 
         {/* Charts Section */}
         <div className="space-y-4 sm:space-y-6 lg:space-y-8 mb-4 sm:mb-6 lg:mb-8">
-          <QuoteProcessingChart />
+          {/* Buscar cotações da API para alimentar o gráfico */}
+          <DashboardCharts />
           <SupplierPerformanceChart />
-        </div>
-
-        {/* Bottom Section */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-          <RecentQuotes />
-          <PendingApprovals />
         </div>
       </main>
     </div>
   );
+}
+
+
+// Novo componente para buscar cotações e renderizar o gráfico corretamente
+import React from "react";
+
+export function DashboardCharts() {
+  const [cotacoes, setCotacoes] = React.useState<Cotacao[]>([]);
+  React.useEffect(() => {
+    async function fetchCotacoes() {
+      try {
+        const mod = await import("../../api/services");
+        const response = await mod.cotacaoService.getAll();
+        const cotacoesArr = Array.isArray(response.data?.data) ? response.data.data : [];
+        setCotacoes(cotacoesArr.map((c: any) => ({
+          status: c.status || c.situacao || '',
+          dataRecebido: c.dataRecebido || c.cadastrado_em || c.data_solicitacao || '',
+        })));
+      } catch {
+        setCotacoes([]);
+      }
+    }
+    fetchCotacoes();
+  }, []);
+  return <QuoteProcessingChart cotacoes={cotacoes} />;
 }

@@ -1,3 +1,6 @@
+import React from "react";
+import { exportSuppliersPdf } from "../../utils/exportSuppliersPdf";
+import { exportCotacao, ExportFormat } from "../../utils/exportCotacaoPdf";
 // Componente para exibir detalhes do item e submodal
 
 type ItemDetalheCardProps = { item: any };
@@ -23,7 +26,7 @@ const ItemDetalheCard = ({ item }: ItemDetalheCardProps) => {
       <div className="text-slate-300 text-xs mt-2">{item.item_descricao}</div>
       {/* Submodal para detalhes completos */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg bg-slate-900/95 border border-cyan-400/30">
+        <DialogContent className="w-full max-w-xs sm:max-w-lg max-h-[90vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-2 sm:p-6 rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-cyan-300 text-base">Detalhes do Item</DialogTitle>
           </DialogHeader>
@@ -37,6 +40,9 @@ const ItemDetalheCard = ({ item }: ItemDetalheCardProps) => {
             <div><b>Subtotal:</b> {(item.quantidade * item.item_preco).toLocaleString('pt-BR', { style: 'currency', currency: item.item_moeda || 'EUR' })}</div>
             <div><b>Moeda:</b> {item.item_moeda}</div>
             <div><b>Condições:</b> <pre className="bg-slate-800 rounded p-2 text-xs whitespace-pre-wrap">{item.condicoes ? JSON.stringify(item.condicoes, null, 2) : '-'}</pre></div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 mt-4 w-full">
+            <button onClick={() => setOpen(false)} className="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border border-cyan-600/60 font-semibold">Fechar</button>
           </div>
         </DialogContent>
       </Dialog>
@@ -102,8 +108,13 @@ const getStatusBadge = (status: string) => {
       );
     case "processed":
     case "approved":
+    case "completa":
       return (
-        <Badge className="bg-green-600 text-white text-xs">Aprovada</Badge>
+        <Badge className="bg-blue-600 text-white text-xs">Completa</Badge>
+      );
+    case "incompleta":
+      return (
+        <Badge className="bg-red-600 text-white text-xs">Incompleta</Badge>
       );
     case "pending_approval":
       return (
@@ -263,6 +274,9 @@ export function QuoteRequestsPage({
   const [sortBy, setSortBy] = useState("data");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [cotacoesList, setCotacoesList] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<number|null>(null);
 
@@ -320,6 +334,19 @@ export function QuoteRequestsPage({
 
   // Estado para os itens da cotação
   const [cotacaoItens, setCotacaoItens] = useState<any[]>([]);
+  // Modal de erro PDF
+  const [pdfErrorModal, setPdfErrorModal] = useState<{open: boolean; message: string}>({open: false, message: ""});
+  // Estado para formato de exportação
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
+  // Função para exportar cotação no formato escolhido
+  const handleExportCotacao = () => {
+    if (!selectedCotacao) return;
+    if (!cotacaoItens || cotacaoItens.length === 0) {
+      setPdfErrorModal({open: true, message: "Não há itens para exportar nesta cotação."});
+      return;
+    }
+    exportCotacao({ cotacao: selectedCotacao, itens: cotacaoItens, format: exportFormat });
+  };
 
   // Buscar itens ao abrir detalhes
   useEffect(() => {
@@ -353,22 +380,25 @@ export function QuoteRequestsPage({
   // Modal de motivo para aprovar / rejeitar / reativar
   const [approvalModal, setApprovalModal] = useState<{open:boolean; action:'approve'|'reject'|'reactivate'; cotacaoId:string|null}>({open:false, action:'approve', cotacaoId:null});
   const [motivoInput, setMotivoInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // Feedback visual de envio
   const openApproval = (id:string, action:'approve'|'reject'|'reactivate') => {
     setMotivoInput('');
     setApprovalModal({open:true, action, cotacaoId:id});
   };
   const closeApproval = () => setApprovalModal(p=>({...p, open:false}));
+  // Submissão com feedback visual e validação
   const submitApproval = async () => {
     if (!approvalModal.cotacaoId) return;
     const id = approvalModal.cotacaoId;
     const action = approvalModal.action;
     const isApprove = action === 'approve' || action === 'reactivate';
     const isReject = action === 'reject';
+    if (!motivoInput.trim()) {
+      setMotivoInput("");
+      return;
+    }
+    setIsSubmitting(true);
     try {
-      if (!motivoInput.trim()) {
-        alert('Informe o motivo');
-        return;
-      }
       const payload:any = { aprovacao: isApprove, motivo: motivoInput };
       if (currentUserId != null) {
         payload.aprovado_por = currentUserId; // envia id do usuário logado
@@ -392,13 +422,16 @@ export function QuoteRequestsPage({
               aprovado_por: currentUserId != null ? currentUserId : c.aprovado_por
             };
         }));
+        // Feedback visual de sucesso
+        window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', message: 'Cotação atualizada com sucesso!' } }));
       } else {
-        alert(resp.error || 'Falha ao atualizar aprovação');
+        window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', message: resp.error || 'Falha ao atualizar aprovação' } }));
       }
     } catch (e) {
       console.error('Erro ao atualizar aprovação:', e);
-      alert('Erro ao atualizar aprovação');
+      window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', message: 'Erro ao atualizar aprovação' } }));
     } finally {
+      setIsSubmitting(false);
       closeApproval();
     }
   };
@@ -419,7 +452,8 @@ export function QuoteRequestsPage({
     }
   };
 
-  const QuoteCard = ({
+  // Memoização para performance
+  const QuoteCard = React.memo(({
     cotacao,
     onViewDetails,
   }: {
@@ -452,10 +486,9 @@ export function QuoteRequestsPage({
               <h3 className="font-mono text-base font-bold text-white group-hover:text-cyan-400 transition-colors duration-300">
                 {cotacao.id}
               </h3>
-              <div className="flex items-center space-x-2 mt-1 sm:mt-0">
-                {getStatusBadge(cotacao.status)}
-                {getPriorityBadge(cotacao.prioridade)}
-              </div>
+                <div className="flex items-center mb-1 sm:mb-0 sm:ml-2 sm:justify-end w-full sm:w-auto">
+                  {getStatusBadge(cotacao.status)}
+                </div>
             </div>
 
             <div className="space-y-2">
@@ -525,55 +558,32 @@ export function QuoteRequestsPage({
             </div>
           </div>
 
-          {/* Aviso de Aprovação Especial */}
-          {needsSpecialApproval(cotacao.valor) && (
-            <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/30">
-              <div className="flex items-center space-x-2 mb-2">
-                <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                <span className="text-xs text-amber-400 font-medium">
-                  Aprovação Especial Requerida
-                </span>
-              </div>
-              <div className="text-xs text-amber-300 mb-2">
-                Valor acima de €2M requer múltiplas aprovações
-              </div>
-              <div className="space-y-1">
-                <div className="text-xs text-slate-400 font-medium">
-                  Aprovadores Pendentes:
-                </div>
-                {getValidationStatus(cotacao).pendingApprovals.map((approver: string, index: number) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <div className="w-1.5 h-1.5 bg-amber-400 rounded-full flex-shrink-0"></div>
-                    <span className="text-xs text-amber-300 font-medium">
-                      {approver}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Aviso de Aprovação Especial removido conforme solicitado */}
 
-          <div className="flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-2">
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-2 w-full mt-2">
             {/* Botões de ação baseados no status */}
     {(cotacao.status === "pending_approval" || cotacao.status === 'incompleta') ? (
               <>
                 <button
-      onClick={() => openApproval(String(cotacao.id),'approve')}
-                  className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
+                  onClick={() => openApproval(String(cotacao.id),'approve')}
+                  aria-label="Aprovar cotação"
+                  className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
                 >
                   <Check className="w-3 h-3" />
                   <span>{t("approvals.approve")}</span>
                 </button>
                 <button
-      onClick={() => openApproval(String(cotacao.id),'reject')}
-                  className="bg-red-600/20 hover:bg-red-600/40 hover:border-red-400/60 border border-red-500/30 text-red-400 hover:text-red-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
+                  onClick={() => openApproval(String(cotacao.id),'reject')}
+                  aria-label="Rejeitar cotação"
+                  className="bg-red-600/20 hover:bg-red-600/40 hover:border-red-400/60 border border-red-500/30 text-red-400 hover:text-red-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-400"
                 >
                   <X className="w-3 h-3" />
                   <span>{t("approvals.reject")}</span>
                 </button>
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
-                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
+                  aria-label="Ver detalhes da cotação"
+                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
                   <Info className="w-3 h-3" />
                   <span>{t("approvals.viewDetails")}</span>
@@ -584,18 +594,20 @@ export function QuoteRequestsPage({
               <>
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
-                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
+                  aria-label="Visualizar cotação"
+                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
                   <Eye className="w-3 h-3" />
                   <span>Visualizar</span>
                 </button>
-                <button className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105">
+                <button className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400" aria-label="Baixar PDF">
                   <Download className="w-3 h-3" />
                   <span>PDF</span>
                 </button>
                 <button
                   onClick={() => openApproval(String(cotacao.id),'reject')}
-                  className="bg-orange-600/20 hover:bg-orange-600/40 hover:border-orange-400/60 border border-orange-500/30 text-orange-400 hover:text-orange-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
+                  aria-label="Cancelar cotação"
+                  className="bg-orange-600/20 hover:bg-orange-600/40 hover:border-orange-400/60 border border-orange-500/30 text-orange-400 hover:text-orange-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 >
                   <X className="w-3 h-3" />
                   <span>Cancelar</span>
@@ -605,19 +617,20 @@ export function QuoteRequestsPage({
               <>
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
-                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
+                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105"
                 >
                   <Info className="w-3 h-3" />
                   <span>Detalhes</span>
                 </button>
                 <button
                   onClick={() => openApproval(String(cotacao.id),'reactivate')}
-                  className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
+                  aria-label="Reativar cotação"
+                  className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
                 >
                   <Check className="w-3 h-3" />
                   <span>Reativar</span>
                 </button>
-                <button className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none opacity-50 cursor-not-allowed">
+                <button className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full opacity-50 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-400" aria-label="Baixar PDF" disabled>
                   <Download className="w-3 h-3" />
                   <span>PDF</span>
                 </button>
@@ -626,18 +639,20 @@ export function QuoteRequestsPage({
               <>
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
-                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
+                  aria-label="Ver cotação"
+                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
                   <Eye className="w-3 h-3" />
                   <span>Ver</span>
                 </button>
-                <button className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105">
+                <button className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400" aria-label="Baixar PDF">
                   <Download className="w-3 h-3" />
                   <span>PDF</span>
                 </button>
                 <button
                   onClick={() => openApproval(String(cotacao.id),'approve')}
-                  className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium flex-1 lg:flex-none hover:scale-105"
+                  aria-label="Aprovar cotação"
+                  className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
                 >
                   <Check className="w-3 h-3" />
                   <span>Aprovar</span>
@@ -648,15 +663,15 @@ export function QuoteRequestsPage({
         </div>
       </div>
     </div>
-  );
+  ));
 
   // Lógica de filtragem
   const filteredCotacoes = cotacoesList.filter((cotacao) => {
     const matchesSearch = searchTerm === "" || 
-      cotacao.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cotacao.produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cotacao.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cotacao.fornecedor.toLowerCase().includes(searchTerm.toLowerCase());
+      (cotacao.cliente || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (cotacao.produto || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (cotacao.id ? String(cotacao.id) : "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (cotacao.fornecedor || "").toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "Todos" || cotacao.status === statusFilter;
     const matchesPriority = priorityFilter === "Todas" || cotacao.prioridade === priorityFilter;
@@ -664,6 +679,18 @@ export function QuoteRequestsPage({
 
     return matchesSearch && matchesStatus && matchesPriority && matchesFornecedor;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredCotacoes.length / itemsPerPage));
+  // Sempre que currentPage for maior que totalPages, ajusta para o máximo disponível
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const paginatedCotacoes = filteredCotacoes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // Resetar página ao filtrar
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, priorityFilter, fornecedorFilter, dateFilter, valueFilter]);
 
   // Contar filtros ativos
   const activeFiltersCount = [
@@ -798,102 +825,24 @@ export function QuoteRequestsPage({
                   />
                 </div>
 
-                {/* Filtros Básicos - ocultos no mobile */}
-                <div className="hidden md:flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-40 bg-dark-card border-dark-color text-dark-primary text-sm hover:bg-slate-700/70 hover:border-blue-500/50 transition-all duration-200">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-dark-card border-dark-color">
-                      <SelectItem
-                        value="Todos"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-blue-500/20 hover:text-blue-300 transition-colors duration-200"
-                      >
-                        Todos Status
-                      </SelectItem>
-                      <SelectItem
-                        value="pending_approval"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-orange-500/20 hover:text-orange-300 transition-colors duration-200"
-                      >
-                        Pendente Aprovação
-                      </SelectItem>
-                      <SelectItem
-                        value="approved"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-green-500/20 hover:text-green-300 transition-colors duration-200"
-                      >
-                        Aprovada
-                      </SelectItem>
-                      <SelectItem
-                        value="processing"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-blue-500/20 hover:text-blue-300 transition-colors duration-200"
-                      >
-                        Processando
-                      </SelectItem>
-                      <SelectItem
-                        value="processed"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-green-500/20 hover:text-green-300 transition-colors duration-200"
-                      >
-                        Processada
-                      </SelectItem>
-                      <SelectItem
-                        value="rejected"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-red-500/20 hover:text-red-300 transition-colors duration-200"
-                      >
-                        Rejeitada
-                      </SelectItem>
-                      <SelectItem
-                        value="sent"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-purple-500/20 hover:text-purple-300 transition-colors duration-200"
-                      >
-                        Enviada
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                    <SelectTrigger className="w-full sm:w-32 bg-dark-card border-dark-color text-dark-primary text-sm hover:bg-slate-700/70 hover:border-blue-500/50 transition-all duration-200">
-                      <SelectValue placeholder="Prioridade" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-dark-card border-dark-color">
-                      <SelectItem
-                        value="Todas"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-blue-500/20 hover:text-blue-300 transition-colors duration-200"
-                      >
-                        Todas
-                      </SelectItem>
-                      <SelectItem
-                        value="high"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-red-500/20 hover:text-red-300 transition-colors duration-200"
-                      >
-                        🔴 Alta
-                      </SelectItem>
-                      <SelectItem
-                        value="medium"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-yellow-500/20 hover:text-yellow-300 transition-colors duration-200"
-                      >
-                        🟡 Média
-                      </SelectItem>
-                      <SelectItem
-                        value="low"
-                        className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-green-500/20 hover:text-green-300 transition-colors duration-200"
-                      >
-                        🟢 Baixa
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {/* Botão de Filtros Avançados - oculto no mobile */}
+                {/* Paginação sempre visível, inclusive no mobile */}
+                <div className="flex items-center gap-2 ml-auto justify-end mt-2 md:mt-0">
                   <button
-                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                    className={`flex px-3 py-2 text-xs sm:text-sm rounded-lg transition-all duration-200 items-center space-x-1 font-medium ${
-                      showAdvancedFilters 
-                        ? 'bg-blue-600/30 border border-blue-500/50 text-blue-400 hover:bg-blue-600/40 hover:border-blue-400/70' 
-                        : 'bg-slate-700/50 hover:bg-slate-600/70 hover:border-blue-500/30 border border-slate-600/50 text-slate-300 hover:text-blue-300'
-                    }`}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                    disabled={currentPage === 1}
                   >
-                    <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline">{showAdvancedFilters ? 'Menos' : 'Mais'} Filtros</span>
-                    <span className="sm:hidden">Filtros</span>
+                    Anterior
+                  </button>
+                  <span className="text-slate-300 font-medium text-sm">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                    disabled={currentPage === totalPages}
+                  >
+                    Próxima
                   </button>
                 </div>
               </div>
@@ -1107,7 +1056,7 @@ export function QuoteRequestsPage({
           <div className="flex-1 scrollable-content">
             <TabsContent value="all" className="h-full mt-0">
               <div className="grid gap-4">
-                {filteredCotacoes.map((cotacao) => (
+                {paginatedCotacoes.map((cotacao) => (
                   <QuoteCard
                     key={cotacao.id}
                     cotacao={cotacao}
@@ -1161,6 +1110,8 @@ export function QuoteRequestsPage({
               </div>
             </TabsContent>
 
+            {/* Paginação no final da lista removida conforme solicitado */}
+
             {filteredCotacoes.length === 0 && cotacoesList.length > 0 && (
             <div className="text-center py-8 lg:py-12">
               <Search className="w-10 h-10 sm:w-12 sm:h-12 text-slate-400 mx-auto mb-4" />
@@ -1175,7 +1126,12 @@ export function QuoteRequestsPage({
 
             {cotacoesList.length === 0 && (
             <div className="text-center py-8 lg:py-12">
-              <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-slate-400 mx-auto mb-4" />
+              <div className="flex justify-center mb-4">
+                <svg className="animate-spin h-10 w-10 sm:w-12 sm:h-12 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-label="Carregando">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+              </div>
               <h3 className="text-base sm:text-lg font-medium text-white mb-2">
                 Carregando cotações...
               </h3>
@@ -1188,8 +1144,9 @@ export function QuoteRequestsPage({
       </main>
 
       {/* Modal de Motivo para Aprovar / Rejeitar / Reativar */}
+      {/* Modal de Motivo para Aprovar / Rejeitar / Reativar */}
       <Dialog open={approvalModal.open} onOpenChange={(o)=>!o && closeApproval()}>
-        <DialogContent className="max-w-md bg-slate-900/95 border border-cyan-500/30">
+        <DialogContent className="w-full max-w-xs sm:max-w-md bg-slate-900/95 border border-cyan-500/30 p-2 sm:p-6 rounded-xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white font-semibold flex items-center gap-2">
               {approvalModal.action === 'approve' && <Check className="w-4 h-4 text-green-400"/>}
@@ -1208,17 +1165,23 @@ export function QuoteRequestsPage({
               value={motivoInput}
               onChange={(e)=>setMotivoInput(e.target.value)}
               placeholder="Descreva o motivo..."
-              className="w-full h-28 rounded-md bg-slate-800/70 border border-slate-600/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm text-white p-3 resize-none outline-none"
+              aria-label="Motivo da aprovação/rejeição"
+              className={`w-full h-28 rounded-md bg-slate-800/70 border ${!motivoInput.trim() && isSubmitting ? 'border-red-500' : 'border-slate-600/50'} focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm text-white p-3 resize-none outline-none`}
             />
-            <div className="flex justify-end gap-2">
-              <button onClick={closeApproval} className="px-4 py-2 text-sm rounded-md bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 border border-slate-600/60">Cancelar</button>
+            {!motivoInput.trim() && isSubmitting && (
+              <div className="text-red-400 text-xs">O motivo é obrigatório.</div>
+            )}
+            <div className="flex flex-col sm:flex-row justify-end gap-2 w-full mt-2">
+              <button onClick={closeApproval} aria-label="Cancelar" className="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 border border-slate-600/60 focus:outline-none focus:ring-2 focus:ring-slate-400">Cancelar</button>
               <button
                 onClick={submitApproval}
-                className={`px-4 py-2 text-sm rounded-md font-semibold flex items-center gap-1 border transition-colors ${approvalModal.action==='reject' ? 'bg-red-600/30 hover:bg-red-600/50 text-red-300 border-red-500/40' : approvalModal.action==='reactivate' ? 'bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border-emerald-500/40' : 'bg-green-600/30 hover:bg-green-600/50 text-green-300 border-green-500/40'}`}
+                aria-label="Confirmar aprovação/rejeição"
+                disabled={isSubmitting || !motivoInput.trim()}
+                className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md font-semibold flex items-center gap-1 border transition-colors ${approvalModal.action==='reject' ? 'bg-red-600/30 hover:bg-red-600/50 text-red-300 border-red-500/40' : approvalModal.action==='reactivate' ? 'bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border-emerald-500/40' : 'bg-green-600/30 hover:bg-green-600/50 text-green-300 border-green-500/40'} focus:outline-none focus:ring-2 focus:ring-cyan-400 disabled:opacity-60`}
               >
-                {approvalModal.action==='approve' && <Check className="w-4 h-4"/>}
-                {approvalModal.action==='reject' && <X className="w-4 h-4"/>}
-                {approvalModal.action==='reactivate' && <RefreshCw className="w-4 h-4"/>}
+                {isSubmitting ? (
+                  <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                ) : approvalModal.action==='approve' ? <Check className="w-4 h-4"/> : approvalModal.action==='reject' ? <X className="w-4 h-4"/> : <RefreshCw className="w-4 h-4"/>}
                 Confirmar
               </button>
             </div>
@@ -1228,7 +1191,7 @@ export function QuoteRequestsPage({
 
       {/* Modal de Detalhes da Cotação com Sistema de Validação */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto bg-gradient-to-br from-slate-900/95 to-slate-800/95 border border-cyan-400/30 backdrop-blur-xl">
+        <DialogContent className="w-full max-w-xs sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-900/95 to-slate-800/95 border border-cyan-400/30 backdrop-blur-xl p-2 sm:p-8 rounded-xl">
           <DialogHeader className="border-b border-slate-700/50 pb-2">
             <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
               <FileText className="h-5 w-5 text-cyan-400" />
@@ -1252,15 +1215,51 @@ export function QuoteRequestsPage({
           ) : (
             <div className="mt-6 text-slate-400 text-sm">Nenhum item encontrado para esta cotação.</div>
           )}
-
-// ...existing code...
-          <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-4 border border-white/10 mt-6">
-            <div className="flex flex-wrap gap-3">
-              <button className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-400 border border-blue-500/50 hover:border-blue-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm">
-                <Download className="h-4 w-4" />
-                Baixar PDF
-              </button>
-              <button className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border border-purple-500/50 hover:border-purple-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm">
+          <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-2 sm:p-4 border border-white/10 mt-6">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full">
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                <select
+                  className="bg-slate-800 border border-slate-600 text-slate-200 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={exportFormat}
+                  onChange={e => setExportFormat(e.target.value as ExportFormat)}
+                  aria-label="Selecionar formato de exportação"
+                >
+                  <option value="pdf">PDF</option>
+                  <option value="xlsx">Excel</option>
+                  <option value="csv">CSV</option>
+                </select>
+                <button
+                  className="w-full sm:w-auto bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-400 border border-blue-500/50 hover:border-blue-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm"
+                  onClick={handleExportCotacao}
+                  aria-label="Baixar cotação"
+                >
+                  <Download className="h-4 w-4" />
+                  {exportFormat === 'pdf' ? 'Baixar PDF' : exportFormat === 'xlsx' ? 'Baixar Excel' : 'Baixar CSV'}
+                </button>
+              </div>
+      {/* Modal de erro ao exportar PDF */}
+      <Dialog open={pdfErrorModal.open} onOpenChange={(o)=>!o && setPdfErrorModal({open:false, message: ""})}>
+        <DialogContent className="w-full max-w-xs sm:max-w-md bg-slate-900/95 border border-red-500/30 p-2 sm:p-6 rounded-xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-red-400 font-semibold flex items-center gap-2">
+              <X className="w-4 h-4 text-red-400"/>
+              Erro ao exportar PDF
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 text-sm">
+              {pdfErrorModal.message}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={()=>setPdfErrorModal({open:false, message: ""})}
+              className="px-4 py-2 rounded-md bg-red-600/30 hover:bg-red-600/50 text-red-200 border border-red-500/40 font-semibold"
+            >
+              Fechar
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+              <button className="w-full sm:w-auto bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border border-purple-500/50 hover:border-purple-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm">
                 <Mail className="h-4 w-4" />
                 Enviar Email
               </button>

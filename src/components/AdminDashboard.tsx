@@ -1376,17 +1376,17 @@ export function AdminDashboard({
       case "new-supplier":
         return (
           <div className="flex flex-col h-full w-full">
-            <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6 flex-shrink-0">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
-                <div className="min-w-0">
+            <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6 flex-shrink-0 w-full max-w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0 min-w-0 max-w-full flex-wrap">
+                <div className="min-w-0 max-w-full break-words">
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary truncate flex items-center gap-2 sm:gap-3">
                     <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                     Novo Fornecedor - Admin
                   </h1>
                   <p className="text-xs sm:text-sm text-dark-secondary mt-1">Adicionar novos fornecedores à plataforma</p>
                 </div>
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="relative">
+                <div className="flex items-center gap-3 sm:gap-4 flex-wrap min-w-0 max-w-full">
+                  <div className="relative min-w-0">
                     <button
                       onClick={() => setActivePage("notifications")}
                       className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
@@ -1397,18 +1397,18 @@ export function AdminDashboard({
                       </div>
                     </button>
                   </div>
-                  <div className="dark-tag text-center sm:text-left flex-shrink-0 text-xs sm:text-sm">
+                  <div className="dark-tag text-center sm:text-left flex-shrink-0 text-xs sm:text-sm min-w-0 max-w-full break-words">
                     Gestão de Fornecedores
                   </div>
                 </div>
               </div>
             </header>
 
-            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
+            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto min-w-0 max-w-full">
               {/* Formulário de Novo Fornecedor */}
               <div className="mb-6 sm:mb-8">
-                <div className="glass-card bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-xl border border-purple-500/20 p-4 sm:p-6">
-                  <div className="flex items-center space-x-3 mb-4 sm:mb-6">
+                <div className="glass-card bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-xl border border-purple-500/20 p-4 sm:p-6 min-w-0 max-w-full">
+                  <div className="flex items-center space-x-3 mb-4 sm:mb-6 flex-wrap min-w-0 max-w-full">
                     <div className="p-2 bg-purple-500/20 rounded-lg flex-shrink-0">
                       <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
                     </div>
@@ -1418,8 +1418,8 @@ export function AdminDashboard({
                       <p className="text-xs text-yellow-300 mt-1">* Campos obrigatórios</p>
                     </div>
                   </div>
-                  <form onSubmit={handleSaveSupplier} className="space-y-4 sm:space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+                  <form onSubmit={handleSaveSupplier} className="space-y-4 sm:space-y-6 min-w-0 max-w-full">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 min-w-0 max-w-full">
                       <div>
                         <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Nome *</label>
                         <input
@@ -1466,7 +1466,7 @@ export function AdminDashboard({
                           disabled={isCreatingSupplier}
                         />
                       </div>
-                      <div className="lg:col-span-2">
+                      <div className="lg:col-span-2 min-w-0 max-w-full">
                         <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Observações</label>
                         <textarea
                           rows={3}
@@ -1477,7 +1477,7 @@ export function AdminDashboard({
                           disabled={isCreatingSupplier}
                         />
                       </div>
-                      <div className="flex items-center space-x-2 pt-2">
+                      <div className="flex items-center space-x-2 pt-2 flex-wrap min-w-0 max-w-full">
                         <input
                           id="supplier-ativo"
                           type="checkbox"
@@ -1504,7 +1504,7 @@ export function AdminDashboard({
                       </div>
                     )}
                     {/* Botões de Ação */}
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-4 flex-wrap min-w-0 max-w-full">
                       <button
                         type="submit"
                         disabled={isCreatingSupplier}
@@ -1557,8 +1557,8 @@ export function AdminDashboard({
 
               {/* Dicas para Novos Fornecedores */}
               <div className="mb-6 sm:mb-8">
-                <div className="glass-card bg-gradient-to-br from-slate-900/50 to-slate-800/50 rounded-xl border border-slate-500/20 p-4 sm:p-6">
-                  <div className="flex items-center space-x-3 mb-4">
+                <div className="glass-card bg-gradient-to-br from-slate-900/50 to-slate-800/50 rounded-xl border border-slate-500/20 p-4 sm:p-6 min-w-0 max-w-full">
+                  <div className="flex items-center space-x-3 mb-4 flex-wrap min-w-0 max-w-full">
                     <div className="p-2 bg-blue-500/20 rounded-lg flex-shrink-0">
                       <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                     </div>
@@ -1568,7 +1568,7 @@ export function AdminDashboard({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm min-w-0 max-w-full">
                     <div className="space-y-3">
                       <div className="flex items-start space-x-3">
                         <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
