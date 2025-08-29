@@ -34,10 +34,6 @@ interface ProductSearchPageProps {
 
 export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageProps = {}) {
   const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("Todas");
-  const [fornecedorFilter, setFornecedorFilter] = useState("Todos");
-  const [priceRange, setPriceRange] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditingInline, setIsEditingInline] = useState(false);
@@ -90,50 +86,15 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
   // Usar os produtos reais do backend para os cards, não apenas o objeto de display
   const displayProducts = products;
 
-  // Extrair categorias únicas dos produtos reais (usando modelo como categoria temporariamente)
-  const categorias = ["Todas", ...Array.from(new Set(products.map(p => p.modelo || "Sem Categoria").filter(Boolean)))];
-  
-  // Para fornecedores, vamos usar uma lista simples por enquanto (pode ser expandida depois)
-  const fornecedores = ["Todos"];
-
-  const getDisponibilidadeBadge = (estoque: number) => {
-    if (estoque > 10) {
-      return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Em Stock</Badge>;
-    } else if (estoque > 0) {
-      return <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Limitado</Badge>;
-    } else {
-      return <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Indisponível</Badge>;
-    }
-  };
-
-  const filteredProducts = displayProducts.filter((produto) => {
-    const matchesSearch = produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (produto.modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      (produto.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-    const matchesCategory = categoryFilter === "Todas" || produto.modelo === categoryFilter;
-    const matchesFornecedor = fornecedorFilter === "Todos" || produto.fornecedorId?.toString() === fornecedorFilter;
-    
-    let matchesPrice = true;
-    if (priceRange !== "all") {
-      const price = produto.preco || 0;
-      switch (priceRange) {
-        case "0-500":
-          matchesPrice = price <= 500;
-          break;
-        case "500-2000":
-          matchesPrice = price > 500 && price <= 2000;
-          break;
-        case "2000-10000":
-          matchesPrice = price > 2000 && price <= 10000;
-          break;
-        case "10000+":
-          matchesPrice = price > 10000;
-          break;
-      }
-    }
-    
-    return matchesSearch && matchesCategory && matchesFornecedor && matchesPrice;
-  });
+  // Substituir os filtros e busca por paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const filteredProducts = products;
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const ProductCard = ({ produto }: { produto: Product }) => (
     <div className={`glass-card bg-white/5 rounded-xl border border-white/20 transition-all duration-300 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] w-full max-w-full overflow-hidden group relative ${
@@ -244,11 +205,21 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
     }
   };
 
+  const getDisponibilidadeBadge = (estoque: number) => {
+    if (estoque > 10) {
+      return <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Em Stock</Badge>;
+    } else if (estoque > 0) {
+      return <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Limitado</Badge>;
+    } else {
+      return <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-3 py-1 rounded-full shadow-lg">Indisponível</Badge>;
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header - Compacto no mobile */}
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-1 md:space-y-4 lg:space-y-0">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-2 md:space-y-4 lg:space-y-0 w-full">
           <div className="hidden md:block">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <Search className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
@@ -268,30 +239,31 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
             </span>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="hidden md:flex items-center gap-3 w-full justify-center">
-              <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[160px] h-[44px]">
-                <span className="font-bold text-lg">{displayProducts.length}</span>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 md:space-y-3 sm:space-y-0 sm:space-x-3 w-full">
+            {/* Ações: alinhadas à direita em telas grandes, centralizadas no mobile */}
+            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto md:justify-end md:ml-auto">
+              <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto">
+                <span className="font-bold text-base md:text-lg">{displayProducts.length}</span>
                 <span className="ml-2 text-blue-200">produtos</span>
               </div>
               <button
                 onClick={handleRefreshProducts}
                 disabled={isLoadingProducts}
-                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm min-w-[160px] h-[44px]"
+                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoadingProducts ? 'animate-spin' : ''}`} />
                 <span>{isLoadingProducts ? 'Carregando...' : 'Atualizar'}</span>
               </button>
               <button
                 onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg min-w-[160px] h-[44px]"
+                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto"
               >
                 {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
                 <span>{viewMode === "grid" ? "Lista" : "Grade"}</span>
               </button>
               <button
                 onClick={() => onNavigateToNewProduct?.()}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm md:text-base min-w-[160px] h-[44px]"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm md:text-base min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto"
               >
                 <Plus className="w-4 h-4" />
                 <span>Novo Produto</span>
@@ -461,96 +433,58 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
               </form>
             </div>
           )}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
-            {/* Tabs - ocultas no mobile */}
-            <TabsList className="hidden md:flex glass-card bg-white/5 border border-white/20 rounded-xl p-1">
-              <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300">
-                Todos os Produtos ({displayProducts.length})
-              </TabsTrigger>
-              {/* Tabs removidas: Populares e Ofertas */}
-            </TabsList>
+          {/* Esconde a barra de ações e paginação durante edição inline */}
+          {!isEditingInline && (
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
+              {/* Tabs - ocultas no mobile */}
+              <TabsList className="hidden md:flex glass-card bg-white/5 border border-white/20 rounded-xl p-1">
+                <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300">
+                  Todos os Produtos ({products.length})
+                </TabsTrigger>
+              </TabsList>
 
-            {/* Search and Filters */}
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-1 md:space-y-3 lg:space-y-0 lg:space-x-4">
-              {/* Pesquisa - sempre visível */}
-              <div className="relative group flex-1 min-w-0">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
-                <Input
-                  placeholder="Pesquisar produtos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:border-blue-400/50 focus:ring-blue-400/20 hover:border-slate-500/50 transition-all duration-200 h-10 md:h-auto"
+              {/* Paginação no topo direito */}
+              <div className="flex items-center justify-end w-full">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
                 />
               </div>
-              
-              {/* Filtros - ocultos no mobile */}
-              <div className="hidden md:flex flex-col lg:flex-row space-y-2 lg:space-y-0 lg:space-x-2">
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full lg:w-40 glass-card border-white/20 text-dark-primary text-sm">
-                    <SelectValue placeholder="Categoria" />
-                  </SelectTrigger>
-                  <SelectContent className="glass-card border-white/20">
-                    {categorias.map(cat => (
-                      <SelectItem key={cat} value={cat} className="text-sm">{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={fornecedorFilter} onValueChange={setFornecedorFilter}>
-                  <SelectTrigger className="w-full lg:w-40 glass-card border-white/20 text-dark-primary text-sm">
-                    <SelectValue placeholder="Fornecedor" />
-                  </SelectTrigger>
-                  <SelectContent className="glass-card border-white/20">
-                    {fornecedores.map(forn => (
-                      <SelectItem key={forn} value={forn} className="text-sm">{forn}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={priceRange} onValueChange={setPriceRange}>
-                  <SelectTrigger className="w-full lg:w-32 glass-card border-white/20 text-dark-primary text-sm">
-                    <SelectValue placeholder="Preço" />
-                  </SelectTrigger>
-                  <SelectContent className="glass-card border-white/20">
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="0-500">€0 - €500</SelectItem>
-                    <SelectItem value="500-2000">€500 - €2K</SelectItem>
-                    <SelectItem value="2000-10000">€2K - €10K</SelectItem>
-                    <SelectItem value="10000+">€10K+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex-1 scrollable-content overflow-hidden">
-            <TabsContent value="all" className="h-full mt-0">
-              <div className={`grid gap-4 lg:gap-6 w-full ${
-                viewMode === "grid" 
-                  ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
-                  : "grid-cols-1"
-              }`}>
-                {filteredProducts.map((produto) => (
-                  <ProductCard key={produto.id} produto={produto} />
-                ))}
-              </div>
-            </TabsContent>
+          {/* Só mostra a lista de produtos se NÃO estiver editando inline */}
+          {!isEditingInline && (
+          <div className="flex-1 scrollable-content overflow-x-hidden overflow-y-auto">
+              <TabsContent value="all" className="h-full mt-0">
+                <div className={`grid gap-3 md:gap-4 lg:gap-6 w-full ${
+                  viewMode === "grid" 
+                    ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                    : "grid-cols-1"
+                }`}>
+                  {paginatedProducts.map((produto) => (
+                    <ProductCard key={produto.id} produto={produto} />
+                  ))}
+                </div>
+              </TabsContent>
 
-            {/* TabsContent removidos: Populares e Ofertas */}
+              {/* TabsContent removidos: Populares e Ofertas */}
 
-            {filteredProducts.length === 0 && !isLoadingProducts && (
-              <div className="text-center py-12">
-                <Search className="w-12 h-12 text-dark-secondary mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-dark-primary mb-2">Nenhum produto encontrado</h3>
-                <p className="text-dark-secondary">
-                  {displayProducts.length === 0 
-                    ? "Nenhum produto cadastrado. Adicione o primeiro produto ao sistema." 
-                    : "Tente ajustar os filtros de pesquisa"
-                  }
-                </p>
-              </div>
-            )}
-          </div>
+              {filteredProducts.length === 0 && !isLoadingProducts && (
+                <div className="text-center py-12">
+                  <Search className="w-12 h-12 text-dark-secondary mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-dark-primary mb-2">Nenhum produto encontrado</h3>
+                  <p className="text-dark-secondary">
+                    {displayProducts.length === 0 
+                      ? "Nenhum produto cadastrado. Adicione o primeiro produto ao sistema." 
+                      : "Tente ajustar os filtros de pesquisa"
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </Tabs>
         )}
       </main>
@@ -707,5 +641,35 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
         }
       `}</style>
     </div>
+  );
+}
+
+type PaginationProps = {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+};
+function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
+  if (totalPages <= 1) return null;
+  return (
+    <nav className="flex items-center gap-2 ml-auto justify-end mt-2 md:mt-0 select-none">
+      <button
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+        disabled={currentPage === 1}
+      >
+        Anterior
+      </button>
+      <span className="text-slate-300 font-medium text-sm">
+        Página {currentPage} de {totalPages}
+      </span>
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+        disabled={currentPage === totalPages}
+      >
+        Próxima
+      </button>
+    </nav>
   );
 }

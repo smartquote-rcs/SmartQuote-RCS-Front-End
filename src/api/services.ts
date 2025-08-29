@@ -189,7 +189,28 @@ export const userService = {
     }
   }
 };
+
 import api from './client';
+
+// Função utilitária para upload de imagem
+export async function uploadImage(file: File): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Supondo que seu backend tenha um endpoint /upload que retorna { url: 'https://...' }
+    const response = await api.post('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    if (response.status === 200 && response.data.url) {
+      return { success: true, url: response.data.url };
+    }
+    return { success: false, error: 'Erro ao fazer upload da imagem.' };
+  } catch (error: any) {
+    return { success: false, error: error.response?.data?.error || 'Erro ao fazer upload da imagem.' };
+  }
+}
 
 // Tipos
 interface AuthResponse {
@@ -607,30 +628,36 @@ export const produtoService = {
   },
 
   async create(productData: {
+    fornecedor_id: number;
+    codigo: string;
     nome: string;
+    modelo: string;
     descricao: string;
-    preco: number;
-    unidade?: string;
+    preco: number; // em centavos
+    unidade: string;
     estoque: number;
-    fornecedorId?: number;
-    codigo?: string;
-    modelo?: string;
-    origem?: string;
+    origem: 'local' | 'externo';
+    image_url?: string;
+    produto_url?: string;
     cadastrado_por: number;
     cadastrado_em: string;
     atualizado_por: number;
     atualizado_em: string;
-    m?: string;
   }): Promise<AuthResponse> {
     try {
-      console.log('📤 Enviando dados para criar produto (POST /products):', productData);
-      const response = await api.post('/products', productData);
+      console.log('📤 Enviando dados para criar produto (POST /produtos):', productData);
+      const response = await api.post('/produtos', productData);
       if (response.status === 201 || response.status === 200) {
         return { success: true, data: response.data };
       }
       return { success: false, error: 'Erro ao criar produto.' };
     } catch (error: any) {
-      console.error('💥 Erro ao criar produto:', error);
+      // Log detalhado do erro do backend
+      if (error.response) {
+        console.error('💥 Erro ao criar produto:', error.response.data);
+      } else {
+        console.error('💥 Erro ao criar produto:', error);
+      }
       return { 
         success: false, 
         error: error.response?.data?.error || error.response?.data?.message || 'Erro ao criar produto' 
@@ -657,7 +684,7 @@ export const produtoService = {
     try {
       console.log(`📤 Fazendo requisição para atualizar produto (PATCH /products/${id})...`);
       console.log(`📊 Dados recebidos para atualização:`, productData);
-      const response = await api.patch(`/products/${id}`, productData);
+      const response = await api.patch(`/produtos/${id}`, productData);
       if (response.status === 200) {
         return { success: true, data: response.data };
       }
@@ -781,6 +808,33 @@ export const dashboardService = {
 
 // Serviço de Fornecedores
 export const supplierService = {
+  async create(supplierData: {
+    nome: string;
+    contato_email: string;
+    contato_telefone?: string;
+    site?: string;
+    observacoes?: string;
+    ativo?: boolean;
+    cadastrado_em: string;
+    cadastrado_por: number;
+    atualizado_em: string;
+    atualizado_por: number;
+  }): Promise<AuthResponse> {
+    try {
+      console.log('📤 Fazendo requisição para criar fornecedor (POST /suppliers):', supplierData);
+      const response = await api.post('/suppliers', supplierData);
+      if (response.status === 201 || response.status === 200) {
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: 'Erro ao criar fornecedor.' };
+    } catch (error: any) {
+      console.error('💥 Erro ao criar fornecedor:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao criar fornecedor.'
+      };
+    }
+  },
   async getAll(): Promise<AuthResponse> {
     try {
       console.log('📤 Fazendo requisição para buscar fornecedores (GET /suppliers)...');
@@ -810,58 +864,7 @@ export const supplierService = {
       };
     }
   },
-  async create(supplierData: {
-    nome: string;
-    contato_email: string;
-    contato_telefone: string;
-    site: string;
-    observacoes: string;
-    ativo: boolean;
-    cadastrado_em: string;
-    cadastrado_por: number;
-    atualizado_em: string;
-    atualizado_por: number;
-  }): Promise<AuthResponse> {
-    try {
-      console.log('📤 Enviando dados para criar fornecedor (POST /suppliers):', supplierData);
-      const response = await api.post('/suppliers', supplierData);
-      if (response.status === 204 || response.status === 201 || response.status === 200) {
-        return { success: true, data: response.data || { message: 'Fornecedor criado com sucesso' } };
-      }
-      return { success: true, data: response.data };
-    } catch (error: any) {
-      console.error('💥 Erro ao criar fornecedor:', error);
-      if (error.response) {
-        console.error('🧪 Detalhes response.status:', error.response.status);
-        console.error('🧪 Detalhes response.data:', JSON.stringify(error.response.data, null, 2));
-        console.error('🧪 Payload reenviado debug:', JSON.stringify(supplierData, null, 2));
-      } else if (error.request) {
-        console.error('🧪 Nenhuma resposta recebida. Request:', error.request);
-      }
-      let errorMessage = 'Erro ao criar fornecedor';
-      if (error.response) {
-        if (error.response.data?.error) {
-          errorMessage = error.response.data.error;
-        } else if (error.response.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.response.status === 400) {
-          errorMessage = 'Dados inválidos. Verifique todos os campos.';
-        } else if (error.response.status === 409) {
-          errorMessage = 'Fornecedor já existe.';
-        } else if (error.response.status === 422) {
-          errorMessage = 'Dados não atendem aos critérios de validação.';
-        } else if (error.response.status >= 500) {
-          errorMessage = 'Erro interno do servidor. Tente novamente mais tarde.';
-        }
-      } else if (error.request) {
-        errorMessage = 'Erro de conexão. Verifique sua internet.';
-      }
-      return {
-        success: false,
-        error: errorMessage
-      };
-    }
-  },
+  // ...existing code...
   async update(id: string, supplierData: Partial<{
     nome: string;
     contato_email: string;
@@ -907,4 +910,3 @@ export const supplierService = {
     }
   }
 };
-

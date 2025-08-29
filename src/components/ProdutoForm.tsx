@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { produtoService, NovoProduto } from '../services/produtoService';
+import { produtoService, uploadImage } from '../api/services';
+
 
 interface Props {
   fornecedorIdDefault?: number;
@@ -7,7 +8,13 @@ interface Props {
 }
 
 const ProdutoForm: React.FC<Props> = ({ fornecedorIdDefault = 1, onSucesso }) => {
-  const [form, setForm] = useState<NovoProduto>({
+  const [form, setForm] = useState<{
+    fornecedor_id: number;
+    nome: string;
+    preco: number;
+    estoque: number;
+    descricao: string;
+  }>({
     fornecedor_id: fornecedorIdDefault,
     nome: '',
     preco: 0,
@@ -22,7 +29,7 @@ const ProdutoForm: React.FC<Props> = ({ fornecedorIdDefault = 1, onSucesso }) =>
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: name === 'preco' || name === 'estoque' ? Number(value) : value }));
+    setForm((f) => ({ ...f, [name]: name === 'preco' || name === 'estoque' ? Number(value) : value }));
   };
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,14 +46,33 @@ const ProdutoForm: React.FC<Props> = ({ fornecedorIdDefault = 1, onSucesso }) =>
     try {
       let image_url: string | undefined = undefined;
       if (file) {
-        image_url = await produtoService.uploadImagem(file);
+        const uploadResp = await uploadImage(file);
+        if (uploadResp.success && uploadResp.url) {
+          image_url = uploadResp.url;
+        } else {
+          throw new Error(uploadResp.error || 'Erro ao fazer upload da imagem');
+        }
       }
-      const payload: NovoProduto = { ...form, image_url };
-      const resp = await produtoService.criarProduto(payload);
+      // Preencher campos obrigatórios que não estão no formulário
+      const now = new Date().toISOString();
+      const payload = {
+        ...form,
+        image_url,
+        codigo: 'AUTO-' + Math.random().toString(36).substring(2, 8).toUpperCase(), // ou peça ao usuário
+        modelo: 'Modelo Padrão', // ou peça ao usuário
+        unidade: 'un', // unidade padrão
+        origem: 'local' as 'local', // string literal correta
+        produto_url: '',
+        cadastrado_por: 1, // id do usuário logado, se disponível
+        cadastrado_em: now,
+        atualizado_por: 1, // id do usuário logado, se disponível
+        atualizado_em: now
+      };
+      const resp = await produtoService.create(payload);
       setOkMsg('Produto criado com sucesso');
       if (onSucesso) onSucesso(resp.data || resp);
       // reset básico
-      setForm(f => ({ ...f, nome: '', preco: 0, estoque: 0, descricao: '' }));
+      setForm((f) => ({ ...f, nome: '', preco: 0, estoque: 0, descricao: '' }));
       setFile(null); setPreview(null);
     } catch (err: any) {
       setErro(err.message || 'Erro ao salvar');

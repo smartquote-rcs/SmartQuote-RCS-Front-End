@@ -366,7 +366,7 @@ export function AdminDashboard({
 
     try {
       // Mapear os campos do formulário para o payload esperado pelo produtoService.create
-  const currentDate = new Date().toISOString().replace(/\..+Z$/, '');
+      const currentDate = new Date().toISOString().replace(/\..+Z$/, '');
       // Obtém id do usuário logado; se não existir aborta (evita violar FK com 0)
       const userIdRaw = (user as any)?.id;
       const userId = typeof userIdRaw === 'number' ? userIdRaw : Number(userIdRaw);
@@ -379,23 +379,33 @@ export function AdminDashboard({
         setIsCreatingProduct(false);
         return;
       }
-      const productData = {
+      let origem: 'local' | 'externo' = 'local';
+      if (newProduct.origem === 'local' || newProduct.origem === 'externo') {
+        origem = newProduct.origem;
+      }
+      // Só incluir image_url se for uma URL válida
+      let image_url: string | undefined = undefined;
+      if (typeof newProduct.image_url === 'string' &&
+          (newProduct.image_url.startsWith('http://') || newProduct.image_url.startsWith('https://'))
+      ) {
+        image_url = newProduct.image_url;
+      }
+      const productData: any = {
         nome: newProduct.nome,
         descricao: typeof newProduct.descricao === 'string' ? newProduct.descricao : '',
         preco: newProduct.preco,
         unidade: newProduct.unidade || 'unidade',
         estoque: newProduct.estoque,
-        // Envia fornecedorId; backend converte e remove a chave antiga antes de inserir
-        fornecedorId: Number(newProduct.fornecedorId),
+        fornecedor_id: Number(newProduct.fornecedorId),
         codigo: newProduct.codigo || '',
         modelo: newProduct.modelo || '',
-        origem: newProduct.origem || '',
-  image_url: newProduct.image_url || '',
+        origem,
         cadastrado_por: userId,
         cadastrado_em: currentDate,
         atualizado_por: userId,
         atualizado_em: currentDate
       };
+      if (image_url) productData.image_url = image_url;
       const { success, error } = await produtoService.create(productData);
       if (!success) {
         showToast(
@@ -1017,76 +1027,10 @@ export function AdminDashboard({
                     </div>
 
                     <div className="space-y-3">
-                      {allQuotes.slice(0, 5).map((quote, index) => (
-                        <div
-                          key={quote.id}
-                          className="bg-slate-800/50 border border-slate-600/30 rounded-lg p-4 hover:border-slate-500/50 transition-all duration-200"
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3 mb-2">
-                                <h4 className="text-white font-semibold text-sm">{quote.produto}</h4>
-                                <div className={`px-2 py-1 rounded-md text-xs font-medium ${quote.status === 'approved'
-                                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                  : quote.status === 'pending'
-                                    ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                                    : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                                  }`}>
-                                  {quote.status === 'approved' ? 'Aprovada' :
-                                    quote.status === 'pending' ? 'Pendente' : 'Processando'}
-                                </div>
-                              </div>
-                              <p className="text-slate-400 text-xs font-mono mb-2">ID: {quote.id}</p>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                                <div>
-                                  <span className="text-slate-500 block mb-1">Fornecedor:</span>
-                                  <span className="text-slate-300">{quote.fornecedor}</span>
-                                </div>
-                                <div>
-                                  <span className="text-slate-500 block mb-1">Status:</span>
-                                  <span className={`${quote.status === 'approved'
-                                    ? 'text-green-400'
-                                    : quote.status === 'pending'
-                                      ? 'text-yellow-400'
-                                      : 'text-blue-400'
-                                    }`}>
-                                    {quote.status === 'approved' ? 'Aprovada' :
-                                      quote.status === 'pending' ? 'Pendente' : 'Processando'}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-slate-500 block mb-1">Valor:</span>
-                                  <span className="text-green-400 font-bold">{quote.valor}</span>
-                                </div>
-                                <div>
-                                  <span className="text-slate-500 block mb-1">Data:</span>
-                                  <span className="text-slate-300">{quote.data}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
-                            <div className="flex items-center space-x-2 text-xs text-slate-400">
-                              <span>Criada por: {user?.name || 'Admin'}</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {index === 0 && lastCreatedQuote?.id === quote.id && (
-                                <div className="bg-green-500/20 border border-green-500/30 px-2 py-1 rounded-md">
-                                  <span className="text-green-400 text-xs font-medium">✨ Recém criada</span>
-                                </div>
-                              )}
-                              <button
-                                onClick={() => setActivePage("quotes")}
-                                className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 px-3 py-1 text-xs rounded-lg transition-all duration-200 flex items-center space-x-1"
-                              >
-                                <FileText className="w-3 h-3" />
-                                <span>Ver Detalhes</span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                      {/* Placeholder para cotações recentes - dados reais virão do prompt futuramente */}
+                      <div className="text-center text-slate-400 text-sm py-8">
+                        Nenhuma cotação recente disponível no momento.
+                      </div>
                     </div>
 
                     {allQuotes.length > 5 && (
@@ -1182,93 +1126,116 @@ export function AdminDashboard({
                       <p className="text-xs text-yellow-300 mt-1">* Campos obrigatórios</p>
                     </div>
                   </div>
-                  <form onSubmit={handleSaveProduct} className="space-y-1">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor *</label>
-                        <select
-                          value={newProduct.fornecedorId || ''}
-                          onChange={e => setNewProduct(prev => ({ ...prev, fornecedorId: e.target.value }))}
-                          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                          required
-                          disabled={isCreatingProduct}
-                          title="Selecione o fornecedor do produto"
-                        >
-                          <option value="">Selecione o fornecedor</option>
-                          {fornecedores && fornecedores.map((f: any) => {
-                            // Tenta pegar o id do fornecedor, mesmo que venha como id, fornecedorId ou outra variação
-                            const fornecedorId = f.id || f.fornecedorId || f.ID || f._id;
-                            return (
-                              <option key={fornecedorId} value={fornecedorId}>
-                                {f.nomeEmpresa || f.nome || fornecedorId}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Código</label>
-                        <input type="text" value={newProduct.codigo || ''} onChange={e => setNewProduct(prev => ({ ...prev, codigo: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Código/SKU" disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Nome *</label>
-                        <input type="text" value={newProduct.nome} onChange={e => setNewProduct(prev => ({ ...prev, nome: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Nome do produto" required disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Modelo</label>
-                        <input type="text" value={newProduct.modelo || ''} onChange={e => setNewProduct(prev => ({ ...prev, modelo: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Modelo" disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Descrição *</label>
-                        <textarea rows={2} value={newProduct.descricao} onChange={e => setNewProduct(prev => ({ ...prev, descricao: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Descrição" required disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Preço *</label>
-                        <input type="number" step="0.01" min="0" value={newProduct.preco} onChange={e => setNewProduct(prev => ({ ...prev, preco: parseFloat(e.target.value) || 0 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="0.00" required disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Unidade</label>
-                        <input type="text" value={newProduct.unidade || ''} onChange={e => setNewProduct(prev => ({ ...prev, unidade: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Unidade" disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Estoque</label>
-                        <input type="number" min="0" value={newProduct.estoque || 0} onChange={e => setNewProduct(prev => ({ ...prev, estoque: parseInt(e.target.value) || 0 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Estoque" disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Origem</label>
-                        <input type="text" value={newProduct.origem || ''} onChange={e => setNewProduct(prev => ({ ...prev, origem: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Origem" disabled={isCreatingProduct} />
-                      </div>
-                      <div>
-                        {/* Campos de auditoria removidos do formulário visual */}
-                        {/** Imagens do Produto **/}
-                        <div className="border-t border-slate-600 pt-4">
-                          <div className="grid grid-cols-1 md:grid-cols-0 gap-4 mb-4">
-                            <div className="md:col-span-2">
-                              <label className="block text-sm font-medium text-slate-300 mb-3">Imagens do Produto</label>
-                              <div className="flex justify-center">
-                                <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
-                                  <div className="flex flex-col items-center space-y-2">
-                                    <Upload className="w-8 h-8 text-slate-400" />
-                                    <span className="text-sm text-slate-400">Clique para adicionar</span>
-                                    <span className="text-xs text-slate-500">PNG, JPG, GIF até 10MB</span>
-                                  </div>
-                                  <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                    disabled={isCreatingProduct}
-                                  />
-                                </label>
-                              </div>
-                            </div>
-                          </div>
+                  <form onSubmit={handleSaveProduct} className="space-y-6">
+                    {/* Grupo: Dados Básicos */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-green-300 mb-2">Dados Básicos</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor *</label>
+                          <select
+                            value={newProduct.fornecedorId || ''}
+                            onChange={e => setNewProduct(prev => ({ ...prev, fornecedorId: e.target.value }))}
+                            className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                            required
+                            disabled={isCreatingProduct}
+                            title="Selecione o fornecedor do produto"
+                          >
+                            <option value="">Selecione o fornecedor</option>
+                            {fornecedores && fornecedores.map((f: any) => {
+                              const fornecedorId = f.id || f.fornecedorId || f.ID || f._id;
+                              return (
+                                <option key={fornecedorId} value={fornecedorId}>
+                                  {f.nomeEmpresa || f.nome || fornecedorId}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Código</label>
+                          <input type="text" value={newProduct.codigo || ''} onChange={e => setNewProduct(prev => ({ ...prev, codigo: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Código/SKU" disabled={isCreatingProduct} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Nome *</label>
+                          <input type="text" value={newProduct.nome} onChange={e => setNewProduct(prev => ({ ...prev, nome: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Nome do produto" required disabled={isCreatingProduct} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Modelo</label>
+                          <input type="text" value={newProduct.modelo || ''} onChange={e => setNewProduct(prev => ({ ...prev, modelo: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Modelo" disabled={isCreatingProduct} />
                         </div>
                       </div>
-
-
                     </div>
+                    <hr className="my-2 border-green-700/30" />
+                    {/* Grupo: Descrição e Preço */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-green-300 mb-2">Descrição e Preço</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Descrição *</label>
+                          <textarea rows={2} value={newProduct.descricao} onChange={e => setNewProduct(prev => ({ ...prev, descricao: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Descrição" required disabled={isCreatingProduct} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Preço *</label>
+                          <input type="number" step="0.01" min="0" value={newProduct.preco} onChange={e => setNewProduct(prev => ({ ...prev, preco: parseFloat(e.target.value) || 0 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="0.00" required disabled={isCreatingProduct} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Unidade</label>
+                          <input type="text" value={newProduct.unidade || ''} onChange={e => setNewProduct(prev => ({ ...prev, unidade: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Unidade" disabled={isCreatingProduct} />
+                        </div>
+                      </div>
+                    </div>
+                    <hr className="my-2 border-green-700/30" />
+                    {/* Grupo: Estoque e Origem */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-green-300 mb-2">Estoque e Origem</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Estoque</label>
+                          <input type="number" min="0" value={newProduct.estoque || 0} onChange={e => setNewProduct(prev => ({ ...prev, estoque: parseInt(e.target.value) || 0 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Estoque" disabled={isCreatingProduct} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Origem</label>
+                          <input type="text" value={newProduct.origem || ''} onChange={e => setNewProduct(prev => ({ ...prev, origem: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Origem" disabled={isCreatingProduct} />
+                        </div>
+                      </div>
+                    </div>
+                    <hr className="my-2 border-green-700/30" />
+                    {/* Grupo: Imagens do Produto */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-green-300 mb-2">Imagens do Produto</h3>
+                      <div className="flex justify-center">
+                        <div className="flex flex-col items-center w-full">
+                          {/* Preview da imagem carregada */}
+                          {newProduct.image_url && (
+                            <div className="mb-2 flex justify-center w-full">
+                              <img
+                                src={newProduct.image_url}
+                                alt="Preview do Produto"
+                                className="max-h-32 rounded-lg object-contain border border-slate-700 bg-slate-900 p-1 mx-auto"
+                                style={{ maxWidth: '100%', maxHeight: '8rem' }}
+                              />
+                            </div>
+                          )}
+                          <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
+                            <div className="flex flex-col items-center space-y-2">
+                              <Upload className="w-8 h-8 text-slate-400" />
+                              <span className="text-sm text-slate-400">Clique para adicionar</span>
+                              <span className="text-xs text-slate-500">PNG, JPG, GIF até 10MB</span>
+                            </div>
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="hidden"
+                              disabled={isCreatingProduct}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Botões de Ação */}
                     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-5 pt-0">
                       <button
                         type="submit"
@@ -1317,56 +1284,7 @@ export function AdminDashboard({
                       </button>
                     </div>
                   </form>
-                  {/* Dicas para Novos Produtos */}
-                  <div className="mb-8">
-                <div className="glass-card bg-gradient-to-br from-slate-900/50 to-slate-800/50 rounded-xl border border-slate-500/20 p-4 sm:p-6">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="p-2 bg-blue-500/20 rounded-lg">
-                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
-                    </div> 
-                    <div>
-                      <h2 className="text-base sm:text-lg font-bold text-white">Dicas para Cadastro</h2>
-                      <p className="text-xs sm:text-sm text-slate-200">Boas práticas para adicionar produtos</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-3">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                        <div>
-                          <h4 className="text-white font-medium">Nome Descritivo</h4>
-                          <p className="text-slate-400 text-xs">Use nomes claros que incluam marca, modelo e características principais</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
-                        <div>
-                          <h4 className="text-white font-medium">Especificações Completas</h4>
-                          <p className="text-slate-400 text-xs">Inclua todas as especificações técnicas relevantes</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
-                        <div>
-                          <h4 className="text-white font-medium">Preços Atualizados</h4>
-                          <p className="text-slate-400 text-xs">Mantenha os preços sempre atualizados com o fornecedor</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-purple-400 rounded-full mt-2"></div>
-                        <div>
-                          <h4 className="text-white font-medium">Disponibilidade Real</h4>
-                          <p className="text-slate-400 text-xs">Confirme a disponibilidade e prazos com o fornecedor</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  </div> {/* fim dicas */}
-                </div> {/* fim glass-card wrapper principal */}
-              </div> {/* fim bloco mb-8 principal */}
+                </div> {/* fim bloco mb-8 principal */}
               </div> {/* fechamento da div.mb-8 aberta após comentário Formulário de Novo Produto */}
             </main>
           </div>

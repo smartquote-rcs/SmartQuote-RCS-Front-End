@@ -16,10 +16,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import { Search, Building, Phone, Mail, Download, Plus, RefreshCw, Edit, Trash2, X, CheckCircle, AlertTriangle } from "lucide-react";
+import { SearchCheck, Building, Phone, Mail, Download, Plus, RefreshCw, Edit, Trash2, X, CheckCircle, AlertTriangle } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 import { exportSuppliersPdf } from "../../utils/exportSuppliersPdf";
 import { EditSupplierModal } from "../EditSupplierModal";
+import { CreateSupplierModal } from "../CreateSupplierModal";
 import { Supplier } from "../../types";
 
 // Interface para Toast Notifications
@@ -40,12 +41,17 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
   const { t } = useTranslation();
   const { suppliers, isLoadingSuppliers, loadSuppliers, deleteSupplier, updateSupplier, addSupplier } = useApp();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("Todas");
-  const [statusFilter, setStatusFilter] = useState("Todos");
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
+
   // Estados para o modal de edição
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedSupplierForEdit, setSelectedSupplierForEdit] = useState<Supplier | null>(null);
+
+  // Estados para o modal de criação
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Estados para toast notifications
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
@@ -117,10 +123,12 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
   // Não há mais categorias no schema atual
   
   const filteredFornecedores = fornecedores.filter((fornecedor) => {
-    const matchesSearch = fornecedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.email.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.telefone.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "Todos" || fornecedor.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    return fornecedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.email.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.telefone.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  // Paginação
+  const totalPages = Math.ceil(filteredFornecedores.length / itemsPerPage);
+  const paginatedFornecedores = filteredFornecedores.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Funções para Toast Notifications
   const showToast = (
@@ -425,7 +433,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
               </button>
               {user?.role === 'admin' && (
                 <button 
-                  onClick={() => { setSelectedSupplierForEdit(null); setIsEditModalOpen(true); }}
+                  onClick={() => setIsCreateModalOpen(true)}
                   className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-sm md:text-base min-w-[160px] h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
@@ -437,14 +445,31 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                 <span>Exportar Relatório</span>
               </button>
             </div>
-      {/* Modal único para criar ou editar fornecedor */}
+      {/* Modal de edição de fornecedor */}
       <EditSupplierModal
         supplier={selectedSupplierForEdit}
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
-  onSave={handleSaveSupplier}
-  onDelete={handleDeleteSupplier}
-  userId={(user as any)?.id}
+        onSave={handleSaveSupplier}
+        onDelete={handleDeleteSupplier}
+        userId={(user as any)?.id}
+      />
+
+      {/* Modal de criação de fornecedor */}
+      <CreateSupplierModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSave={async (supplierData) => {
+          try {
+            await addSupplier(supplierData);
+            showToast('success','Fornecedor cadastrado',`Fornecedor "${supplierData.nome}" foi criado com sucesso!`);
+            setIsCreateModalOpen(false);
+          } catch (error) {
+            console.error('Erro ao criar fornecedor:', error);
+            showToast('error','Erro ao criar','Não foi possível criar o fornecedor.');
+          }
+        }}
+        userId={(user as any)?.id}
       />
           </div>
         </div>
@@ -473,54 +498,18 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
             <div className="flex flex-col md:flex-row items-stretch md:items-center space-y-1 md:space-y-3 md:space-y-0 md:space-x-4">
               {/* Pesquisa - sempre visível */}
               <div className="relative group flex-1 min-w-0">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors duration-200" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                  <SearchCheck className="w-6 h-6 text-blue-400 bg-white rounded-full shadow p-1" />
+                </span>
                 <Input
                   placeholder="Pesquisar fornecedores..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full bg-slate-800/50 border-slate-700/50 text-white placeholder-slate-400 focus:border-blue-400/50 focus:ring-blue-400/20 hover:border-slate-600/50 transition-all duration-200 text-sm h-10 md:h-auto"
-                />
-              </div>
-              
-              {/* Filtros - ocultos no mobile */}
-              <div className="hidden md:flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-40 bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-400/50 focus:ring-blue-400/20">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="all">Todos os status</SelectItem>
-                    <SelectItem value="active">Ativo</SelectItem>
-                    <SelectItem value="inactive">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-44 bg-slate-800/50 border-slate-700/50 text-white focus:border-blue-400/50 focus:ring-blue-400/20">
-                    <SelectValue placeholder="Categoria" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="all">Todas as categorias</SelectItem>
-                    <SelectItem value="eletrônicos">Eletrônicos</SelectItem>
-                    <SelectItem value="materiais">Materiais</SelectItem>
-                    <SelectItem value="equipamentos">Equipamentos</SelectItem>
-                    <SelectItem value="serviços">Serviços</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                    setCategoryFilter('all');
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
                   }}
-                  className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200"
-                >
-                  <RefreshCw className="w-4 h-4 mr-1" />
-                  Limpar
-                </Button>
+                  className="pl-12 w-full bg-slate-800/50 border-slate-700/50 text-white placeholder-slate-400 focus:border-blue-400/50 focus:ring-blue-400/20 hover:border-slate-600/50 transition-all duration-200 text-sm h-10 md:h-auto"
+                />
               </div>
             </div>
           </div>
@@ -538,10 +527,32 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
               <>
                 <TabsContent value="all" className="h-full mt-0">
                   <div className="grid gap-4 lg:gap-6">
-                    {filteredFornecedores.map((fornecedor) => (
+                    {paginatedFornecedores.map((fornecedor) => (
                       <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
                     ))}
                   </div>
+                  {/* Paginação */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-6 gap-2">
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 rounded bg-slate-700 text-white disabled:opacity-50"
+                      >Anterior</button>
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                          key={i + 1}
+                          onClick={() => setCurrentPage(i + 1)}
+                          className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'}`}
+                        >{i + 1}</button>
+                      ))}
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 rounded bg-slate-700 text-white disabled:opacity-50"
+                      >Próxima</button>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="active" className="h-full mt-0">

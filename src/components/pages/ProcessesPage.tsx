@@ -63,112 +63,24 @@ interface QuoteJob {
   };
 }
 
-// Dados mock baseados no JSON real
-const mockJobs: QuoteJob[] = [
-  {
-    id: "e30fe277-9e23-4071-b174-9a97e671d708",
-    status: "concluido",
-    criadoEm: "2025-08-20T15:50:05.487Z",
-    parametros: {
-      termo: "Monitor 4K",
-      numResultados: 1,
-      fornecedores: [1, 2],
-      usuarioId: 1
-    },
-    iniciadoEm: "2025-08-20T15:50:05.487Z",
-    progresso: {
-      etapa: "salvamento",
-      produtos: 2,
-      detalhes: "Salvando produtos na base de dados..."
-    },
-    concluidoEm: "2025-08-20T15:53:07.907Z",
-    resultado: {
-      produtos: [
-        {
-          name: "Monitor 32'' E32K G5 UHD 4K USB-C/HDMI/DP/RJ45/3USB-A",
-          price: "701814,78AKZ",
-          image_url: "https://ncrangola.vtexassets.com/arquivos/ids/171144/6N4D6AA.jpg?v=638898907769770000",
-          description: "O Monitor 4K HP E32k G5 com USB-C foi concebido de forma engenhosa para apresentar imagens incrivelm...",
-          product_url: "https://www.ncrangola.com/monitor-32-e32k-g5-uhd-4k-usb-c-hdmi-dp-rj45-3usb-a/p"
-        },
-        {
-          name: "MONITOR NILOX NXM274KD11 (27″ IPS 4K UHD 60Hz)",
-          price: "431.194,51 Kz",
-          image_url: "https://loja.sistec.co.ao/wp-content/uploads/2024/09/NXM274KD11-MONITOR-NILOX-27-4K-UHD-300x300.jpg",
-          description: "Monitor Nilox NXM274KD11 com tela optimizada de 27\", 2xHDMI e uma Display Port., resolução 4K UHD, taxa de actualização 60 Hz que oferece um tempo de resposta de 5 ms no modo Overdrive para jogos.",
-          product_url: "https://loja.sistec.co.ao/product/monitor-nilox-nxm274kd11-4k-uhd-de-27/"
-        }
-      ],
-      salvamento: {
-        salvos: 2,
-        erros: 0,
-        detalhes: [
-          {
-            fornecedor: "NCR",
-            fornecedor_id: 1,
-            salvos: 1,
-            erros: 0,
-            detalhes: [
-              {
-                produto: "Monitor 32'' E32K G5 UHD 4K USB-C/HDMI/DP/RJ45/3USB-A",
-                status: "salvo",
-                id: 81,
-                preco_centavos: 70181478
-              }
-            ]
-          },
-          {
-            fornecedor: "Sistec",
-            fornecedor_id: 2,
-            salvos: 1,
-            erros: 0,
-            detalhes: [
-              {
-                produto: "MONITOR NILOX NXM274KD11 (27″ IPS 4K UHD 60Hz)",
-                status: "salvo",
-                id: 82,
-                preco_centavos: 43119451
-              }
-            ]
-          }
-        ]
-      },
-      tempoExecucao: 180219
-    }
-  },
-  {
-    id: "f20fe277-8e23-5071-c174-8a97e671d709",
-    status: "em-andamento",
-    criadoEm: "2025-08-21T10:30:15.123Z",
-    iniciadoEm: "2025-08-21T10:30:20.456Z",
-    parametros: {
-      termo: "Laptop HP",
-      numResultados: 5,
-      fornecedores: [1, 2, 3],
-      usuarioId: 2
-    },
-    progresso: {
-      etapa: "busca",
-      produtos: 3,
-      detalhes: "Buscando produtos nos fornecedores..."
-    }
-  },
-  {
-    id: "a10fe277-7e23-6071-d174-7a97e671d710",
-    status: "pendente",
-    criadoEm: "2025-08-21T12:15:30.789Z",
-    parametros: {
-      termo: "Impressora multifunção",
-      numResultados: 3,
-      fornecedores: [2, 4],
-      usuarioId: 1
-    }
+
+// Função para buscar jobs da API
+async function fetchJobs(): Promise<QuoteJob[]> {
+  try {
+    // Altere a URL abaixo para o endpoint real da sua API de processos/jobs
+    const response = await fetch('/api/jobs');
+    if (!response.ok) throw new Error('Erro ao buscar processos');
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data.jobs || []);
+  } catch (e) {
+    // Se der erro, retorna array vazio (ou pode retornar mockJobs se quiser fallback)
+    return [];
   }
-];
+}
 
 export function ProcessesPage() {
-  const [jobs, setJobs] = useState<QuoteJob[]>(mockJobs);
-  const [filteredJobs, setFilteredJobs] = useState<QuoteJob[]>(mockJobs);
+  const [jobs, setJobs] = useState<QuoteJob[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<QuoteJob[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'details'>('list');
@@ -204,13 +116,30 @@ export function ProcessesPage() {
     );
   }
 
+
+  // Atualiza jobs periodicamente (real time)
+  useEffect(() => {
+    let isMounted = true;
+    let interval: NodeJS.Timeout;
+
+    const updateJobs = async () => {
+      const apiJobs = await fetchJobs();
+      if (isMounted) setJobs(apiJobs);
+    };
+    updateJobs();
+    interval = setInterval(updateJobs, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Filtra jobs por status
   useEffect(() => {
     let filtered = jobs;
-    
     if (statusFilter !== 'todos') {
       filtered = filtered.filter(job => job.status === statusFilter);
     }
-    
     setFilteredJobs(filtered);
   }, [jobs, statusFilter]);
 

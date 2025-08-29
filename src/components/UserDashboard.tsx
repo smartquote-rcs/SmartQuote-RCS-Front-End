@@ -726,22 +726,13 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                     <div key={produto.id} className="glass-card p-4 lg:p-6 bg-white/5 rounded-xl border border-white/20 hover:border-yellow-400/50 transition-all duration-300 group">
                       <div className="relative w-full h-48 bg-gray-800 rounded-xl overflow-hidden mb-4 group-hover:scale-[1.02] transition-all duration-300">
                         <img 
-                          src={produto.imagem} 
+                          src={produto.image_url || ''} 
                           alt={produto.nome}
                           className="w-full h-full object-cover"
                         />
-                        {produto.desconto > 0 && (
-                          <div className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                            -{produto.desconto}%
-                          </div>
-                        )}
-                        {produto.popular && (
-                          <div className="absolute top-3 right-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                            Popular
-                          </div>
-                        )}
+                        {/* Desconto e Popular removidos pois não existem no tipo Product */}
                         <button
-                          onClick={() => toggleFavorite(produto.id)}
+                          onClick={() => produto.id && toggleFavorite(String(produto.id))}
                           className="absolute bottom-3 right-3 p-2 bg-red-500/80 hover:bg-red-600 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
                           title="Remover dos favoritos"
                         >
@@ -755,8 +746,8 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                             {produto.nome}
                           </h3>
                           <div className="flex items-center justify-between mb-2">
-                            <p className="text-sm text-blue-300 font-medium truncate mr-2">{produto.categoria}</p>
-                            <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[120px]">{produto.fornecedor}</span>
+                            {/* <p className="text-sm text-blue-300 font-medium truncate mr-2">{produto.categoria}</p> */}
+                            {/* <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[120px]">{produto.fornecedor}</span> */}
                           </div>
                           <p className="text-sm text-dark-secondary line-clamp-2">
                             {produto.descricao}
@@ -766,9 +757,9 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                         <div className="mt-auto">
                           <div className="flex items-center space-x-2 flex-wrap mb-3">
                             <span className="text-xl font-bold text-green-400">{produto.preco}</span>
-                            {produto.precoOriginal && (
+                            {/* {produto.precoOriginal && (
                               <span className="text-sm text-red-400 line-through bg-red-500/20 px-2 py-1 rounded">{produto.precoOriginal}</span>
-                            )}
+                            )} */}
                           </div>
                           
                           <div className="flex items-center space-x-2 w-full">
