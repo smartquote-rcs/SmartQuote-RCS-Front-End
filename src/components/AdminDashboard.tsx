@@ -106,6 +106,7 @@ export function AdminDashboard({
   onLogout,
 }: AdminDashboardProps) {
   const { t } = useTranslation();
+  const { systemName } = useApp();
   const [activePage, setActivePage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
@@ -1689,7 +1690,7 @@ export function AdminDashboard({
 
               <div className="min-w-0">
                 <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-dark-primary truncate group-hover:text-blue-400 transition-colors duration-200">
-                  SMARTQUOTE
+                  {systemName || 'SMARTQUOTE'}
                 </h1>
                 <p className="text-xs text-dark-secondary font-medium truncate">
                   Painel Administrativo
@@ -1813,7 +1814,7 @@ export function AdminDashboard({
               <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-bold text-dark-primary text-sm sm:text-base group-hover:text-blue-400 transition-colors duration-200">
-              SmartQuote-RCS
+              {systemName || 'SmartQuote-RCS'}
             </span>
           </button>
           <div className="w-9 sm:w-10"></div>

@@ -35,6 +35,8 @@ interface UserSettings {
 }
 
 interface AppContextType {
+  systemName: string;
+  setSystemName: (name: string) => void;
   // Favoritos
   favorites: string[];
   toggleFavorite: (productId: string) => void;
@@ -76,7 +78,7 @@ interface AppContextType {
   setUser: (u: { id: number; name?: string; email?: string } | null) => void;
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const mockNotifications: Notification[] = [
   {
@@ -113,6 +115,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   // Usuário logado (placeholder - em integração real substituir pela autenticação)
   const [user, setUser] = useState<{ id: number; name?: string; email?: string } | null>({ id: 1, name: 'Usuário Demo' });
+  // Nome do sistema global (sempre da API)
+  const [systemName, setSystemName] = useState<string>('');
+
+  // Buscar nome do sistema da API ao montar
+  useEffect(() => {
+    async function fetchSystemName() {
+      try {
+        const { sistemaService } = await import('../api/services');
+        const result = await sistemaService.getConfig();
+        const data = result.data;
+        const config = data && data.data ? data.data : null;
+        if (config && typeof config.nome_empresa === 'string') {
+          setSystemName(config.nome_empresa.trim());
+        }
+      } catch (error) {
+        setSystemName('');
+      }
+    }
+    fetchSystemName();
+  }, []);
   const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   
@@ -168,9 +190,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const getFavoriteProducts = () => {
-    return products.filter(product => 
-      product.id && favorites.includes(product.id.toString())
-    );
+    return products.filter(product => {
+      // Garante que id seja string para comparação
+      const idStr = typeof product.id === 'string' ? product.id : product.id?.toString();
+      return idStr && favorites.includes(idStr);
+    });
   };
 
   const unreadCount = notifications.filter(n => !n.lida).length;
@@ -529,16 +553,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         descricao: product.descricao,
         preco: product.preco,
         estoque: product.estoque,
-        unidade: product.unidade,
+        unidade: product.unidade ?? '',
         cadastrado_por: product.cadastrado_por,
         cadastrado_em: product.cadastrado_em,
         atualizado_por: product.atualizado_por,
         atualizado_em: product.atualizado_em,
-        fornecedorId: product.fornecedorId,
-        codigo: product.codigo,
-        modelo: product.modelo,
-        origem: product.origem,
-        m: product.m
+        fornecedor_id: typeof product.fornecedorId === 'number' ? product.fornecedorId : 0,
+        codigo: product.codigo ?? '',
+        modelo: product.modelo ?? '',
+        origem: product.origem === 'externo' ? 'externo' : 'local',
       });
       
       if (response.success) {
@@ -652,15 +675,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         descricao: product.descricao,
         preco: product.preco,
         estoque: product.estoque,
-        unidade: product.unidade,
+        unidade: product.unidade ?? '',
         cadastrado_por: product.cadastrado_por,
         cadastrado_em: product.cadastrado_em,
         atualizado_por: product.atualizado_por,
         atualizado_em: product.atualizado_em,
         fornecedorId: product.fornecedorId,
-        codigo: product.codigo,
-        modelo: product.modelo,
-        origem: product.origem,
+        codigo: product.codigo ?? '',
+        modelo: product.modelo ?? '',
+        origem: product.origem === 'externo' ? 'externo' : 'local',
         m: product.m
       });
       
@@ -745,9 +768,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateProduct,
     isLoadingProducts,
     userSettings,
-  updateSettings,
-  user,
-  setUser
+    updateSettings,
+    user,
+    setUser,
+    systemName,
+    setSystemName
   };
 
   return (

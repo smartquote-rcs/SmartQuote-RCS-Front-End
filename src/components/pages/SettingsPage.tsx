@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -7,6 +7,7 @@ import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../hooks/useLanguage';
+import { AppContext } from '../../contexts/AppContext';
 import { emailService, EmailConfig } from '../../services/emailService';
 import { 
   User, 
@@ -78,6 +79,7 @@ interface PasswordData {
 }
 
 export default function SettingsPage() {
+  const appCtx = useContext(AppContext);
   const { t } = useTranslation();
   const { changeLanguage } = useLanguage();
   
@@ -91,13 +93,15 @@ export default function SettingsPage() {
   });
 
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
-    systemName: 'SmartQuote RCS',
-    language: 'pt-PT',
-    timezone: 'Europe/Lisbon',
-    currency: 'EUR',
+    systemName: '',
+    language: '',
+    timezone: '',
+    currency: '',
     autoBackup: true,
-    maintenanceMode: false
+    maintenanceMode: true
   });
+  const [loading, setLoading] = useState(true);
+
 
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     emailNotifications: true,
@@ -140,36 +144,43 @@ export default function SettingsPage() {
 
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
-  // Carregar configurações salvas
-  useEffect(() => {
-    const savedSettings = localStorage.getItem('smartquote-general-settings');
-    const savedLanguage = localStorage.getItem('smartquote-language');
-    
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        setGeneralSettings(parsed);
-      } catch (error) {
-        console.error('Erro ao carregar configurações salvas:', error);
+  // Função para buscar configurações do sistema da API
+  const fetchSettings = async () => {
+    try {
+      const { sistemaService } = await import('../../api/services');
+      const result = await sistemaService.getConfig();
+      const data = result.data;
+      console.log('API /api/sistema response:', data); // <-- Adicionado para depuração
+      const config = data && data.data ? data.data : null;
+      if (config) {
+        const sysName = typeof config.nome_empresa === 'string' ? config.nome_empresa.trim() : '';
+        setGeneralSettings({
+          systemName: sysName,
+          language: typeof config.idioma === 'string' ? config.idioma.trim() : '',
+          timezone: typeof config.fuso_horario === 'string' ? config.fuso_horario.trim() : '',
+          currency: typeof config.moeda === 'string' ? config.moeda.trim() : '',
+          autoBackup: config.backup?.trim?.() === 'diario' || config.backup === true,
+          maintenanceMode: !!config.manutencao
+        });
+        if (appCtx?.setSystemName) appCtx.setSystemName(sysName);
+        setSecuritySettings(prev => ({
+          ...prev,
+          sessionTimeout: config.tempo_de_sessao ? String(config.tempo_de_sessao) : prev.sessionTimeout,
+          passwordPolicy: (config.politica_senha?.trim() === 'forte') ? 'strong' : (config.politica_senha?.trim() === 'medio' ? 'medium' : prev.passwordPolicy),
+          auditLogging: !!config.log_auditoria,
+          ipWhitelist: typeof config.ip_permitidos === 'string' ? config.ip_permitidos.trim() : ''
+        }));
       }
-    } else if (savedLanguage) {
-      setGeneralSettings(prev => ({ ...prev, language: savedLanguage }));
+    } catch (error) {
+      console.error('Erro ao buscar configurações do sistema:', error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Carregar configurações de email
-    const savedEmailConfig = emailService.loadSavedConfig();
-    if (savedEmailConfig) {
-      setEmailSettings({
-        enabled: savedEmailConfig.enabled,
-        host: savedEmailConfig.host,
-        port: savedEmailConfig.port,
-        username: savedEmailConfig.username,
-        password: savedEmailConfig.password,
-        secure: savedEmailConfig.secure,
-        checkInterval: savedEmailConfig.checkInterval,
-        showPassword: false
-      });
-    }
+  // Carregar configurações do sistema ao montar
+  useEffect(() => {
+    fetchSettings();
   }, []);
 
   useEffect(() => {
@@ -187,7 +198,7 @@ export default function SettingsPage() {
   const handleSaveGeneral = async () => {
     const languageMap: { [key: string]: string } = {
       'pt-PT': 'pt',
-      'pt-BR': 'pt', 
+      'pt-BR': 'pt',
       'en-US': 'en',
       'en-GB': 'en',
       'es-ES': 'es',
@@ -195,24 +206,41 @@ export default function SettingsPage() {
       'de-DE': 'de',
       'it-IT': 'it'
     };
-    
     const newLang = languageMap[generalSettings.language] || 'pt';
-    
+
     try {
-      localStorage.setItem('smartquote-language', generalSettings.language);
-      localStorage.setItem('smartquote-general-settings', JSON.stringify(generalSettings));
-      
-      const success = await changeLanguage(newLang);
-      
-      if (success) {
-        setSaveSuccess(t('settings.languageChanged'));
+      // Map frontend state to backend config fields
+      const configPayload = {
+        nome_empresa: generalSettings.systemName,
+        idioma: generalSettings.language,
+        fuso_horario: generalSettings.timezone,
+        moeda: generalSettings.currency,
+        backup: generalSettings.autoBackup ? 'diario' : 'manual',
+        manutencao: generalSettings.maintenanceMode
+      };
+
+      const { sistemaService } = await import('../../api/services');
+      const result = await sistemaService.updateConfig(configPayload);
+
+      if (result.success) {
+        // Atualiza dados exibidos após salvar
+        await fetchSettings();
+        if (appCtx?.setSystemName) appCtx.setSystemName(generalSettings.systemName);
+        // Update localStorage and language for immediate UI effect
+        localStorage.setItem('smartquote-language', generalSettings.language);
+        localStorage.setItem('smartquote-general-settings', JSON.stringify(generalSettings));
+        const success = await changeLanguage(newLang);
+        if (success) {
+          setSaveSuccess(t('settings.languageChanged'));
+        } else {
+          setSaveSuccess(t('settings.settingsSaved'));
+        }
       } else {
-        setSaveSuccess(t('settings.settingsSaved'));
+        setSaveSuccess(result.error || 'Erro ao salvar configurações do sistema.');
       }
-      
     } catch (error) {
-      console.error('Erro ao alterar idioma:', error);
-      setSaveSuccess('Configurações salvas com erro na mudança de idioma.');
+      console.error('Erro ao salvar configurações do sistema:', error);
+      setSaveSuccess('Erro ao salvar configurações do sistema.');
     }
   };
 
@@ -399,7 +427,7 @@ export default function SettingsPage() {
 
                 <div className="space-y-3 sm:space-y-4 lg:space-y-5">
                   <div>
-                    <Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.company')}</Label>
+                    <Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('Empresa')}</Label>
                     <Input
                       value={adminProfile.company}
                       onChange={(e) => setAdminProfile({...adminProfile, company: e.target.value})}
@@ -415,17 +443,17 @@ export default function SettingsPage() {
                       className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
                     />
                   </div>
-                  
-                  <div className="glass-card bg-gradient-to-br from-blue-900/30 to-cyan-900/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-500/20">
+                </div>
+              </div>
+	      <br />
+	      <div className="glass-card bg-gradient-to-br from-blue-900/30 to-cyan-900/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-500/20">
                     <div className="flex items-center space-x-3 mb-2">
                       <Badge className="bg-blue-600/20 text-blue-300 border-blue-500/30 text-xs sm:text-sm">
                         {adminProfile.role}
                       </Badge>
                     </div>
-                    <p className="text-blue-200 text-xs sm:text-sm">Nível de acesso administrativo completo</p>
+		    <p>Acesso privilegiado ao sistema</p>
                   </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

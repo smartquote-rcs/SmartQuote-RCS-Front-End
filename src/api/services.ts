@@ -1,3 +1,31 @@
+// Serviço de Configurações do Sistema
+export const sistemaService = {
+  async getConfig() {
+    try {
+      const response = await api.get('/sistema');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar configurações do sistema:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar configurações do sistema'
+      };
+    }
+  }
+  ,
+  async updateConfig(config: any) {
+    try {
+      const response = await api.patch('/sistema', config);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao atualizar configurações do sistema:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao atualizar configurações do sistema'
+      };
+    }
+  }
+};
 // Busca o papel/função do usuário por email
 export async function getUserRoleByEmail(email: string): Promise<{ role: string, origem: 'employees' | 'users' | null }> {
   try {

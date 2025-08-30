@@ -80,6 +80,7 @@ const supportItems = [
 
 export function UserDashboard({ user, onLogout }: UserDashboardProps) {
   const { t, i18n } = useTranslation();
+  const { systemName } = useApp();
   const [activePage, setActivePage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
@@ -1039,7 +1040,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                
               <div className="min-w-0">
                 <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-dark-primary truncate group-hover:text-blue-400 transition-colors duration-200">
-                  SMARTQUOTE
+                  {systemName || 'SMARTQUOTE'}
                 </h1>
                 <p className="text-xs text-dark-secondary font-medium truncate">
                   Portal do Cliente
@@ -1126,7 +1127,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-800 rounded-lg flex items-center justify-center p-1 flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
               <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="font-bold text-dark-primary text-sm sm:text-base truncate group-hover:text-blue-400 transition-colors duration-200">SMARTQUOTE</span>
+            <span className="font-bold text-dark-primary text-sm sm:text-base truncate group-hover:text-blue-400 transition-colors duration-200">{systemName || 'SMARTQUOTE'}</span>
           </button>
           <div className="w-9 sm:w-10 flex-shrink-0"></div>
         </div>
