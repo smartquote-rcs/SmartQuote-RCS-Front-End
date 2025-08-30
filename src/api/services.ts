@@ -1,3 +1,42 @@
+// Serviço de Notificações
+export const notificationService = {
+  async getAll() {
+    try {
+      const response = await api.get('/notifications');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar notificações:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar notificações'
+      };
+    }
+  },
+  async delete(id: string) {
+    try {
+      const response = await api.delete(`/notifications/${id}`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao deletar notificação:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao deletar notificação'
+      };
+    }
+  },
+  async deleteAll() {
+    try {
+      const response = await api.delete('/notifications');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao deletar todas as notificações:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao deletar todas as notificações'
+      };
+    }
+  }
+};
 // Serviço de Configurações do Sistema
 export const sistemaService = {
   async getConfig() {
@@ -45,6 +84,10 @@ export async function getUserRoleByEmail(email: string): Promise<{ role: string,
   return { role: 'user', origem: null };
 }
 // ...existing code...
+
+// ...existing code...
+
+// (Removido bloco dinâmico de adição do método deleteAll)
 // Serviço de Usuários (atualizado para usar a API correta)
 export const userService = {
   async create(userData: {

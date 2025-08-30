@@ -1,23 +1,33 @@
+
+
 import { useState, useEffect } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
-import { 
-  Bell, 
-  CheckCircle, 
-  AlertTriangle, 
-  Info, 
-  Clock, 
+import {
+  Bell,
+  CheckCircle,
+  AlertTriangle,
+  Info,
+  Clock,
   Trash2,
   Check,
   Search,
-  Filter,
-  Calendar,
-  Tag
+  // ...
 } from 'lucide-react';
+
+// ...existing code...
 
 interface Notification {
   id: string;
@@ -27,9 +37,9 @@ interface Notification {
   timestamp: string;
   read: boolean;
   category: string;
+  subject?: string;
+  rawType?: string;
 }
-
-
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -77,88 +87,159 @@ const formatTimestamp = (timestamp: string) => {
 };
 
 export function NotificationsPage() {
+  // Toast notification type
+  interface ToastNotification {
+    id: string;
+    type: "success" | "error" | "info";
+    title: string;
+    message: string;
+    duration?: number;
+  }
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
+  const showToast = (
+    type: "success" | "error" | "info",
+    title: string,
+    message: string,
+    duration: number = 5000
+  ) => {
+    const id = Date.now().toString();
+    const newToast: ToastNotification = { id, type, title, message, duration };
+    setToasts((prev) => [...prev, newToast]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    }, duration);
+  };
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  // Buscar notificações reais da API ao carregar a página
+  // IDs das notificações lidas salvos no localStorage
+  const LOCAL_KEY = 'readNotifications';
+  const getReadIds = () => {
+    try {
+      return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  };
+  const setReadIds = (ids: string[]) => {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(ids));
+  };
+
   useEffect(() => {
     async function fetchNotifications() {
       try {
-        const response = await fetch('/notifications');
-        if (!response.ok) throw new Error('Erro ao buscar notificações');
-        const data = await response.json();
-        setNotifications(Array.isArray(data) ? data : (data.notifications || []));
+        const { notificationService } = await import('../../api/services');
+        const response = await notificationService.getAll();
+        if (!response.success || !response.data) throw new Error('Erro ao buscar notificações');
+        const arr = Array.isArray(response.data) ? response.data : (Array.isArray(response.data.data) ? response.data.data : (response.data.notifications || []));
+        const readIds = getReadIds();
+        const mapped = arr.map((n: any) => {
+          let visualType: 'info' | 'warning' | 'success' | 'error' = 'info';
+          const rawType = n.type ?? n.tipo ?? '';
+          if (['success', 'sucesso'].includes(rawType)) visualType = 'success';
+          else if (['warning', 'aviso', 'warn'].includes(rawType)) visualType = 'warning';
+          else if (['error', 'erro', 'danger'].includes(rawType)) visualType = 'error';
+          const customType = rawType || n.category || n.categoria || 'geral';
+          const id = n.id?.toString() ?? n._id?.toString() ?? Math.random().toString(36).slice(2);
+          return {
+            id,
+            title: n.title ?? n.titulo ?? n.titulo_notificacao ?? 'Notificação',
+            message: n.message ?? n.mensagem ?? n.text ?? n.subject ?? '',
+            type: visualType,
+            timestamp: n.timestamp ?? n.data ?? n.createdAt ?? new Date().toISOString(),
+            read: readIds.includes(id) ? true : (n.read ?? n.lida ?? false),
+            category: customType,
+            subject: n.subject ?? '',
+            rawType: rawType,
+          };
+        });
+        setNotifications(mapped);
       } catch (e) {
         setNotifications([]);
       }
     }
     fetchNotifications();
   }, []);
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterRead, setFilterRead] = useState<string>('all');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [filterPeriod, setFilterPeriod] = useState<string>('all');
+  // Filtros removidos, só pesquisa
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-  const categories = Array.from(new Set(notifications.map(n => n.category)));
-
-  const filteredNotifications = notifications.filter(notification => {
-    const typeMatch = filterType === 'all' || notification.type === filterType;
-    const readMatch = filterRead === 'all' || 
-      (filterRead === 'unread' && !notification.read) ||
-      (filterRead === 'read' && notification.read);
-    const categoryMatch = filterCategory === 'all' || notification.category === filterCategory;
-    
-    // Filtro por período
-    let periodMatch = true;
-    if (filterPeriod !== 'all') {
-      const notificationDate = new Date(notification.timestamp);
-      const now = new Date();
-      const diffDays = Math.floor((now.getTime() - notificationDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      switch (filterPeriod) {
-        case 'today':
-          periodMatch = diffDays === 0;
-          break;
-        case 'week':
-          periodMatch = diffDays <= 7;
-          break;
-        case 'month':
-          periodMatch = diffDays <= 30;
-          break;
-      }
-    }
-    
-    // Filtro por pesquisa
+  const unreadCount = notifications.filter((n: Notification) => !n.read).length;
+  const filteredNotifications = notifications.filter((notification: Notification) => {
     const searchMatch = searchTerm === '' || 
       notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       notification.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notification.category.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return typeMatch && readMatch && categoryMatch && periodMatch && searchMatch;
+      (notification.category && notification.category.toLowerCase().includes(searchTerm.toLowerCase()));
+    return searchMatch;
   });
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
+    setNotifications((prev: Notification[]) => {
+      const updated = prev.map((n: Notification) => n.id === id ? { ...n, read: true } : n);
+      // Atualiza localStorage
+      const readIds = Array.from(new Set([...(getReadIds()), id]));
+      setReadIds(readIds);
+      return updated;
+    });
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(n => ({ ...n, read: true }))
-    );
+    setNotifications((prev: Notification[]) => {
+      const allIds = prev.map((n: Notification) => n.id);
+      setReadIds(Array.from(new Set([...(getReadIds()), ...allIds])));
+      return prev.map((n: Notification) => ({ ...n, read: true }));
+    });
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const handleDeleteClick = (notification: Notification) => {
+    setNotificationToDelete(notification);
+    setIsDeleteDialogOpen(true);
   };
 
-  const clearAllRead = () => {
-    setNotifications(prev => prev.filter(n => !n.read));
+  const confirmDeleteNotification = async () => {
+    if (!notificationToDelete) return;
+    try {
+      const { notificationService } = await import('../../api/services');
+      await notificationService.delete(notificationToDelete.id);
+      setNotifications((prev: Notification[]) => prev.filter((n: Notification) => n.id !== notificationToDelete.id));
+      // Remove do localStorage se estava marcada como lida
+      const readIds = getReadIds().filter((id: string) => id !== notificationToDelete.id);
+      setReadIds(readIds);
+      showToast('success', 'Eliminado com sucesso', 'A notificação foi eliminada.');
+    } catch (e) {
+      showToast('error', 'Erro ao eliminar', 'Não foi possível eliminar a notificação.');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setNotificationToDelete(null);
+    }
+  };
+
+  const clearAllRead = async () => {
+    try {
+      const { notificationService } = await import('../../api/services');
+      await notificationService.deleteAll();
+      setNotifications([]);
+      setReadIds([]);
+      showToast('success', 'Eliminado com sucesso', 'Todas as notificações foram eliminadas.');
+    } catch (e) {
+      showToast('error', 'Erro ao eliminar', 'Não foi possível eliminar todas as notificações.');
+    }
   };
 
   return (
     <div className="flex flex-col h-full">
+      {/* Toasts */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`px-4 py-3 rounded shadow-lg text-white font-semibold transition-all duration-300
+              ${toast.type === 'success' ? 'bg-green-600' : toast.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}
+          >
+            <div className="text-base">{toast.title}</div>
+            <div className="text-sm font-normal">{toast.message}</div>
+          </div>
+        ))}
+      </div>
       {/* Header */}
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
@@ -196,216 +277,20 @@ export function NotificationsPage() {
       </header>
 
       <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
-        {/* Quick Actions Tabs */}
-        <Tabs defaultValue="all" className="mb-6">
-          <TabsList className="glass-card bg-white/5 border border-white/20 rounded-xl p-1">
-            <TabsTrigger 
-              value="all" 
-              onClick={() => {setFilterRead('all'); setFilterType('all');}}
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300"
-            >
-              Todas ({notifications.length})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="unread"
-              onClick={() => setFilterRead('unread')}
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-pink-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300"
-            >
-              Não Lidas ({unreadCount})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="important"
-              onClick={() => setFilterType('error')}
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-red-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300"
-            >
-              Importantes ({notifications.filter(n => n.type === 'error' || n.type === 'warning').length})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="today"
-              onClick={() => setFilterPeriod('today')}
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300"
-            >
-              Hoje ({notifications.filter(n => {
-                const today = new Date();
-                const notifDate = new Date(n.timestamp);
-                return notifDate.toDateString() === today.toDateString();
-              }).length})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {/* Advanced Filters */}
-        <div className="bg-white/5 border border-white/20 rounded-xl p-6 mb-6 glass-card">
-          <div className="flex items-center gap-3 mb-4">
-            <Filter className="w-5 h-5 text-blue-400" />
-            <h3 className="text-lg font-semibold text-white">Filtros Avançados</h3>
+        {/* Barra de pesquisa única */}
+        <div className="mb-3 flex items-center gap-3">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
+            <Input
+              placeholder="Pesquisar notificações..."
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              className="pl-10 glass-card border-white/20 text-white placeholder:text-dark-secondary w-full h-10 text-sm"
+            />
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            {/* Search Bar - sempre visível */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
-              <Input
-                placeholder="Pesquisar notificações..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 glass-card border-white/20 text-white placeholder:text-dark-secondary"
-              />
-            </div>
-
-            {/* Type Filter - oculto no mobile */}
-            <div className="hidden sm:block">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="glass-card border-white/20 text-white">
-                  <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent className="glass-card bg-slate-900/95 border-slate-700/50">
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="info">
-                    <div className="flex items-center gap-2">
-                      <Info className="w-4 h-4 text-blue-400" />
-                      Informação
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="success">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      Sucesso
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="warning">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                      Aviso
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="error">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-red-400" />
-                      Erro
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Category Filter - oculto no mobile */}
-            <div className="hidden sm:block">
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="glass-card border-white/20 text-white">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent className="glass-card bg-slate-900/95 border-slate-700/50">
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>
-                      <div className="flex items-center gap-2">
-                        <Tag className="w-4 h-4 text-cyan-400" />
-                        {category}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Period Filter - oculto no mobile */}
-            <div className="hidden sm:block">
-              <Select value={filterPeriod} onValueChange={setFilterPeriod}>
-                <SelectTrigger className="glass-card border-white/20 text-white">
-                  <SelectValue placeholder="Período" />
-                </SelectTrigger>
-                <SelectContent className="glass-card bg-slate-900/95 border-slate-700/50">
-                  <SelectItem value="all">Todos os períodos</SelectItem>
-                  <SelectItem value="today">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-green-400" />
-                      Hoje
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="week">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-blue-400" />
-                      Última semana
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="month">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-purple-400" />
-                      Último mês
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Active Filters Display */}
-          <div className="flex flex-wrap gap-2">
-            {filterType !== 'all' && (
-              <Badge 
-                className="bg-blue-600/20 text-blue-300 border border-blue-500/50 cursor-pointer hover:bg-blue-600/30"
-                onClick={() => setFilterType('all')}
-              >
-                Tipo: {filterType} ✕
-              </Badge>
-            )}
-            {filterCategory !== 'all' && (
-              <Badge 
-                className="bg-cyan-600/20 text-cyan-300 border border-cyan-500/50 cursor-pointer hover:bg-cyan-600/30"
-                onClick={() => setFilterCategory('all')}
-              >
-                Categoria: {filterCategory} ✕
-              </Badge>
-            )}
-            {filterPeriod !== 'all' && (
-              <Badge 
-                className="bg-purple-600/20 text-purple-300 border border-purple-500/50 cursor-pointer hover:bg-purple-600/30"
-                onClick={() => setFilterPeriod('all')}
-              >
-                Período: {filterPeriod} ✕
-              </Badge>
-            )}
-            {filterRead !== 'all' && (
-              <Badge 
-                className="bg-orange-600/20 text-orange-300 border border-orange-500/50 cursor-pointer hover:bg-orange-600/30"
-                onClick={() => setFilterRead('all')}
-              >
-                Status: {filterRead === 'unread' ? 'Não lidas' : 'Lidas'} ✕
-              </Badge>
-            )}
-            {searchTerm && (
-              <Badge 
-                className="bg-green-600/20 text-green-300 border border-green-500/50 cursor-pointer hover:bg-green-600/30"
-                onClick={() => setSearchTerm('')}
-              >
-                Busca: "{searchTerm}" ✕
-              </Badge>
-            )}
-          </div>
-
-          {/* Results Count */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
-            <div className="glass-card px-4 py-2 bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-lg">{filteredNotifications.length}</span>
-              <span className="text-blue-200 ml-2">notificações filtradas</span>
-            </div>
-            {(filterType !== 'all' || filterCategory !== 'all' || filterPeriod !== 'all' || filterRead !== 'all' || searchTerm) && (
-              <Button
-                onClick={() => {
-                  setFilterType('all');
-                  setFilterCategory('all');
-                  setFilterPeriod('all');
-                  setFilterRead('all');
-                  setSearchTerm('');
-                }}
-                variant="outline"
-                className="border-white/20 text-white hover:bg-white/10"
-              >
-                Limpar Filtros
-              </Button>
-            )}
-          </div>
+          <Badge className="ml-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 font-semibold px-3 py-2 text-sm whitespace-nowrap">
+            Total: {notifications.length}
+          </Badge>
         </div>
 
         {/* Notifications List */}
@@ -418,15 +303,14 @@ export function NotificationsPage() {
                   Nenhuma notificação encontrada
                 </h3>
                 <p className="text-dark-secondary">
-                  {filterType !== 'all' || filterRead !== 'all' 
-                    ? 'Tente ajustar os filtros para ver mais notificações'
-                    : 'Você está em dia com todas as notificações!'
-                  }
+                  {searchTerm
+                    ? 'Nenhuma notificação encontrada para sua busca.'
+                    : 'Você está em dia com todas as notificações!'}
                 </p>
               </CardContent>
             </Card>
           ) : (
-            filteredNotifications.map((notification) => (
+            filteredNotifications.map((notification: Notification) => (
               <Card 
                 key={notification.id} 
                 className={`glass-card border-white/20 transition-all duration-300 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/25 ${
@@ -452,6 +336,9 @@ export function NotificationsPage() {
                       </div>
                       <p className="text-sm text-dark-secondary mt-1 line-clamp-2">
                         {notification.message}
+                        {notification.subject && notification.message !== notification.subject && (
+                          <span className="block text-xs text-blue-300 mt-1">{notification.subject}</span>
+                        )}
                       </p>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-3 space-y-2 sm:space-y-0">
                         <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-xs text-dark-secondary">
@@ -461,6 +348,9 @@ export function NotificationsPage() {
                           </div>
                           <Badge variant="outline" className="border-white/20 text-white text-xs w-fit">
                             {notification.category}
+                            {notification.rawType && notification.rawType !== notification.category && (
+                              <span className="ml-1 text-blue-400">({notification.rawType})</span>
+                            )}
                           </Badge>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -475,7 +365,7 @@ export function NotificationsPage() {
                             </Button>
                           )}
                           <Button
-                            onClick={() => deleteNotification(notification.id)}
+                            onClick={() => handleDeleteClick(notification)}
                             size="sm"
                             variant="outline"
                             className="border-white/20 text-white hover:bg-red-500/20 hover:border-red-500/50 text-xs px-2 py-1 sm:px-3 sm:py-1.5"
@@ -491,6 +381,27 @@ export function NotificationsPage() {
             ))
           )}
         </div>
+        {/* Modal de confirmação de exclusão - fora do loop */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent className="glass-card border-white/20 bg-slate-800/95 backdrop-blur-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-red-500" />
+                Confirmar Remoção
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-300">
+                Tem certeza que deseja remover esta notificação?
+                <br />
+                <strong className="text-white">{notificationToDelete?.title}</strong>
+                <br />Esta ação não poderá ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-3">
+              <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)} className="bg-slate-700 text-white border-none">Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeleteNotification} className="bg-red-600 hover:bg-red-700 text-white">Remover</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
