@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { EmailStatus } from "../EmailStatus";
 import { EmailNotifications } from "../EmailNotifications";
 
+
 interface Metric {
   title: string;
   value: string;
@@ -352,6 +353,7 @@ export function DashboardPage({
             );
           })}
         </div>
+
 
         {/* Email Monitoring Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6 lg:mb-8">

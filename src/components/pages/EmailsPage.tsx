@@ -2,41 +2,57 @@ import { useState, useEffect } from "react";
 import {
   Mail,
   Search,
-  MoreVertical,
-  Star,
   RefreshCw,
-  Clock,
+  X,
   User,
-  CheckCircle,
-  AlertCircle,
-  Download,
-  Paperclip,
-  X
+  List
 } from "lucide-react";
 import { emailService } from "../../services/emailService";
 
 interface EmailMessage {
   id: string;
-  from: string;
   subject: string;
-  body: string;
   date: Date;
-  attachments: any[];
+  from: string;
+  clienteNome: string;
+  clienteEmail: string;
+  clienteEmpresa?: string;
+  clienteTelefone?: string;
+  clienteLocalizacao?: string;
+  textoOriginal: string;
+  itens: Array<{
+    nome: string;
+    categoria?: string;
+    quantidade?: number;
+    prioridade?: string;
+    justificativa?: string;
+  }>;
+  alternativas: Array<{
+    nome: string;
+    tipo?: string;
+    vantagens?: string[];
+    limitacoes?: string[];
+    cenario_recomendado?: string;
+  }>;
+  prazoImplementacao?: number;
+  origemTipo?: string;
+  origemFonte?: string;
+  status?: string;
   isRead?: boolean;
-  isQuoteRequest?: boolean;
-  confidence?: number;
-  status?: 'pending' | 'processed' | 'rejected';
-  quoteId?: string;
+  attachments: any[];
+  dadosBruto?: any;
 }
 
 export function EmailsPage() {
   const [emails, setEmails] = useState<EmailMessage[]>([]);
   const [filteredEmails, setFilteredEmails] = useState<EmailMessage[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<'all' | 'unread' | 'quote-requests' | 'processed'>('all');
+  // Filtros antigos removidos, agora só busca texto
   const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [emailServiceStatus, setEmailServiceStatus] = useState<any>(null);
+  // Estado para controlar se está mostrando detalhes no mobile
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
 
   useEffect(() => {
     loadEmails();
@@ -45,146 +61,76 @@ export function EmailsPage() {
 
   useEffect(() => {
     filterEmails();
-  }, [emails, searchQuery, filterStatus]);
+  }, [emails, searchQuery]);
 
   const loadEmails = async () => {
     setIsLoading(true);
     try {
-      // Simular emails de cotação recebidos
-      const mockEmails: EmailMessage[] = [
-        {
-          id: "1",
-          from: "cliente@empresa.com",
-          subject: "Solicitação de Cotação - Painéis Solares",
-          body: `Prezados,
+      const response = await fetch('http://localhost:2000/api/prompts/with-dados-bruto');
+      if (!response.ok) throw new Error('Erro ao buscar emails');
+      const data = await response.json();
 
-Gostaria de solicitar uma cotação para:
+      // Extrai o array de pedidos
+      let emailsRaw = [];
+      if (Array.isArray(data)) {
+        emailsRaw = data;
+      } else if (Array.isArray(data.emails)) {
+        emailsRaw = data.emails;
+      } else if (Array.isArray(data.data)) {
+        emailsRaw = data.data;
+      } else {
+        const firstArray = Object.values(data).find(v => Array.isArray(v));
+        if (firstArray) emailsRaw = firstArray;
+      }
 
-Produto: Painéis Solares 400W
-Quantidade: 50 unidades
-Cliente: Energia Verde Lda
-Prazo: 15 dias
-
-Por favor, enviem a cotação com urgência.
-
-Atenciosamente,
-João Silva`,
-          date: new Date(Date.now() - 1000 * 60 * 30), // 30 min atrás
-          attachments: [],
-          isRead: false,
-          isQuoteRequest: true,
-          confidence: 95,
-          status: 'pending'
-        },
-        {
-          id: "2",
-          from: "compras@techcorp.pt",
-          subject: "Orçamento para Servidores",
-          body: `Bom dia,
-
-Necessitamos de um orçamento para:
-
-Produto: Servidores Dell PowerEdge R750
-Quantidade: 3 unidades
-Cliente: TechCorp International
-Especificações: 64GB RAM, 2TB SSD
-
-Prazo: 30 dias
-
-Cumprimentos,
-Maria Silva
-Departamento de Compras`,
-          date: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 horas atrás
-          attachments: [{ name: "especificacoes.pdf", size: "245KB" }],
-          isRead: true,
-          isQuoteRequest: true,
-          confidence: 90,
-          status: 'processed',
-          quoteId: 'RCS-2025-001'
-        },
-        {
-          id: "3",
-          from: "fornecedor@supplies.com",
-          subject: "Disponibilidade de Produtos",
-          body: `Olá,
-
-Informamos que temos novos produtos disponíveis em nosso catálogo.
-
-Por favor, consultem nossa lista atualizada.
-
-Obrigado,
-Pedro Santos`,
-          date: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 horas atrás
-          attachments: [],
-          isRead: true,
-          isQuoteRequest: false,
-          confidence: 20,
-          status: 'rejected'
-        },
-        {
-          id: "4",
-          from: "vendas@industrial.pt",
-          subject: "Pedido de Cotação - Equipamentos Industriais",
-          body: `Caros Senhores,
-
-Solicitamos cotação para os seguintes itens:
-
-1. Compressor Industrial 50HP - 2 unidades
-2. Motor Elétrico 30KW - 5 unidades
-3. Painel de Controle Automático - 1 unidade
-
-Cliente: Indústria Metalúrgica SA
-Prazo de entrega: 45 dias úteis
-Local de entrega: Porto
-
-Aguardamos retorno urgente.
-
-Cordialmente,
-Ana Costa
-Departamento Técnico`,
-          date: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 dia atrás
-          attachments: [
-            { name: "especificacoes_tecnicas.pdf", size: "1.2MB" },
-            { name: "layout_instalacao.dwg", size: "856KB" }
-          ],
-          isRead: false,
-          isQuoteRequest: true,
-          confidence: 98,
-          status: 'pending'
-        },
-        {
-          id: "5",
-          from: "procurement@construction.com",
-          subject: "RFQ: Construction Materials",
-          body: `Dear Supplier,
-
-We are requesting quotes for the following construction materials:
-
-- Steel beams (various sizes) - 500 tons
-- Concrete blocks - 10,000 units
-- Roofing materials - 2,000 m²
-
-Project: Commercial Building Complex
-Delivery timeline: 8 weeks
-Location: Lisbon
-
-Please provide detailed pricing and availability.
-
-Best regards,
-Construction Team`,
-          date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 dias atrás
-          attachments: [],
-          isRead: true,
-          isQuoteRequest: true,
-          confidence: 85,
-          status: 'processed',
-          quoteId: 'RCS-2025-002'
-        }
-      ];
-
-      setEmails(mockEmails);
+      // Mapeia os campos conforme estrutura do JSON real
+      const emails: EmailMessage[] = (emailsRaw || []).map((item: any) => {
+        const dadosBruto = item && item.dados_bruto ? item.dados_bruto : {};
+        const cliente = item && item.cliente ? item.cliente : {};
+        const dadosExtraidos = item && item.dados_extraidos ? item.dados_extraidos : {};
+        const origem = item && item.origem ? item.origem : {};
+        return {
+          id: item && item.id !== undefined ? String(item.id) : 'Não informado',
+          subject: dadosBruto.subject || 'Não informado',
+          date: dadosBruto.date ? new Date(dadosBruto.date) : new Date(),
+          from: dadosBruto.from || 'Não informado',
+          clienteNome: cliente.nome || 'Não informado',
+          clienteEmail: cliente.email || 'Não informado',
+          clienteEmpresa: cliente.empresa || 'Não informado',
+          clienteTelefone: cliente.telefone || 'Não informado',
+          clienteLocalizacao: cliente.localizacao || 'Não informado',
+          textoOriginal: item && item.texto_original ? item.texto_original : 'Não informado',
+          itens: Array.isArray(dadosExtraidos.itens_a_comprar)
+            ? dadosExtraidos.itens_a_comprar.map((it: any) => ({
+                nome: it && it.nome ? it.nome : 'Não informado',
+                categoria: it && it.categoria ? it.categoria : 'Não informado',
+                quantidade: it && typeof it.quantidade === 'number' ? it.quantidade : 'Não informado',
+                prioridade: it && it.prioridade ? it.prioridade : 'Não informado',
+                justificativa: it && it.justificativa ? it.justificativa : 'Não informado'
+              }))
+            : [],
+          alternativas: Array.isArray(dadosExtraidos.alternativas_viaveis)
+            ? dadosExtraidos.alternativas_viaveis.map((alt: any) => ({
+                nome: alt && alt.nome ? alt.nome : 'Não informado',
+                tipo: alt && alt.tipo ? alt.tipo : 'Não informado',
+                vantagens: Array.isArray(alt && alt.vantagens) ? alt.vantagens : [],
+                limitacoes: Array.isArray(alt && alt.limitacoes) ? alt.limitacoes : [],
+                cenario_recomendado: alt && alt.cenario_recomendado ? alt.cenario_recomendado : 'Não informado'
+              }))
+            : [],
+          prazoImplementacao: typeof dadosExtraidos.prazo_implementacao_dias === 'number' ? dadosExtraidos.prazo_implementacao_dias : 'Não informado',
+          origemTipo: origem.tipo || 'Não informado',
+          origemFonte: origem.fonte || 'Não informado',
+          status: item && item.status ? item.status : 'Não informado',
+          isRead: !!(item && item.isRead),
+          attachments: Array.isArray(dadosBruto.attachments) ? dadosBruto.attachments : [],
+          dadosBruto: dadosBruto
+        };
+      });
+      setEmails(emails);
     } catch (error) {
       console.error('Erro ao carregar emails:', error);
+      setEmails([]);
     } finally {
       setIsLoading(false);
     }
@@ -202,23 +148,12 @@ Construction Team`,
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(email =>
-        email.from.toLowerCase().includes(query) ||
-        email.subject.toLowerCase().includes(query) ||
-        email.body.toLowerCase().includes(query)
+        (email.from && email.from.toLowerCase().includes(query)) ||
+        (email.subject && email.subject.toLowerCase().includes(query)) ||
+        (email.textoOriginal && email.textoOriginal.toLowerCase().includes(query)) ||
+        (email.clienteNome && email.clienteNome.toLowerCase().includes(query)) ||
+        (email.clienteEmail && email.clienteEmail.toLowerCase().includes(query))
       );
-    }
-
-    // Filtrar por status
-    switch (filterStatus) {
-      case 'unread':
-        filtered = filtered.filter(email => !email.isRead);
-        break;
-      case 'quote-requests':
-        filtered = filtered.filter(email => email.isQuoteRequest);
-        break;
-      case 'processed':
-        filtered = filtered.filter(email => email.status === 'processed');
-        break;
     }
 
     // Ordenar por data (mais recente primeiro)
@@ -227,14 +162,33 @@ Construction Team`,
     setFilteredEmails(filtered);
   };
 
-  const handleEmailClick = (email: EmailMessage) => {
+  const handleEmailClick = async (email: EmailMessage) => {
     setSelectedEmail(email);
-    // Marcar como lido
+    // Marcar como lido localmente e no backend
     if (!email.isRead) {
-      setEmails(prev => prev.map(e => 
-        e.id === email.id ? { ...e, isRead: true } : e
+      setEmails(prev => prev.map(e =>
+        e.id === email.id ? { ...e, isRead: true, status: 'Lido' } : e
       ));
+      // Atualizar no backend (ajuste a rota se necessário)
+      try {
+        await fetch(`http://localhost:2000/api/prompts/with-dados-bruto/${email.id}/read`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Lido', isRead: true })
+        });
+      } catch (err) {
+        // Silencioso, mas pode exibir toast/erro se desejar
+      }
     }
+    // Se for mobile, mostrar detalhes
+    if (window.innerWidth < 1024) {
+      setShowMobileDetails(true);
+    }
+  };
+
+  const handleBackToList = () => {
+    setShowMobileDetails(false);
+    setSelectedEmail(null);
   };
 
   const handleRefresh = () => {
@@ -242,20 +196,7 @@ Construction Team`,
     loadEmailServiceStatus();
   };
 
-  const getEmailStatusIcon = (email: EmailMessage) => {
-    if (!email.isQuoteRequest) return null;
-    
-    switch (email.status) {
-      case 'processed':
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-400" />;
-      case 'rejected':
-        return <AlertCircle className="w-4 h-4 text-red-400" />;
-      default:
-        return null;
-    }
-  };
+  // getEmailStatusIcon removido (não usado)
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -280,18 +221,18 @@ Construction Team`,
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
               <Mail className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              Emails de Cotação
+              Pedidos de Cotação
             </h1>
             <p className="text-sm sm:text-base text-dark-secondary mt-2">
-              Emails recebidos e processados pelo sistema
+              Pedidos recebidos e processados pelo sistema
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-lg">{emails.filter(e => e.isQuoteRequest).length}</span>
-              <span className="text-blue-200 ml-2">Cotações</span>
+          <div className="hidden sm:flex items-center gap-3">
+            <div className="glass-card px-4 py-2 text-center bg-blue-500/20 border-blue-500/30">
+              <span className="text-blue-300 font-bold text-lg">{emails.length}</span>
+              <span className="text-blue-200 ml-2">Pedidos</span>
             </div>
-            <div className="glass-card px-4 py-2 text-center sm:text-left bg-green-500/20 border-green-500/30">
+            <div className="glass-card px-4 py-2 text-center bg-green-500/20 border-green-500/30">
               <span className="text-green-300 font-bold text-lg">{emails.filter(e => !e.isRead).length}</span>
               <span className="text-green-200 ml-2">Não lidos</span>
             </div>
@@ -306,63 +247,41 @@ Construction Team`,
         </div>
       </header>
 
+
       <main className="flex-1 overflow-hidden bg-dark-bg">
-        <div className="h-full flex">
-          {/* Lista de Emails */}
-          <div className="w-full lg:w-1/2 xl:w-2/5 border-r border-dark-color flex flex-col">
-            {/* Barra de Busca e Filtros */}
+        <div className="h-full flex flex-col lg:flex-row">
+          {/* Lista de Pedidos - MOBILE: só aparece se não estiver mostrando detalhes */}
+          <div className={`w-full lg:w-1/2 xl:w-2/5 border-b lg:border-b-0 lg:border-r border-dark-color flex flex-col min-h-[300px] ${showMobileDetails ? 'hidden' : ''} lg:flex`}> 
+            {/* Barra de Busca */}
             <div className="p-4 border-b border-dark-color bg-dark-bg">
               <div className="flex flex-col space-y-3">
-                {/* Busca */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-secondary w-4 h-4" />
                   <input
                     type="text"
-                    placeholder="Buscar emails..."
+                    placeholder="Buscar pedidos..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-dark-hover border border-dark-color rounded-lg text-dark-primary placeholder-dark-secondary focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
                 </div>
-
-                {/* Filtros */}
-                <div className="flex space-x-2 overflow-x-auto">
-                  {[
-                    { key: 'all', label: 'Todos', count: emails.length },
-                    { key: 'unread', label: 'Não lidos', count: emails.filter(e => !e.isRead).length },
-                    { key: 'quote-requests', label: 'Cotações', count: emails.filter(e => e.isQuoteRequest).length },
-                    { key: 'processed', label: 'Processados', count: emails.filter(e => e.status === 'processed').length }
-                  ].map((filter) => (
-                    <button
-                      key={filter.key}
-                      onClick={() => setFilterStatus(filter.key as any)}
-                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-                        filterStatus === filter.key
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-dark-hover text-dark-secondary hover:text-dark-primary hover:bg-dark-color'
-                      }`}
-                    >
-                      {filter.label} ({filter.count})
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
 
-            {/* Lista de Emails */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Lista de Pedidos */}
+            <div className="flex-1 overflow-y-auto min-h-[200px]">
               {isLoading ? (
                 <div className="flex items-center justify-center h-40">
                   <div className="flex items-center space-x-3">
                     <RefreshCw className="w-5 h-5 animate-spin text-blue-400" />
-                    <span className="text-dark-secondary">Carregando emails...</span>
+                    <span className="text-dark-secondary">Carregando pedidos...</span>
                   </div>
                 </div>
               ) : filteredEmails.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-center p-4">
                   <Mail className="w-12 h-12 text-dark-secondary mb-2" />
                   <p className="text-dark-secondary">
-                    {searchQuery || filterStatus !== 'all' ? 'Nenhum email encontrado' : 'Nenhum email recebido ainda'}
+                    {searchQuery ? 'Nenhum pedido encontrado' : 'Nenhum pedido recebido ainda'}
                   </p>
                 </div>
               ) : (
@@ -379,42 +298,30 @@ Construction Team`,
                           : 'bg-transparent border-transparent hover:bg-dark-hover/30 hover:border-dark-color'
                       }`}
                     >
-                      <div className="flex items-start space-x-3">
+                      <div className="flex items-center space-x-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-1">
                             <span className={`text-sm font-medium ${!email.isRead ? 'text-white' : 'text-dark-primary'}`}>
-                              {email.from}
+                              {email.clienteNome || 'Não informado'}
                             </span>
-                            {getEmailStatusIcon(email)}
+                            {email.status && (
+                              <span className="ml-2 text-xs px-2 py-0.5 rounded bg-dark-color text-dark-secondary border border-dark-hover">
+                                {email.status}
+                              </span>
+                            )}
                           </div>
                           <p className={`text-sm mb-1 truncate ${!email.isRead ? 'text-white font-medium' : 'text-dark-primary'}`}>
-                            {email.subject}
+                            {email.subject || 'Não informado'}
                           </p>
                           <p className="text-xs text-dark-secondary line-clamp-2">
-                            {email.body.substring(0, 100)}...
+                            {(email.textoOriginal ? email.textoOriginal.substring(0, 100) : 'Não informado') + (email.textoOriginal && email.textoOriginal.length > 100 ? '...' : '')}
                           </p>
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center space-x-2">
                               <span className="text-xs text-dark-secondary">
-                                {formatDate(email.date)}
+                                {email.date ? email.date.toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Não informado'}
                               </span>
-                              {email.attachments.length > 0 && (
-                                <div className="flex items-center space-x-1">
-                                  <Paperclip className="w-3 h-3 text-dark-secondary" />
-                                  <span className="text-xs text-dark-secondary">
-                                    {email.attachments.length}
-                                  </span>
-                                </div>
-                              )}
                             </div>
-                            {email.isQuoteRequest && (
-                              <div className="flex items-center space-x-1">
-                                <Star className="w-3 h-3 text-yellow-400" />
-                                <span className="text-xs text-yellow-400">
-                                  {email.confidence}%
-                                </span>
-                              </div>
-                            )}
                           </div>
                         </div>
                         {!email.isRead && (
@@ -428,143 +335,117 @@ Construction Team`,
             </div>
           </div>
 
-          {/* Visualização do Email */}
-          <div className="hidden lg:flex lg:flex-1 flex-col">
+          {/* Painel de detalhes mobile: só aparece se showMobileDetails=true (mobile) */}
+          {showMobileDetails && selectedEmail && (
+            <div className="lg:hidden flex-1 border-t border-dark-color bg-dark-bg p-4 space-y-6 animate-fade-in overflow-y-auto max-h-screen">
+              <button onClick={handleBackToList} className="mb-4 flex items-center gap-2 text-blue-400 hover:text-blue-600 font-medium">
+                <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left w-5 h-5"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                Voltar para lista
+              </button>
+              <section>
+                <h3 className="text-base font-bold text-dark-primary mb-2 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-400" /> Informações do Cliente
+                </h3>
+                <div className="grid grid-cols-1 gap-2 text-xs">
+                  <div><span className="font-medium">Nome:</span> {selectedEmail?.clienteNome || 'Não informado'}</div>
+                  <div><span className="font-medium">E-mail:</span> {selectedEmail?.clienteEmail || 'Não informado'}</div>
+                  <div><span className="font-medium">Empresa:</span> {selectedEmail?.clienteEmpresa || 'Não informado'}</div>
+                  <div><span className="font-medium">Telefone:</span> {selectedEmail?.clienteTelefone || 'Não informado'}</div>
+                  <div><span className="font-medium">Localização:</span> {selectedEmail?.clienteLocalizacao || 'Não informado'}</div>
+                </div>
+              </section>
+              <section>
+                <h3 className="text-base font-bold text-dark-primary mb-2 flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-green-400" /> Conteúdo do Pedido
+                </h3>
+                <pre className="whitespace-pre-wrap text-dark-primary text-xs font-mono bg-dark-hover/30 p-3 rounded-lg border border-dark-color">
+                  {selectedEmail?.textoOriginal || 'Não informado'}
+                </pre>
+              </section>
+              <section>
+                <h3 className="text-base font-bold text-dark-primary mb-2 flex items-center gap-2">
+                  <List className="w-5 h-5 text-yellow-400" /> Itens a Comprar
+                </h3>
+                {selectedEmail?.itens?.length === 0 ? (
+                  <p className="text-dark-secondary text-xs">Nenhum item identificado.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {selectedEmail?.itens?.map((item, idx) => (
+                      <li key={idx} className="bg-dark-hover rounded-lg p-2 border border-dark-color">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium text-dark-primary">{item.nome || 'Não informado'}</span>
+                          <span className="text-xs text-dark-secondary">Categoria: {item.categoria || 'Não informado'}</span>
+                          <span className="text-xs text-dark-secondary">Qtd: {item.quantidade ?? 'Não informado'}</span>
+                          <span className="text-xs text-dark-secondary">Prioridade: {item.prioridade || 'Não informado'}</span>
+                          <span className="text-xs text-dark-secondary">Justificativa: {item.justificativa || 'Não informado'}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+          )}
+
+          {/* Visualização do Pedido - Desktop */}
+          <div className="w-full lg:flex-1 flex-col hidden lg:flex">
             {selectedEmail ? (
-              <>
-                {/* Header do Email */}
-                <div className="p-6 border-b border-dark-color bg-dark-bg">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold text-dark-primary mb-2">
-                        {selectedEmail.subject}
-                      </h2>
-                      <div className="flex items-center space-x-4 text-sm text-dark-secondary">
-                        <div className="flex items-center space-x-2">
-                          <User className="w-4 h-4" />
-                          <span>{selectedEmail.from}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Clock className="w-4 h-4" />
-                          <span>{selectedEmail.date.toLocaleString('pt-PT')}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {selectedEmail.isQuoteRequest && (
-                        <div className={`px-3 py-1 rounded-lg text-xs font-medium ${
-                          selectedEmail.status === 'processed'
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                            : selectedEmail.status === 'pending'
-                            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        }`}>
-                          {selectedEmail.status === 'processed' && 'Processado'}
-                          {selectedEmail.status === 'pending' && 'Pendente'}
-                          {selectedEmail.status === 'rejected' && 'Rejeitado'}
-                        </div>
-                      )}
-                      <button 
-                        className="p-2 text-dark-secondary hover:text-dark-primary transition-colors"
-                        title="Mais opções"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Info de Cotação */}
-                  {selectedEmail.isQuoteRequest && (
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Star className="w-4 h-4 text-yellow-400" />
-                        <span className="text-sm font-medium text-white">
-                          Detectado como pedido de cotação
-                        </span>
-                        <span className="text-sm text-blue-300">
-                          (Confiança: {selectedEmail.confidence}%)
-                        </span>
-                      </div>
-                      {selectedEmail.quoteId && (
-                        <p className="text-sm text-green-300">
-                          Cotação criada: {selectedEmail.quoteId}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Anexos */}
-                  {selectedEmail.attachments.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-dark-primary mb-2">
-                        Anexos ({selectedEmail.attachments.length})
-                      </h4>
-                      <div className="space-y-2">
-                        {selectedEmail.attachments.map((attachment, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center space-x-3 p-2 bg-dark-hover rounded-lg"
-                          >
-                            <Paperclip className="w-4 h-4 text-dark-secondary" />
-                            <span className="text-sm text-dark-primary flex-1">
-                              {attachment.name}
-                            </span>
-                            <span className="text-xs text-dark-secondary">
-                              {attachment.size}
-                            </span>
-                            <button 
-                              className="p-1 text-dark-secondary hover:text-dark-primary transition-colors"
-                              title="Baixar anexo"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Corpo do Email */}
-                <div className="flex-1 p-6 overflow-y-auto">
-                  <div className="prose prose-invert max-w-none">
-                    <pre className="whitespace-pre-wrap text-dark-primary text-sm font-mono bg-dark-hover/30 p-4 rounded-lg border border-dark-color">
-                      {selectedEmail.body}
-                    </pre>
-                  </div>
-                </div>
-
-                {/* Ações */}
-                <div className="p-6 border-t border-dark-color bg-dark-bg">
-                  <div className="flex space-x-3">
-                    {selectedEmail.isQuoteRequest && selectedEmail.status === 'pending' && (
-                      <>
-                        <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center space-x-2">
-                          <CheckCircle className="w-4 h-4" />
-                          <span>Criar Cotação</span>
-                        </button>
-                        <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center space-x-2">
-                          <AlertCircle className="w-4 h-4" />
-                          <span>Rejeitar</span>
-                        </button>
-                      </>
-                    )}
-                    <button className="bg-dark-hover hover:bg-dark-color text-dark-primary px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center space-x-2">
-                      <Mail className="w-4 h-4" />
-                      <span>Responder</span>
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-center p-8">
-                <div>
-                  <Mail className="w-16 h-16 text-dark-secondary mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-dark-primary mb-2">
-                    Selecione um email
+              <div className="p-4 sm:p-6 border-b border-dark-color bg-dark-bg space-y-8">
+                {/* Seção Cliente */}
+                <section>
+                  <h3 className="text-lg font-bold text-dark-primary mb-2 flex items-center gap-2">
+                    <User className="w-5 h-5 text-blue-400" /> Informações do Cliente
                   </h3>
-                  <p className="text-dark-secondary">
-                    Escolha um email da lista para visualizar seu conteúdo
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
+                    <div><span className="font-medium">Nome:</span> {selectedEmail?.clienteNome || 'Não informado'}</div>
+                    <div><span className="font-medium">E-mail:</span> {selectedEmail?.clienteEmail || 'Não informado'}</div>
+                    <div><span className="font-medium">Empresa:</span> {selectedEmail?.clienteEmpresa || 'Não informado'}</div>
+                    <div><span className="font-medium">Telefone:</span> {selectedEmail?.clienteTelefone || 'Não informado'}</div>
+                    <div><span className="font-medium">Localização:</span> {selectedEmail?.clienteLocalizacao || 'Não informado'}</div>
+                  </div>
+                </section>
+                {/* Seção Conteúdo do Pedido */}
+                <section>
+                  <h3 className="text-lg font-bold text-dark-primary mb-2 flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-green-400" /> Conteúdo do Pedido
+                  </h3>
+                  <pre className="whitespace-pre-wrap text-dark-primary text-xs sm:text-sm font-mono bg-dark-hover/30 p-3 sm:p-4 rounded-lg border border-dark-color">
+                    {selectedEmail?.textoOriginal || 'Não informado'}
+                  </pre>
+                </section>
+                {/* Seção Itens a Comprar */}
+                <section>
+                  <h3 className="text-lg font-bold text-dark-primary mb-2 flex items-center gap-2">
+                    <List className="w-5 h-5 text-yellow-400" /> Itens a Comprar
+                  </h3>
+                  {selectedEmail?.itens?.length === 0 ? (
+                    <p className="text-dark-secondary text-sm">Nenhum item identificado.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {selectedEmail?.itens?.map((item, idx) => (
+                        <li key={idx} className="bg-dark-hover rounded-lg p-3 border border-dark-color">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-1 sm:gap-0">
+                            <span className="font-medium text-dark-primary">{item.nome || 'Não informado'}</span>
+                            <span className="text-xs text-dark-secondary">Categoria: {item.categoria || 'Não informado'}</span>
+                            <span className="text-xs text-dark-secondary">Qtd: {item.quantidade ?? 'Não informado'}</span>
+                            <span className="text-xs text-dark-secondary">Prioridade: {item.prioridade || 'Não informado'}</span>
+                          </div>
+                          <div className="text-xs text-dark-secondary mt-1">Justificativa: {item.justificativa || 'Não informado'}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-center p-6 sm:p-8">
+                <div>
+                  <Mail className="w-12 h-12 sm:w-16 sm:h-16 text-dark-secondary mx-auto mb-4" />
+                  <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">
+                    Selecione um pedido
+                  </h3>
+                  <p className="text-dark-secondary text-xs sm:text-base">
+                    Escolha um pedido da lista para visualizar seu conteúdo
                   </p>
                 </div>
               </div>

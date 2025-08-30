@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader } from '../ui/card';
@@ -29,62 +29,7 @@ interface Notification {
   category: string;
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Nova Cotação Pendente',
-    message: 'Cotação #2024-001 aguarda aprovação para Painel Solar 400W',
-    type: 'info',
-    timestamp: '2024-08-08T10:30:00Z',
-    read: false,
-    category: 'Cotações'
-  },
-  {
-    id: '2',
-    title: 'Sistema Atualizado',
-    message: 'SmartQuote foi atualizado para versão 2.1.5 com melhorias de segurança',
-    type: 'success',
-    timestamp: '2024-08-08T09:15:00Z',
-    read: false,
-    category: 'Sistema'
-  },
-  {
-    id: '3',
-    title: 'Backup Falhou',
-    message: 'Backup automático das 08:00 falhou. Verificar configurações.',
-    type: 'error',
-    timestamp: '2024-08-08T08:05:00Z',
-    read: true,
-    category: 'Sistema'
-  },
-  {
-    id: '4',
-    title: 'Novo Fornecedor Registrado',
-    message: 'GreenTech Solutions foi adicionado como novo fornecedor',
-    type: 'success',
-    timestamp: '2024-08-07T16:45:00Z',
-    read: true,
-    category: 'Fornecedores'
-  },
-  {
-    id: '5',
-    title: 'Limite de API Atingido',
-    message: 'Aplicação atingiu 80% do limite de chamadas da API externa',
-    type: 'warning',
-    timestamp: '2024-08-07T14:30:00Z',
-    read: false,
-    category: 'Sistema'
-  },
-  {
-    id: '6',
-    title: 'Relatório Mensal Disponível',
-    message: 'Relatório de performance de julho está pronto para visualização',
-    type: 'info',
-    timestamp: '2024-08-01T09:00:00Z',
-    read: true,
-    category: 'Relatórios'
-  }
-];
+
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -132,7 +77,21 @@ const formatTimestamp = (timestamp: string) => {
 };
 
 export function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  // Buscar notificações reais da API ao carregar a página
+  useEffect(() => {
+    async function fetchNotifications() {
+      try {
+        const response = await fetch('/notifications');
+        if (!response.ok) throw new Error('Erro ao buscar notificações');
+        const data = await response.json();
+        setNotifications(Array.isArray(data) ? data : (data.notifications || []));
+      } catch (e) {
+        setNotifications([]);
+      }
+    }
+    fetchNotifications();
+  }, []);
   const [filterType, setFilterType] = useState<string>('all');
   const [filterRead, setFilterRead] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');

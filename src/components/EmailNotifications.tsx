@@ -1,6 +1,18 @@
+
 import { useState, useEffect } from 'react';
 import { Mail, X, CheckCircle, Clock, FileText } from 'lucide-react';
 import { Button } from './ui/button';
+
+interface EmailAPIMessage {
+  id: string;
+  subject: string;
+  date: string;
+  from: string;
+  clienteNome: string;
+  clienteEmail: string;
+  status?: string;
+  isRead?: boolean;
+}
 
 interface EmailNotification {
   id: number;
@@ -18,60 +30,66 @@ interface EmailNotificationsProps {
 
 export function EmailNotifications({ onClose, onNavigateToQuotes }: EmailNotificationsProps) {
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
 
   useEffect(() => {
-    const loadNotifications = () => {
+    const fetchRecentEmailQuotes = async () => {
       try {
-        const saved = localStorage.getItem('smartquote-notifications');
-        if (saved) {
-          const allNotifications = JSON.parse(saved);
-          // Filtrar apenas notificações de email
-          const emailNotifications = allNotifications.filter((n: EmailNotification) => 
-            n.type === 'quote_email'
-          );
-          setNotifications(emailNotifications.slice(0, 5)); // Mostrar apenas as 5 mais recentes
+        const response = await fetch('http://localhost:2000/api/prompts/with-dados-bruto');
+        if (!response.ok) throw new Error('Erro ao buscar emails');
+        const data = await response.json();
+
+        let emailsRaw = [];
+        if (Array.isArray(data)) {
+          emailsRaw = data;
+        } else if (Array.isArray(data.emails)) {
+          emailsRaw = data.emails;
+        } else if (Array.isArray(data.data)) {
+          emailsRaw = data.data;
+        } else {
+          const firstArray = Object.values(data).find(v => Array.isArray(v));
+          if (firstArray) emailsRaw = firstArray;
         }
+
+        const emails: EmailAPIMessage[] = (emailsRaw || []).map((item: any) => {
+          const dadosBruto = item && item.dados_bruto ? item.dados_bruto : {};
+          const cliente = item && item.cliente ? item.cliente : {};
+          return {
+            id: item && item.id !== undefined ? String(item.id) : 'Não informado',
+            subject: dadosBruto.subject || 'Não informado',
+            date: dadosBruto.date || new Date().toISOString(),
+            from: dadosBruto.from || 'Não informado',
+            clienteNome: cliente.nome || 'Não informado',
+            clienteEmail: cliente.email || 'Não informado',
+            status: item && item.status ? item.status : 'Não informado',
+            isRead: !!(item && item.isRead),
+          };
+        });
+
+        // Ordenar por data (mais recente primeiro)
+        emails.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setTotalCount(emails.length);
+        // Mapear para o formato esperado pelo componente
+        const mapped: EmailNotification[] = emails.slice(0, 3).map((email) => ({
+          id: Number(email.id),
+          type: 'quote_email',
+          title: email.subject,
+          message: `De: ${email.clienteNome} <${email.clienteEmail}>`,
+          timestamp: email.date,
+          read: !!email.isRead,
+        }));
+        setNotifications(mapped);
       } catch (error) {
-        console.error('Erro ao carregar notificações:', error);
+        console.error('Erro ao buscar cotações via email:', error);
+        setNotifications([]);
       }
     };
-
-    loadNotifications();
-    
-    // Atualizar a cada 30 segundos
-    const interval = setInterval(loadNotifications, 30000);
+    fetchRecentEmailQuotes();
+    const interval = setInterval(fetchRecentEmailQuotes, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const markAsRead = (id: number) => {
-    try {
-      const saved = localStorage.getItem('smartquote-notifications');
-      if (saved) {
-        const allNotifications = JSON.parse(saved);
-        const updated = allNotifications.map((n: EmailNotification) => 
-          n.id === id ? { ...n, read: true } : n
-        );
-        localStorage.setItem('smartquote-notifications', JSON.stringify(updated));
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-      }
-    } catch (error) {
-      console.error('Erro ao marcar notificação como lida:', error);
-    }
-  };
-
-  const removeNotification = (id: number) => {
-    try {
-      const saved = localStorage.getItem('smartquote-notifications');
-      if (saved) {
-        const allNotifications = JSON.parse(saved);
-        const filtered = allNotifications.filter((n: EmailNotification) => n.id !== id);
-        localStorage.setItem('smartquote-notifications', JSON.stringify(filtered));
-        setNotifications(prev => prev.filter(n => n.id !== id));
-      }
-    } catch (error) {
-      console.error('Erro ao remover notificação:', error);
-    }
-  };
+  // markAsRead e removeNotification não são mais usados pois agora vem da API
 
   const getTimeAgo = (timestamp: string) => {
     const now = new Date();
@@ -89,12 +107,12 @@ export function EmailNotifications({ onClose, onNavigateToQuotes }: EmailNotific
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Mail className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-white font-bold text-sm">Cotações via Email</h3>
-          {notifications.length > 0 && (
-            <span className="bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full text-xs font-medium">
-              {notifications.filter(n => !n.read).length}
+          <h3 className="text-white font-bold text-sm">
+            Cotações via Email
+            <span className="ml-2 bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full text-xs font-medium align-middle">
+              {totalCount}
             </span>
-          )}
+          </h3>
         </div>
         
         <div className="flex items-center space-x-2">
@@ -153,24 +171,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes }: EmailNotific
                 <p className="text-slate-500 text-xs mt-1">{getTimeAgo(notification.timestamp)}</p>
               </div>
               
-              <div className="flex items-center space-x-1 ml-2">
-                {!notification.read && (
-                  <button
-                    onClick={() => markAsRead(notification.id)}
-                    className="p-1 hover:bg-white/10 rounded transition-colors"
-                    title="Marcar como lida"
-                  >
-                    <CheckCircle className="w-3 h-3 text-cyan-400 hover:text-green-400" />
-                  </button>
-                )}
-                <button
-                  onClick={() => removeNotification(notification.id)}
-                  className="p-1 hover:bg-white/10 rounded transition-colors"
-                  title="Remover"
-                >
-                  <X className="w-3 h-3 text-slate-400 hover:text-red-400" />
-                </button>
-              </div>
+              {/* Sem ações de marcar como lida/remover, pois vem da API */}
             </div>
             
             {!notification.read && (
@@ -181,18 +182,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes }: EmailNotific
         </div>
       )}
 
-      {notifications.length > 0 && notifications.some(n => !n.read) && (
-        <div className="mt-3 pt-3 border-t border-slate-700/50">
-          <Button
-            onClick={() => notifications.forEach(n => !n.read && markAsRead(n.id))}
-            variant="outline"
-            size="sm"
-            className="w-full h-7 text-xs bg-slate-700/50 border-slate-600/50 text-slate-300 hover:bg-slate-600/50"
-          >
-            Marcar todas como lidas
-          </Button>
-        </div>
-      )}
+      {/* Sem botão de marcar todas como lidas, pois vem da API */}
     </div>
   );
 }
