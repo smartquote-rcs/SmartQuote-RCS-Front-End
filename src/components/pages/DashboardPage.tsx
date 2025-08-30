@@ -79,8 +79,35 @@ export function DashboardPage({
   statsError = null
 }: DashboardPageProps = {}) {
   const { t } = useTranslation();
-  // Simular notificações não lidas (em um app real, viria de um contexto ou API)
-  const unreadNotifications = 3;
+  // Buscar notificações reais e calcular não lidas
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  useEffect(() => {
+    async function fetchNotifications() {
+      try {
+        const { notificationService } = await import("../../api/services");
+        const response = await notificationService.getAll();
+        if (!response.success || !response.data) throw new Error();
+        const arr = Array.isArray(response.data) ? response.data : (Array.isArray(response.data.data) ? response.data.data : (response.data.notifications || []));
+        // IDs lidas do localStorage
+        let readIds: string[] = [];
+        try {
+          readIds = JSON.parse(localStorage.getItem("readNotifications") || "[]");
+        } catch {}
+        const mapped = arr.map((n: any) => {
+          const id = n.id?.toString() ?? n._id?.toString() ?? Math.random().toString(36).slice(2);
+          return {
+            id,
+            read: readIds.includes(id) ? true : (n.read ?? n.lida ?? false),
+          };
+        });
+        setUnreadNotifications(mapped.filter((n: any) => !n.read).length);
+      } catch {
+        // não precisa setNotifications
+        setUnreadNotifications(0);
+      }
+    }
+    fetchNotifications();
+  }, []);
 
   // Estado para logs de login
   const [loginAlerts, setLoginAlerts] = useState<Array<any>>([]);
@@ -367,11 +394,18 @@ export function DashboardPage({
         <div className="mb-4 sm:mb-6 lg:mb-8">
           <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-3 sm:p-4 border border-white/10 backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 sm:pb-4 space-y-2 sm:space-y-0">
-              <div className="min-w-0 flex-1">
-                <h3 className="text-base sm:text-lg font-bold text-white mb-1">Alertas do Sistema</h3>
-                <p className="text-xs sm:text-sm text-slate-300">
-                  Atualizações em tempo real de inicio de sessão
-                </p>
+              <div className="min-w-0 flex-1 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-white mb-1 flex items-center gap-2">
+                  Alertas do Sistema
+                  {unreadNotifications > 0 && (
+                    <span className="ml-1 bg-red-600 text-white text-xs rounded-full px-2 py-0.5 font-bold animate-pulse">
+                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                    </span>
+                  )}
+                </h3>
+                {/* Fim badge dinâmico */}
+                
+                {/* ...restante do conteúdo... */}
               </div>
               <button
                 className="px-3 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs sm:text-sm rounded-lg border border-slate-600/50 transition-all duration-200 self-start sm:self-auto whitespace-nowrap"
