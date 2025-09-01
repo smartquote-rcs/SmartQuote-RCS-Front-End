@@ -10,9 +10,9 @@ import {
   Timer,
   Package,
   Building,
-  Search,
   ExternalLink,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react';
 
 interface QuoteJob {
@@ -26,6 +26,11 @@ interface QuoteJob {
     numResultados: number;
     fornecedores: number[];
     usuarioId: number;
+    custo_beneficio?: any;
+    rigor?: number;
+    refinamento?: boolean;
+    salvamento?: boolean;
+    urls_add?: string[];
   };
   progresso?: {
     etapa: string;
@@ -33,6 +38,7 @@ interface QuoteJob {
     detalhes: string;
   };
   resultado?: {
+    relatorio?: any;
     produtos: Array<{
       name: string;
       price: string;
@@ -70,159 +76,59 @@ export function ProcessDetailsPage({ jobId, onBack, onDelete }: ProcessDetailsPa
   const [job, setJob] = useState<QuoteJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Dados mock - os mesmos da ProcessesPage
-  const mockJobs: QuoteJob[] = [
-    {
-      id: "e30fe277-9e23-4071-b174-9a97e671d708",
-      status: "concluido",
-      criadoEm: "2025-08-20T15:50:05.487Z",
-      parametros: {
-        termo: "Monitor 4K",
-        numResultados: 1,
-        fornecedores: [1, 2],
-        usuarioId: 1
-      },
-      iniciadoEm: "2025-08-20T15:50:05.487Z",
-      progresso: {
-        etapa: "salvamento",
-        produtos: 2,
-        detalhes: "Salvando produtos na base de dados..."
-      },
-      concluidoEm: "2025-08-20T15:53:07.907Z",
-      resultado: {
-        produtos: [
-          {
-            name: "Monitor Samsung 32 4K UHD",
-            price: "R$ 1.899,99",
-            image_url: "https://example.com/monitor1.jpg",
-            description: "Monitor 32 polegadas 4K UHD com HDR",
-            product_url: "https://example.com/product1"
-          },
-          {
-            name: "Monitor LG 27 4K IPS",
-            price: "R$ 1.599,99", 
-            image_url: "https://example.com/monitor2.jpg",
-            description: "Monitor 27 polegadas 4K IPS profissional",
-            product_url: "https://example.com/product2"
-          }
-        ],
-        salvamento: {
-          salvos: 2,
-          erros: 0,
-          detalhes: [
-            {
-              fornecedor: "TechStore",
-              fornecedor_id: 1,
-              salvos: 1,
-              erros: 0,
-              detalhes: [
-                {
-                  produto: "Monitor Samsung 32 4K UHD",
-                  status: "salvo",
-                  id: 1,
-                  preco_centavos: 189999
-                }
-              ]
-            },
-            {
-              fornecedor: "DigitalShop",
-              fornecedor_id: 2,
-              salvos: 1,
-              erros: 0,
-              detalhes: [
-                {
-                  produto: "Monitor LG 27 4K IPS",
-                  status: "salvo",
-                  id: 2,
-                  preco_centavos: 159999
-                }
-              ]
-            }
-          ]
-        },
-        tempoExecucao: 182
+  // Função para buscar detalhes do job da API
+  const fetchJobDetails = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch(`http://localhost:2000/api/busca-automatica/job/${id}`);
+      if (!response.ok) throw new Error('Erro ao buscar detalhes do processo');
+      
+      const data = await response.json();
+      
+      if (data.success && data.job) {
+        setJob(data.job);
+      } else {
+        throw new Error('Job não encontrado');
       }
-    },
-    {
-      id: "f40ge388-ae34-5182-c285-0b08f782e819",
-      status: "em-andamento",
-      criadoEm: "2025-08-21T09:15:00.000Z",
-      parametros: {
-        termo: "Notebook Dell",
-        numResultados: 3,
-        fornecedores: [1, 2, 3],
-        usuarioId: 1
-      },
-      iniciadoEm: "2025-08-21T09:15:05.000Z",
-      progresso: {
-        etapa: "busca",
-        produtos: 0,
-        detalhes: "Buscando produtos nos fornecedores..."
-      }
-    },
-    {
-      id: "g51hf499-bf45-6293-d396-1c19g893f920",
-      status: "pendente",
-      criadoEm: "2025-08-21T10:30:00.000Z",
-      parametros: {
-        termo: "Mouse Gamer",
-        numResultados: 5,
-        fornecedores: [2, 3],
-        usuarioId: 2
-      }
+    } catch (e) {
+      console.error('Erro ao buscar detalhes do job:', e);
+      setError(e instanceof Error ? e.message : 'Erro desconhecido');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   useEffect(() => {
-    const loadJobData = async () => {
-      try {
-        setLoading(true);
-        
-        // Simular delay de API
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Buscar o job pelo ID
-        const foundJob = mockJobs.find(j => j.id === jobId);
-        
-        if (foundJob) {
-          setJob(foundJob);
-        } else {
-          setError('Job não encontrado');
-        }
-      } catch (err) {
-        setError('Erro ao carregar dados do job');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadJobData();
+    if (jobId) {
+      fetchJobDetails(jobId);
+    }
   }, [jobId]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pendente':
-        return 'bg-dark-hover text-dark-secondary border-dark-border';
       case 'em-andamento':
-        return 'bg-dark-cta/20 text-dark-cta border-dark-cta/30';
+        return 'bg-blue-600/20 text-blue-400 border-blue-500/30';
+      case 'pendente':
+        return 'bg-slate-600/20 text-slate-300 border-slate-500/30';
       case 'concluido':
-        return 'bg-dark-success/20 text-dark-success border-dark-success/30';
+        return 'bg-green-600/20 text-green-400 border-green-500/30';
       case 'erro':
-        return 'bg-dark-error/20 text-dark-error border-dark-error/30';
+        return 'bg-red-600/20 text-red-400 border-red-500/30';
       case 'cancelado':
-        return 'bg-dark-error/20 text-dark-error border-dark-error/30';
+        return 'bg-red-600/20 text-red-400 border-red-500/30';
       default:
-        return 'bg-dark-hover text-dark-secondary border-dark-border';
+        return 'bg-slate-600/20 text-slate-300 border-slate-500/30';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pendente':
-        return <Clock className="h-4 w-4" />;
       case 'em-andamento':
+        return <Clock className="h-4 w-4" />;
+      case 'pendente':
         return <Timer className="h-4 w-4" />;
       case 'concluido':
         return <CheckCircle className="h-4 w-4" />;
@@ -235,330 +141,249 @@ export function ProcessDetailsPage({ jobId, onBack, onDelete }: ProcessDetailsPa
     }
   };
 
-  const formatCurrency = (centavos: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(centavos / 100);
-  };
-
   if (loading) {
     return (
-      <div className="p-6 space-y-6 bg-dark-bg min-h-screen">
-        <div className="flex items-center justify-center py-20">
+      <div className="bg-slate-900 text-slate-200 p-6">
+        <div className="flex items-center justify-center h-60">
+          <div className="text-slate-300">Carregando detalhes do processo...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-slate-900 text-slate-200 p-6">
+        <div className="flex items-center justify-center h-60">
           <div className="text-center">
-            <Timer className="h-12 w-12 text-dark-cta mx-auto mb-4 animate-spin" />
-            <p className="text-dark-secondary">Carregando detalhes do job...</p>
+            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Erro ao carregar</h3>
+            <p className="text-slate-300">{error}</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error || !job) {
+  if (!job) {
     return (
-      <div className="p-6 space-y-6 bg-dark-bg min-h-screen">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" onClick={onBack} className="text-dark-secondary hover:text-dark-primary">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-        </div>
-        <div className="flex items-center justify-center py-20">
+      <div className="bg-slate-900 text-slate-200 p-6">
+        <div className="flex items-center justify-center h-60">
           <div className="text-center">
-            <XCircle className="h-12 w-12 text-dark-error mx-auto mb-4" />
-            <p className="text-dark-error text-lg font-medium">{error || 'Job não encontrado'}</p>
-            <p className="text-dark-secondary">Verifique o ID do job e tente novamente</p>
+            <Package className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Processo não encontrado</h3>
+            <p className="text-slate-300">O processo solicitado não foi encontrado.</p>
           </div>
         </div>
       </div>
     );
   }
+
+  const produtos = job.resultado?.produtos || [];
 
   return (
-    <div className="p-6 space-y-6 bg-dark-bg min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={onBack} className="text-dark-secondary hover:text-dark-primary">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-dark-primary">Detalhes do Job</h1>
-            <p className="text-dark-secondary">Job #{job.id.substring(0, 8)}</p>
-          </div>
+    <div className="bg-slate-900 text-slate-200 max-h-[90vh] overflow-y-auto">
+      {/* Header do Modal */}
+      <div className="sticky top-0 bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-white">{job.parametros.termo}</h1>
+          <p className="text-slate-400 text-sm">ID: {job.id}</p>
         </div>
-        {onDelete && (
-          <Button 
-            variant="outline" 
-            className="text-dark-error border-dark-error/30 hover:bg-dark-error/10"
-            onClick={() => setShowDeleteConfirm(true)}
+        <div className="flex items-center gap-3">
+          <Badge className={`${getStatusColor(job.status)} flex items-center gap-2`}>
+            {getStatusIcon(job.status)}
+            {job.status.replace('-', ' ').toUpperCase()}
+          </Badge>
+          <Button
+            onClick={onBack}
+            variant="ghost"
+            size="sm"
+            className="text-slate-400 hover:text-white"
           >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Excluir Job
+            <X className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </div>
 
-      {/* Informações Principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Status e Informações Gerais */}
-        <Card className="bg-dark-card border-dark-border lg:col-span-2">
-          <div className="p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="p-3 bg-dark-cta/10 rounded-lg">
-                <Search className="h-6 w-6 text-dark-cta" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold text-dark-primary mb-2">{job.parametros.termo}</h2>
-                <Badge className={`${getStatusColor(job.status)} text-sm`}>
-                  {getStatusIcon(job.status)}
-                  <span className="ml-2">{job.status.replace('-', ' ').toUpperCase()}</span>
-                </Badge>
-              </div>
+      {/* Conteúdo */}
+      <div className="p-6 space-y-6">
+        {/* Informações Básicas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-slate-800 border-slate-700">
+            <div className="p-4">
+              <h3 className="text-sm font-medium text-slate-400 mb-2">Criado em</h3>
+              <p className="text-white">{new Date(job.criadoEm).toLocaleString('pt-BR')}</p>
             </div>
+          </Card>
+          
+          <Card className="bg-slate-800 border-slate-700">
+            <div className="p-4">
+              <h3 className="text-sm font-medium text-slate-400 mb-2">Produtos Encontrados</h3>
+              <p className="text-white text-lg font-semibold">{produtos.length}</p>
+            </div>
+          </Card>
+          
+          {job.resultado && (
+            <Card className="bg-slate-800 border-slate-700">
+              <div className="p-4">
+                <h3 className="text-sm font-medium text-slate-400 mb-2">Tempo de Execução</h3>
+                <p className="text-white">{(job.resultado.tempoExecucao / 1000).toFixed(1)}s</p>
+              </div>
+            </Card>
+          )}
+        </div>
 
-            <div className="grid grid-cols-2 gap-6">
+        {/* Parâmetros da Busca */}
+        <Card className="bg-slate-800 border-slate-700">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Building className="h-5 w-5 text-blue-400" />
+              Parâmetros da Busca
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="text-sm font-medium text-dark-secondary mb-3">Informações do Job</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-dark-secondary">Criado em:</span>
-                    <span className="text-dark-primary">
-                      {new Date(job.criadoEm).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </span>
-                  </div>
-                  {job.iniciadoEm && (
-                    <div className="flex justify-between">
-                      <span className="text-dark-secondary">Iniciado em:</span>
-                      <span className="text-dark-primary">
-                        {new Date(job.iniciadoEm).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                    </div>
-                  )}
-                  {job.concluidoEm && (
-                    <div className="flex justify-between">
-                      <span className="text-dark-secondary">Concluído em:</span>
-                      <span className="text-dark-success">
-                        {new Date(job.concluidoEm).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                    </div>
-                  )}
+                <h3 className="text-sm font-medium text-slate-400 mb-1">Termo de busca</h3>
+                <p className="text-white">{job.parametros.termo}</p>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-medium text-slate-400 mb-1">Número de resultados</h3>
+                <p className="text-white">{job.parametros.numResultados}</p>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-medium text-slate-400 mb-1">Fornecedores</h3>
+                <div className="flex flex-wrap gap-1">
+                  {job.parametros.fornecedores.map((fornecedorId) => (
+                    <Badge key={fornecedorId} variant="outline" className="text-xs border-slate-500 text-slate-300">
+                      ID: {fornecedorId}
+                    </Badge>
+                  ))}
                 </div>
               </div>
               
               <div>
-                <h3 className="text-sm font-medium text-dark-secondary mb-3">Parâmetros</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-dark-secondary">Resultado máximo:</span>
-                    <span className="text-dark-primary">{job.parametros.numResultados}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-dark-secondary">Fornecedores:</span>
-                    <span className="text-dark-primary">{job.parametros.fornecedores.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-dark-secondary">Usuário ID:</span>
-                    <span className="text-dark-primary">{job.parametros.usuarioId}</span>
-                  </div>
-                  {job.resultado && (
-                    <div className="flex justify-between">
-                      <span className="text-dark-secondary">Tempo execução:</span>
-                      <span className="text-dark-cta font-medium">{job.resultado.tempoExecucao}s</span>
-                    </div>
-                  )}
-                </div>
+                <h3 className="text-sm font-medium text-slate-400 mb-1">Usuário</h3>
+                <p className="text-white">ID: {job.parametros.usuarioId}</p>
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Progresso */}
-        <Card className="bg-dark-card border-dark-border">
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-dark-primary mb-4">Progresso</h3>
-            {job.progresso ? (
-              <div className="space-y-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-dark-cta mb-2">{job.progresso.produtos}</div>
-                  <div className="text-sm text-dark-secondary">Produtos processados</div>
+        {/* Progresso (se em andamento) */}
+        {job.progresso && (
+          <Card className="bg-slate-800 border-slate-700">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-400" />
+                Progresso Atual
+              </h2>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Etapa:</span>
+                  <Badge variant="outline" className="border-slate-500 text-slate-300">{job.progresso.etapa}</Badge>
                 </div>
-                <div className="p-3 bg-dark-hover/50 rounded-lg">
-                  <div className="text-sm font-medium text-dark-primary mb-1">{job.progresso.etapa}</div>
-                  <div className="text-xs text-dark-secondary">{job.progresso.detalhes}</div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Produtos processados:</span>
+                  <span className="text-white">{job.progresso.produtos}</span>
+                </div>
+                
+                <div>
+                  <span className="text-slate-400 block mb-2">Detalhes:</span>
+                  <p className="text-white bg-slate-700 p-3 rounded">{job.progresso.detalhes}</p>
                 </div>
               </div>
-            ) : (
-              <div className="text-center text-dark-secondary">
-                <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Aguardando início</p>
+            </div>
+          </Card>
+        )}
+
+        {/* Produtos Encontrados */}
+        {produtos.length > 0 && (
+          <Card className="bg-slate-800 border-slate-700">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Package className="h-5 w-5 text-blue-400" />
+                Produtos Encontrados ({produtos.length})
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {produtos.slice(0, 9).map((produto, index) => (
+                  <Card key={index} className="bg-slate-700 border-slate-600">
+                    <div className="p-4">
+                      {produto.image_url && (
+                        <img
+                          src={produto.image_url}
+                          alt={produto.name}
+                          className="w-full h-32 object-cover rounded-lg mb-3"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      
+                      <h3 className="font-medium text-white mb-2 line-clamp-2">
+                        {produto.name}
+                      </h3>
+                      
+                      <p className="text-slate-400 text-sm mb-2 line-clamp-2">
+                        {produto.description}
+                      </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-blue-400 font-semibold">
+                          {produto.price}
+                        </span>
+                        
+                        {produto.product_url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-slate-600 text-slate-300 hover:bg-slate-600"
+                            onClick={() => window.open(produto.product_url, '_blank')}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
-            )}
-          </div>
-        </Card>
+              
+              {produtos.length > 9 && (
+                <p className="text-slate-400 text-center mt-4">
+                  ... e mais {produtos.length - 9} produtos
+                </p>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {/* Botões de Ação */}
+        <div className="flex justify-between pt-6 border-t border-slate-700">
+          <Button
+            onClick={onBack}
+            variant="outline"
+            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Fechar
+          </Button>
+          
+          {onDelete && (
+            <Button
+              onClick={() => onDelete(jobId)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Deletar Processo
+            </Button>
+          )}
+        </div>
       </div>
-
-      {/* Resultados */}
-      {job.resultado && (
-        <div className="space-y-6">
-          {/* Resumo dos Resultados */}
-          <Card className="bg-dark-card border-dark-border">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-dark-primary mb-4">Resumo dos Resultados</h3>
-              <div className="grid grid-cols-3 gap-6">
-                <div className="text-center p-4 bg-dark-cta/10 rounded-lg">
-                  <div className="text-2xl font-bold text-dark-cta">{job.resultado.produtos.length}</div>
-                  <div className="text-sm text-dark-secondary">Produtos encontrados</div>
-                </div>
-                <div className="text-center p-4 bg-dark-success/10 rounded-lg">
-                  <div className="text-2xl font-bold text-dark-success">{job.resultado.salvamento.salvos}</div>
-                  <div className="text-sm text-dark-secondary">Produtos salvos</div>
-                </div>
-                <div className="text-center p-4 bg-dark-error/10 rounded-lg">
-                  <div className="text-2xl font-bold text-dark-error">{job.resultado.salvamento.erros}</div>
-                  <div className="text-sm text-dark-secondary">Erros</div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Produtos Encontrados */}
-          {job.resultado.produtos.length > 0 && (
-            <Card className="bg-dark-card border-dark-border">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-dark-primary mb-4 flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Produtos Encontrados ({job.resultado.produtos.length})
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {job.resultado.produtos.map((produto, index) => (
-                    <div key={index} className="p-4 bg-dark-hover/30 rounded-lg border border-dark-border/50">
-                      <div className="flex items-start gap-4">
-                        <div className="w-16 h-16 bg-dark-border/50 rounded-lg flex items-center justify-center">
-                          <Package className="h-6 w-6 text-dark-secondary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-dark-primary mb-1 line-clamp-2">{produto.name}</h4>
-                          <p className="text-sm text-dark-secondary mb-2 line-clamp-2">{produto.description}</p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-lg font-bold text-dark-cta">{produto.price}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-dark-secondary hover:text-dark-primary"
-                              onClick={() => window.open(produto.product_url, '_blank')}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Fornecedores */}
-          {job.resultado.salvamento.detalhes.length > 0 && (
-            <Card className="bg-dark-card border-dark-border">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-dark-primary mb-4 flex items-center gap-2">
-                  <Building className="h-5 w-5" />
-                  Detalhes por Fornecedor ({job.resultado.salvamento.detalhes.length})
-                </h3>
-                <div className="space-y-4">
-                  {job.resultado.salvamento.detalhes.map((fornecedor) => (
-                    <div key={fornecedor.fornecedor_id} className="p-4 bg-dark-hover/30 rounded-lg border border-dark-border/50">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium text-dark-primary">{fornecedor.fornecedor}</h4>
-                        <div className="flex gap-2">
-                          <Badge className="bg-dark-success/20 text-dark-success">
-                            {fornecedor.salvos} salvos
-                          </Badge>
-                          {fornecedor.erros > 0 && (
-                            <Badge className="bg-dark-error/20 text-dark-error">
-                              {fornecedor.erros} erros
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        {fornecedor.detalhes.map((detalhe) => (
-                          <div key={detalhe.id} className="flex items-center justify-between p-3 bg-dark-card rounded border border-dark-border/30">
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-dark-primary">{detalhe.produto}</div>
-                              <div className="text-xs text-dark-secondary">Status: {detalhe.status}</div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-sm font-medium text-dark-cta">
-                                {formatCurrency(detalhe.preco_centavos)}
-                              </div>
-                              <div className="text-xs text-dark-secondary">ID: {detalhe.id}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          )}
-        </div>
-      )}
-
-      {/* Modal de Confirmação de Exclusão */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="bg-dark-card border-dark-border max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-dark-primary mb-2">Confirmar Exclusão</h3>
-              <p className="text-dark-secondary mb-6">
-                Tem certeza que deseja excluir este job? Esta ação não pode ser desfeita.
-              </p>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    onDelete?.(job.id);
-                    setShowDeleteConfirm(false);
-                  }}
-                  className="flex-1 bg-dark-error hover:bg-dark-error/90"
-                >
-                  Excluir
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

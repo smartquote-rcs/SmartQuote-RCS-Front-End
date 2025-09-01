@@ -12,6 +12,7 @@ export interface Supplier {
   cadastrado_por: number;
   atualizado_em: string;
   atualizado_por: number;
+  rate?: number; // classificação de 0 a 5
 }
 
 export interface QuoteRequest {

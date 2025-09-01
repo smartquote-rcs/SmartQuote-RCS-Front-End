@@ -950,7 +950,6 @@ export const supplierService = {
       };
     }
   },
-  // ...existing code...
   async update(id: string, supplierData: Partial<{
     nome: string;
     contato_email: string;
@@ -962,10 +961,11 @@ export const supplierService = {
     cadastrado_por: number;
     atualizado_em: string;
     atualizado_por: number;
+    rate?: number;
   }>): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para atualizar fornecedor (PATCH /suppliers/${id}):`, supplierData);
-      const response = await api.patch(`/suppliers/${id}`, supplierData);
+  console.log(`📤 Fazendo requisição para atualizar fornecedor (PATCH /suppliers/${id}):`, supplierData);
+  const response = await api.patch(`/suppliers/${id}`, supplierData);
       if (response.status === 200) {
         return { success: true, data: response.data };
       }
@@ -992,6 +992,22 @@ export const supplierService = {
       return { 
         success: false, 
         error: error.response?.data?.error || error.response?.data?.message || 'Erro ao remover fornecedor.' 
+      };
+    }
+  }
+};
+
+// Serviço de Jobs de Cotação
+export const jobService = {
+  async deleteJobById(jobId: string) {
+    try {
+      const response = await api.delete(`/busca-automatica/job/${jobId}`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('Erro ao deletar job:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao deletar job'
       };
     }
   }

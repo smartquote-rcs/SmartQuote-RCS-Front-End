@@ -474,7 +474,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         cadastrado_em: supplier.cadastrado_em,
         cadastrado_por: supplier.cadastrado_por,
         atualizado_em: supplier.atualizado_em,
-        atualizado_por: supplier.atualizado_por
+        atualizado_por: supplier.atualizado_por,
+        rate: supplier.rate
       });
       
       if (response.success) {

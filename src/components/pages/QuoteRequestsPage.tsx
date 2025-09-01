@@ -59,10 +59,14 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
   );
 
   return (
-  <div className="bg-slate-800/60 border border-cyan-900/30 rounded-xl p-6 flex flex-col gap-4 shadow-lg text-lg">
+  <div className="bg-slate-800/60 border border-cyan-900/30 rounded-xl p-4 sm:p-6 flex flex-col gap-3 sm:gap-4 shadow-lg text-base sm:text-lg w-full max-w-screen overflow-x-auto">
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <div>
-          <div className="text-white font-semibold text-base">{item.item_nome}</div>
+          <div className="text-white font-semibold text-base">
+            {item.item_nome && item.item_nome.length > 50
+              ? item.item_nome.slice(0, 50) + '...'
+              : item.item_nome}
+          </div>
           <div className="text-slate-400 text-xs">Fornecedor: <span className="text-cyan-300">{item.provider || item.fornecedor || '-'}</span></div>
           <div className="text-slate-400 text-xs">Origem: <span className="text-cyan-300">{item.origem || '-'}</span></div>
         </div>
@@ -76,9 +80,13 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
           <button onClick={() => { setShowReplace(v => !v); if (!produtos.length) fetchProdutos(); }} className="ml-auto bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border border-blue-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">Substituir item</button>
         </div>
       </div>
-      <div className="text-slate-300 text-xs mt-2">{item.item_descricao}</div>
+      <div className="text-slate-300 text-xs mt-2">
+        {item.item_descricao && item.item_descricao.length > 50
+          ? item.item_descricao.slice(0, 50) + '...'
+          : item.item_descricao}
+      </div>
       {showReplace && (
-        <div className="mt-4 p-4 bg-slate-900/90 border border-cyan-700/30 rounded-xl w-full max-w-2xl mx-auto">
+  <div className="mt-4 p-3 sm:p-4 bg-slate-900/90 border border-cyan-700/30 rounded-xl w-full max-w-screen sm:max-w-2xl mx-auto overflow-x-auto">
           <div className="flex items-center gap-3 mb-4">
             <input
               type="text"
@@ -113,7 +121,7 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
       )}
       {/* Submodal para detalhes completos */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-6 rounded-2xl">
+  <DialogContent className="w-full max-w-screen sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-4 sm:p-6 rounded-2xl overflow-x-auto">
           <DialogHeader>
             <DialogTitle className="text-cyan-300 text-2xl">Detalhes do Item</DialogTitle>
           </DialogHeader>
@@ -560,7 +568,7 @@ export function QuoteRequestsPage({
     cotacao: any;
     onViewDetails: (id: string) => void;
   }) => (
-    <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300 group relative">
+  <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-3 sm:p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300 group relative w-full max-w-screen overflow-x-auto">
       {/* Borda lateral de status */}
       <div
         className={`absolute left-0 top-0 w-1 h-full rounded-l-xl ${
@@ -576,20 +584,22 @@ export function QuoteRequestsPage({
         }`}
       ></div>
 
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-3 lg:space-y-0 lg:space-x-4">
-        <div className="flex items-start space-x-3 flex-1 min-w-0">
+  <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-2 sm:space-y-3 lg:space-y-0 lg:space-x-4">
+  <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
           <div className="flex-shrink-0 mt-1">
             {getStatusIcon(cotacao.status)}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
               <div className="flex flex-col">
                 <h3 className="font-mono text-base font-bold text-white group-hover:text-cyan-400 transition-colors duration-300">
                   {cotacao.id}
                 </h3>
                 {cotacao.prompt && cotacao.prompt.texto_original && (
                   <span className="block text-lg font-semibold text-cyan-300 mt-1 truncate" title={cotacao.prompt.texto_original}>
-                    {cotacao.prompt.texto_original}
+                    {cotacao.prompt.texto_original.length > 50
+                      ? cotacao.prompt.texto_original.slice(0, 50) + '...'
+                      : cotacao.prompt.texto_original}
                   </span>
                 )}
               </div>
@@ -622,13 +632,13 @@ export function QuoteRequestsPage({
               </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
+            <div className="mt-2 grid grid-cols-2 lg:grid-cols-3 gap-1 sm:gap-2 text-xs">
               <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
                 <span className="text-slate-400 text-xs block mb-1">
-                  {t("dashboard.supplier")}:
+                  Fornecedor:
                 </span>
                 <span className="text-white font-medium">
-                  {cotacao.condicoes ? JSON.stringify(cotacao.condicoes) : '-'}
+                  {cotacao.fornecedor && cotacao.fornecedor !== '' ? cotacao.fornecedor : '-'}
                 </span>
               </div>
               <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
@@ -652,7 +662,7 @@ export function QuoteRequestsPage({
         </div>
 
         {/* Valor e Actions */}
-        <div className="flex flex-col space-y-3 min-w-0 lg:min-w-[140px]">
+  <div className="flex flex-col space-y-2 sm:space-y-3 min-w-0 lg:min-w-[140px]">
           <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/30 text-center">
             <div className="flex items-center justify-center space-x-1 mb-1">
               <Euro className="w-4 h-4 text-green-400" />

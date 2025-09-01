@@ -55,9 +55,8 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
 
   // Converter fornecedores do contexto para o formato esperado pela página (usando apenas campos válidos do Supabase)
-  // Ratings: persist in localStorage
+  // Ratings: agora persistem no backend (campo rate)
   const [ratings, setRatings] = useState<{ [id: number]: number }>({});
-  const [ratingsLoaded, setRatingsLoaded] = useState(false);
 
   // Salvar fornecedores no localStorage para o dashboard de performance
   useEffect(() => {
@@ -73,31 +72,18 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
     }
   }, [suppliers]);
 
-  // Load ratings from localStorage only after suppliers are loaded
+  // Inicializa ratings a partir do campo rate dos suppliers
   useEffect(() => {
-    if (!ratingsLoaded && suppliers.length > 0) {
-      try {
-        const stored = localStorage.getItem('supplierRatings');
-        if (stored) {
-          setRatings(JSON.parse(stored));
-        }
-      } catch (e) {
-        // ignore
-      }
-      setRatingsLoaded(true);
+    if (suppliers.length > 0) {
+      const initialRatings: { [id: number]: number } = {};
+      suppliers.forEach(s => {
+        if (typeof s.rate === 'number') initialRatings[s.id] = s.rate;
+      });
+      setRatings(initialRatings);
     }
-  }, [suppliers, ratingsLoaded]);
+  }, [suppliers]);
 
-  // Save ratings to localStorage whenever they change (but not on first load)
-  useEffect(() => {
-    if (ratingsLoaded) {
-      try {
-        localStorage.setItem('supplierRatings', JSON.stringify(ratings));
-      } catch (e) {
-        // ignore
-      }
-    }
-  }, [ratings, ratingsLoaded]);
+  // Não salva mais ratings no localStorage
   const fornecedores = suppliers.map(supplier => ({
     id: supplier.id, // manter id numérico real
     nome: supplier.nome,
@@ -109,13 +95,26 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
     observacoes: supplier.observacoes || '',
     cadastrado_por: supplier.cadastrado_por,
     atualizado_por: supplier.atualizado_por,
-    rating: ratings[supplier.id] || 0
+    rating: ratings[supplier.id] ?? (typeof supplier.rate === 'number' ? supplier.rate : 0)
   }));
 
-  // Função para atualizar nota
-  const handleRating = (id: number, nota: number) => {
-    setRatings(prev => ({ ...prev, [id]: nota }));
-    // Persist handled by useEffect
+  // Função para atualizar nota (rating) no backend
+  // updateSupplier já está disponível via useApp no topo
+  const handleRating = async (id: number, nota: number) => {
+    const fornecedor = suppliers.find(s => s.id === id);
+    if (!fornecedor) return;
+    try {
+      // Garante que o campo rate está presente no objeto enviado
+      const fornecedorAtualizado = { ...fornecedor, rate: nota };
+      console.log('[handleRating] Enviando para updateSupplier:', fornecedorAtualizado);
+      const resp = await updateSupplier(fornecedorAtualizado);
+      console.log('[handleRating] Resposta updateSupplier:', resp);
+      setRatings(prev => ({ ...prev, [id]: nota }));
+      showToast('success', 'Classificação atualizada', `Classificação do fornecedor "${fornecedor.nome}" atualizada para ${nota} estrela(s).`);
+    } catch (error) {
+      console.error('[handleRating] Erro ao atualizar classificação:', error);
+      showToast('error', 'Erro ao atualizar classificação', 'Não foi possível atualizar a classificação do fornecedor.');
+    }
   };
 
   // Não há mais categorias no schema atual

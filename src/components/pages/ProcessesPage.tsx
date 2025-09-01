@@ -13,10 +13,10 @@ import {
   Trash2,
   Building,
   AlertTriangle,
-  Package,
-  Search
+  Package
 } from 'lucide-react';
 import { ProcessDetailsPage } from './ProcessDetailsPage';
+import { jobService } from '../../api/services';
 
 interface QuoteJob {
   id: string;
@@ -29,6 +29,11 @@ interface QuoteJob {
     numResultados: number;
     fornecedores: number[];
     usuarioId: number;
+    custo_beneficio?: any;
+    rigor?: number;
+    refinamento?: boolean;
+    salvamento?: boolean;
+    urls_add?: string[];
   };
   progresso?: {
     etapa: string;
@@ -36,6 +41,7 @@ interface QuoteJob {
     detalhes: string;
   };
   resultado?: {
+    relatorio?: any;
     produtos: Array<{
       name: string;
       price: string;
@@ -67,13 +73,17 @@ interface QuoteJob {
 // Função para buscar jobs da API
 async function fetchJobs(): Promise<QuoteJob[]> {
   try {
-    // Altere a URL abaixo para o endpoint real da sua API de processos/jobs
-    const response = await fetch('/api/jobs');
+    const response = await fetch('http://localhost:2000/api/busca-automatica/jobs/');
     if (!response.ok) throw new Error('Erro ao buscar processos');
     const data = await response.json();
-    return Array.isArray(data) ? data : (data.jobs || []);
+    
+    // A API retorna { success: true, message: "X jobs encontrados", jobs: [...] }
+    if (data.success && data.jobs) {
+      return data.jobs;
+    }
+    return [];
   } catch (e) {
-    // Se der erro, retorna array vazio (ou pode retornar mockJobs se quiser fallback)
+    console.error('Erro ao buscar jobs:', e);
     return [];
   }
 }
@@ -86,16 +96,22 @@ export function ProcessesPage() {
   const [viewMode, setViewMode] = useState<'list' | 'details'>('list');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
-  const deleteJob = (jobId: string) => {
-    setJobs(jobs.filter(j => j.id !== jobId));
-    setShowDeleteConfirm(null);
-    if (selectedJobId === jobId) {
-      setSelectedJobId(null);
-      setViewMode('list');
+  const deleteJob = async (jobId: string) => {
+    const res = await jobService.deleteJobById(jobId);
+    if (res.success) {
+      setJobs(jobs.filter(j => j.id !== jobId));
+      setShowDeleteConfirm(null);
+      if (selectedJobId === jobId) {
+        setSelectedJobId(null);
+        setViewMode('list');
+      }
+    } else {
+      alert(res.error || 'Erro ao deletar processo.');
     }
   };
 
   const viewJobDetails = (jobId: string) => {
+    console.log('Abrindo detalhes para job:', jobId);
     setSelectedJobId(jobId);
     setViewMode('details');
   };
@@ -105,16 +121,7 @@ export function ProcessesPage() {
     setViewMode('list');
   };
 
-  // Se estiver no modo de detalhes, renderizar a página de detalhes
-  if (viewMode === 'details' && selectedJobId) {
-    return (
-      <ProcessDetailsPage 
-        jobId={selectedJobId} 
-        onBack={backToList}
-        onDelete={deleteJob}
-      />
-    );
-  }
+  // Renderização principal da página (sempre mostra a lista)
 
 
   // Atualiza jobs periodicamente (real time)
@@ -212,164 +219,106 @@ export function ProcessesPage() {
 
       {/* Lista de Processos */}
       <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 min-h-[800px]"> {/* Força altura para scroll */}
+        {filteredJobs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-96 text-dark-secondary">
+            <Package className="h-10 w-10 mb-4 text-dark-secondary" />
+            <span className="text-lg font-semibold">Nenhum processo encontrado</span>
+            <span className="text-sm mt-2">Nenhum processo de cotação foi encontrado no momento.</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 min-h-[800px]">
           {filteredJobs.map((job) => {
           const produtos = job.resultado?.produtos || [];
-          const fornecedores = job.resultado?.salvamento?.detalhes || [];
           
           return (
-            <Card key={job.id} className="bg-dark-card border-dark-border hover:border-dark-cta transition-colors">
-              <div className="p-6">
+            <Card key={job.id} className="bg-dark-card border-dark-border hover:border-dark-cta transition-colors h-fit">
+              <div className="p-4">
                 {/* Header do Card */}
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-mono text-dark-secondary">{job.id.substring(0, 8)}</span>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono text-dark-secondary">{job.id.substring(0, 8)}</span>
                     </div>
-                    <h3 className="font-semibold text-dark-primary mb-1 line-clamp-2">
+                    <h3 className="font-medium text-dark-primary mb-1 line-clamp-1 text-sm">
                       {job.parametros.termo}
                     </h3>
-                    <p className="text-sm text-dark-secondary line-clamp-2">
-                      Job criado em {new Date(job.criadoEm).toLocaleDateString('pt-BR')}
+                    <p className="text-xs text-dark-secondary">
+                      {new Date(job.criadoEm).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-dark-secondary hover:text-dark-primary">
-                    <MoreHorizontal className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" className="text-dark-secondary hover:text-dark-primary h-6 w-6 p-0">
+                    <MoreHorizontal className="h-3 w-3" />
                   </Button>
                 </div>
 
                 {/* Status */}
-                <div className="mb-4">
+                <div className="mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <Badge className={`${getStatusColor(job.status)} text-xs flex items-center gap-1`}>
                       {getStatusIcon(job.status)}
                       {job.status.replace('-', ' ').toUpperCase()}
                     </Badge>
                     {job.resultado && (
-                      <span className="text-sm font-medium text-dark-primary">
+                      <span className="text-xs font-medium text-dark-primary">
                         {job.resultado.tempoExecucao}s
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Informações do Job */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-sm text-dark-secondary">
-                    <Search className="h-4 w-4" />
-                    <span>Termo: {job.parametros.termo}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-dark-secondary">
-                    <Building className="h-4 w-4" />
-                    <span>Fornecedores: {job.parametros.fornecedores.length}</span>
+                {/* Informações resumidas */}
+                <div className="space-y-1 mb-3">
+                  <div className="flex items-center gap-2 text-xs text-dark-secondary">
+                    <Building className="h-3 w-3" />
+                    <span>{job.parametros.fornecedores.length} fornecedores</span>
                   </div>
                   {produtos.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-dark-secondary">
-                      <Package className="h-4 w-4" />
-                      <span>Produtos encontrados: {produtos.length}</span>
-                    </div>
-                  )}
-                  {job.concluidoEm && (
-                    <div className="flex items-center gap-2 text-sm text-dark-secondary">
-                      <Clock className="h-4 w-4" />
-                      <span>Finalizado: {new Date(job.concluidoEm).toLocaleDateString('pt-BR')}</span>
+                    <div className="flex items-center gap-2 text-xs text-dark-secondary">
+                      <Package className="h-3 w-3" />
+                      <span>{produtos.length} produtos</span>
                     </div>
                   )}
                 </div>
 
-                {/* Produtos */}
-                {produtos.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-dark-primary mb-2">
-                      Produtos ({produtos.length})
-                    </h4>
-                    <div className="flex flex-wrap gap-1">
-                      {produtos.slice(0, 2).map((produto, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="text-xs border-dark-border text-dark-secondary bg-dark-hover"
-                        >
-                          {produto.name.substring(0, 20)}...
-                        </Badge>
-                      ))}
-                      {produtos.length > 2 && (
-                        <Badge variant="outline" className="text-xs border-dark-border text-dark-secondary bg-dark-hover">
-                          +{produtos.length - 2} mais
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Fornecedores */}
-                {fornecedores.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-dark-primary mb-2">
-                      Fornecedores ({fornecedores.length})
-                    </h4>
-                    <div className="flex flex-wrap gap-1">
-                      {fornecedores.slice(0, 3).map((fornecedor) => (
-                        <Badge
-                          key={fornecedor.fornecedor_id}
-                          variant="outline"
-                          className={`text-xs ${
-                            fornecedor.salvos > 0 ? 'border-dark-cta/30 text-dark-cta bg-dark-cta/10' :
-                            'border-dark-border text-dark-secondary bg-dark-hover'
-                          }`}
-                        >
-                          {fornecedor.fornecedor}
-                        </Badge>
-                      ))}
-                      {fornecedores.length > 3 && (
-                        <Badge variant="outline" className="text-xs border-dark-border text-dark-secondary bg-dark-hover">
-                          +{fornecedores.length - 3} mais
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Ações */}
                 <div className="flex gap-2">
                   <Button 
-                    variant="outline" 
                     size="sm" 
-                    className="flex-1 text-dark-primary border-dark-border hover:bg-dark-hover"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 h-7 flex items-center justify-center gap-1"
                     onClick={() => viewJobDetails(job.id)}
                   >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Detalhes
+                    <Eye className="h-3 w-3" />
+                    Ver Detalhes
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-dark-error border-dark-border hover:bg-dark-error/10 hover:text-dark-error"
+                    className="text-dark-error border-dark-border hover:bg-dark-error/10 hover:text-dark-error h-7 w-7 p-0"
                     onClick={() => setShowDeleteConfirm(job.id)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
             </Card>
           );
         })}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Mensagem se não houver jobs */}
-      {filteredJobs.length === 0 && (
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 text-dark-secondary mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-dark-primary mb-2">
-            Nenhum job encontrado
-          </h3>
-          <p className="text-dark-secondary">
-            {statusFilter !== 'todos' 
-              ? 'Tente ajustar os filtros para ver mais resultados.'
-              : 'Não há jobs de cotação no momento.'
-            }
-          </p>
+  {/* ...existing code... */}
+
+      {/* Modal de Detalhes do Processo */}
+      {viewMode === 'details' && selectedJobId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden border border-slate-700">
+            <ProcessDetailsPage 
+              jobId={selectedJobId} 
+              onBack={backToList}
+              onDelete={deleteJob}
+            />
+          </div>
         </div>
       )}
 
