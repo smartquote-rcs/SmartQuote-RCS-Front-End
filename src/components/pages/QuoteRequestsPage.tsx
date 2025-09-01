@@ -403,15 +403,8 @@ export function QuoteRequestsPage({
           prazoResposta: c.prazoResposta || c.prazo_validade || '',
           orcamento_geral: c.orcamento_geral || c.valor || '',
         }));
-        // Filtra para não exibir cotações cujo prazo_validade seja igual à data atual
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const hojeISO = hoje.toISOString().slice(0, 10); // yyyy-mm-dd
-        const cotacoesFiltradas = mappedCotacoes.filter((c: any) => {
-          if (!c.prazo_validade) return true;
-          return c.prazo_validade.slice(0, 10) !== hojeISO;
-        });
-        setCotacoesList(cotacoesFiltradas);
+  // Exibe todas as cotações, sem filtrar por prazo_validade
+  setCotacoesList(mappedCotacoes);
       } catch (error) {
         setCotacoesList([]);
         console.error('Erro ao buscar cotações:', error);
@@ -483,9 +476,14 @@ export function QuoteRequestsPage({
   const [isSubmitting, setIsSubmitting] = useState(false); // Feedback visual de envio
   const openApproval = (id:string, action:'approve'|'reject'|'reactivate') => {
     setMotivoInput('');
+    setIsSubmitting(false);
     setApprovalModal({open:true, action, cotacaoId:id});
   };
-  const closeApproval = () => setApprovalModal(p=>({...p, open:false}));
+  const closeApproval = () => {
+    setMotivoInput('');
+    setIsSubmitting(false);
+    setApprovalModal(p=>({...p, open:false}));
+  };
   // Submissão com feedback visual e validação
   const submitApproval = async () => {
     if (!approvalModal.cotacaoId) return;
@@ -494,6 +492,7 @@ export function QuoteRequestsPage({
     const isApprove = action === 'approve' || action === 'reactivate';
     const isReject = action === 'reject';
     if (!motivoInput.trim()) {
+      setIsSubmitting(false);
       setMotivoInput("");
       return;
     }
@@ -504,7 +503,7 @@ export function QuoteRequestsPage({
         payload.aprovado_por = currentUserId; // envia id do usuário logado
       }
       if (isReject) {
-        payload.status = 'rejected';
+        payload.status = 'incompleta';
         payload.data_aprovacao = null;
       } else if (isApprove) {
         payload.status = 'completa';
@@ -513,17 +512,18 @@ export function QuoteRequestsPage({
       if (resp.success) {
         setCotacoesList(prev => prev.map(c => {
           if (String(c.id) !== String(id)) return c;
-            return {
-              ...c,
-              aprovacao: isApprove,
-              status: isReject ? 'rejected' : 'completa',
-              motivo: motivoInput,
-              data_aprovacao: isReject ? null : new Date().toISOString(),
-              aprovado_por: currentUserId != null ? currentUserId : c.aprovado_por
-            };
+          // Atualiza motivo, id de quem rejeitou, status e data_aprovacao
+          return {
+            ...c,
+            aprovacao: isApprove,
+            status: isReject ? 'incompleta' : 'completa',
+            motivo: motivoInput,
+            data_aprovacao: isReject ? null : new Date().toISOString(),
+            aprovado_por: currentUserId != null ? currentUserId : c.aprovado_por
+          };
         }));
-        // Feedback visual de sucesso
         window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', message: 'Cotação atualizada com sucesso!' } }));
+        setMotivoInput("");
       } else {
         window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', message: resp.error || 'Falha ao atualizar aprovação' } }));
       }
@@ -787,17 +787,34 @@ export function QuoteRequestsPage({
     return matchesSearch && matchesStatus && matchesPriority && matchesFornecedor;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filteredCotacoes.length / itemsPerPage));
-  // Sempre que currentPage for maior que totalPages, ajusta para o máximo disponível
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [totalPages, currentPage]);
 
-  const paginatedCotacoes = filteredCotacoes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  // Resetar página ao filtrar
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, priorityFilter, fornecedorFilter, dateFilter, valueFilter]);
+  // Estado para aba ativa
+  const [activeTab, setActiveTab] = useState('all');
+
+  // Função para obter o filtro de cada aba
+  const getTabFilter = (tab: string) => {
+    if (tab === 'pending') return (c: any) => c.status === 'incompleta' && (!c.motivo || c.motivo.trim() === '');
+    if (tab === 'approved') return (c: any) => c.status === 'approved' || c.status === 'processed' || c.status === 'completa';
+    if (tab === 'rejected') return (c: any) => c.status === 'incompleta' && c.motivo && c.motivo.trim() !== '';
+    return () => true;
+  };
+
+  // Função para obter o total de páginas da aba ativa
+  const getTotalPages = () => {
+    const filtered = cotacoesList.filter(getTabFilter(activeTab));
+    return Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  };
+
+  // Sempre que currentPage for maior que o total da aba, ajusta
+  useEffect(() => {
+    const total = getTotalPages();
+    if (currentPage > total) {
+      setCurrentPage(total);
+    }
+  }, [activeTab, cotacoesList, itemsPerPage, currentPage]);
+
+  // Resetar página ao trocar de aba
+  useEffect(() => { setCurrentPage(1); }, [activeTab]);
 
   // Contar filtros ativos
   const activeFiltersCount = [
@@ -885,7 +902,7 @@ export function QuoteRequestsPage({
       </header>
 
       <main className="flex-1 dashboard-main p-3 md:p-4 lg:p-8 bg-dark-bg">
-        <Tabs defaultValue="all" className="w-full h-full flex flex-col">
+  <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
             {/* Tabs - ocultas no mobile */}
             <TabsList className="hidden md:flex bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-xl p-1 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
@@ -899,7 +916,7 @@ export function QuoteRequestsPage({
                 value="pending"
                 className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-orange-500/20 hover:text-orange-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                Pendentes ({cotacoesList.filter((c) => c.status === 'pending_approval' || c.status === 'incompleta').length})
+                Pendentes ({cotacoesList.filter((c) => c.status === 'incompleta' && (!c.motivo || c.motivo.trim() === '')).length})
               </TabsTrigger>
               <TabsTrigger
                 value="approved"
@@ -913,7 +930,7 @@ export function QuoteRequestsPage({
                 className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
                 Rejeitadas (
-                {cotacoesList.filter((c) => c.status === "rejected").length})
+                {cotacoesList.filter((c) => c.status === 'incompleta' && c.motivo && c.motivo.trim() !== '').length})
               </TabsTrigger>
             </TabsList>
 
@@ -942,12 +959,12 @@ export function QuoteRequestsPage({
                     Anterior
                   </button>
                   <span className="text-slate-300 font-medium text-sm">
-                    Página {currentPage} de {totalPages}
+                    Página {currentPage} de {getTotalPages()}
                   </span>
                   <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() => setCurrentPage((p) => Math.min(getTotalPages(), p + 1))}
                     className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage === getTotalPages()}
                   >
                     Próxima
                   </button>
@@ -1161,61 +1178,64 @@ export function QuoteRequestsPage({
           </div>
 
           <div className="flex-1 scrollable-content">
-            <TabsContent value="all" className="h-full mt-0">
-              <div className="grid gap-4">
-                {paginatedCotacoes.map((cotacao) => (
-                  <QuoteCard
-                    key={cotacao.id}
-                    cotacao={cotacao}
-                    onViewDetails={handleViewDetails}
-                  />
-                ))}
-              </div>
-            </TabsContent>
 
-            <TabsContent value="pending" className="h-full mt-0">
-              <div className="grid gap-4">
-                {cotacoesList
-                  .filter((c) => c.status === 'pending_approval' || c.status === 'incompleta')
-                  .map((cotacao) => (
-                    <QuoteCard
-                      key={cotacao.id}
-                      cotacao={cotacao}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="approved" className="h-full mt-0">
-              <div className="grid gap-4">
-                {cotacoesList
-                  .filter(
-                    (c) => c.status === 'approved' || c.status === 'processed' || c.status === 'completa'
-                  )
-                  .map((cotacao) => (
-                    <QuoteCard
-                      key={cotacao.id}
-                      cotacao={cotacao}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="rejected" className="h-full mt-0">
-              <div className="grid gap-4">
-                {cotacoesList
-                  .filter((c) => c.status === "rejected")
-                  .map((cotacao) => (
-                    <QuoteCard
-                      key={cotacao.id}
-                      cotacao={cotacao}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-              </div>
-            </TabsContent>
+            {/* Funções para filtrar e paginar por aba */}
+            {(() => {
+              const getPaginated = (tab: string) => {
+                const filtered = cotacoesList.filter(getTabFilter(tab));
+                const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+                const page = Math.min(currentPage, totalPages);
+                return filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+              };
+              return (
+                <>
+                  <TabsContent value="all" className="h-full mt-0">
+                    <div className="grid gap-4">
+                      {getPaginated('all').map((cotacao) => (
+                        <QuoteCard
+                          key={cotacao.id}
+                          cotacao={cotacao}
+                          onViewDetails={handleViewDetails}
+                        />
+                      ))}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="pending" className="h-full mt-0">
+                    <div className="grid gap-4">
+                      {getPaginated('pending').map((cotacao) => (
+                        <QuoteCard
+                          key={cotacao.id}
+                          cotacao={cotacao}
+                          onViewDetails={handleViewDetails}
+                        />
+                      ))}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="approved" className="h-full mt-0">
+                    <div className="grid gap-4">
+                      {getPaginated('approved').map((cotacao) => (
+                        <QuoteCard
+                          key={cotacao.id}
+                          cotacao={cotacao}
+                          onViewDetails={handleViewDetails}
+                        />
+                      ))}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="rejected" className="h-full mt-0">
+                    <div className="grid gap-4">
+                      {getPaginated('rejected').map((cotacao) => (
+                        <QuoteCard
+                          key={cotacao.id}
+                          cotacao={cotacao}
+                          onViewDetails={handleViewDetails}
+                        />
+                      ))}
+                    </div>
+                  </TabsContent>
+                </>
+              );
+            })()}
 
             {/* Paginação no final da lista removida conforme solicitado */}
 
