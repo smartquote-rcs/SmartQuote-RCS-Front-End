@@ -384,7 +384,7 @@ export function DashboardPage({
 
         {/* Email Monitoring Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6 lg:mb-8">
-          <EmailStatus onOpenSettings={onNavigateToSettings} />
+                        <EmailStatus />
           <EmailNotifications 
             onNavigateToQuotes={onNavigateToQuotes}
           />

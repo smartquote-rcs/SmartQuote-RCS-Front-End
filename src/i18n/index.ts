@@ -725,7 +725,8 @@ const deTranslations = {
     recentQuotes: "Neueste Angebote",
     viewAll: "Alle anzeigen",
     goToNotifications: "Zu Benachrichtigungen",
-    total: "Gesamt"
+    total: "Gesamt",
+    supplier: "Lieferant"
   }
 };
 
@@ -752,7 +753,8 @@ const itTranslations = {
     recentQuotes: "Preventivi Recenti",
     viewAll: "Vedi tutti",
     goToNotifications: "Vai alle Notifiche",
-    total: "Totale"
+    total: "Totale",
+    supplier: "Fornitore"
   }
 };
 
