@@ -83,9 +83,6 @@ export async function getUserRoleByEmail(email: string): Promise<{ role: string,
   } catch (e) { /* ignora erro */ }
   return { role: 'user', origem: null };
 }
-// ...existing code...
-
-// ...existing code...
 
 // (Removido bloco dinâmico de adição do método deleteAll)
 // Serviço de Usuários (atualizado para usar a API correta)
@@ -765,6 +762,24 @@ export const produtoService = {
       return { 
         success: false, 
         error: error.response?.data?.error || error.response?.data?.message || 'Erro ao atualizar produto.' 
+      };
+    }
+  },
+
+  async replaceProduct(cotacaoItemId: number, newProductId: number): Promise<AuthResponse> {
+    try {
+      const response = await api.put('/cotacoes-itens/replace-product', {
+        cotacaoItemId,
+        newProductId,
+      });
+      if (response.status === 200) {
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: response.data?.error || 'Erro ao substituir item.' };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao substituir item.'
       };
     }
   }
