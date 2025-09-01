@@ -211,8 +211,9 @@ export function ProcessesPage() {
       </div>
 
       {/* Lista de Processos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredJobs.map((job) => {
+      <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 min-h-[800px]"> {/* Força altura para scroll */}
+          {filteredJobs.map((job) => {
           const produtos = job.resultado?.produtos || [];
           const fornecedores = job.resultado?.salvamento?.detalhes || [];
           
@@ -353,6 +354,7 @@ export function ProcessesPage() {
             </Card>
           );
         })}
+        </div>
       </div>
 
       {/* Mensagem se não houver jobs */}

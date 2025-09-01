@@ -198,21 +198,6 @@ export function EmailsPage() {
 
   // getEmailStatusIcon removido (não usado)
 
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
-    if (diffInHours < 1) {
-      const minutes = Math.floor(diffInHours * 60);
-      return `${minutes}m atrás`;
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h atrás`;
-    } else {
-      const days = Math.floor(diffInHours / 24);
-      return `${days}d atrás`;
-    }
-  };
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -269,7 +254,7 @@ export function EmailsPage() {
             </div>
 
             {/* Lista de Pedidos */}
-            <div className="flex-1 overflow-y-auto min-h-[200px]">
+            <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
               {isLoading ? (
                 <div className="flex items-center justify-center h-40">
                   <div className="flex items-center space-x-3">
@@ -285,12 +270,12 @@ export function EmailsPage() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-1 p-2">
+                <div className="space-y-1 p-2 min-h-[800px]">
                   {filteredEmails.map((email) => (
                     <div
                       key={email.id}
                       onClick={() => handleEmailClick(email)}
-                      className={`p-3 rounded-lg cursor-pointer transition-all duration-200 border ${
+                      className={`p-3 rounded-lg cursor-pointer transition-all duration-200 border w-full max-w-full ${
                         selectedEmail?.id === email.id
                           ? 'bg-blue-600/20 border-blue-500/50'
                           : !email.isRead
@@ -298,35 +283,37 @@ export function EmailsPage() {
                           : 'bg-transparent border-transparent hover:bg-dark-hover/30 hover:border-dark-color'
                       }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <span className={`text-sm font-medium ${!email.isRead ? 'text-white' : 'text-dark-primary'}`}>
-                              {email.clienteNome || 'Não informado'}
-                            </span>
-                            {email.status && (
-                              <span className="ml-2 text-xs px-2 py-0.5 rounded bg-dark-color text-dark-secondary border border-dark-hover">
-                                {email.status}
+                      <div className="flex items-start space-x-3 w-full">
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="flex flex-col space-y-1 w-full">
+                            <div className="flex items-center justify-between w-full">
+                              <span className={`text-sm font-medium truncate max-w-[200px] ${!email.isRead ? 'text-white' : 'text-dark-primary'}`}>
+                                {email.clienteNome || 'Não informado'}
                               </span>
-                            )}
-                          </div>
-                          <p className={`text-sm mb-1 truncate ${!email.isRead ? 'text-white font-medium' : 'text-dark-primary'}`}>
-                            {email.subject || 'Não informado'}
-                          </p>
-                          <p className="text-xs text-dark-secondary line-clamp-2">
-                            {(email.textoOriginal ? email.textoOriginal.substring(0, 100) : 'Não informado') + (email.textoOriginal && email.textoOriginal.length > 100 ? '...' : '')}
-                          </p>
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs text-dark-secondary">
-                                {email.date ? email.date.toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Não informado'}
-                              </span>
+                              {email.status && (
+                                <span className="text-xs px-2 py-0.5 rounded bg-dark-color text-dark-secondary border border-dark-hover flex-shrink-0">
+                                  {email.status}
+                                </span>
+                              )}
+                            </div>
+                            <p className={`text-sm mb-1 truncate ${!email.isRead ? 'text-white font-medium' : 'text-dark-primary'}`}>
+                              {email.subject || 'Não informado'}
+                            </p>
+                            <p className="text-xs text-dark-secondary line-clamp-2">
+                              {(email.textoOriginal ? email.textoOriginal.substring(0, 100) : 'Não informado') + (email.textoOriginal && email.textoOriginal.length > 100 ? '...' : '')}
+                            </p>
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xs text-dark-secondary">
+                                  {email.date ? email.date.toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Não informado'}
+                                </span>
+                              </div>
                             </div>
                           </div>
+                          {!email.isRead && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                          )}
                         </div>
-                        {!email.isRead && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -337,8 +324,9 @@ export function EmailsPage() {
 
           {/* Painel de detalhes mobile: só aparece se showMobileDetails=true (mobile) */}
           {showMobileDetails && selectedEmail && (
-            <div className="lg:hidden flex-1 border-t border-dark-color bg-dark-bg p-4 space-y-6 animate-fade-in overflow-y-auto max-h-screen">
-              <button onClick={handleBackToList} className="mb-4 flex items-center gap-2 text-blue-400 hover:text-blue-600 font-medium">
+            <div className="lg:hidden flex-1 border-t border-dark-color bg-dark-bg p-4 space-y-6 animate-fade-in force-scroll scrollable-content min-h-0 overflow-y-scroll">
+              <div className="min-h-[600px]"> {/* Container com altura mínima para scroll */}
+                <button onClick={handleBackToList} className="mb-4 flex items-center gap-2 text-blue-400 hover:text-blue-600 font-medium">
                 <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left w-5 h-5"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
                 Voltar para lista
               </button>
@@ -384,6 +372,7 @@ export function EmailsPage() {
                   </ul>
                 )}
               </section>
+              </div> {/* Fecha o container com altura mínima */}
             </div>
           )}
 

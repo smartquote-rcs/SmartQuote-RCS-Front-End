@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { Badge } from "../ui/badge";
-import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Search, Heart, Grid, List, Plus, Edit2, Trash2, RefreshCw, CheckCircle, X, Activity } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
@@ -39,6 +37,9 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
   const [isEditingInline, setIsEditingInline] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
   
   // Estados para toast notifications
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
@@ -86,11 +87,35 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
   // Usar os produtos reais do backend para os cards, não apenas o objeto de display
   const displayProducts = products;
 
-  // Substituir os filtros e busca por paginação
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const filteredProducts = products;
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  // All products are displayed with scroll instead of pagination
+  const filteredProducts = products.filter((product) => {
+    if (!searchTerm.trim()) return true;
+
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (product.nome || "").toLowerCase().includes(searchLower) ||
+      (product.descricao || "").toLowerCase().includes(searchLower) ||
+      (product.codigo || "").toLowerCase().includes(searchLower) ||
+      (product.modelo || "").toLowerCase().includes(searchLower) ||
+      (product.origem || "").toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Lógica de paginação
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
+
+  // Resetar página ao filtrar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Sempre que currentPage for maior que totalPages, ajusta para o máximo disponível
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -439,26 +464,50 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
               {/* Tabs - ocultas no mobile */}
               <TabsList className="hidden md:flex glass-card bg-white/5 border border-white/20 rounded-xl p-1">
                 <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300">
-                  Todos os Produtos ({products.length})
+                  Todos os Produtos ({filteredProducts.length})
                 </TabsTrigger>
               </TabsList>
 
-              {/* Paginação no topo direito */}
-              <div className="flex items-center justify-end w-full">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
+              {/* Paginação sempre visível, inclusive no mobile */}
+              <div className="flex items-center gap-4 ml-auto justify-end mt-2 md:mt-0">
+                {/* Pesquisa movida para cá */}
+                <div className="relative group flex-1 min-w-0 max-w-xs">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Pesquisar por nome, descrição, código..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
+                  />
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </button>
+                <span className="text-slate-300 font-medium text-sm">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima
+                </button>
               </div>
             </div>
           )}
 
           {/* Só mostra a lista de produtos se NÃO estiver editando inline */}
           {!isEditingInline && (
-          <div className="flex-1 scrollable-content overflow-x-hidden overflow-y-auto">
+          <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
               <TabsContent value="all" className="h-full mt-0">
-                <div className={`grid gap-3 md:gap-4 lg:gap-6 w-full ${
+                <div className={`grid gap-3 md:gap-4 lg:gap-6 w-full min-h-[800px] ${
                   viewMode === "grid" 
                     ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
                     : "grid-cols-1"
@@ -471,14 +520,16 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
 
               {/* TabsContent removidos: Populares e Ofertas */}
 
-              {filteredProducts.length === 0 && !isLoadingProducts && (
+              {paginatedProducts.length === 0 && !isLoadingProducts && (
                 <div className="text-center py-12">
                   <Search className="w-12 h-12 text-dark-secondary mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-dark-primary mb-2">Nenhum produto encontrado</h3>
+                  <h3 className="text-lg font-medium text-dark-primary mb-2">
+                    {searchTerm.trim() ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
+                  </h3>
                   <p className="text-dark-secondary">
-                    {displayProducts.length === 0 
-                      ? "Nenhum produto cadastrado. Adicione o primeiro produto ao sistema." 
-                      : "Tente ajustar os filtros de pesquisa"
+                    {searchTerm.trim()
+                      ? `Nenhum produto corresponde à pesquisa "${searchTerm}". Tente outros termos.`
+                      : "Nenhum produto cadastrado. Adicione o primeiro produto ao sistema."
                     }
                   </p>
                 </div>
@@ -641,35 +692,5 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
         }
       `}</style>
     </div>
-  );
-}
-
-type PaginationProps = {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-};
-function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
-  if (totalPages <= 1) return null;
-  return (
-    <nav className="flex items-center gap-2 ml-auto justify-end mt-2 md:mt-0 select-none">
-      <button
-        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-        className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
-        disabled={currentPage === 1}
-      >
-        Anterior
-      </button>
-      <span className="text-slate-300 font-medium text-sm">
-        Página {currentPage} de {totalPages}
-      </span>
-      <button
-        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-        className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
-        disabled={currentPage === totalPages}
-      >
-        Próxima
-      </button>
-    </nav>
   );
 }

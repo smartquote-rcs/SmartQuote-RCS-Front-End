@@ -3,63 +3,11 @@ import { exportSuppliersPdf } from "../../utils/exportSuppliersPdf";
 import { exportCotacao, ExportFormat } from "../../utils/exportCotacaoPdf";
 // Componente para exibir detalhes do item e submodal
 
-type ItemDetalheCardProps = { item: any, onItemReplaced?: () => void };
-const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
+type ItemDetalheCardProps = { item: any };
+const ItemDetalheCard = ({ item }: ItemDetalheCardProps) => {
   const [open, setOpen] = useState(false);
-  const [showReplace, setShowReplace] = useState(false);
-  const [produtos, setProdutos] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
-  const [loadingProdutos, setLoadingProdutos] = useState(false);
-  const [replaceLoading, setReplaceLoading] = useState(false);
-  const [replaceError, setReplaceError] = useState("");
-  const [replaceSuccess, setReplaceSuccess] = useState("");
-
-  // Buscar produtos ao abrir combobox
-  const fetchProdutos = async () => {
-    setLoadingProdutos(true);
-    setReplaceError("");
-    try {
-      const res = await import('../../api/services').then(m => m.produtoService.getAll());
-      if (res.success && Array.isArray(res.data?.data)) {
-        setProdutos(res.data.data);
-      } else {
-        setReplaceError("Erro ao buscar produtos");
-      }
-    } catch (e) {
-      setReplaceError("Erro ao buscar produtos");
-    }
-    setLoadingProdutos(false);
-  };
-
-  const handleReplace = async (newProductId: number) => {
-    setReplaceLoading(true);
-    setReplaceError("");
-    setReplaceSuccess("");
-    try {
-      const res = await import('../../api/services').then(m => m.produtoService.replaceProduct(item.id, newProductId));
-      if (res.success) {
-        setReplaceSuccess("Item substituído com sucesso!");
-        setTimeout(() => {
-          setShowReplace(false);
-          setReplaceSuccess("");
-          if (onItemReplaced) onItemReplaced();
-        }, 800);
-      } else {
-        setReplaceError(res.error || "Erro ao substituir item");
-      }
-    } catch (e) {
-      setReplaceError("Erro ao substituir item");
-    }
-    setReplaceLoading(false);
-  };
-
-  // Filtro de produtos
-  const produtosFiltrados = produtos.filter(p =>
-    p.nome?.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
-  <div className="bg-slate-800/60 border border-cyan-900/30 rounded-xl p-6 flex flex-col gap-4 shadow-lg text-lg">
+    <div className="bg-slate-800/60 border border-cyan-900/30 rounded-lg p-4 flex flex-col gap-2">
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <div>
           <div className="text-white font-semibold text-base">{item.item_nome}</div>
@@ -71,53 +19,18 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
           <div className="text-slate-300 text-sm">Preço: <b>{item.item_preco} {item.item_moeda}</b></div>
           <div className="text-slate-300 text-sm">Subtotal: <b>{(item.quantidade * item.item_preco).toLocaleString('pt-BR', { style: 'currency', currency: item.item_moeda || 'EUR' })}</b></div>
         </div>
-        <div className="flex flex-col gap-2">
+        <div>
           <button onClick={() => setOpen(true)} className="ml-auto bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border border-cyan-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">Ver detalhes</button>
-          <button onClick={() => { setShowReplace(v => !v); if (!produtos.length) fetchProdutos(); }} className="ml-auto bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border border-blue-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">Substituir item</button>
         </div>
       </div>
       <div className="text-slate-300 text-xs mt-2">{item.item_descricao}</div>
-      {showReplace && (
-        <div className="mt-4 p-4 bg-slate-900/90 border border-cyan-700/30 rounded-xl w-full max-w-2xl mx-auto">
-          <div className="flex items-center gap-3 mb-4">
-            <input
-              type="text"
-              className="flex-1 px-4 py-2 rounded-lg bg-slate-800 text-white border border-cyan-700/30 focus:border-cyan-400 outline-none text-base"
-              placeholder="Buscar produto..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              disabled={loadingProdutos}
-              style={{ minWidth: 200 }}
-            />
-            <Search className="w-5 h-5 text-cyan-400" />
-          </div>
-          {replaceError && <div className="text-red-400 text-sm mb-2">{replaceError}</div>}
-          {replaceSuccess && <div className="text-green-400 text-base mb-2 animate-pulse">{replaceSuccess}</div>}
-          <div className="max-h-72 overflow-y-auto divide-y divide-slate-800">
-            {loadingProdutos ? (
-              <div className="text-slate-400 text-base p-4">Carregando produtos...</div>
-            ) : produtosFiltrados.length === 0 ? (
-              <div className="text-slate-400 text-base p-4">Nenhum produto encontrado.</div>
-            ) : produtosFiltrados.map(prod => (
-              <button
-                key={prod.id}
-                className="w-full text-left px-4 py-2 hover:bg-cyan-800/30 rounded text-cyan-200 text-base flex items-center gap-2"
-                onClick={() => handleReplace(prod.id)}
-                disabled={replaceLoading}
-              >
-                <Search className="w-4 h-4 text-cyan-400" /> {prod.nome}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
       {/* Submodal para detalhes completos */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-6 rounded-2xl">
+        <DialogContent className="w-full max-w-xs sm:max-w-lg max-h-[90vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-2 sm:p-6 rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-cyan-300 text-2xl">Detalhes do Item</DialogTitle>
+            <DialogTitle className="text-cyan-300 text-base">Detalhes do Item</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 text-lg">
+          <div className="space-y-2 text-sm">
             <div><b>Nome:</b> {item.item_nome}</div>
             <div><b>Fornecedor:</b> {item.provider || item.fornecedor || '-'}</div>
             <div><b>Origem:</b> {item.origem || '-'}</div>
@@ -126,10 +39,10 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
             <div><b>Quantidade:</b> {item.quantidade}</div>
             <div><b>Subtotal:</b> {(item.quantidade * item.item_preco).toLocaleString('pt-BR', { style: 'currency', currency: item.item_moeda || 'EUR' })}</div>
             <div><b>Moeda:</b> {item.item_moeda}</div>
-            <div><b>Condições:</b> <pre className="bg-slate-800 rounded p-2 text-base whitespace-pre-wrap">{item.condicoes ? JSON.stringify(item.condicoes, null, 2) : '-'}</pre></div>
+            <div><b>Condições:</b> <pre className="bg-slate-800 rounded p-2 text-xs whitespace-pre-wrap">{item.condicoes ? JSON.stringify(item.condicoes, null, 2) : '-'}</pre></div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 mt-6 w-full">
-            <button onClick={() => setOpen(false)} className="w-full sm:w-auto px-6 py-3 text-lg rounded-md bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border border-cyan-600/60 font-semibold">Fechar</button>
+          <div className="flex flex-col sm:flex-row gap-2 mt-4 w-full">
+            <button onClick={() => setOpen(false)} className="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border border-cyan-600/60 font-semibold">Fechar</button>
           </div>
         </DialogContent>
       </Dialog>
@@ -403,15 +316,7 @@ export function QuoteRequestsPage({
           prazoResposta: c.prazoResposta || c.prazo_validade || '',
           orcamento_geral: c.orcamento_geral || c.valor || '',
         }));
-        // Filtra para não exibir cotações cujo prazo_validade seja igual à data atual
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const hojeISO = hoje.toISOString().slice(0, 10); // yyyy-mm-dd
-        const cotacoesFiltradas = mappedCotacoes.filter((c: any) => {
-          if (!c.prazo_validade) return true;
-          return c.prazo_validade.slice(0, 10) !== hojeISO;
-        });
-        setCotacoesList(cotacoesFiltradas);
+        setCotacoesList(mappedCotacoes);
       } catch (error) {
         setCotacoesList([]);
         console.error('Erro ao buscar cotações:', error);
@@ -443,8 +348,8 @@ export function QuoteRequestsPage({
     exportCotacao({ cotacao: selectedCotacao, itens: cotacaoItens, format: exportFormat });
   };
 
-  // Função para buscar itens da cotação (usada também como callback de atualização)
-  const fetchCotacaoItens = () => {
+  // Buscar itens ao abrir detalhes
+  useEffect(() => {
     if (selectedCotacao && selectedCotacao.id) {
       api.get(`/cotacoes-itens?cotacao_id=${selectedCotacao.id}`)
         .then(res => setCotacaoItens(Array.isArray(res.data) ? res.data : []))
@@ -452,11 +357,6 @@ export function QuoteRequestsPage({
     } else {
       setCotacaoItens([]);
     }
-  };
-  // Buscar itens ao abrir detalhes
-  useEffect(() => {
-    fetchCotacaoItens();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCotacao]);
 
   // Extrair valores únicos para os filtros
@@ -583,19 +483,12 @@ export function QuoteRequestsPage({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
-              <div className="flex flex-col">
-                <h3 className="font-mono text-base font-bold text-white group-hover:text-cyan-400 transition-colors duration-300">
-                  {cotacao.id}
-                </h3>
-                {cotacao.prompt && cotacao.prompt.texto_original && (
-                  <span className="block text-lg font-semibold text-cyan-300 mt-1 truncate" title={cotacao.prompt.texto_original}>
-                    {cotacao.prompt.texto_original}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center mb-1 sm:mb-0 sm:ml-2 sm:justify-end w-full sm:w-auto">
-                {getStatusBadge(cotacao.status)}
-              </div>
+              <h3 className="font-mono text-base font-bold text-white group-hover:text-cyan-400 transition-colors duration-300">
+                {cotacao.id}
+              </h3>
+                <div className="flex items-center mb-1 sm:mb-0 sm:ml-2 sm:justify-end w-full sm:w-auto">
+                  {getStatusBadge(cotacao.status)}
+                </div>
             </div>
 
             <div className="space-y-2">
@@ -625,10 +518,10 @@ export function QuoteRequestsPage({
             <div className="mt-3 grid grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
               <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
                 <span className="text-slate-400 text-xs block mb-1">
-                  {t("dashboard.supplier")}:
+                  Fornecedor:
                 </span>
                 <span className="text-white font-medium">
-                  {cotacao.condicoes ? JSON.stringify(cotacao.condicoes) : '-'}
+                  {cotacao.fornecedor || '-'}
                 </span>
               </div>
               <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
@@ -1253,7 +1146,7 @@ export function QuoteRequestsPage({
       {/* Modal de Motivo para Aprovar / Rejeitar / Reativar */}
       {/* Modal de Motivo para Aprovar / Rejeitar / Reativar */}
       <Dialog open={approvalModal.open} onOpenChange={(o)=>!o && closeApproval()}>
-  <DialogContent className="w-full max-w-4xl bg-slate-900/95 border border-cyan-500/30 p-8 rounded-2xl overflow-y-auto">
+        <DialogContent className="w-full max-w-xs sm:max-w-md bg-slate-900/95 border border-cyan-500/30 p-2 sm:p-6 rounded-xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white font-semibold flex items-center gap-2">
               {approvalModal.action === 'approve' && <Check className="w-4 h-4 text-green-400"/>}
@@ -1298,7 +1191,7 @@ export function QuoteRequestsPage({
 
       {/* Modal de Detalhes da Cotação com Sistema de Validação */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-  <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-900/95 to-slate-800/95 border border-cyan-400/30 backdrop-blur-xl p-8 rounded-2xl">
+        <DialogContent className="w-full max-w-xs sm:max-w-2xl md:max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-900/95 to-slate-800/95 border border-cyan-400/30 backdrop-blur-xl p-2 sm:p-8 rounded-xl">
           <DialogHeader className="border-b border-slate-700/50 pb-2">
             <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
               <FileText className="h-5 w-5 text-cyan-400" />
@@ -1315,7 +1208,7 @@ export function QuoteRequestsPage({
               </h3>
               <div className="space-y-4">
                 {cotacaoItens.map(item => (
-                  <ItemDetalheCard key={item.id} item={item} onItemReplaced={fetchCotacaoItens} />
+                  <ItemDetalheCard key={item.id} item={item} />
                 ))}
               </div>
             </div>

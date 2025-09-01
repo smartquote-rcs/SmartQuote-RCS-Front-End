@@ -1397,27 +1397,29 @@ export default function UserManagementPage() {
         </div>
 
         {/* Users Grid */}
-        <div className="grid gap-4 lg:gap-6">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
-              <p className="text-slate-300">Carregando usuários...</p>
-            </div>
-          ) : filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => <UserCard key={user.id} user={user} />)
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <Users className="w-12 h-12 text-slate-500" />
-              <div className="text-center">
-                <h3 className="text-base sm:text-lg font-medium text-slate-300 mb-2">
-                  Nenhum usuário encontrado
-                </h3>
-                <p className="text-slate-500 text-sm">
-                  Tente ajustar os filtros ou adicione um novo usuário.
-                </p>
+        <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
+          <div className="grid gap-4 lg:gap-6 min-h-[800px]"> {/* Força altura para scroll */}
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
+                <p className="text-slate-300">Carregando usuários...</p>
               </div>
-            </div>
-          )}
+            ) : filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => <UserCard key={user.id} user={user} />)
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <Users className="w-12 h-12 text-slate-500" />
+                <div className="text-center">
+                  <h3 className="text-base sm:text-lg font-medium text-slate-300 mb-2">
+                    Nenhum usuário encontrado
+                  </h3>
+                  <p className="text-slate-500 text-sm">
+                    Tente ajustar os filtros ou adicione um novo usuário.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Edit User Dialog */}

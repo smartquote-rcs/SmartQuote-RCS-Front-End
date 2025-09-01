@@ -327,19 +327,21 @@ export function LogsPage() {
         </div>
 
         {/* Logs List */}
-        <div className="grid gap-3 lg:gap-4">
-          {filteredLogs.map((log) => (
-            <LogCard key={log.id} log={log} />
-          ))}
-        </div>
-
-        {filteredLogs.length === 0 && (
-          <div className="text-center py-8 lg:py-12">
-            <Activity className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />
-            <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhum log encontrado</h3>
-            <p className="text-sm sm:text-base text-dark-secondary px-4">Tente ajustar os filtros de pesquisa</p>
+        <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
+          <div className="grid gap-3 lg:gap-4 min-h-[800px]"> {/* Força altura para scroll */}
+            {filteredLogs.map((log) => (
+              <LogCard key={log.id} log={log} />
+            ))}
           </div>
-        )}
+
+          {filteredLogs.length === 0 && (
+            <div className="text-center py-8 lg:py-12">
+              <Activity className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhum log encontrado</h3>
+              <p className="text-sm sm:text-base text-dark-secondary px-4">Tente ajustar os filtros de pesquisa</p>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

@@ -206,13 +206,6 @@ export function ApprovalsPage() {
       </div>
     </div>
   );
-          >
-            {t('approvals.viewDetails')}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="flex flex-col h-full">
@@ -283,19 +276,21 @@ export function ApprovalsPage() {
         </div>
 
         {/* Approvals List */}
-        <div className="grid gap-4 lg:gap-6">
-          {filteredAprovacoes.map((aprovacao) => (
-            <ApprovalCard key={aprovacao.id} aprovacao={aprovacao} />
-          ))}
-        </div>
-
-        {filteredAprovacoes.length === 0 && (
-          <div className="text-center py-8 lg:py-12">
-            <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-green-400 mx-auto mb-4" />
-            <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhuma aprovação pendente</h3>
-            <p className="text-sm sm:text-base text-dark-secondary px-4">Todas as cotações foram processadas</p>
+        <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
+          <div className="grid gap-4 lg:gap-6 min-h-[800px]"> {/* Força altura para scroll */}
+            {filteredAprovacoes.map((aprovacao) => (
+              <ApprovalCard key={aprovacao.id} aprovacao={aprovacao} />
+            ))}
           </div>
-        )}
+
+          {filteredAprovacoes.length === 0 && (
+            <div className="text-center py-8 lg:py-12">
+              <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-green-400 mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhuma aprovação pendente</h3>
+              <p className="text-sm sm:text-base text-dark-secondary px-4">Todas as cotações foram processadas</p>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

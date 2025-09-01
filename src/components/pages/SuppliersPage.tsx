@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { 
   AlertDialog,
@@ -41,9 +38,10 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
   const { t } = useTranslation();
   const { suppliers, isLoadingSuppliers, loadSuppliers, deleteSupplier, updateSupplier, addSupplier } = useApp();
   const [searchTerm, setSearchTerm] = useState("");
-  // Paginação
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 12;
+
+  // All suppliers are displayed with scroll instead of pagination
   
 
   // Estados para o modal de edição
@@ -126,9 +124,35 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
     return fornecedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.email.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.telefone.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  // Paginação
-  const totalPages = Math.ceil(filteredFornecedores.length / itemsPerPage);
-  const paginatedFornecedores = filteredFornecedores.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // Lógica de paginação
+  const totalPages = Math.max(1, Math.ceil(filteredFornecedores.length / itemsPerPage));
+
+  // Resetar página ao filtrar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Sempre que currentPage for maior que totalPages, ajusta para o máximo disponível
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const paginatedFornecedores = filteredFornecedores.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Fornecedores ativos filtrados e paginados
+  const activeFornecedores = fornecedores.filter(f => f.status === 'active');
+  const filteredActiveFornecedores = activeFornecedores.filter((fornecedor) => {
+    return fornecedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.email.toLowerCase().includes(searchTerm.toLowerCase()) || fornecedor.telefone.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+  const paginatedActiveFornecedores = filteredActiveFornecedores.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Funções para Toast Notifications
   const showToast = (
@@ -411,7 +435,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
               Fornecedores
             </h1>
             <span className="text-blue-300 font-bold text-sm">
-              {filteredFornecedores.length}
+              {paginatedFornecedores.length} de {filteredFornecedores.length}
             </span>
           </div>
           
@@ -419,8 +443,8 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
             {/* Linha centralizada com contador e botões do mesmo tamanho */}
             <div className="hidden md:flex items-center gap-3 w-full justify-center">
               <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[160px] h-[44px]">
-                <span className="font-bold text-lg">{filteredFornecedores.length}</span>
-                <span className="ml-2 text-blue-200">fornecedores</span>
+                <span className="font-bold text-lg">{paginatedFornecedores.length}</span>
+                <span className="ml-2 text-blue-200">de {filteredFornecedores.length}</span>
               </div>
               <button 
                 onClick={handleRefreshSuppliers}
@@ -484,39 +508,58 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                 value="all" 
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
               >
-                Todos ({fornecedores.length})
+                Todos ({filteredFornecedores.length})
               </TabsTrigger>
               <TabsTrigger 
                 value="active" 
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-green-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
               >
-                Ativos ({fornecedores.filter(f => f.status === 'active').length})
+                Ativos ({filteredActiveFornecedores.length})
               </TabsTrigger>
             </TabsList>
 
             {/* Filters */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center space-y-1 md:space-y-3 md:space-y-0 md:space-x-4">
               {/* Pesquisa - sempre visível */}
-              <div className="relative group flex-1 min-w-0">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                  <SearchCheck className="w-6 h-6 text-blue-400 bg-white rounded-full shadow p-1" />
+              <div className="flex flex-col space-y-1 md:space-y-4 w-full lg:w-auto">
+                <div className="relative group flex-1 min-w-0">
+                  <SearchCheck className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Pesquisar fornecedores..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
+                  />
+                </div>
+              </div>
+
+              {/* Paginação sempre visível, inclusive no mobile */}
+              <div className="flex items-center gap-2 ml-auto justify-end mt-2 md:mt-0">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </button>
+                <span className="text-slate-300 font-medium text-sm">
+                  Página {currentPage} de {totalPages}
                 </span>
-                <Input
-                  placeholder="Pesquisar fornecedores..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="pl-12 w-full bg-slate-800/50 border-slate-700/50 text-white placeholder-slate-400 focus:border-blue-400/50 focus:ring-blue-400/20 hover:border-slate-600/50 transition-all duration-200 text-sm h-10 md:h-auto"
-                />
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima
+                </button>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 scrollable-content">
+          <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
             {isLoadingSuppliers ? (
-              <div className="text-center py-8 lg:py-12">
+              <div className="text-center py-8 lg:py-12 min-h-[600px]"> {/* Força altura para scroll */}
                 <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 animate-spin">
                   <RefreshCw className="w-full h-full text-blue-400" />
                 </div>
@@ -526,38 +569,16 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
             ) : (
               <>
                 <TabsContent value="all" className="h-full mt-0">
-                  <div className="grid gap-4 lg:gap-6">
+                  <div className="grid gap-4 lg:gap-6 min-h-[800px]"> {/* Força altura para scroll */}
                     {paginatedFornecedores.map((fornecedor) => (
                       <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
                     ))}
                   </div>
-                  {/* Paginação */}
-                  {totalPages > 1 && (
-                    <div className="flex justify-center items-center mt-6 gap-2">
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1 rounded bg-slate-700 text-white disabled:opacity-50"
-                      >Anterior</button>
-                      {Array.from({ length: totalPages }, (_, i) => (
-                        <button
-                          key={i + 1}
-                          onClick={() => setCurrentPage(i + 1)}
-                          className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'}`}
-                        >{i + 1}</button>
-                      ))}
-                      <button
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-1 rounded bg-slate-700 text-white disabled:opacity-50"
-                      >Próxima</button>
-                    </div>
-                  )}
                 </TabsContent>
 
                 <TabsContent value="active" className="h-full mt-0">
-                  <div className="grid gap-4 lg:gap-6">
-                    {fornecedores.filter(f => f.status === 'active').map((fornecedor) => (
+                  <div className="grid gap-4 lg:gap-6 min-h-[600px]"> {/* Força altura para scroll */}
+                    {paginatedActiveFornecedores.map((fornecedor) => (
                       <FornecedorCard key={fornecedor.id} fornecedor={fornecedor} />
                     ))}
                   </div>
