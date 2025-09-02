@@ -122,25 +122,157 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
           </div>
         </div>
       )}
-      {/* Submodal para detalhes completos */}
+      {/* Modal melhorado com aparência de fatura */}
       <Dialog open={open} onOpenChange={setOpen}>
-  <DialogContent className="w-full max-w-screen sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-4 sm:p-6 rounded-2xl overflow-x-auto">
-          <DialogHeader>
-            <DialogTitle className="text-cyan-300 text-2xl">{t("quoteRequests.itemDetailsTitle")}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 text-lg">
-            <div><b>{t("quoteRequests.nameLabel")}:</b> {item.item_nome}</div>
-            <div><b>{t("quoteRequests.supplierLabel")}:</b> {item.provider || item.fornecedor || '-'}</div>
-            <div><b>{t("quoteRequests.originLabel")}:</b> {item.origem || '-'}</div>
-            <div><b>{t("quoteRequests.descriptionLabel")}:</b> {item.item_descricao}</div>
-            <div><b>{t("quoteRequests.priceLabel")}:</b> {item.item_preco} {item.item_moeda}</div>
-            <div><b>{t("quoteRequests.quantityLabel")}:</b> {item.quantidade}</div>
-            <div><b>{t("quoteRequests.subtotalLabel")}:</b> {formatCurrency(item.quantidade * item.item_preco)}</div>
-            <div><b>{t("quoteRequests.currencyLabel")}:</b> {item.item_moeda}</div>
-            <div><b>{t("quoteRequests.conditionsLabel")}:</b> <pre className="bg-slate-800 rounded p-2 text-base whitespace-pre-wrap">{item.condicoes ? JSON.stringify(item.condicoes, null, 2) : '-'}</pre></div>
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto bg-white border-0 p-0 rounded-2xl shadow-2xl">
+          {/* Cabeçalho da Fatura */}
+          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-3 md:p-4 rounded-t-2xl relative">
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Receipt className="w-6 h-6 md:w-8 md:h-8 text-cyan-400" />
+                <div>
+                  <DialogTitle className="text-xl md:text-2xl font-bold text-white">
+                    {t("quoteRequests.itemDetailsTitle")}
+                  </DialogTitle>
+                  <DialogDescription className="text-slate-300 mt-1 text-sm">
+                    Detalhes completos do item da cotação
+                  </DialogDescription>
+                </div>
+              </div>
+              <div className="text-center md:text-right text-slate-300">
+                <div className="text-sm">Data de criação</div>
+                <div className="text-lg font-semibold">{new Date().toLocaleDateString('pt-BR')}</div>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 mt-6 w-full">
-            <button onClick={() => setOpen(false)} className="w-full sm:w-auto px-6 py-3 text-lg rounded-md bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border border-cyan-600/60 font-semibold">{t("quoteRequests.close")}</button>
+
+          {/* Conteúdo da Fatura */}
+          <div className="p-3 md:p-4 bg-white text-gray-800">
+            {/* Informações do Item */}
+            <div className="mb-4 md:mb-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Package className="w-5 h-5 text-slate-600" />
+                <h3 className="text-lg md:text-xl font-bold text-slate-800">Informações do Produto</h3>
+              </div>
+              
+              <div className="bg-slate-50 rounded-xl p-3 md:p-4 border border-slate-200">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Hash className="w-4 h-4 text-slate-500 mt-1" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-slate-600 font-medium">Nome do Produto</div>
+                        <div className="text-base md:text-lg font-semibold text-slate-800 mt-1 break-words">{item.item_nome}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <Building className="w-4 h-4 text-slate-500 mt-1" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-slate-600 font-medium">Fornecedor</div>
+                        <div className="text-base text-slate-800 mt-1 break-words">{item.provider || item.fornecedor || 'Não informado'}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-4 h-4 text-slate-500 mt-1" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-slate-600 font-medium">Origem</div>
+                        <div className="text-base text-slate-800 mt-1 break-words">{item.origem || 'Não informado'}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-4 h-4 text-slate-500 mt-1" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-slate-600 font-medium">Descrição</div>
+                        <div className="text-base text-slate-800 mt-1 leading-relaxed break-words">
+                          {item.item_descricao || 'Sem descrição disponível'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Detalhes Financeiros */}
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Calculator className="w-5 h-5 text-slate-600" />
+                <h3 className="text-xl font-bold text-slate-800">Detalhes Financeiros</h3>
+              </div>
+              
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 md:p-4 border border-blue-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Hash className="w-4 h-4 text-blue-600" />
+                      <div className="text-sm text-blue-700 font-medium">Quantidade</div>
+                    </div>
+                    <div className="text-base md:text-lg font-bold text-blue-800">{item.quantidade}</div>
+                    <div className="text-sm text-blue-600">unidades</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <DollarSign className="w-4 h-4 text-green-600" />
+                      <div className="text-sm text-green-700 font-medium">Preço Unitário</div>
+                    </div>
+                    <div className="text-base md:text-lg font-bold text-green-800 break-words">
+                      {formatCurrency(item.item_preco)}
+                    </div>
+                    <div className="text-sm text-green-600">{item.item_moeda}</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Calculator className="w-4 h-4 text-purple-600" />
+                      <div className="text-sm text-purple-700 font-medium">Subtotal</div>
+                    </div>
+                    <div className="text-base md:text-lg font-bold text-purple-800 break-words">
+                      {formatCurrency(item.quantidade * item.item_preco)}
+                    </div>
+                    <div className="text-sm text-purple-600">valor total</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Resumo Final */}
+            <div className="border-t-2 border-slate-200 pt-4">
+              <div className="bg-slate-800 text-white rounded-xl p-3 md:p-4">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                  <div className="text-center md:text-left">
+                    <div className="text-slate-300 text-sm">Total do Item</div>
+                    <div className="text-2xl md:text-3xl font-bold text-white break-words">
+                      {formatCurrency(item.quantidade * item.item_preco)}
+                    </div>
+                  </div>
+                  <div className="text-center md:text-right">
+                    <div className="text-slate-300 text-sm">Moeda</div>
+                    <div className="text-lg md:text-xl font-semibold text-cyan-400">{item.item_moeda}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Rodapé com Ações */}
+          <div className="bg-slate-50 p-3 md:p-4 rounded-b-2xl border-t border-slate-200">
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => setOpen(false)}
+                className="bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400 hover:text-slate-800 transition-all duration-200 px-6 py-2 rounded-lg font-medium shadow-sm"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Fechar Detalhes
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -184,6 +316,13 @@ import {
   SortAsc,
   SortDesc,
   Plus,
+  Receipt,
+  Package,
+  MapPin,
+  Hash,
+  DollarSign,
+  Calculator,
+  X,
 } from "lucide-react";
 import { cotacaoService } from "../../api/services";
 import api from '../../api/client';
