@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCurrency } from "../hooks/useCurrency";
 import { 
   Search, 
   ShoppingCart, 
@@ -82,6 +83,7 @@ const supportItems = [
 export function UserDashboard({ user, onLogout }: UserDashboardProps) {
   const { t, i18n } = useTranslation();
   const { systemName } = useApp();
+  const { formatCurrency } = useCurrency();
   const [activePage, setActivePage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
@@ -221,7 +223,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               </div>
             </header>
             
-            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
+            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg">
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 lg:mb-6">
                 {/* Minhas Cotações */}
                 <div className="glass-card p-4 sm:p-6 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 group cursor-pointer" onClick={() => setActivePage("my-quotes")}>
@@ -274,20 +276,34 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                     {t('dashboard.viewAll')}
                   </button>
                 </div>
-                <div className="space-y-3">
-                  {myQuotes.slice(0, 3).map((quote) => (
-                    <div key={quote.id} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors duration-300">
-                      <div className="min-w-0 flex-1 mr-3">
-                        <p className="text-white font-medium text-sm truncate">{quote.produto}</p>
-                        <p className="text-slate-400 text-xs truncate">{quote.fornecedor}</p>
+                {myQuotes.length > 0 ? (
+                  <div className="space-y-3">
+                    {myQuotes.slice(0, 3).map((quote) => (
+                      <div key={quote.id} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors duration-300">
+                        <div className="min-w-0 flex-1 mr-3">
+                          <p className="text-white font-medium text-sm truncate">{quote.produto}</p>
+                          <p className="text-slate-400 text-xs truncate">{quote.fornecedor}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-white font-semibold text-sm whitespace-nowrap">{quote.valor}</p>
+                          {getStatusBadge(quote.status)}
+                        </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-white font-semibold text-sm whitespace-nowrap">{quote.valor}</p>
-                        {getStatusBadge(quote.status)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="w-12 h-12 text-dark-secondary mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-dark-primary mb-2">{t('newQuote.noQuotesFound')}</h3>
+                    <p className="text-sm text-dark-secondary mb-4">Você ainda não fez nenhuma solicitação de cotação</p>
+                    <button 
+                      onClick={() => setActivePage("orders")}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105"
+                    >
+                      Criar Nova Cotação
+                    </button>
+                  </div>
+                )}
               </div>
             </main>
           </div>
@@ -329,7 +345,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               </div>
             </header>
             
-            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
+            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg">
               {/* Statistics Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 lg:mb-6">
                 <div className="glass-card p-4 sm:p-6 bg-green-500/10 rounded-xl border border-green-500/20 hover:border-green-500/40 transition-all duration-300">
@@ -452,7 +468,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               {myQuotes.length === 0 && (
                 <div className="text-center py-8 sm:py-12">
                   <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />
-                  <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhuma cotação encontrada</h3>
+                  <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">{t('newQuote.noQuotesFound')}</h3>
                   <p className="text-sm sm:text-base text-dark-secondary mb-4 px-4">Você ainda não fez nenhuma solicitação de cotação</p>
                   <button 
                     onClick={() => setActivePage("product-search")}
@@ -467,28 +483,17 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
         );
       case "orders":
         return (
-          <div className="flex flex-col h-full w-full">
+          <div className="flex flex-col h-full w-full overflow-hidden">
             <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                 <div className="min-w-0">
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary truncate flex items-center gap-3">
                     <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
-                    Nova Cotação
+                    {t("navigation.newQuote")}
                   </h1>
-                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">Crie cotações personalizadas usando IA</p>
+                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">{t("dashboard.newQuoteSubtitle")}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <button 
-                      onClick={() => setActivePage("notifications")}
-                      className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
-                    >
-                      <Bell className="w-5 h-5 text-slate-300" />
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-bold text-white">3</span>
-                      </div>
-                    </button>
-                  </div>
                   <div className="glass-card bg-blue-500/20 border-blue-500/30 px-4 py-2 text-center sm:text-left flex-shrink-0 rounded-lg">
                     <span className="text-blue-300 font-bold text-lg">{myQuotes.length}</span>
                     <span className="text-blue-200 ml-2">cotações ativas</span>
@@ -497,17 +502,17 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               </div>
             </header>
             
-            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
+            <main className="flex-1 flex flex-col p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-hidden">
               {/* Nova Cotação com IA */}
-              <div className="mb-8">
+              <div className="flex-shrink-0 mb-8">
                 <div className="glass-card bg-gradient-to-br from-blue-900/30 to-cyan-900/30 rounded-xl border border-blue-500/20 p-4 sm:p-6">
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="p-2 bg-blue-500/20 rounded-lg">
                       <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                     </div>
                     <div>
-                      <h2 className="text-base sm:text-lg font-bold text-white">Criar Nova Cotação com IA</h2>
-                      <p className="text-xs sm:text-sm text-blue-200">Descreva o que precisa e nossa IA irá gerar uma cotação personalizada</p>
+                      <h2 className="text-base sm:text-lg font-bold text-white">{t("dashboard.createNewQuoteAI")}</h2>
+                      <p className="text-xs sm:text-sm text-blue-200">{t("dashboard.createNewQuoteAIDesc")}</p>
                     </div>
                   </div>
                   
@@ -516,7 +521,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                       <textarea
                         value={newQuotePrompt}
                         onChange={(e) => setNewQuotePrompt(e.target.value)}
-                        placeholder="Ex: Preciso de 50 painéis solares de 400W para instalação residencial, incluindo inversores e sistema de montagem. O projeto é para uma residência de 200m² em Lisboa..."
+                        placeholder={t("newQuote.placeholder")}
                         className="w-full h-20 sm:h-24 bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 sm:p-4 text-white placeholder-slate-400 resize-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors text-xs sm:text-sm"
                         maxLength={500}
                       />
@@ -534,7 +539,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                             if (!validation.valid) {
                               setQuoteMessage({
                                 type: 'error',
-                                text: validation.message || 'Solicitação inválida'
+                                text: validation.message || t('newQuote.invalidRequest')
                               });
                               return;
                             }
@@ -555,7 +560,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                                 id: `RCS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
                                 produto: result.data?.produto || `Produto personalizado (${newQuotePrompt.substring(0, 30)}...)`,
                                 fornecedor: result.data?.fornecedor || "IA SmartQuote",
-                                valor: result.data?.valor || "€" + (Math.random() * 5000 + 100).toFixed(2),
+                                valor: result.data?.valor || formatCurrency(Math.random() * 5000 + 100),
                                 status: "pending" as const,
                                 data: new Date().toLocaleDateString('pt-PT'),
                                 submittedAt: new Date().toLocaleString('pt-PT'),
@@ -585,7 +590,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                               
                               setQuoteMessage({
                                 type: 'success',
-                                text: 'Cotação criada com sucesso!',
+                                text: t('newQuote.quotationCreated'),
                                 quoteId: newQuote.id
                               });
                               setIsCreatingQuote(false);
@@ -600,7 +605,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                               console.error('❌ Erro ao fazer busca:', error);
                               setQuoteMessage({
                                 type: 'error',
-                                text: error.message || 'Erro ao processar solicitação. Tente novamente.'
+                                text: error.message || t('newQuote.processError')
                               });
                               setIsCreatingQuote(false);
                             }
@@ -612,12 +617,12 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                         {isCreatingQuote ? (
                           <>
                             <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Criando Cotação...</span>
+                            <span>{t('newQuote.creating')}</span>
                           </>
                         ) : (
                           <>
                             <Send className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>Gerar Cotação</span>
+                            <span>{t('newQuote.generate')}</span>
                           </>
                         )}
                       </button>
@@ -625,7 +630,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                         onClick={() => setNewQuotePrompt("")}
                         className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm"
                       >
-                        Limpar
+                        {t('newQuote.clear')}
                       </button>
                     </div>
                     
@@ -633,7 +638,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 sm:p-4">
                         <div className="flex items-center space-x-3">
                           <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                          <span className="text-blue-300 text-xs sm:text-sm">Nossa IA está analisando sua solicitação e buscando os melhores fornecedores...</span>
+                          <span className="text-blue-300 text-xs sm:text-sm">{t('newQuote.aiAnalyzing')}</span>
                         </div>
                       </div>
                     )}
@@ -660,7 +665,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                               className="bg-green-600/50 hover:bg-green-700/50 border border-green-600/50 text-green-300 px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300 flex items-center space-x-1"
                             >
                               <Eye className="w-3 h-3" />
-                              <span>Detalhes</span>
+                              <span>{t('newQuote.details')}</span>
                             </button>
                           )}
                         </div>
@@ -674,107 +679,18 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               </div>
 
               {/* Lista de Cotações Existentes - Histórico Real */}
-              <div className="space-y-4">
-                <h3 className="text-base sm:text-lg font-bold text-white mb-4">Histórico de Minhas Cotações</h3>
-                
-                {/* Histórico Real das Cotações Criadas */}
-                {quoteHistory.length > 0 ? (
-                  <div className="space-y-3 mb-6">
-                    {quoteHistory.slice(0, 10).map((entry) => (
-                      <div key={entry.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="text-blue-400 font-mono text-xs">{entry.id}</p>
-                            <p className="text-slate-400 text-xs">{entry.timestamp}</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="bg-orange-500/20 px-2 py-1 rounded">
-                              <span className="text-orange-400 text-xs font-medium">Pendente</span>
-                            </div>
-                            <button
-                              onClick={() => setActivePage("quotes")}
-                              className="bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 text-blue-300 px-3 py-1.5 rounded text-xs transition-all duration-200 flex items-center space-x-1"
-                            >
-                              <Eye className="w-3 h-3" />
-                              <span>Ver Detalhes</span>
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-white text-sm mb-2">{entry.message}</p>
-                        {entry.quote && (
-                          <div className="mt-2 pt-2 border-t border-slate-600/30">
-                            <div className="grid grid-cols-2 gap-3 text-xs">
-                              <div>
-                                <span className="text-slate-400">Produto:</span>
-                                <span className="text-white ml-2">{entry.quote.produto}</span>
-                              </div>
-                              <div>
-                                <span className="text-slate-400">Valor:</span>
-                                <span className="text-blue-400 ml-2 font-bold">{entry.quote.valor}</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {quoteHistory.length > 10 && (
-                      <div className="text-center">
-                        <button
-                          onClick={() => setActivePage("quotes")}
-                          className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm flex items-center space-x-2 mx-auto"
-                        >
-                          <FileText className="w-4 h-4" />
-                          <span>Ver todas as {quoteHistory.length} cotações</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="glass-card p-6 text-center">
-                    <FileText className="w-8 h-8 mx-auto mb-3 text-slate-400 opacity-50" />
-                    <p className="text-slate-400 text-sm">Nenhuma cotação criada ainda.</p>
-                    <p className="text-xs text-slate-500 mt-1">Use o prompt acima para criar sua primeira cotação.</p>
-                  </div>
-                )}
-
-                {/* Cotações do Sistema (se existirem) */}
-                {myQuotes.map((quote) => (
-                  <div key={quote.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <span className="font-mono text-sm text-blue-400">{quote.id}</span>
-                          <Badge className={`text-xs px-2 py-1 ${
-                            quote.status === 'approved' ? 'bg-green-600' :
-                            quote.status === 'pending' ? 'bg-orange-600' :
-                            quote.status === 'rejected' ? 'bg-red-600' : 'bg-blue-600'
-                          }`}>
-                            {quote.status === 'approved' ? 'Aprovada' :
-                             quote.status === 'pending' ? 'Pendente' :
-                             quote.status === 'rejected' ? 'Rejeitada' : 'Processando'}
-                          </Badge>
-                        </div>
-                        <h4 className="font-medium text-white mb-1 truncate">{quote.produto}</h4>
-                        <p className="text-sm text-dark-secondary truncate">{quote.fornecedor}</p>
-                        <p className="text-xs text-dark-secondary mt-1">{quote.data}</p>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-400">{quote.valor}</div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors">
-                            <Eye className="w-4 h-4 text-blue-400" />
-                          </button>
-                          <button className="p-2 hover:bg-green-500/20 rounded-lg transition-colors">
-                            <Download className="w-4 h-4 text-green-400" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex-1 flex flex-col justify-center items-center">
+                <div className="text-center">
+                  <FileText className="w-16 h-16 text-dark-secondary mx-auto mb-6" />
+                  <h3 className="text-xl font-medium text-dark-primary mb-3">Nenhuma cotação encontrada</h3>
+                  <p className="text-base text-dark-secondary mb-6 px-4 max-w-md">Você ainda não criou nenhuma solicitação de cotação. Use o formulário acima para criar sua primeira cotação.</p>
+                  <button 
+                    onClick={() => setActivePage("product-search")}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-all duration-300 hover:scale-105 font-medium"
+                  >
+                    Explorar Produtos
+                  </button>
+                </div>
               </div>
             </main>
           </div>
@@ -812,7 +728,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               </div>
             </header>
             
-            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
+            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg">
               {favoriteProducts.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                   {favoriteProducts.map((produto) => (
@@ -849,7 +765,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
 
                         <div className="mt-auto">
                           <div className="flex items-center space-x-2 flex-wrap mb-3">
-                            <span className="text-xl font-bold text-green-400">{produto.preco}</span>
+                            <span className="text-xl font-bold text-green-400">{typeof produto.preco === 'number' ? formatCurrency(produto.preco) : produto.preco}</span>
                             {/* {produto.precoOriginal && (
                               <span className="text-sm text-red-400 line-through bg-red-500/20 px-2 py-1 rounded">{produto.precoOriginal}</span>
                             )} */}
@@ -1003,7 +919,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               </div>
             </header>
             
-            <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg overflow-y-auto">
+            <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
               {notifications.length > 0 ? (
                 <div className="space-y-4">
                   {notifications.map((notification) => (

@@ -1,42 +1,34 @@
 import { useState, useEffect } from "react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "./ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
+} from "./ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
   FileText,
   Plus,
   User,
-  Building,
   Package,
-  Euro,
   Calendar,
   AlertCircle,
   CheckCircle,
-  Mail,
-  Phone,
-  MapPin,
-  Clock,
-  Upload,
   X,
 } from "lucide-react";
-import { useApp } from "../../contexts/AppContext";
+import { useApp } from "../contexts/AppContext";
 import { useTranslation } from "react-i18next";
 
 interface QuoteWebFormProps {
@@ -122,6 +114,7 @@ const moedas = [
   { value: "USD", label: "Dólar Americano ($)" },
   { value: "GBP", label: "Libra Esterlina (£)" },
   { value: "BRL", label: "Real Brasileiro (R$)" },
+  { value: "AOA", label: "Kwanza Angolano (Kz)" },
 ];
 
 export function QuoteWebForm({ onQuoteSubmitted, isPublic = false }: QuoteWebFormProps) {
@@ -184,10 +177,11 @@ export function QuoteWebForm({ onQuoteSubmitted, isPublic = false }: QuoteWebFor
     setFormData(prev => {
       if (field.includes('.')) {
         const [parent, child] = field.split('.');
+        const parentObj = prev[parent as keyof QuoteFormData] as any;
         return {
           ...prev,
           [parent]: {
-            ...prev[parent as keyof QuoteFormData],
+            ...parentObj,
             [child]: value
           }
         };
@@ -303,7 +297,6 @@ export function QuoteWebForm({ onQuoteSubmitted, isPublic = false }: QuoteWebFor
       // Adicionar ao contexto se não for público
       if (!isPublic && addQuote) {
         addQuote({
-          id: novaColacao.id,
           produto: novaColacao.produto,
           fornecedor: novaColacao.fornecedorPreferencial || "A definir",
           valor: novaColacao.valor,
@@ -760,9 +753,9 @@ export function QuoteWebForm({ onQuoteSubmitted, isPublic = false }: QuoteWebFor
           </SelectTrigger>
           <SelectContent className="bg-slate-800 border-slate-600">
             <SelectItem value="" className="text-white hover:bg-slate-700">Sem preferência</SelectItem>
-            {suppliers.map((supplier) => (
-              <SelectItem key={supplier.id} value={supplier.nomeEmpresa} className="text-white hover:bg-slate-700">
-                {supplier.nomeEmpresa}
+            {suppliers.map((supplier: any) => (
+              <SelectItem key={supplier.id} value={supplier.nome} className="text-white hover:bg-slate-700">
+                {supplier.nome}
               </SelectItem>
             ))}
           </SelectContent>
@@ -893,7 +886,7 @@ export function QuoteWebForm({ onQuoteSubmitted, isPublic = false }: QuoteWebFor
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-white">
             <FileText className="w-6 h-6 text-blue-400" />
-            <span>Solicitação de Cotação</span>
+            <span>{t("quoteForm.title")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -927,12 +920,12 @@ export function QuoteWebForm({ onQuoteSubmitted, isPublic = false }: QuoteWebFor
                   variant="outline"
                   className="border-slate-600 text-slate-300 hover:bg-slate-700"
                 >
-                  Anterior
+                  {t("quoteForm.previous")}
                 </Button>
                 
                 {currentStep < 4 ? (
                   <Button onClick={nextStep} className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Próximo
+                    {t("quoteForm.next")}
                   </Button>
                 ) : (
                   <Button
@@ -940,7 +933,7 @@ export function QuoteWebForm({ onQuoteSubmitted, isPublic = false }: QuoteWebFor
                     disabled={isSubmitting}
                     className="bg-green-600 hover:bg-green-700 text-white"
                   >
-                    {isSubmitting ? "Enviando..." : "Enviar Cotação"}
+                    {isSubmitting ? t("quoteForm.submitting") : t("quoteForm.submit")}
                   </Button>
                 )}
               </div>
@@ -964,7 +957,7 @@ export function QuoteWebForm({ onQuoteSubmitted, isPublic = false }: QuoteWebFor
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2 text-white">
             <FileText className="w-5 h-5 text-blue-400" />
-            <span>Formulário Completo de Cotação</span>
+            <span>{t("quoteForm.titleComplete")}</span>
           </DialogTitle>
         </DialogHeader>
         
@@ -976,7 +969,7 @@ export function QuoteWebForm({ onQuoteSubmitted, isPublic = false }: QuoteWebFor
               <div className="mb-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
                 <div className="flex items-center space-x-2 mb-2">
                   <AlertCircle className="w-4 h-4 text-red-400" />
-                  <span className="text-red-400 font-medium">Erros encontrados:</span>
+                  <span className="text-red-400 font-medium">{t("quoteForm.errorsFound")}</span>
                 </div>
                 <ul className="text-red-300 text-sm space-y-1">
                   {validationErrors.map((error, index) => (

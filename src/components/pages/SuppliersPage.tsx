@@ -213,7 +213,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
       exportSuppliersPdf(suppliers, { companyName: 'RCS', username: (user as any)?.name || 'Usuário' });
     } catch (e) {
       console.error('Erro ao exportar PDF fornecedores:', e);
-      showToast('error','Falha na Exportação','Não foi possível gerar o PDF.');
+      showToast('error', t('suppliers.exportError'), t('suppliers.exportErrorMessage'));
     }
   };
 
@@ -224,7 +224,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
     const originalSupplier = suppliers.find(s => s.id === supplierId);
     if (!originalSupplier) {
       console.error('Fornecedor não encontrado para edição:', supplierId);
-      showToast('error','Fornecedor não encontrado','Não foi possível localizar o fornecedor para edição.');
+      showToast('error', t('suppliers.supplierNotFound'), t('suppliers.supplierNotFoundMessage'));
       return;
     }
     setSelectedSupplierForEdit(originalSupplier);
@@ -237,15 +237,15 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
       if (isNew) {
         const { id, ...rest } = supplierData; // remover id 0
         await addSupplier(rest as any);
-        showToast('success','Fornecedor cadastrado',`Fornecedor "${supplierData.nome}" foi criado com sucesso!`);
+        showToast('success', t('suppliers.supplierCreated'), `${t('common.supplier')} "${supplierData.nome}" ${t('suppliers.supplierCreatedSuccess')}`);
       } else {
         await updateSupplier(supplierData);
-        showToast('success','Fornecedor atualizado',`Fornecedor "${supplierData.nome}" foi atualizado com sucesso!`);
+        showToast('success', t('suppliers.supplierUpdated'), `${t('common.supplier')} "${supplierData.nome}" ${t('suppliers.supplierUpdatedSuccess')}`);
       }
       handleCloseEditModal();
     } catch (error) {
       console.error('Erro ao salvar fornecedor:', error);
-      showToast('error','Erro ao salvar','Não foi possível salvar o fornecedor.');
+      showToast('error', t('suppliers.errorSaving'), t('suppliers.errorSavingMessage'));
     }
   };
 
@@ -261,16 +261,16 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
       await deleteSupplier(supplierId);
       showToast(
         'success',
-        'Fornecedor Removido',
-        `O fornecedor foi removido com sucesso!`
+        t('suppliers.supplierRemoved'),
+        t('suppliers.supplierRemovedSuccess')
       );
       console.log('Fornecedor deletado com sucesso:', supplierId);
     } catch (error: any) {
       console.error('Erro ao deletar fornecedor:', error);
       showToast(
         'error',
-        'Erro ao Remover',
-        error?.message || error?.toString() || 'Ocorreu um erro ao remover o fornecedor. Tente novamente.'
+        t('suppliers.errorRemoving'),
+        error?.message || error?.toString() || t('suppliers.errorRemovingMessage')
       );
     }
   };
@@ -296,7 +296,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
       </div>
       {/* Performance/Avaliação tipo barra */}
       <div className="flex items-center gap-2 mt-2">
-        <span className="text-xs text-slate-400">Performance:</span>
+        <span className="text-xs text-slate-400">{t('suppliers.performanceLabel')}</span>
         <div className="flex gap-1">
           {[1,2,3,4,5].map(level => (
             <button
@@ -312,7 +312,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                       : 'bg-orange-400 border-orange-500'
                   : 'bg-slate-600 border-slate-500'
               }`}
-              title={`Performance nível ${level}`}
+              title={`${t('suppliers.performanceLevel')} ${level}`}
             />
           ))}
         </div>
@@ -336,13 +336,13 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
 
       {/* Informações Básicas */}
       <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/50">
-        <h4 className="text-xs sm:text-sm font-semibold text-slate-300 mb-3">Informações</h4>
+        <h4 className="text-xs sm:text-sm font-semibold text-slate-300 mb-3">{t('suppliers.informationTitle')}</h4>
         <div className="grid grid-cols-1 gap-3 sm:gap-4">
           <div className="text-center">
             <div className="text-xs sm:text-sm font-medium text-slate-300 mb-1">
               {new Date(fornecedor.ultimaAtividade).toLocaleDateString('pt-PT')}
             </div>
-            <div className="text-xs text-slate-400">Última Atividade</div>
+            <div className="text-xs text-slate-400">{t('suppliers.lastActivity')}</div>
           </div>
         </div>
       </div>
@@ -353,21 +353,21 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
           <button 
             onClick={() => handleEditSupplier(fornecedor)}
             className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500/80 hover:bg-blue-500 rounded-full flex items-center justify-center text-white transition-colors duration-200"
-            title="Editar fornecedor"
+            title={t('suppliers.editTooltip')}
           >
             <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
           <button 
             onClick={() => window.open(`mailto:${fornecedor.email}`)}
             className="w-7 h-7 sm:w-8 sm:h-8 bg-green-500/80 hover:bg-green-500 rounded-full flex items-center justify-center text-white transition-colors duration-200"
-            title="Enviar email"
+            title={t('suppliers.sendEmail')}
           >
             <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
           <button 
             onClick={() => window.open(`tel:${fornecedor.telefone}`)}
             className="w-7 h-7 sm:w-8 sm:h-8 bg-cyan-500/80 hover:bg-cyan-500 rounded-full flex items-center justify-center text-white transition-colors duration-200"
-            title="Ligar para fornecedor"
+            title={t('suppliers.callSupplier')}
           >
             <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
@@ -377,7 +377,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
             <AlertDialogTrigger asChild>
               <button
                 className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500/80 hover:bg-red-500 rounded-full flex items-center justify-center text-white transition-colors duration-200"
-                title="Remover fornecedor"
+                title={t('suppliers.removeSupplier')}
               >
                 <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
@@ -386,23 +386,22 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-white flex items-center gap-2">
                   <Trash2 className="w-5 h-5 text-red-400" />
-                  Confirmar Remoção
+                  {t('suppliers.confirmRemove')}
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-slate-300">
-                  Tem certeza que deseja remover o fornecedor{" "}
-                  <strong className="text-white">{fornecedor.nome}</strong>? Esta ação
-                  não pode ser desfeita.
+                  {t('suppliers.confirmRemoveMessage')}{" "}
+                  <strong className="text-white">{fornecedor.nome}</strong>? {t('suppliers.actionCannotBeUndone')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="gap-3">
                 <AlertDialogCancel className="bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-600/50 px-6 py-2 rounded-xl">
-                  Cancelar
+                  {t('suppliers.cancel')}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => handleDeleteSupplier(fornecedor.id)}
                   className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-xl font-semibold"
                 >
-                  Remover
+                  {t('suppliers.remove')}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -431,10 +430,10 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
           <div className="md:hidden flex items-center justify-between">
             <h1 className="text-lg font-bold text-dark-primary flex items-center gap-2">
               <Building className="w-5 h-5 text-blue-400" />
-              Fornecedores
+              {t('suppliers.title')}
             </h1>
             <span className="text-blue-300 font-bold text-sm">
-              {paginatedFornecedores.length} de {filteredFornecedores.length}
+              {paginatedFornecedores.length} {t('suppliers.of')} {filteredFornecedores.length}
             </span>
           </div>
           
@@ -443,16 +442,16 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
             <div className="hidden md:flex items-center gap-3 w-full justify-center">
               <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[160px] h-[44px]">
                 <span className="font-bold text-lg">{paginatedFornecedores.length}</span>
-                <span className="ml-2 text-blue-200">de {filteredFornecedores.length}</span>
+                <span className="ml-2 text-blue-200">{t('suppliers.of')} {filteredFornecedores.length}</span>
               </div>
               <button 
                 onClick={handleRefreshSuppliers}
                 disabled={isLoadingSuppliers}
                 className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm min-w-[160px] h-[44px]"
-                title="Atualizar lista de fornecedores"
+                title={t('suppliers.refreshTooltip')}
               >
                 <RefreshCw className={`w-4 h-4 ${isLoadingSuppliers ? 'animate-spin' : ''}`} />
-                <span>{isLoadingSuppliers ? 'Carregando...' : 'Atualizar'}</span>
+                <span>{isLoadingSuppliers ? t('suppliers.loading') : t('suppliers.refresh')}</span>
               </button>
               {user?.role === 'admin' && (
                 <button 
@@ -460,12 +459,12 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                   className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-sm md:text-base min-w-[160px] h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Novo Fornecedor</span>
+                  <span>{t('suppliers.newSupplier')}</span>
                 </button>
               )}
               <button onClick={handleExportPdf} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm min-w-[160px] h-[44px]">
                 <Download className="w-4 h-4" />
-                <span>Exportar Relatório</span>
+                <span>{t('suppliers.exportPdf')}</span>
               </button>
             </div>
       {/* Modal de edição de fornecedor */}
@@ -485,11 +484,11 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
         onSave={async (supplierData) => {
           try {
             await addSupplier(supplierData);
-            showToast('success','Fornecedor cadastrado',`Fornecedor "${supplierData.nome}" foi criado com sucesso!`);
+            showToast('success', t('suppliers.supplierCreated'), `${t('common.supplier')} "${supplierData.nome}" ${t('suppliers.supplierCreatedSuccess')}`);
             setIsCreateModalOpen(false);
           } catch (error) {
             console.error('Erro ao criar fornecedor:', error);
-            showToast('error','Erro ao criar','Não foi possível criar o fornecedor.');
+            showToast('error', t('suppliers.errorCreating'), t('suppliers.errorCreatingMessage'));
           }
         }}
         userId={(user as any)?.id}
@@ -507,13 +506,13 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                 value="all" 
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
               >
-                Todos ({filteredFornecedores.length})
+                {t('suppliers.allSuppliers')} ({filteredFornecedores.length})
               </TabsTrigger>
               <TabsTrigger 
                 value="active" 
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-green-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
               >
-                Ativos ({filteredActiveFornecedores.length})
+                {t('suppliers.activeSuppliers')} ({filteredActiveFornecedores.length})
               </TabsTrigger>
             </TabsList>
 
@@ -525,7 +524,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                   <SearchCheck className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Pesquisar fornecedores..."
+                    placeholder={t('suppliers.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
@@ -540,17 +539,17 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                   className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
                   disabled={currentPage === 1}
                 >
-                  Anterior
+                  {t('suppliers.previous')}
                 </button>
                 <span className="text-slate-300 font-medium text-sm">
-                  Página {currentPage} de {totalPages}
+                  {t('suppliers.page')} {currentPage} {t('suppliers.of')} {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
                   disabled={currentPage === totalPages}
                 >
-                  Próxima
+                  {t('suppliers.next')}
                 </button>
               </div>
             </div>
@@ -562,8 +561,8 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                 <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 animate-spin">
                   <RefreshCw className="w-full h-full text-blue-400" />
                 </div>
-                <h3 className="text-base sm:text-lg font-medium text-white mb-2">Carregando fornecedores...</h3>
-                <p className="text-sm sm:text-base text-slate-400 px-4">Buscando dados da API</p>
+                <h3 className="text-base sm:text-lg font-medium text-white mb-2">{t('suppliers.loadingSuppliers')}</h3>
+                <p className="text-sm sm:text-base text-slate-400 px-4">{t('suppliers.loadingApiData')}</p>
               </div>
             ) : (
               <>
@@ -592,8 +591,8 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                 {!isLoadingSuppliers && filteredFornecedores.length === 0 && (
                   <div className="text-center py-8 lg:py-12">
                     <Building className="w-10 h-10 sm:w-12 sm:h-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-base sm:text-lg font-medium text-white mb-2">Nenhum fornecedor encontrado</h3>
-                    <p className="text-sm sm:text-base text-slate-400 px-4">Tente ajustar os filtros de pesquisa</p>
+                    <h3 className="text-base sm:text-lg font-medium text-white mb-2">{t('suppliers.noSuppliersFound')}</h3>
+                    <p className="text-sm sm:text-base text-slate-400 px-4">{t('suppliers.adjustFilters')}</p>
                   </div>
                 )}
               </>

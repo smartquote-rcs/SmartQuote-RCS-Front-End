@@ -617,9 +617,13 @@ export default function SettingsPage() {
 											</SelectTrigger>
 											<SelectContent className="bg-dark-card border-dark-color">
 												<SelectItem value="EUR" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Euro (€)</SelectItem>
-												<SelectItem value="USD" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Dólar ($)</SelectItem>
-												<SelectItem value="GBP" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Libra (£)</SelectItem>
-												<SelectItem value="BRL" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Real (R$)</SelectItem>
+												<SelectItem value="USD" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Dólar Americano ($)</SelectItem>
+												<SelectItem value="GBP" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Libra Esterlina (£)</SelectItem>
+												<SelectItem value="BRL" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Real Brasileiro (R$)</SelectItem>
+												<SelectItem value="JPY" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Iene Japonês (¥)</SelectItem>
+												<SelectItem value="CHF" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Franco Suíço (CHF)</SelectItem>
+												<SelectItem value="CAD" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Dólar Canadense (C$)</SelectItem>
+												<SelectItem value="AOA" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Kwanza Angolano (Kz)</SelectItem>
 											</SelectContent>
 										</Select>
 									</div>

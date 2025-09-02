@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Search, Heart, Grid, List, Plus, Edit2, Trash2, RefreshCw, CheckCircle, X, Activity } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 import { useTranslation } from 'react-i18next';
+import { useCurrency } from "../../hooks/useCurrency";
 import { Product } from "../../types";
 // Modal de edição antigo substituído por formulário inline
 import {
@@ -32,6 +33,7 @@ interface ProductSearchPageProps {
 
 export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageProps = {}) {
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditingInline, setIsEditingInline] = useState(false);
@@ -150,7 +152,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
             {getDisponibilidadeBadge(produto.estoque)}
           </div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-blue-300 font-medium truncate mr-2">{produto.modelo || "Sem Categoria"}</p>
+            <p className="text-sm text-blue-300 font-medium truncate mr-2">{produto.modelo || t('productSearch.noCategory')}</p>
             <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[120px]">Fornecedor {produto.fornecedorId || "N/A"}</span>
           </div>
         </div>
@@ -165,11 +167,11 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
           <div className="flex flex-col space-y-3 mb-3">
             <div>
               <div className="flex items-center space-x-2 flex-wrap">
-                <span className="text-xl font-bold text-green-400">€{produto.preco?.toFixed(2)}</span>
+                <span className="text-xl font-bold text-green-400">{formatCurrency(produto.preco || 0)}</span>
               </div>
               <p className="text-xs text-dark-secondary mt-1 flex items-center">
                 <span className="w-2 h-2 bg-green-400 rounded-full mr-2 flex-shrink-0"></span>
-                <span className="truncate">3-5 dias úteis</span>
+                <span className="truncate">3-5 {t('productSearch.deliveryTime')}</span>
               </p>
             </div>
           </div>
@@ -178,7 +180,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
             <button 
               onClick={() => produto.id !== undefined && handleEditProduct(produto.id)}
               className="glass-card p-2 rounded-lg hover:bg-blue-500/20 hover:border-blue-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
-              title="Editar"
+              title={t('productSearch.edit')}
               disabled={produto.id === undefined}
             >
               <Edit2 className="w-4 h-4 text-dark-secondary group-hover:text-blue-400 transition-colors" />
@@ -186,7 +188,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
             <button 
               onClick={() => produto.id !== undefined && handleDeleteProduct(produto.id)}
               className="glass-card p-2 rounded-lg hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
-              title="Remover"
+              title={t('productSearch.delete')}
               disabled={produto.id === undefined}
             >
               <Trash2 className="w-4 h-4 text-dark-secondary group-hover:text-red-400 transition-colors" />
@@ -277,14 +279,14 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                 className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoadingProducts ? 'animate-spin' : ''}`} />
-                <span>{isLoadingProducts ? 'Carregando...' : 'Atualizar'}</span>
+                <span>{isLoadingProducts ? t('productSearch.loading') : t('productSearch.refresh')}</span>
               </button>
               <button
                 onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
                 className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto"
               >
                 {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-                <span>{viewMode === "grid" ? "Lista" : "Grade"}</span>
+                <span>{viewMode === "grid" ? t('productSearch.listView') : t('productSearch.gridView')}</span>
               </button>
               <button
                 onClick={() => onNavigateToNewProduct?.()}
@@ -321,7 +323,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                 <button
                   onClick={() => { setIsEditingInline(false); setEditingProduct(null); }}
                   className="text-slate-400 hover:text-white text-sm"
-                >Cancelar</button>
+                >{t('productSearch.cancel')}</button>
               </div>
               <form
                 onSubmit={async (e) => {
@@ -354,7 +356,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       value={editingProduct.fornecedorId || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, fornecedorId: parseInt(e.target.value) || undefined } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                      placeholder="ID fornecedor"
+                      placeholder={t('productSearch.supplierIdPlaceholder')}
                     />
                   </div>
                   <div>
@@ -364,7 +366,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       value={editingProduct.codigo || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, codigo: e.target.value } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                      placeholder="Código/SKU"
+                      placeholder={t('productSearch.codePlaceholder')}
                     />
                   </div>
                   <div>
@@ -375,7 +377,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       value={editingProduct.nome}
                       onChange={e => setEditingProduct(p => p ? { ...p, nome: e.target.value } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                      placeholder="Nome do produto"
+                      placeholder={t('productSearch.namePlaceholder')}
                     />
                   </div>
                   <div>
@@ -385,7 +387,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       value={editingProduct.modelo || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, modelo: e.target.value } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                      placeholder="Modelo"
+                      placeholder={t('productSearch.modelPlaceholder')}
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -396,7 +398,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       value={editingProduct.descricao}
                       onChange={e => setEditingProduct(p => p ? { ...p, descricao: e.target.value } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                      placeholder="Descrição"
+                      placeholder={t('productSearch.descriptionPlaceholder')}
                     />
                   </div>
                   <div>
@@ -409,7 +411,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       value={editingProduct.preco}
                       onChange={e => setEditingProduct(p => p ? { ...p, preco: parseFloat(e.target.value) || 0 } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                      placeholder="0.00"
+                      placeholder={t('productSearch.pricePlaceholder')}
                     />
                   </div>
                   <div>
@@ -419,7 +421,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       value={editingProduct.unidade || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, unidade: e.target.value } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                      placeholder="Unidade"
+                      placeholder={t('productSearch.unitPlaceholder')}
                     />
                   </div>
                   <div>
@@ -430,7 +432,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       value={editingProduct.estoque}
                       onChange={e => setEditingProduct(p => p ? { ...p, estoque: parseInt(e.target.value) || 0 } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                      placeholder="Estoque"
+                      placeholder={t('productSearch.stockPlaceholder')}
                     />
                   </div>
                   <div>
@@ -440,7 +442,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       value={editingProduct.origem || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, origem: e.target.value } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                      placeholder="Origem"
+                      placeholder={t('productSearch.originPlaceholder')}
                     />
                   </div>
                 </div>
@@ -448,12 +450,12 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                   <button
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-4 py-2 rounded-lg font-medium transition-all"
-                  >Salvar Alterações</button>
+                  >{t('productSearch.saveChanges')}</button>
                   <button
                     type="button"
                     onClick={() => { setIsEditingInline(false); setEditingProduct(null); }}
                     className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-all"
-                  >Cancelar</button>
+                  >{t('productSearch.cancel')}</button>
                 </div>
               </form>
             </div>
@@ -464,7 +466,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
               {/* Tabs - ocultas no mobile */}
               <TabsList className="hidden md:flex glass-card bg-white/5 border border-white/20 rounded-xl p-1">
                 <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300">
-                  Todos os Produtos ({filteredProducts.length})
+                  {t('productSearch.allProducts')} ({filteredProducts.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -475,7 +477,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Pesquisar por nome, descrição, código..."
+                    placeholder={t('productSearch.searchProducts')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
@@ -548,17 +550,16 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-red-400" />
-              Confirmar Remoção
+              {t('productSearch.confirmDelete')}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-300">
-              Tem certeza que deseja remover o produto{" "}
-              <strong className="text-white">{productToDelete?.nome}</strong>? Esta ação
-              não pode ser desfeita.
+              {t('productSearch.confirmDeleteMessage')}{" "}
+              <strong className="text-white">{productToDelete?.nome}</strong>? {t('productSearch.deleteActionText')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3">
             <AlertDialogCancel className="bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-600/50 px-6 py-2 rounded-xl">
-              Cancelar
+              {t('productSearch.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
@@ -586,7 +587,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
               }}
               className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-xl font-semibold"
             >
-              Remover
+              {t('productSearch.deleteButton')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

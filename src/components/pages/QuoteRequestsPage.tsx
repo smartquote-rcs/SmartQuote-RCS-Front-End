@@ -1,10 +1,13 @@
 import React from "react";
-import { exportSuppliersPdf } from "../../utils/exportSuppliersPdf";
 import { exportCotacao, ExportFormat } from "../../utils/exportCotacaoPdf";
+import { useTranslation } from "react-i18next";
+import { useCurrency } from "../../hooks/useCurrency";
 // Componente para exibir detalhes do item e submodal
 
 type ItemDetalheCardProps = { item: any, onItemReplaced?: () => void };
 const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
+  const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   const [open, setOpen] = useState(false);
   const [showReplace, setShowReplace] = useState(false);
   const [produtos, setProdutos] = useState<any[]>([]);
@@ -23,10 +26,10 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
       if (res.success && Array.isArray(res.data?.data)) {
         setProdutos(res.data.data);
       } else {
-        setReplaceError("Erro ao buscar produtos");
+        setReplaceError(t("quoteRequests.errorFetchingProducts"));
       }
     } catch (e) {
-      setReplaceError("Erro ao buscar produtos");
+      setReplaceError(t("quoteRequests.errorFetchingProducts"));
     }
     setLoadingProdutos(false);
   };
@@ -38,17 +41,17 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
     try {
       const res = await import('../../api/services').then(m => m.produtoService.replaceProduct(item.id, newProductId));
       if (res.success) {
-        setReplaceSuccess("Item substituído com sucesso!");
+        setReplaceSuccess(t("quoteRequests.itemReplacedSuccess"));
         setTimeout(() => {
           setShowReplace(false);
           setReplaceSuccess("");
           if (onItemReplaced) onItemReplaced();
         }, 800);
       } else {
-        setReplaceError(res.error || "Erro ao substituir item");
+        setReplaceError(res.error || t("quoteRequests.errorReplacingItem"));
       }
     } catch (e) {
-      setReplaceError("Erro ao substituir item");
+      setReplaceError(t("quoteRequests.errorReplacingItem"));
     }
     setReplaceLoading(false);
   };
@@ -67,17 +70,17 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
               ? item.item_nome.slice(0, 50) + '...'
               : item.item_nome}
           </div>
-          <div className="text-slate-400 text-xs">Fornecedor: <span className="text-cyan-300">{item.provider || item.fornecedor || '-'}</span></div>
-          <div className="text-slate-400 text-xs">Origem: <span className="text-cyan-300">{item.origem || '-'}</span></div>
+          <div className="text-slate-400 text-xs">{t("quoteRequests.supplierLabel")}: <span className="text-cyan-300">{item.provider || item.fornecedor || '-'}</span></div>
+          <div className="text-slate-400 text-xs">{t("quoteRequests.originLabel")}: <span className="text-cyan-300">{item.origem || '-'}</span></div>
         </div>
         <div className="text-right">
-          <div className="text-slate-300 text-sm">Qtd: <b>{item.quantidade}</b></div>
-          <div className="text-slate-300 text-sm">Preço: <b>{item.item_preco} {item.item_moeda}</b></div>
-          <div className="text-slate-300 text-sm">Subtotal: <b>{(item.quantidade * item.item_preco).toLocaleString('pt-BR', { style: 'currency', currency: item.item_moeda || 'EUR' })}</b></div>
+          <div className="text-slate-300 text-sm">{t("quoteRequests.quantityLabel")}: <b>{item.quantidade}</b></div>
+          <div className="text-slate-300 text-sm">{t("quoteRequests.priceLabel")}: <b>{item.item_preco} {item.item_moeda}</b></div>
+          <div className="text-slate-300 text-sm">{t("quoteRequests.subtotalLabel")}: <b>{formatCurrency(item.quantidade * item.item_preco)}</b></div>
         </div>
         <div className="flex flex-col gap-2">
-          <button onClick={() => setOpen(true)} className="ml-auto bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border border-cyan-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">Ver detalhes</button>
-          <button onClick={() => { setShowReplace(v => !v); if (!produtos.length) fetchProdutos(); }} className="ml-auto bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border border-blue-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">Substituir item</button>
+          <button onClick={() => setOpen(true)} className="ml-auto bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border border-cyan-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">{t("quoteRequests.itemDetails")}</button>
+          <button onClick={() => { setShowReplace(v => !v); if (!produtos.length) fetchProdutos(); }} className="ml-auto bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border border-blue-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">{t("quoteRequests.replaceItem")}</button>
         </div>
       </div>
       <div className="text-slate-300 text-xs mt-2">
@@ -91,7 +94,7 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
             <input
               type="text"
               className="flex-1 px-4 py-2 rounded-lg bg-slate-800 text-white border border-cyan-700/30 focus:border-cyan-400 outline-none text-base"
-              placeholder="Buscar produto..."
+              placeholder={t("quoteRequests.searchProduct")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               disabled={loadingProdutos}
@@ -103,9 +106,9 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
           {replaceSuccess && <div className="text-green-400 text-base mb-2 animate-pulse">{replaceSuccess}</div>}
           <div className="max-h-72 overflow-y-auto divide-y divide-slate-800">
             {loadingProdutos ? (
-              <div className="text-slate-400 text-base p-4">Carregando produtos...</div>
+              <div className="text-slate-400 text-base p-4">{t("quoteRequests.loadingProducts")}</div>
             ) : produtosFiltrados.length === 0 ? (
-              <div className="text-slate-400 text-base p-4">Nenhum produto encontrado.</div>
+              <div className="text-slate-400 text-base p-4">{t("quoteRequests.noProductsFound")}</div>
             ) : produtosFiltrados.map(prod => (
               <button
                 key={prod.id}
@@ -123,21 +126,21 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
       <Dialog open={open} onOpenChange={setOpen}>
   <DialogContent className="w-full max-w-screen sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-4 sm:p-6 rounded-2xl overflow-x-auto">
           <DialogHeader>
-            <DialogTitle className="text-cyan-300 text-2xl">Detalhes do Item</DialogTitle>
+            <DialogTitle className="text-cyan-300 text-2xl">{t("quoteRequests.itemDetailsTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 text-lg">
-            <div><b>Nome:</b> {item.item_nome}</div>
-            <div><b>Fornecedor:</b> {item.provider || item.fornecedor || '-'}</div>
-            <div><b>Origem:</b> {item.origem || '-'}</div>
-            <div><b>Descrição:</b> {item.item_descricao}</div>
-            <div><b>Preço:</b> {item.item_preco} {item.item_moeda}</div>
-            <div><b>Quantidade:</b> {item.quantidade}</div>
-            <div><b>Subtotal:</b> {(item.quantidade * item.item_preco).toLocaleString('pt-BR', { style: 'currency', currency: item.item_moeda || 'EUR' })}</div>
-            <div><b>Moeda:</b> {item.item_moeda}</div>
-            <div><b>Condições:</b> <pre className="bg-slate-800 rounded p-2 text-base whitespace-pre-wrap">{item.condicoes ? JSON.stringify(item.condicoes, null, 2) : '-'}</pre></div>
+            <div><b>{t("quoteRequests.nameLabel")}:</b> {item.item_nome}</div>
+            <div><b>{t("quoteRequests.supplierLabel")}:</b> {item.provider || item.fornecedor || '-'}</div>
+            <div><b>{t("quoteRequests.originLabel")}:</b> {item.origem || '-'}</div>
+            <div><b>{t("quoteRequests.descriptionLabel")}:</b> {item.item_descricao}</div>
+            <div><b>{t("quoteRequests.priceLabel")}:</b> {item.item_preco} {item.item_moeda}</div>
+            <div><b>{t("quoteRequests.quantityLabel")}:</b> {item.quantidade}</div>
+            <div><b>{t("quoteRequests.subtotalLabel")}:</b> {formatCurrency(item.quantidade * item.item_preco)}</div>
+            <div><b>{t("quoteRequests.currencyLabel")}:</b> {item.item_moeda}</div>
+            <div><b>{t("quoteRequests.conditionsLabel")}:</b> <pre className="bg-slate-800 rounded p-2 text-base whitespace-pre-wrap">{item.condicoes ? JSON.stringify(item.condicoes, null, 2) : '-'}</pre></div>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 mt-6 w-full">
-            <button onClick={() => setOpen(false)} className="w-full sm:w-auto px-6 py-3 text-lg rounded-md bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border border-cyan-600/60 font-semibold">Fechar</button>
+            <button onClick={() => setOpen(false)} className="w-full sm:w-auto px-6 py-3 text-lg rounded-md bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border border-cyan-600/60 font-semibold">{t("quoteRequests.close")}</button>
           </div>
         </DialogContent>
       </Dialog>
@@ -176,7 +179,6 @@ import {
   FileText,
   Building,
   User,
-  Euro,
   Check,
   X,
   Info,
@@ -187,7 +189,6 @@ import {
   ShieldAlert,
   RefreshCw,
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { cotacaoService } from "../../api/services";
 import api from '../../api/client';
 
@@ -360,6 +361,7 @@ export function QuoteRequestsPage({
   onNavigateToNewQuote,
 }: QuoteRequestsPageProps = {}) {
   const { t } = useTranslation();
+  const { formatCurrency, currency } = useCurrency();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [priorityFilter, setPriorityFilter] = useState("Todas");
@@ -530,14 +532,14 @@ export function QuoteRequestsPage({
             aprovado_por: currentUserId != null ? currentUserId : c.aprovado_por
           };
         }));
-        window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', message: 'Cotação atualizada com sucesso!' } }));
+        window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', message: t("quoteRequests.quotationUpdatedSuccess") } }));
         setMotivoInput("");
       } else {
-        window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', message: resp.error || 'Falha ao atualizar aprovação' } }));
+        window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', message: resp.error || t("quoteRequests.updateApprovalError") } }));
       }
     } catch (e) {
       console.error('Erro ao atualizar aprovação:', e);
-      window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', message: 'Erro ao atualizar aprovação' } }));
+      window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', message: t("quoteRequests.generalUpdateError") } }));
     } finally {
       setIsSubmitting(false);
       closeApproval();
@@ -665,13 +667,13 @@ export function QuoteRequestsPage({
   <div className="flex flex-col space-y-2 sm:space-y-3 min-w-0 lg:min-w-[140px]">
           <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/30 text-center">
             <div className="flex items-center justify-center space-x-1 mb-1">
-              <Euro className="w-4 h-4 text-green-400" />
+              <span className="text-sm text-green-400 font-medium">{currency.symbol}</span>
               <span className="text-xs text-green-400 font-medium">
                 {t("approvals.value")}
               </span>
             </div>
             <div className="text-lg font-bold text-green-400">
-              {cotacao.orcamento_geral}
+              {formatCurrency(parseFloat(cotacao.orcamento_geral) || 0, false)}
             </div>
           </div>
 
@@ -837,7 +839,7 @@ export function QuoteRequestsPage({
   ].filter(Boolean).length;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-screen overflow-hidden">
       {/* Header - Compacto no mobile */}
       <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-1 md:space-y-4 lg:space-y-0">
@@ -847,8 +849,8 @@ export function QuoteRequestsPage({
               {t("quoteRequests.title")}
               {activeFiltersCount > 0 && (
                 <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-xs font-medium">
-                  {activeFiltersCount} filtro{activeFiltersCount > 1 ? "s" : ""}{" "}
-                  ativo{activeFiltersCount > 1 ? "s" : ""}
+                  {activeFiltersCount} {activeFiltersCount > 1 ? t("quoteRequests.filtersActive") : t("quoteRequests.filterActive")}{" "}
+                  {activeFiltersCount > 1 ? t("quoteRequests.filterActivePlural") : t("quoteRequests.filterActiveSingular")}
                 </span>
               )}
             </h1>
@@ -856,8 +858,8 @@ export function QuoteRequestsPage({
               {t("quoteRequests.subtitle")}
               {activeFiltersCount > 0 && (
                 <span className="text-blue-400 ml-2">
-                  • {filteredCotacoes.length} de {cotacoesList.length}{" "}
-                  resultados
+                  • {filteredCotacoes.length} {t("quoteRequests.totalOf")} {cotacoesList.length}{" "}
+                  {t("quoteRequests.results")}
                 </span>
               )}
             </p>
@@ -867,7 +869,7 @@ export function QuoteRequestsPage({
           <div className="md:hidden flex items-center justify-between">
             <h1 className="text-lg font-bold text-dark-primary flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-400" />
-              Cotações
+              {t("quoteRequests.title")}
             </h1>
             <span className="text-blue-300 font-bold text-sm">
               {filteredCotacoes.length}
@@ -878,10 +880,10 @@ export function QuoteRequestsPage({
             <div className="hidden md:flex items-center gap-3 w-full justify-center">
               <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[160px] h-[44px]">
                 <span className="font-bold text-lg">{filteredCotacoes.length}</span>
-                <span className="ml-2 text-blue-200">cotações</span>
+                <span className="ml-2 text-blue-200">{t("quoteRequests.quotations")}</span>
                 {filteredCotacoes.length !== cotacoesList.length && (
                   <span className="text-slate-400 text-xs block ml-2">
-                    de {cotacoesList.length} total
+                    {t("quoteRequests.totalOf")} {cotacoesList.length} {t("quoteRequests.total")}
                   </span>
                 )}
               </div>
@@ -891,14 +893,14 @@ export function QuoteRequestsPage({
                   className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 text-sm md:text-base min-w-[160px] h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Nova Cotação</span>
+                  <span>{t("quoteRequests.newQuote")}</span>
                 </Button>
               ) : (
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm md:text-base min-w-[160px] h-[44px]">
                       <Plus className="w-4 h-4" />
-                      <span>Nova Cotação</span>
+                      <span>{t("quoteRequests.newQuote")}</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="bg-dark-card border-dark-color">
@@ -911,7 +913,7 @@ export function QuoteRequestsPage({
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-3 md:p-4 lg:p-8 bg-dark-bg">
+      <main className="flex-1 dashboard-main p-3 md:p-4 lg:p-8 bg-dark-bg overflow-hidden">
   <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
             {/* Tabs - ocultas no mobile */}
@@ -920,26 +922,26 @@ export function QuoteRequestsPage({
                 value="all"
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                Todas ({cotacoesList.length})
+                {t("quoteRequests.allTab")} ({cotacoesList.length})
               </TabsTrigger>
               <TabsTrigger
                 value="pending"
                 className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-orange-500/20 hover:text-orange-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                Pendentes ({cotacoesList.filter((c) => c.status === 'incompleta' && (!c.motivo || c.motivo.trim() === '')).length})
+                {t("quoteRequests.pendingTab")} ({cotacoesList.filter((c) => c.status === 'incompleta' && (!c.motivo || c.motivo.trim() === '')).length})
               </TabsTrigger>
               <TabsTrigger
                 value="approved"
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-green-500/20 hover:text-green-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                Aprovadas ({cotacoesList.filter((c) => c.status === 'approved' || c.status === 'processed' || c.status === 'completa').length})
+                {t("quoteRequests.approvedTab")} ({cotacoesList.filter((c) => c.status === 'approved' || c.status === 'processed' || c.status === 'completa').length})
               </TabsTrigger>
               {/* Removido tab Processando conforme solicitação */}
               <TabsTrigger
                 value="rejected"
                 className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                Rejeitadas (
+                {t("quoteRequests.rejectedTab")} (
                 {cotacoesList.filter((c) => c.status === 'incompleta' && c.motivo && c.motivo.trim() !== '').length})
               </TabsTrigger>
             </TabsList>
@@ -952,7 +954,7 @@ export function QuoteRequestsPage({
                 <div className="relative group flex-1 min-w-0">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
                   <Input
-                    placeholder="Pesquisar por cliente, produto, ID ou fornecedor..."
+                    placeholder={t("quoteRequests.searchByClient")}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 md:h-auto"
@@ -966,17 +968,17 @@ export function QuoteRequestsPage({
                     className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
                     disabled={currentPage === 1}
                   >
-                    Anterior
+                    {t("quoteRequests.previous")}
                   </button>
                   <span className="text-slate-300 font-medium text-sm">
-                    Página {currentPage} de {getTotalPages()}
+                    {t("quoteRequests.page")} {currentPage} {t("quoteRequests.of")} {getTotalPages()}
                   </span>
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(getTotalPages(), p + 1))}
                     className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
                     disabled={currentPage === getTotalPages()}
                   >
-                    Próxima
+                    {t("quoteRequests.next")}
                   </button>
                 </div>
               </div>
@@ -988,14 +990,14 @@ export function QuoteRequestsPage({
                     {/* Filtro por Fornecedor */}
                     <div>
                       <label className="text-slate-300 text-xs font-medium mb-2 block">
-                        Fornecedor
+                        {t("quoteRequests.supplier")}
                       </label>
                       <Select
                         value={fornecedorFilter}
                         onValueChange={setFornecedorFilter}
                       >
                         <SelectTrigger className="bg-dark-card border-dark-color text-dark-primary text-sm hover:bg-slate-700/70 hover:border-blue-500/50 transition-all duration-200">
-                          <SelectValue placeholder="Fornecedor" />
+                          <SelectValue placeholder={t("quoteRequests.supplier")} />
                         </SelectTrigger>
                         <SelectContent className="bg-dark-card border-dark-color">
                           <SelectItem
@@ -1084,19 +1086,19 @@ export function QuoteRequestsPage({
                             value="baixo"
                             className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-green-500/20 hover:text-green-300 transition-colors duration-200"
                           >
-                            💰 Até €1.000
+                            💰 Até {currency.symbol}1.000
                           </SelectItem>
                           <SelectItem
                             value="medio"
                             className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-yellow-500/20 hover:text-yellow-300 transition-colors duration-200"
                           >
-                            💰 €1.000 - €10.000
+                            💰 {currency.symbol}1.000 - {currency.symbol}10.000
                           </SelectItem>
                           <SelectItem
                             value="alto"
                             className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-red-500/20 hover:text-red-300 transition-colors duration-200"
                           >
-                            💰 Acima de €10.000
+                            💰 Acima de {currency.symbol}10.000
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -1187,95 +1189,104 @@ export function QuoteRequestsPage({
             </div>
           </div>
 
-          <div className="flex-1 scrollable-content">
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Conteúdo com dados */}
+            {cotacoesList.length > 0 && (
+              <div className="flex-1 overflow-y-auto">
+                {/* Funções para filtrar e paginar por aba */}
+                {(() => {
+                  const getPaginated = (tab: string) => {
+                    const filtered = cotacoesList.filter(getTabFilter(tab));
+                    const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+                    const page = Math.min(currentPage, totalPages);
+                    return filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+                  };
+                  return (
+                    <>
+                      <TabsContent value="all" className="h-full mt-0">
+                        <div className="grid gap-4">
+                          {getPaginated('all').map((cotacao) => (
+                            <QuoteCard
+                              key={cotacao.id}
+                              cotacao={cotacao}
+                              onViewDetails={handleViewDetails}
+                            />
+                          ))}
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="pending" className="h-full mt-0">
+                        <div className="grid gap-4">
+                          {getPaginated('pending').map((cotacao) => (
+                            <QuoteCard
+                              key={cotacao.id}
+                              cotacao={cotacao}
+                              onViewDetails={handleViewDetails}
+                            />
+                          ))}
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="approved" className="h-full mt-0">
+                        <div className="grid gap-4">
+                          {getPaginated('approved').map((cotacao) => (
+                            <QuoteCard
+                              key={cotacao.id}
+                              cotacao={cotacao}
+                              onViewDetails={handleViewDetails}
+                            />
+                          ))}
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="rejected" className="h-full mt-0">
+                        <div className="grid gap-4">
+                          {getPaginated('rejected').map((cotacao) => (
+                            <QuoteCard
+                              key={cotacao.id}
+                              cotacao={cotacao}
+                              onViewDetails={handleViewDetails}
+                            />
+                          ))}
+                        </div>
+                      </TabsContent>
+                    </>
+                  );
+                })()}
 
-            {/* Funções para filtrar e paginar por aba */}
-            {(() => {
-              const getPaginated = (tab: string) => {
-                const filtered = cotacoesList.filter(getTabFilter(tab));
-                const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
-                const page = Math.min(currentPage, totalPages);
-                return filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-              };
-              return (
-                <>
-                  <TabsContent value="all" className="h-full mt-0">
-                    <div className="grid gap-4">
-                      {getPaginated('all').map((cotacao) => (
-                        <QuoteCard
-                          key={cotacao.id}
-                          cotacao={cotacao}
-                          onViewDetails={handleViewDetails}
-                        />
-                      ))}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="pending" className="h-full mt-0">
-                    <div className="grid gap-4">
-                      {getPaginated('pending').map((cotacao) => (
-                        <QuoteCard
-                          key={cotacao.id}
-                          cotacao={cotacao}
-                          onViewDetails={handleViewDetails}
-                        />
-                      ))}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="approved" className="h-full mt-0">
-                    <div className="grid gap-4">
-                      {getPaginated('approved').map((cotacao) => (
-                        <QuoteCard
-                          key={cotacao.id}
-                          cotacao={cotacao}
-                          onViewDetails={handleViewDetails}
-                        />
-                      ))}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="rejected" className="h-full mt-0">
-                    <div className="grid gap-4">
-                      {getPaginated('rejected').map((cotacao) => (
-                        <QuoteCard
-                          key={cotacao.id}
-                          cotacao={cotacao}
-                          onViewDetails={handleViewDetails}
-                        />
-                      ))}
-                    </div>
-                  </TabsContent>
-                </>
-              );
-            })()}
-
-            {/* Paginação no final da lista removida conforme solicitado */}
-
-            {filteredCotacoes.length === 0 && cotacoesList.length > 0 && (
-            <div className="text-center py-8 lg:py-12">
-              <Search className="w-10 h-10 sm:w-12 sm:h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-base sm:text-lg font-medium text-white mb-2">
-                Nenhuma cotação encontrada
-              </h3>
-              <p className="text-sm sm:text-base text-slate-300 px-4">
-                Tente ajustar os filtros de pesquisa. ({cotacoesList.length}{" "}
-                cotações disponíveis)
-              </p>
-            </div>            )}
-
-            {cotacoesList.length === 0 && (
-            <div className="text-center py-8 lg:py-12">
-              <div className="flex justify-center mb-4">
-                <svg className="animate-spin h-10 w-10 sm:w-12 sm:h-12 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-label="Carregando">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                </svg>
+                {/* Estado quando há dados mas filtros não retornam resultados */}
+                {filteredCotacoes.length === 0 && cotacoesList.length > 0 && (
+                  <div className="flex-1 flex flex-col justify-center items-center">
+                    <Search className="w-12 h-12 text-slate-400 mb-4" />
+                    <h3 className="text-lg font-medium text-white mb-2">
+                      Nenhuma cotação encontrada
+                    </h3>
+                    <p className="text-sm text-slate-300 text-center">
+                      Tente ajustar os filtros de pesquisa. ({cotacoesList.length}{" "}
+                      cotações disponíveis)
+                    </p>
+                  </div>
+                )}
               </div>
-              <h3 className="text-base sm:text-lg font-medium text-white mb-2">
-                Carregando cotações...
-              </h3>
-              <p className="text-sm sm:text-base text-slate-300 px-4">
-                Aguarde enquanto as cotações são carregadas
-              </p>
-            </div>            )}
+            )}
+
+            {/* Estado vazio centralizado quando não há dados */}
+            {cotacoesList.length === 0 && (
+              <div className="flex-1 flex flex-col justify-center items-center">
+                <FileText className="w-16 h-16 text-slate-400 mb-6" />
+                <h3 className="text-xl font-semibold text-white mb-3">
+                  Nenhuma cotação encontrada
+                </h3>
+                <p className="text-slate-300 mb-6 text-center max-w-md">
+                  Você ainda não possui cotações registradas no sistema.
+                </p>
+                {onNavigateToNewQuote && (
+                  <button 
+                    onClick={onNavigateToNewQuote}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-all duration-300 hover:scale-105 font-semibold text-base shadow-lg"
+                  >
+                    Criar Nova Cotação
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </Tabs>
       </main>
@@ -1301,15 +1312,15 @@ export function QuoteRequestsPage({
             <textarea
               value={motivoInput}
               onChange={(e)=>setMotivoInput(e.target.value)}
-              placeholder="Descreva o motivo..."
+              placeholder={t("quoteRequests.reasonPlaceholder")}
               aria-label="Motivo da aprovação/rejeição"
               className={`w-full h-28 rounded-md bg-slate-800/70 border ${!motivoInput.trim() && isSubmitting ? 'border-red-500' : 'border-slate-600/50'} focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm text-white p-3 resize-none outline-none`}
             />
             {!motivoInput.trim() && isSubmitting && (
-              <div className="text-red-400 text-xs">O motivo é obrigatório.</div>
+              <div className="text-red-400 text-xs">{t("quoteRequests.reasonRequired")}</div>
             )}
             <div className="flex flex-col sm:flex-row justify-end gap-2 w-full mt-2">
-              <button onClick={closeApproval} aria-label="Cancelar" className="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 border border-slate-600/60 focus:outline-none focus:ring-2 focus:ring-slate-400">Cancelar</button>
+              <button onClick={closeApproval} aria-label="Cancelar" className="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 border border-slate-600/60 focus:outline-none focus:ring-2 focus:ring-slate-400">{t("quoteRequests.cancel")}</button>
               <button
                 onClick={submitApproval}
                 aria-label="Confirmar aprovação/rejeição"
@@ -1319,7 +1330,7 @@ export function QuoteRequestsPage({
                 {isSubmitting ? (
                   <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
                 ) : approvalModal.action==='approve' ? <Check className="w-4 h-4"/> : approvalModal.action==='reject' ? <X className="w-4 h-4"/> : <RefreshCw className="w-4 h-4"/>}
-                Confirmar
+                {t("quoteRequests.confirm")}
               </button>
             </div>
           </div>
@@ -1332,7 +1343,7 @@ export function QuoteRequestsPage({
           <DialogHeader className="border-b border-slate-700/50 pb-2">
             <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
               <FileText className="h-5 w-5 text-cyan-400" />
-              Detalhes da Cotação {selectedCotacao?.id}
+              {t("quoteRequests.quotationDetails")} {selectedCotacao?.id}
             </DialogTitle>
           </DialogHeader>
 
@@ -1341,7 +1352,7 @@ export function QuoteRequestsPage({
             <div className="mt-6">
               <h3 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
                 <Info className="h-4 w-4 text-cyan-400" />
-                Itens da Cotação
+                {t("quoteRequests.quotationItems")}
               </h3>
               <div className="space-y-4">
                 {cotacaoItens.map(item => (
@@ -1350,7 +1361,7 @@ export function QuoteRequestsPage({
               </div>
             </div>
           ) : (
-            <div className="mt-6 text-slate-400 text-sm">Nenhum item encontrado para esta cotação.</div>
+            <div className="mt-6 text-slate-400 text-sm">{t("quoteRequests.noItemsFound")}</div>
           )}
           <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-2 sm:p-4 border border-white/10 mt-6">
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full">
@@ -1371,7 +1382,7 @@ export function QuoteRequestsPage({
                   aria-label="Baixar cotação"
                 >
                   <Download className="h-4 w-4" />
-                  {exportFormat === 'pdf' ? 'Baixar PDF' : exportFormat === 'xlsx' ? 'Baixar Excel' : 'Baixar CSV'}
+                  {exportFormat === 'pdf' ? t("quoteRequests.downloadPdf") : exportFormat === 'xlsx' ? t("quoteRequests.downloadExcel") : t("quoteRequests.downloadCsv")}
                 </button>
               </div>
       {/* Modal de erro ao exportar PDF */}
@@ -1380,7 +1391,7 @@ export function QuoteRequestsPage({
           <DialogHeader>
             <DialogTitle className="text-red-400 font-semibold flex items-center gap-2">
               <X className="w-4 h-4 text-red-400"/>
-              Erro ao exportar PDF
+              {t("quoteRequests.pdfExportError")}
             </DialogTitle>
             <DialogDescription className="text-slate-300 text-sm">
               {pdfErrorModal.message}
@@ -1391,14 +1402,14 @@ export function QuoteRequestsPage({
               onClick={()=>setPdfErrorModal({open:false, message: ""})}
               className="px-4 py-2 rounded-md bg-red-600/30 hover:bg-red-600/50 text-red-200 border border-red-500/40 font-semibold"
             >
-              Fechar
+              {t("quoteRequests.close")}
             </button>
           </div>
         </DialogContent>
       </Dialog>
               <button className="w-full sm:w-auto bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border border-purple-500/50 hover:border-purple-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm">
                 <Mail className="h-4 w-4" />
-                Enviar Email
+                {t("quoteRequests.sendEmail")}
               </button>
             </div>
           </div>

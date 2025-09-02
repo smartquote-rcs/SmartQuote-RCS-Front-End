@@ -535,6 +535,7 @@ export default function SettingsPage() {
                         <SelectItem value="USD" className="text-white hover:bg-blue-900/80">Dólar ($)</SelectItem>
                         <SelectItem value="GBP" className="text-white hover:bg-blue-900/80">Libra (£)</SelectItem>
                         <SelectItem value="BRL" className="text-white hover:bg-blue-900/80">Real (R$)</SelectItem>
+                        <SelectItem value="AOA" className="text-white hover:bg-blue-900/80">Kwanza (Kz)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
