@@ -63,6 +63,20 @@ export function EmailsPage() {
     filterEmails();
   }, [emails, searchQuery]);
 
+  // Verificar se há um email específico para abrir
+  useEffect(() => {
+    const selectedEmailId = localStorage.getItem("selectedEmailId");
+    if (selectedEmailId && emails.length > 0) {
+      const emailToOpen = emails.find(email => email.id === selectedEmailId);
+      if (emailToOpen) {
+        setSelectedEmail(emailToOpen);
+        setShowMobileDetails(true);
+        // Limpar o ID após uso
+        localStorage.removeItem("selectedEmailId");
+      }
+    }
+  }, [emails]);
+
   const loadEmails = async () => {
     setIsLoading(true);
     try {

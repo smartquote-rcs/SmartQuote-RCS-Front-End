@@ -817,10 +817,10 @@ export function AdminDashboard({
       case "dashboard":
         return (
           <DashboardPage
-            onNavigateToNotifications={() => setActivePage("notifications")}
-            onNavigateToSettings={() => setActivePage("settings")}
             onNavigateToQuotes={() => setActivePage("emails")}
+            onNavigateToEmails={() => setActivePage("emails")}
             onNavigateToLoginLogs={() => setActivePage("login-logs")}
+            onNavigateToNotifications={() => setActivePage("notifications")}
             onRefreshStats={refreshStats}
             dashboardStats={dashboardStats}
             isLoadingStats={isLoadingStats}

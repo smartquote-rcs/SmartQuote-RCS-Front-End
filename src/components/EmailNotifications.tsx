@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Mail, X, CheckCircle, Clock, FileText } from 'lucide-react';
+import { Mail, X, CheckCircle, Clock, FileText, Check, Eye } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface EmailAPIMessage {
@@ -26,11 +26,40 @@ interface EmailNotification {
 interface EmailNotificationsProps {
   onClose?: () => void;
   onNavigateToQuotes?: () => void;
+  onNavigateToEmails?: () => void;
 }
 
-export function EmailNotifications({ onClose, onNavigateToQuotes }: EmailNotificationsProps) {
+export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEmails }: EmailNotificationsProps) {
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
+
+  // Função para marcar como lida
+  const markAsRead = (id: number) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
+          ? { ...notification, read: true }
+          : notification
+      )
+    );
+    
+    // Salvar no localStorage
+    const readIds = JSON.parse(localStorage.getItem("readEmailNotifications") || "[]");
+    if (!readIds.includes(id)) {
+      readIds.push(id);
+      localStorage.setItem("readEmailNotifications", JSON.stringify(readIds));
+    }
+  };
+
+  // Função para abrir email específico
+  const openEmail = (notification: EmailNotification) => {
+    markAsRead(notification.id);
+    if (onNavigateToEmails) {
+      // Salvar o ID do email selecionado para abrir na página de emails
+      localStorage.setItem("selectedEmailId", notification.id.toString());
+      onNavigateToEmails();
+    }
+  };
 
   useEffect(() => {
     const fetchRecentEmailQuotes = async () => {
@@ -69,6 +98,10 @@ export function EmailNotifications({ onClose, onNavigateToQuotes }: EmailNotific
         // Ordenar por data (mais recente primeiro)
         emails.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setTotalCount(emails.length);
+        
+        // Carregar IDs lidos do localStorage
+        const readIds = JSON.parse(localStorage.getItem("readEmailNotifications") || "[]");
+        
         // Mapear para o formato esperado pelo componente
         const mapped: EmailNotification[] = emails.slice(0, 3).map((email) => ({
           id: Number(email.id),
@@ -76,7 +109,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes }: EmailNotific
           title: email.subject,
           message: `De: ${email.clienteNome} <${email.clienteEmail}>`,
           timestamp: email.date,
-          read: !!email.isRead,
+          read: !!email.isRead || readIds.includes(Number(email.id)),
         }));
         setNotifications(mapped);
       } catch (error) {
@@ -151,14 +184,15 @@ export function EmailNotifications({ onClose, onNavigateToQuotes }: EmailNotific
           {notifications.map((notification) => (
           <div
             key={notification.id}
-            className={`relative p-3 rounded-lg border transition-all duration-200 ${
+            className={`relative p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
               notification.read
                 ? 'bg-slate-800/30 border-slate-700/50 opacity-75'
                 : 'bg-cyan-900/20 border-cyan-500/30 hover:bg-cyan-900/30'
             }`}
+            onClick={() => openEmail(notification)}
           >
             <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pr-2">
                 <div className="flex items-center space-x-2 mb-1">
                   {notification.read ? (
                     <CheckCircle className="w-3 h-3 text-green-400 flex-shrink-0" />
@@ -171,7 +205,31 @@ export function EmailNotifications({ onClose, onNavigateToQuotes }: EmailNotific
                 <p className="text-slate-500 text-xs mt-1">{getTimeAgo(notification.timestamp)}</p>
               </div>
               
-              {/* Sem ações de marcar como lida/remover, pois vem da API */}
+              {/* Botões de ação */}
+              <div className="flex flex-col gap-1">
+                {!notification.read && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markAsRead(notification.id);
+                    }}
+                    className="bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-400 p-1 rounded text-xs transition-colors duration-200 flex items-center gap-1"
+                    title="Marcar como lida"
+                  >
+                    <Check className="w-3 h-3" />
+                  </button>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEmail(notification);
+                  }}
+                  className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 p-1 rounded text-xs transition-colors duration-200 flex items-center gap-1"
+                  title="Ver detalhes"
+                >
+                  <Eye className="w-3 h-3" />
+                </button>
+              </div>
             </div>
             
             {!notification.read && (

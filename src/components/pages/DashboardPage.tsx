@@ -1,9 +1,7 @@
-import { Mail, Users, Clock, Download, TrendingUp, Bell, Shield, RefreshCw } from "lucide-react";
+import { Mail, Users, Clock, TrendingUp, Bell, Shield, RefreshCw } from "lucide-react";
 import { QuoteProcessingChart } from "../QuoteProcessingChart";
 import type { Cotacao } from "../QuoteProcessingChart";
 import { SupplierPerformanceChart } from "../SupplierPerformanceChart";
-import { RecentQuotes } from "../RecentQuotes";
-import { PendingApprovals } from "../PendingApprovals";
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { EmailStatus } from "../EmailStatus";
@@ -23,10 +21,10 @@ interface Metric {
 }
 
 interface DashboardPageProps {
-  onNavigateToNotifications?: () => void;
-  onNavigateToSettings?: () => void;
   onNavigateToQuotes?: () => void;
   onNavigateToLoginLogs?: () => void;
+  onNavigateToEmails?: () => void;
+  onNavigateToNotifications?: () => void;
   onRefreshStats?: () => void;
   dashboardStats?: {
     quotes: {
@@ -69,10 +67,10 @@ function getRelativeTime(dateString: string) {
 }
 
 export function DashboardPage({
-  onNavigateToNotifications, 
-  onNavigateToSettings, 
   onNavigateToQuotes,
   onNavigateToLoginLogs,
+  onNavigateToEmails,
+  onNavigateToNotifications,
   onRefreshStats,
   dashboardStats,
   isLoadingStats = false,
@@ -316,20 +314,6 @@ export function DashboardPage({
             </p>
           </div>
           <div className="flex flex-row sm:flex-nowrap items-center gap-2 sm:gap-3 shrink-0">
-            {onNavigateToNotifications && (
-              <button 
-                onClick={onNavigateToNotifications}
-                className="relative bg-white/10 hover:bg-blue-500/20 hover:border-blue-400/50 text-white p-2 sm:p-3 rounded-lg border border-white/20 transition-all duration-300 hover:scale-105 group"
-                title="Ir para Notificações"
-              >
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5 group-hover:text-blue-400 transition-colors" />
-                {/* Badge de notificações não lidas */}
-                {unreadNotifications > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-[10px] sm:text-[11px] font-bold animate-pulse">
-                    {unreadNotifications > 99 ? '99+' : unreadNotifications}</span>
-                )}
-              </button>
-            )}
             {onRefreshStats && (
               <button 
                 onClick={onRefreshStats}
@@ -342,11 +326,20 @@ export function DashboardPage({
                 <span className="sm:hidden">{isLoadingStats ? '...' : 'Atualizar'}</span>
               </button>
             )}
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 sm:px-4 rounded-lg border border-blue-500 transition-colors duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Exportar Relatório</span>
-              <span className="sm:hidden">Exportar</span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={onNavigateToNotifications}
+                className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
+                title="Ver notificações"
+              >
+                <Bell className="w-7 h-7 text-slate-300" />
+                {unreadNotifications > 0 && (
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -387,6 +380,7 @@ export function DashboardPage({
                         <EmailStatus />
           <EmailNotifications 
             onNavigateToQuotes={onNavigateToQuotes}
+            onNavigateToEmails={onNavigateToEmails}
           />
         </div>
 
@@ -397,11 +391,6 @@ export function DashboardPage({
               <div className="min-w-0 flex-1 flex items-center gap-2">
                 <h3 className="text-base sm:text-lg font-bold text-white mb-1 flex items-center gap-2">
                   Alertas do Sistema
-                  {unreadNotifications > 0 && (
-                    <span className="ml-1 bg-red-600 text-white text-xs rounded-full px-2 py-0.5 font-bold animate-pulse">
-                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
-                    </span>
-                  )}
                 </h3>
                 {/* Fim badge dinâmico */}
                 

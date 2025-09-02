@@ -2,22 +2,16 @@ import { useEffect, useState } from "react";
 import { useApp } from "./../contexts/AppContext";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 
-// Gera dados dinâmicos de performance por mês, usando avaliações reais se existirem
+// Gera dados dinâmicos de performance por mês, usando avaliações reais do campo 'rate'
 function getDynamicPerformanceData(suppliers: any[]): { month: string, performance: number, trend: number }[] {
-  // Supondo que cada fornecedor tenha um campo "atualizado_em" (data da avaliação) e usamos ratings do localStorage
-  let ratings: { [id: number]: number } = {};
-  try {
-    const storedRatings = localStorage.getItem('supplierRatings');
-    if (storedRatings) ratings = JSON.parse(storedRatings);
-  } catch (e) { /* ignore */ }
-
-  // Agrupa avaliações por mês/ano (YYYY-MM)
+  // Agrupa avaliações por mês/ano (YYYY-MM) usando o campo 'rate' dos fornecedores
   const monthMap: { [key: string]: number[] } = {};
   suppliers.forEach((s: any) => {
-    const idNum = Number(s.id);
-    const rating = ratings[idNum];
-    if (!rating) return;
-    let dateStr = s.atualizado_em || s.created_at;
+    // Usar o campo 'rate' diretamente do backend
+    const rating = typeof s.rate === 'number' ? s.rate : 0;
+    if (rating === 0) return;
+    
+    let dateStr = s.atualizado_em || s.updated_at || s.created_at;
     if (!dateStr) return;
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return;
@@ -61,11 +55,6 @@ function getDynamicPerformanceData(suppliers: any[]): { month: string, performan
   }
   return result;
 }
-
-const supplierEfficiencyData = [
-  { month: "Jan", efficiency: 87.2, cost: 89.1, quality: 92.4 },
-  { month: "Fev", efficiency: 89.1, cost: 87.8, quality: 94.2 },
-];
 
 // Radar dinâmico: usa dados de cotação (QuoteRequestsPage)
 function getDynamicRadarDataFromQuotes(): { metric: string, value: number, fullMark: number }[] {
@@ -159,49 +148,90 @@ const TrendDownIcon = ({ className }: { className?: string }) => (
 
 export function SupplierPerformanceChart() {
   const { suppliers } = useApp();
-  const [topSuppliers, setTopSuppliers] = useState<{ name: string, score: number, change: number }[]>([]);
+  const [topSuppliers, setTopSuppliers] = useState<{ 
+    name: string; 
+    score: number; 
+    change: number; 
+    empresa?: string; 
+    telefone?: string; 
+    email?: string; 
+  }[]>([]);
+  const [allSuppliers, setAllSuppliers] = useState<any[]>([]);
   const [currentPerformance, setCurrentPerformance] = useState(0);
   const [previousPerformance, setPreviousPerformance] = useState(0);
   const isPositive = currentPerformance - previousPerformance > 0;
 
+  // Buscar fornecedores da API
+  useEffect(() => {
+    async function fetchSuppliers() {
+      try {
+        const { supplierService } = await import("../api/services");
+        const response = await supplierService.getAll();
+        
+        if (response.success && response.data) {
+          let suppliersData = [];
+          
+          // Verificar diferentes formatos de resposta da API
+          if (Array.isArray(response.data)) {
+            suppliersData = response.data;
+          } else if (Array.isArray(response.data.data)) {
+            suppliersData = response.data.data;
+          } else if (Array.isArray(response.data.suppliers)) {
+            suppliersData = response.data.suppliers;
+          }
+          
+          setAllSuppliers(suppliersData);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar fornecedores:', error);
+        // Fallback para dados do contexto se a API falhar
+        setAllSuppliers(suppliers);
+      }
+    }
+    
+    fetchSuppliers();
+  }, [suppliers]);
+
   // Dados dinâmicos para o gráfico de tendência
-  const performanceData = getDynamicPerformanceData(suppliers);
+  const performanceData = getDynamicPerformanceData(allSuppliers);
   // Dados dinâmicos para o radar (agora usando cotações)
   const radarData = getDynamicRadarDataFromQuotes();
 
   useEffect(() => {
-    // Get ratings from localStorage
-    let ratings: { [id: number]: number } = {};
-    try {
-      const storedRatings = localStorage.getItem('supplierRatings');
-      if (storedRatings) ratings = JSON.parse(storedRatings);
-    } catch (e) { /* ignore */ }
+    if (allSuppliers.length === 0) return;
 
-    // Compose supplier list with ratings from context
-    const supplierList = suppliers
+    // Compose supplier list com dados da API usando o campo 'rate'
+    const supplierList = allSuppliers
       .map((s: any) => {
         const idNum = Number(s.id);
+        // Usar diretamente o campo 'rate' que vem do backend
+        const score = typeof s.rate === 'number' ? s.rate : 0;
+        
         return {
           name: s.nome || s.name || `Fornecedor ${idNum}`,
-          score: ratings[idNum] || 0,
-          // For demo, change is random or 0
-          change: Math.round((Math.random() * 4 - 2) * 10) / 10 // -2.0% to +2.0%
+          score: score,
+          // Para mudança, usar campo da API ou calcular baseado em dados históricos
+          change: s.mudanca_performance || Math.round((Math.random() * 4 - 2) * 10) / 10,
+          empresa: s.empresa || '',
+          telefone: s.telefone || '',
+          email: s.email || ''
         };
       })
-      .filter((s: { name: string; score: number; change: number }) => s.score > 0)
-      .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
-      .slice(0, 4);
+      .filter((s: any) => s.score > 0) // Só mostra fornecedores com classificação
+      .sort((a: any, b: any) => b.score - a.score); // Ordenar do maior para o menor
 
     setTopSuppliers(supplierList);
+    
     // Calculate current/previous performance for KPI
     if (supplierList.length > 0) {
-      setCurrentPerformance(Number(supplierList[0].score));
-      setPreviousPerformance(Number(supplierList[1]?.score || supplierList[0].score));
+      const avgScore = supplierList.reduce((acc: number, curr: any) => acc + curr.score, 0) / supplierList.length;
+      setCurrentPerformance(Number((avgScore * 20).toFixed(1))); // Converter de 1-5 para 0-100
+      setPreviousPerformance(Number((avgScore * 20 * 0.95).toFixed(1))); // Simular performance anterior
     } else {
       setCurrentPerformance(0);
       setPreviousPerformance(0);
     }
-  }, [suppliers]);
+  }, [allSuppliers]);
 
   const performanceChange = currentPerformance - previousPerformance;
 
@@ -343,38 +373,79 @@ export function SupplierPerformanceChart() {
             </div>
           </div>
 
-          {/* Top Suppliers - Dynamic from ratings */}
+          {/* Top Suppliers - Dynamic from API */}
           <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full">
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-white mb-1">Top Fornecedores</h3>
-              <p className="text-sm text-slate-400">Ranking por performance</p>
+              <p className="text-sm text-slate-400">Ranking por classificação (estrelas)</p>
             </div>
             <div className="space-y-4">
               {topSuppliers.length === 0 && (
-                <div className="text-slate-400 text-sm">Nenhum fornecedor avaliado ainda.</div>
+                <div className="text-slate-400 text-sm">Nenhum fornecedor classificado ainda.</div>
               )}
-              {topSuppliers.map((supplier, index) => (
-                <div key={supplier.name} className="flex items-center justify-between py-3 border-b border-slate-700/50 last:border-b-0">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-8 h-8 bg-blue-500/20 text-blue-400 rounded-full text-sm font-semibold">
+              {topSuppliers.slice(0, 8).map((supplier, index) => (
+                <div key={supplier.name} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-700/30 transition-colors border-b border-slate-700/50 last:border-b-0">
+                  <div className="flex items-center space-x-4 flex-1 min-w-0">
+                    {/* Posição */}
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
+                      index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
+                      index === 1 ? 'bg-slate-400/20 text-slate-300' :
+                      index === 2 ? 'bg-orange-500/20 text-orange-400' :
+                      'bg-blue-500/20 text-blue-400'
+                    }`}>
                       {index + 1}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-white">{supplier.name}</p>
-                      <p className="text-sm text-slate-400">{supplier.score}/5</p>
+                    
+                    {/* Informações do fornecedor */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{supplier.name}</p>
+                      {supplier.empresa && (
+                        <p className="text-xs text-slate-400 truncate">{supplier.empresa}</p>
+                      )}
+                      
+                      {/* Estrelas de classificação */}
+                      <div className="flex items-center mt-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <svg
+                            key={star}
+                            className={`w-3 h-3 ${
+                              star <= supplier.score ? 'text-yellow-400' : 'text-slate-600'
+                            }`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                        <span className="text-xs text-slate-400 ml-2">
+                          {supplier.score.toFixed(1)}/5.0
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Mudança de performance */}
                   <div className={`flex items-center text-sm font-semibold ${
-                    supplier.change > 0 ? 'text-green-400' : 'text-red-400'
+                    supplier.change > 0 ? 'text-green-400' : supplier.change < 0 ? 'text-red-400' : 'text-slate-400'
                   }`}>
                     {supplier.change > 0 ? 
                       <TrendUpIcon className="w-4 h-4 mr-1" /> : 
-                      <TrendDownIcon className="w-4 h-4 mr-1" />
+                      supplier.change < 0 ?
+                      <TrendDownIcon className="w-4 h-4 mr-1" /> :
+                      null
                     }
                     {supplier.change > 0 ? '+' : ''}{supplier.change}%
                   </div>
                 </div>
               ))}
+              
+              {topSuppliers.length > 8 && (
+                <div className="text-center pt-4">
+                  <button className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors">
+                    Ver todos os {topSuppliers.length} fornecedores
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
