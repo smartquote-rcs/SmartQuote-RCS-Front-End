@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { processImageUrl, handleImageError } from '../../utils/imageProxy';
 import { 
   ArrowLeft,
   CheckCircle,
@@ -313,16 +314,12 @@ export function ProcessDetailsPage({ jobId, onBack, onDelete }: ProcessDetailsPa
                 {produtos.slice(0, 9).map((produto, index) => (
                   <Card key={index} className="bg-slate-700 border-slate-600">
                     <div className="p-4">
-                      {produto.image_url && (
-                        <img
-                          src={produto.image_url}
-                          alt={produto.name}
-                          className="w-full h-32 object-cover rounded-lg mb-3"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      )}
+                      <img
+                        src={processImageUrl(produto.image_url, 300, 200)}
+                        alt={produto.name}
+                        className="w-full h-32 object-cover rounded-lg mb-3"
+                        onError={handleImageError}
+                      />
                       
                       <h3 className="font-medium text-white mb-2 line-clamp-2">
                         {produto.name}

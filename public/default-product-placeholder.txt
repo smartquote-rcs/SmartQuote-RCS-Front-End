@@ -1,0 +1,4 @@
+# Esta é uma imagem placeholder que será substituída pela imagem real
+# A imagem deve ser colocada em: /public/default-product.jpg
+# Tamanho recomendado: 400x300 pixels
+# Formato: JPG ou PNG

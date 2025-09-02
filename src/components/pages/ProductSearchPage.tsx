@@ -6,6 +6,7 @@ import { useApp } from "../../contexts/AppContext";
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from "../../hooks/useCurrency";
 import { Product } from "../../types";
+import { processImageUrl, handleImageError } from "../../utils/imageProxy";
 // Modal de edição antigo substituído por formulário inline
 import {
   AlertDialog,
@@ -130,9 +131,10 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
       {/* Image */}
       <div className={`relative ${viewMode === "list" ? "w-full lg:w-32 h-48 lg:h-24" : "w-full h-48"} bg-gray-800 rounded-xl overflow-hidden mb-4 ${viewMode === "list" ? "lg:mb-0" : ""} group`}>
         <img 
-          src={produto.image_url || "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop"}
+          src={processImageUrl(produto.image_url, 400, 300)}
           alt={produto.nome}
           className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
+          onError={handleImageError}
         />
         <button
           onClick={() => produto.id && toggleFavorite(produto.id.toString())}

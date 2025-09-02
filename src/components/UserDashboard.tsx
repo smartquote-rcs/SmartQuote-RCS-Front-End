@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useCurrency } from "../hooks/useCurrency";
+import { processImageUrl, handleImageError } from "../utils/imageProxy";
 import { 
   Search, 
   ShoppingCart, 
@@ -735,9 +736,10 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                     <div key={produto.id} className="glass-card p-4 lg:p-6 bg-white/5 rounded-xl border border-white/20 hover:border-yellow-400/50 transition-all duration-300 group">
                       <div className="relative w-full h-48 bg-gray-800 rounded-xl overflow-hidden mb-4 group-hover:scale-[1.02] transition-all duration-300">
                         <img 
-                          src={produto.image_url || ''} 
+                          src={processImageUrl(produto.image_url, 300, 300)} 
                           alt={produto.nome}
                           className="w-full h-full object-cover"
+                          onError={handleImageError}
                         />
                         {/* Desconto e Popular removidos pois não existem no tipo Product */}
                         <button
