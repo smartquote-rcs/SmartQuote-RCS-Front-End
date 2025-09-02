@@ -180,14 +180,10 @@ import {
   Building,
   User,
   Check,
-  X,
   Info,
-  Filter,
   SortAsc,
   SortDesc,
   Plus,
-  ShieldAlert,
-  RefreshCw,
 } from "lucide-react";
 import { cotacaoService } from "../../api/services";
 import api from '../../api/client';
@@ -196,34 +192,22 @@ interface QuoteRequestsPageProps {
   onNavigateToNewQuote?: () => void;
 }
 
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "processing":
-      return (
-        <Badge className="bg-blue-600 text-white text-xs">Processando</Badge>
-      );
-    case "processed":
-    case "approved":
-    case "completa":
-      return (
-        <Badge className="bg-blue-600 text-white text-xs">Completa</Badge>
-      );
-    case "incompleta":
-      return (
-        <Badge className="bg-red-600 text-white text-xs">Incompleta</Badge>
-      );
-    case "pending_approval":
-      return (
-        <Badge className="bg-orange-600 text-white text-xs">Pendente</Badge>
-      );
-    case "sent":
-      return (
-        <Badge className="bg-purple-600 text-white text-xs">Enviada</Badge>
-      );
-    case "rejected":
-      return <Badge className="bg-red-600 text-white text-xs">Rejeitada</Badge>;
-    default:
-      return <Badge className="text-xs">{status}</Badge>;
+const getStatusFromAprovacao = (cotacao: any) => {
+  if (cotacao.aprovacao === true) return "approved";
+  if (cotacao.aprovacao === false) return "pending_approval";
+  return "pending_approval"; // null ou undefined também é pendente
+};
+
+const getStatusBadge = (cotacao: any) => {
+  const status = getStatusFromAprovacao(cotacao);
+  if (status === "approved") {
+    return (
+      <Badge className="bg-green-600 text-white text-xs">Aprovado</Badge>
+    );
+  } else {
+    return (
+      <Badge className="bg-orange-600 text-white text-xs">Pendente</Badge>
+    );
   }
 };
 
@@ -240,21 +224,12 @@ const getPriorityBadge = (priority: string) => {
   }
 };
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "processing":
-      return <Clock className="w-4 h-4 text-blue-400" />;
-    case "processed":
-    case "approved":
-      return <CheckCircle className="w-4 h-4 text-green-400" />;
-    case "pending_approval":
-      return <AlertTriangle className="w-4 h-4 text-orange-400" />;
-    case "sent":
-      return <Mail className="w-4 h-4 text-purple-400" />;
-    case "rejected":
-      return <X className="w-4 h-4 text-red-400" />;
-    default:
-      return <Clock className="w-4 h-4 text-gray-400" />;
+const getStatusIcon = (cotacao: any) => {
+  const status = getStatusFromAprovacao(cotacao);
+  if (status === "approved") {
+    return <CheckCircle className="w-4 h-4 text-green-400" />;
+  } else {
+    return <AlertTriangle className="w-4 h-4 text-orange-400" />;
   }
 };
 
@@ -351,9 +326,9 @@ const getValidationStatus = (cotacao: any) => {
 
   return {
     ...validation,
-    isFullyApproved: cotacao.status === "approved",
-    pendingApprovals: cotacao.status === "approved" ? [] : validation.approvers,
-    approvedBy: cotacao.status === "approved" ? validation.approvers : [],
+    isFullyApproved: cotacao.aprovacao === true,
+    pendingApprovals: cotacao.aprovacao === true ? [] : validation.approvers,
+    approvedBy: cotacao.aprovacao === true ? validation.approvers : [],
   };
 };
 
@@ -404,6 +379,7 @@ export function QuoteRequestsPage({
           fornecedor: c.fornecedor || c.nome_fornecedor || '',
           prioridade: c.prioridade || c.priority || '',
           status: c.status || '',
+          aprovacao: c.aprovacao,
           valor: c.valor || c.orcamento_geral || '',
           quantidade: c.quantidade || '',
           aprovado_por: c.aprovado_por || c.aprovador || '',
@@ -481,10 +457,10 @@ export function QuoteRequestsPage({
 
 
   // Modal de motivo para aprovar / rejeitar / reativar
-  const [approvalModal, setApprovalModal] = useState<{open:boolean; action:'approve'|'reject'|'reactivate'; cotacaoId:string|null}>({open:false, action:'approve', cotacaoId:null});
+  const [approvalModal, setApprovalModal] = useState<{open:boolean; action:'approve'|'set_pending'; cotacaoId:string|null}>({open:false, action:'approve', cotacaoId:null});
   const [motivoInput, setMotivoInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // Feedback visual de envio
-  const openApproval = (id:string, action:'approve'|'reject'|'reactivate') => {
+  const openApproval = (id:string, action:'approve'|'set_pending') => {
     setMotivoInput('');
     setIsSubmitting(false);
     setApprovalModal({open:true, action, cotacaoId:id});
@@ -499,8 +475,9 @@ export function QuoteRequestsPage({
     if (!approvalModal.cotacaoId) return;
     const id = approvalModal.cotacaoId;
     const action = approvalModal.action;
-    const isApprove = action === 'approve' || action === 'reactivate';
-    const isReject = action === 'reject';
+    const isApprove = action === 'approve';
+    const isPending = action === 'set_pending';
+    
     if (!motivoInput.trim()) {
       setIsSubmitting(false);
       setMotivoInput("");
@@ -512,23 +489,27 @@ export function QuoteRequestsPage({
       if (currentUserId != null) {
         payload.aprovado_por = currentUserId; // envia id do usuário logado
       }
-      if (isReject) {
+      
+      // Define status baseado na aprovação
+      if (isApprove) {
+        payload.status = 'completa';
+        payload.data_aprovacao = new Date().toISOString();
+      } else if (isPending) {
         payload.status = 'incompleta';
         payload.data_aprovacao = null;
-      } else if (isApprove) {
-        payload.status = 'completa';
       }
+      
       const resp = await cotacaoService.update(String(id), payload);
       if (resp.success) {
         setCotacoesList(prev => prev.map(c => {
           if (String(c.id) !== String(id)) return c;
-          // Atualiza motivo, id de quem rejeitou, status e data_aprovacao
+          // Atualiza campos baseado na ação
           return {
             ...c,
             aprovacao: isApprove,
-            status: isReject ? 'incompleta' : 'completa',
+            status: isApprove ? 'completa' : 'incompleta',
             motivo: motivoInput,
-            data_aprovacao: isReject ? null : new Date().toISOString(),
+            data_aprovacao: isApprove ? new Date().toISOString() : null,
             aprovado_por: currentUserId != null ? currentUserId : c.aprovado_por
           };
         }));
@@ -589,7 +570,7 @@ export function QuoteRequestsPage({
   <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-2 sm:space-y-3 lg:space-y-0 lg:space-x-4">
   <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
           <div className="flex-shrink-0 mt-1">
-            {getStatusIcon(cotacao.status)}
+            {getStatusIcon(cotacao)}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
@@ -606,7 +587,7 @@ export function QuoteRequestsPage({
                 )}
               </div>
               <div className="flex items-center mb-1 sm:mb-0 sm:ml-2 sm:justify-end w-full sm:w-auto">
-                {getStatusBadge(cotacao.status)}
+                {getStatusBadge(cotacao)}
               </div>
             </div>
 
@@ -680,8 +661,9 @@ export function QuoteRequestsPage({
           {/* Aviso de Aprovação Especial removido conforme solicitado */}
 
           <div className="flex flex-col sm:flex-row lg:flex-col gap-2 w-full mt-2">
-            {/* Botões de ação baseados no status */}
-    {(cotacao.status === "pending_approval" || cotacao.status === 'incompleta') ? (
+            {/* Botões de ação baseados no campo aprovacao */}
+            {cotacao.aprovacao !== true ? (
+              /* Pendente - mostra botão de aprovar */
               <>
                 <button
                   onClick={() => openApproval(String(cotacao.id),'approve')}
@@ -689,15 +671,7 @@ export function QuoteRequestsPage({
                   className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
                 >
                   <Check className="w-3 h-3" />
-                  <span>{t("approvals.approve")}</span>
-                </button>
-                <button
-                  onClick={() => openApproval(String(cotacao.id),'reject')}
-                  aria-label="Rejeitar cotação"
-                  className="bg-red-600/20 hover:bg-red-600/40 hover:border-red-400/60 border border-red-500/30 text-red-400 hover:text-red-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-400"
-                >
-                  <X className="w-3 h-3" />
-                  <span>{t("approvals.reject")}</span>
+                  <span>Aprovar</span>
                 </button>
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
@@ -705,11 +679,11 @@ export function QuoteRequestsPage({
                   className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
                   <Info className="w-3 h-3" />
-                  <span>{t("approvals.viewDetails")}</span>
+                  <span>Ver Detalhes</span>
                 </button>
               </>
-            ) : cotacao.status === "approved" || cotacao.status === 'completa' ||
-              cotacao.status === "processed" ? (
+            ) : (
+              /* Aprovado - mostra botão para colocar como pendente */
               <>
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
@@ -724,57 +698,12 @@ export function QuoteRequestsPage({
                   <span>PDF</span>
                 </button>
                 <button
-                  onClick={() => openApproval(String(cotacao.id),'reject')}
-                  aria-label="Cancelar cotação"
+                  onClick={() => openApproval(String(cotacao.id),'set_pending')}
+                  aria-label="Colocar como pendente"
                   className="bg-orange-600/20 hover:bg-orange-600/40 hover:border-orange-400/60 border border-orange-500/30 text-orange-400 hover:text-orange-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 >
-                  <X className="w-3 h-3" />
-                  <span>Cancelar</span>
-                </button>
-              </>
-            ) : cotacao.status === "rejected" ? (
-              <>
-                <button
-                  onClick={() => onViewDetails(cotacao.id)}
-                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105"
-                >
-                  <Info className="w-3 h-3" />
-                  <span>Detalhes</span>
-                </button>
-                <button
-                  onClick={() => openApproval(String(cotacao.id),'reactivate')}
-                  aria-label="Reativar cotação"
-                  className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
-                >
-                  <Check className="w-3 h-3" />
-                  <span>Reativar</span>
-                </button>
-                <button className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full opacity-50 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-400" aria-label="Baixar PDF" disabled>
-                  <Download className="w-3 h-3" />
-                  <span>PDF</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => onViewDetails(cotacao.id)}
-                  aria-label="Ver cotação"
-                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                >
-                  <Eye className="w-3 h-3" />
-                  <span>Ver</span>
-                </button>
-                <button className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400" aria-label="Baixar PDF">
-                  <Download className="w-3 h-3" />
-                  <span>PDF</span>
-                </button>
-                <button
-                  onClick={() => openApproval(String(cotacao.id),'approve')}
-                  aria-label="Aprovar cotação"
-                  className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
-                >
-                  <Check className="w-3 h-3" />
-                  <span>Aprovar</span>
+                  <Clock className="w-3 h-3" />
+                  <span>Pendente</span>
                 </button>
               </>
             )}
@@ -805,9 +734,8 @@ export function QuoteRequestsPage({
 
   // Função para obter o filtro de cada aba
   const getTabFilter = (tab: string) => {
-    if (tab === 'pending') return (c: any) => c.status === 'incompleta' && (!c.motivo || c.motivo.trim() === '');
-    if (tab === 'approved') return (c: any) => c.status === 'approved' || c.status === 'processed' || c.status === 'completa';
-    if (tab === 'rejected') return (c: any) => c.status === 'incompleta' && c.motivo && c.motivo.trim() !== '';
+    if (tab === 'pending') return (c: any) => c.aprovacao !== true; // false, null ou undefined
+    if (tab === 'approved') return (c: any) => c.aprovacao === true;
     return () => true;
   };
 
@@ -1298,11 +1226,9 @@ export function QuoteRequestsPage({
           <DialogHeader>
             <DialogTitle className="text-white font-semibold flex items-center gap-2">
               {approvalModal.action === 'approve' && <Check className="w-4 h-4 text-green-400"/>}
-              {approvalModal.action === 'reject' && <X className="w-4 h-4 text-red-400"/>}
-              {approvalModal.action === 'reactivate' && <RefreshCw className="w-4 h-4 text-emerald-400"/>}
+              {approvalModal.action === 'set_pending' && <Clock className="w-4 h-4 text-orange-400"/>}
               {approvalModal.action === 'approve' && 'Aprovar Cotação'}
-              {approvalModal.action === 'reject' && 'Rejeitar Cotação'}
-              {approvalModal.action === 'reactivate' && 'Reativar Cotação'}
+              {approvalModal.action === 'set_pending' && 'Marcar como Pendente'}
             </DialogTitle>
             <DialogDescription className="text-slate-300 text-sm">
               Informe o motivo. Esse registro ficará salvo no histórico.
@@ -1323,13 +1249,13 @@ export function QuoteRequestsPage({
               <button onClick={closeApproval} aria-label="Cancelar" className="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 border border-slate-600/60 focus:outline-none focus:ring-2 focus:ring-slate-400">{t("quoteRequests.cancel")}</button>
               <button
                 onClick={submitApproval}
-                aria-label="Confirmar aprovação/rejeição"
+                aria-label="Confirmar aprovação/pendente"
                 disabled={isSubmitting || !motivoInput.trim()}
-                className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md font-semibold flex items-center gap-1 border transition-colors ${approvalModal.action==='reject' ? 'bg-red-600/30 hover:bg-red-600/50 text-red-300 border-red-500/40' : approvalModal.action==='reactivate' ? 'bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border-emerald-500/40' : 'bg-green-600/30 hover:bg-green-600/50 text-green-300 border-green-500/40'} focus:outline-none focus:ring-2 focus:ring-cyan-400 disabled:opacity-60`}
+                className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md font-semibold flex items-center gap-1 border transition-colors ${approvalModal.action==='set_pending' ? 'bg-orange-600/30 hover:bg-orange-600/50 text-orange-300 border-orange-500/40' : 'bg-green-600/30 hover:bg-green-600/50 text-green-300 border-green-500/40'} focus:outline-none focus:ring-2 focus:ring-cyan-400 disabled:opacity-60`}
               >
                 {isSubmitting ? (
                   <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                ) : approvalModal.action==='approve' ? <Check className="w-4 h-4"/> : approvalModal.action==='reject' ? <X className="w-4 h-4"/> : <RefreshCw className="w-4 h-4"/>}
+                ) : approvalModal.action==='approve' ? <Check className="w-4 h-4"/> : <Clock className="w-4 h-4"/>}
                 {t("quoteRequests.confirm")}
               </button>
             </div>
@@ -1390,7 +1316,7 @@ export function QuoteRequestsPage({
         <DialogContent className="w-full max-w-xs sm:max-w-md bg-slate-900/95 border border-red-500/30 p-2 sm:p-6 rounded-xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-red-400 font-semibold flex items-center gap-2">
-              <X className="w-4 h-4 text-red-400"/>
+              <AlertTriangle className="w-4 h-4 text-red-400"/>
               {t("quoteRequests.pdfExportError")}
             </DialogTitle>
             <DialogDescription className="text-slate-300 text-sm">
