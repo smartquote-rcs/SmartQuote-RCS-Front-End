@@ -29,6 +29,7 @@ import { UserSettingsPage } from "./pages/UserSettingsPage";
 import { Badge } from "./ui/badge";
 import { useApp } from "../contexts/AppContext";
 import { useTranslation } from 'react-i18next';
+import { buscaGeralService } from "../services/buscaGeralService";
 
 interface User {
   email: string;
@@ -85,8 +86,39 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
-  const [lastCreatedQuote, setLastCreatedQuote] = useState<any>(null);
-  const [quoteMessage, setQuoteMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  // Histórico de cotações criadas
+  const [quoteHistory, setQuoteHistory] = useState<Array<{
+    id: string;
+    message: string;
+    timestamp: string;
+    quote: any;
+  }>>([]);
+  
+  // Carregar histórico do localStorage ao montar o componente
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('userQuoteHistory');
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        if (Array.isArray(parsed)) {
+          setQuoteHistory(parsed);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar histórico do localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Salvar histórico no localStorage sempre que mudar
+  useEffect(() => {
+    localStorage.setItem('userQuoteHistory', JSON.stringify(quoteHistory));
+  }, [quoteHistory]);
+
+  const [quoteMessage, setQuoteMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+    quoteId?: string;
+  } | null>(null);
   // Forçar atualização ao trocar idioma
   const [, setForceUpdate] = useState(0);
 
@@ -495,47 +527,66 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                     
                     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (newQuotePrompt.trim()) {
+                            // Validar solicitação antes de enviar
+                            const validation = buscaGeralService.validarSolicitacao(newQuotePrompt);
+                            if (!validation.valid) {
+                              setQuoteMessage({
+                                type: 'error',
+                                text: validation.message || 'Solicitação inválida'
+                              });
+                              return;
+                            }
+
                             setIsCreatingQuote(true);
                             setQuoteMessage(null);
-                            setLastCreatedQuote(null);
                             
-                            // Simular processamento de IA
-                            setTimeout(() => {
-                              // Simular possível erro (5% de chance)
-                              const hasError = Math.random() < 0.05;
-                              
-                              if (hasError) {
-                                setQuoteMessage({
-                                  type: 'error',
-                                  text: t('newQuote.errorMessage')
-                                });
-                                setIsCreatingQuote(false);
-                                return;
+                            try {
+                              // Usar o serviço de busca geral
+                              const result = await buscaGeralService.buscarGeral(newQuotePrompt);
+
+                              if (!result.success) {
+                                throw new Error(result.error || 'Erro na busca');
                               }
-                              
+
+                              // Criar cotação com base na resposta da API
                               const newQuote = {
                                 id: `RCS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
-                                produto: `Produto personalizado (${newQuotePrompt.substring(0, 30)}...)`,
-                                fornecedor: "IA SmartQuote",
-                                valor: "€" + (Math.random() * 5000 + 100).toFixed(2),
+                                produto: result.data?.produto || `Produto personalizado (${newQuotePrompt.substring(0, 30)}...)`,
+                                fornecedor: result.data?.fornecedor || "IA SmartQuote",
+                                valor: result.data?.valor || "€" + (Math.random() * 5000 + 100).toFixed(2),
                                 status: "pending" as const,
                                 data: new Date().toLocaleDateString('pt-PT'),
                                 submittedAt: new Date().toLocaleString('pt-PT'),
                                 cliente: user?.name || "Cliente",
-                                quantidade: "1 unidade",
-                                prioridade: "medium",
+                                quantidade: result.data?.quantidade || "1 unidade",
+                                prioridade: result.data?.prioridade || "medium",
                                 dataRecebido: new Date().toISOString().split('T')[0],
                                 prazoResposta: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                responsavel: "Sistema IA"
+                                responsavel: "Sistema IA",
+                                descricao: result.data?.descricao || newQuotePrompt,
+                                observacoes: result.data?.observacoes || '',
+                                categoria: result.data?.categoria || '',
+                                especificacoes: result.data?.especificacoes || '',
+                                prazoEntrega: result.data?.prazoEntrega || ''
                               };
                               
                               addQuote(newQuote);
-                              setLastCreatedQuote(newQuote);
+                              
+                              // Adicionar ao histórico
+                              const historyEntry = {
+                                id: newQuote.id,
+                                message: `Cotação ${newQuote.produto} criada com sucesso`,
+                                timestamp: new Date().toLocaleString('pt-PT'),
+                                quote: newQuote
+                              };
+                              setQuoteHistory(prev => [historyEntry, ...prev]);
+                              
                               setQuoteMessage({
                                 type: 'success',
-                                text: t('newQuote.successMessage')
+                                text: 'Cotação criada com sucesso!',
+                                quoteId: newQuote.id
                               });
                               setIsCreatingQuote(false);
                               setNewQuotePrompt("");
@@ -544,7 +595,15 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                               setTimeout(() => {
                                 setQuoteMessage(null);
                               }, 5000);
-                            }, 3000);
+                              
+                            } catch (error: any) {
+                              console.error('❌ Erro ao fazer busca:', error);
+                              setQuoteMessage({
+                                type: 'error',
+                                text: error.message || 'Erro ao processar solicitação. Tente novamente.'
+                              });
+                              setIsCreatingQuote(false);
+                            }
                           }
                         }}
                         disabled={!newQuotePrompt.trim() || isCreatingQuote}
@@ -586,67 +645,100 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                           ? 'bg-green-500/10 border-green-500/20 text-green-300' 
                           : 'bg-red-500/10 border-red-500/20 text-red-300'
                       } border rounded-lg p-3 sm:p-4 transition-all duration-300`}>
-                        <div className="flex items-center space-x-3">
-                          {quoteMessage.type === 'success' ? (
-                            <Check className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <X className="w-4 h-4 text-red-400" />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            {quoteMessage.type === 'success' ? (
+                              <Check className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <X className="w-4 h-4 text-red-400" />
+                            )}
+                            <span className="text-xs sm:text-sm font-medium">{quoteMessage.text}</span>
+                          </div>
+                          {quoteMessage.type === 'success' && quoteMessage.quoteId && (
+                            <button
+                              onClick={() => setActivePage("quotes")}
+                              className="bg-green-600/50 hover:bg-green-700/50 border border-green-600/50 text-green-300 px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300 flex items-center space-x-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>Detalhes</span>
+                            </button>
                           )}
-                          <span className="text-xs sm:text-sm font-medium">{quoteMessage.text}</span>
                         </div>
                       </div>
                     )}
 
                     {/* Cotação Criada */}
-                    {lastCreatedQuote && (
-                      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-blue-500/30 backdrop-blur-sm">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="text-white font-bold text-sm mb-1">Cotação Criada</h4>
-                            <p className="text-blue-400 font-mono text-xs">{lastCreatedQuote.id}</p>
-                          </div>
-                          <div className="bg-orange-500/20 px-2 py-1 rounded-md">
-                            <span className="text-orange-400 text-xs font-medium">Pendente</span>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <span className="text-slate-400 block mb-1">Produto:</span>
-                            <span className="text-white">{lastCreatedQuote.produto}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block mb-1">Fornecedor:</span>
-                            <span className="text-white">{lastCreatedQuote.fornecedor}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block mb-1">Valor:</span>
-                            <span className="text-blue-400 font-bold">{lastCreatedQuote.valor}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block mb-1">Data:</span>
-                            <span className="text-white">{lastCreatedQuote.data}</span>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 pt-3 border-t border-slate-700/50">
-                          <button
-                            onClick={() => setActivePage("my-quotes")}
-                            className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center space-x-2 font-medium"
-                          >
-                            <FileText className="w-3 h-3" />
-                            <span>Ver Minhas Cotações</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                    {/* Apenas mensagem de sucesso/erro aqui */}
                   </div>
                 </div>
               </div>
 
-              {/* Lista de Cotações Existentes */}
+              {/* Lista de Cotações Existentes - Histórico Real */}
               <div className="space-y-4">
-                <h3 className="text-base sm:text-lg font-bold text-white mb-4">Minhas Cotações</h3>
+                <h3 className="text-base sm:text-lg font-bold text-white mb-4">Histórico de Minhas Cotações</h3>
+                
+                {/* Histórico Real das Cotações Criadas */}
+                {quoteHistory.length > 0 ? (
+                  <div className="space-y-3 mb-6">
+                    {quoteHistory.slice(0, 10).map((entry) => (
+                      <div key={entry.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-blue-400 font-mono text-xs">{entry.id}</p>
+                            <p className="text-slate-400 text-xs">{entry.timestamp}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="bg-orange-500/20 px-2 py-1 rounded">
+                              <span className="text-orange-400 text-xs font-medium">Pendente</span>
+                            </div>
+                            <button
+                              onClick={() => setActivePage("quotes")}
+                              className="bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 text-blue-300 px-3 py-1.5 rounded text-xs transition-all duration-200 flex items-center space-x-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>Ver Detalhes</span>
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-white text-sm mb-2">{entry.message}</p>
+                        {entry.quote && (
+                          <div className="mt-2 pt-2 border-t border-slate-600/30">
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                              <div>
+                                <span className="text-slate-400">Produto:</span>
+                                <span className="text-white ml-2">{entry.quote.produto}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400">Valor:</span>
+                                <span className="text-blue-400 ml-2 font-bold">{entry.quote.valor}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {quoteHistory.length > 10 && (
+                      <div className="text-center">
+                        <button
+                          onClick={() => setActivePage("quotes")}
+                          className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm flex items-center space-x-2 mx-auto"
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span>Ver todas as {quoteHistory.length} cotações</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="glass-card p-6 text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-3 text-slate-400 opacity-50" />
+                    <p className="text-slate-400 text-sm">Nenhuma cotação criada ainda.</p>
+                    <p className="text-xs text-slate-500 mt-1">Use o prompt acima para criar sua primeira cotação.</p>
+                  </div>
+                )}
+
+                {/* Cotações do Sistema (se existirem) */}
                 {myQuotes.map((quote) => (
                   <div key={quote.id} className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">

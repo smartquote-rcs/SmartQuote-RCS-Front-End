@@ -18,7 +18,8 @@ import {
   RefreshCw,
   Check,
   Upload,
-  Mail
+  Mail,
+  Eye
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -36,6 +37,7 @@ import { EmailsPage } from "./pages/EmailsPage";
 import { ProcessesPage } from "./pages/ProcessesPage";
 import { useApp } from "../contexts/AppContext";
 import { produtoService, supplierService, dashboardService } from "../api/services";
+import { buscaGeralService } from "../services/buscaGeralService";
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 
@@ -234,8 +236,40 @@ export function AdminDashboard({
       setActivePage(defaultPage);
     }
   }, [activePage, allowedPages, defaultPage]);
-  const [lastCreatedQuote, setLastCreatedQuote] = useState<any>(null);
-  const [quoteMessage, setQuoteMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  
+  // Histórico de cotações criadas
+  const [quoteHistory, setQuoteHistory] = useState<Array<{
+    id: string;
+    message: string;
+    timestamp: string;
+    quote: any;
+  }>>([]);
+  
+  // Carregar histórico do localStorage ao montar o componente
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('adminQuoteHistory');
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        if (Array.isArray(parsed)) {
+          setQuoteHistory(parsed);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar histórico do localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Salvar histórico no localStorage sempre que mudar
+  useEffect(() => {
+    localStorage.setItem('adminQuoteHistory', JSON.stringify(quoteHistory));
+  }, [quoteHistory]);
+
+  const [quoteMessage, setQuoteMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+    quoteId?: string;
+  } | null>(null);
   const [shouldFocusPrompt, setShouldFocusPrompt] = useState(false);
   // Estados para novo produto
   const [newProduct, setNewProduct] = useState({
@@ -859,41 +893,50 @@ export function AdminDashboard({
 
                     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (newQuotePrompt.trim()) {
                             setIsCreatingQuote(true);
                             setQuoteMessage(null);
-                            setLastCreatedQuote(null);
 
-                            // Simular processamento de IA
-                            setTimeout(() => {
-                              // Simular possível erro (5% de chance)
-                              const hasError = Math.random() < 0.05;
+                            try {
+                              // Usar o serviço de busca geral
+                              const result = await buscaGeralService.buscarGeral(newQuotePrompt.trim());
+                              console.log('📨 Resposta da API de busca geral (Admin):', result);
 
-                              if (hasError) {
-                                setQuoteMessage({
-                                  type: 'error',
-                                  text: t('newQuote.errorMessage')
-                                });
-                                setIsCreatingQuote(false);
-                                return;
-                              }
-
+                              // Criar cotação com base na resposta da API
                               const newQuote = {
                                 id: `RCS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
-                                produto: `Admin: ${newQuotePrompt.substring(0, 30)}...`,
-                                fornecedor: "Admin SmartQuote",
-                                valor: "€" + (Math.random() * 10000 + 500).toFixed(2),
+                                produto: result.data?.produto || `Admin: ${newQuotePrompt.substring(0, 30)}...`,
+                                fornecedor: result.data?.fornecedor || "Admin SmartQuote",
+                                valor: result.data?.valor || "€" + (Math.random() * 10000 + 500).toFixed(2),
                                 status: "approved" as const,
                                 data: new Date().toLocaleDateString('pt-PT'),
-                                submittedAt: new Date().toLocaleString('pt-PT')
+                                submittedAt: new Date().toLocaleString('pt-PT'),
+                                cliente: user?.name || "Admin",
+                                quantidade: result.data?.quantidade || "1 unidade",
+                                prioridade: result.data?.prioridade || "high",
+                                dataRecebido: new Date().toISOString().split('T')[0],
+                                prazoResposta: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                responsavel: "Sistema Admin",
+                                descricao: result.data?.descricao || newQuotePrompt,
+                                observacoes: result.data?.observacoes || ''
                               };
 
                               addQuote(newQuote);
-                              setLastCreatedQuote(newQuote);
+                              
+                              // Adicionar ao histórico
+                              const historyEntry = {
+                                id: newQuote.id,
+                                message: `Cotação ${newQuote.produto} criada com sucesso (Admin)`,
+                                timestamp: new Date().toLocaleString('pt-PT'),
+                                quote: newQuote
+                              };
+                              setQuoteHistory(prev => [historyEntry, ...prev]);
+                              
                               setQuoteMessage({
                                 type: 'success',
-                                text: t('newQuote.successMessage')
+                                text: 'Cotação criada com sucesso!',
+                                quoteId: newQuote.id
                               });
                               setIsCreatingQuote(false);
                               setNewQuotePrompt("");
@@ -902,7 +945,15 @@ export function AdminDashboard({
                               setTimeout(() => {
                                 setQuoteMessage(null);
                               }, 5000);
-                            }, 3000);
+                              
+                            } catch (error) {
+                              console.error('❌ Erro ao fazer busca (Admin):', error);
+                              setQuoteMessage({
+                                type: 'error',
+                                text: 'Erro ao processar solicitação. Tente novamente.'
+                              });
+                              setIsCreatingQuote(false);
+                            }
                           }
                         }}
                         disabled={!newQuotePrompt.trim() || isCreatingQuote}
@@ -950,104 +1001,114 @@ export function AdminDashboard({
                         ? 'bg-green-500/10 border-green-500/20 text-green-300'
                         : 'bg-red-500/10 border-red-500/20 text-red-300'
                         } border rounded-lg p-3 sm:p-4 transition-all duration-300`}>
-                        <div className="flex items-center space-x-3">
-                          {quoteMessage.type === 'success' ? (
-                            <Check className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <X className="w-4 h-4 text-red-400" />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            {quoteMessage.type === 'success' ? (
+                              <Check className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <X className="w-4 h-4 text-red-400" />
+                            )}
+                            <span className="text-xs sm:text-sm font-medium">{quoteMessage.text}</span>
+                          </div>
+                          {quoteMessage.type === 'success' && quoteMessage.quoteId && (
+                            <button
+                              onClick={() => setActivePage("quotes")}
+                              className="bg-green-600/50 hover:bg-green-700/50 border border-green-600/50 text-green-300 px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300 flex items-center space-x-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>Detalhes</span>
+                            </button>
                           )}
-                          <span className="text-xs sm:text-sm font-medium">{quoteMessage.text}</span>
                         </div>
                       </div>
                     )}
 
-                    {/* Cotação Criada */}
-                    {lastCreatedQuote && (
-                      <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-green-500/30 backdrop-blur-sm">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="text-white font-bold text-sm mb-1">Cotação Criada</h4>
-                            <p className="text-green-400 font-mono text-xs">{lastCreatedQuote.id}</p>
-                          </div>
-                          <div className="bg-green-500/20 px-2 py-1 rounded-md">
-                            <span className="text-green-400 text-xs font-medium">Aprovada</span>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <span className="text-slate-400 block mb-1">Produto:</span>
-                            <span className="text-white">{lastCreatedQuote.produto}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block mb-1">Fornecedor:</span>
-                            <span className="text-white">{lastCreatedQuote.fornecedor}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block mb-1">Valor:</span>
-                            <span className="text-green-400 font-bold">{lastCreatedQuote.valor}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block mb-1">Data:</span>
-                            <span className="text-white">{lastCreatedQuote.data}</span>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 pt-3 border-t border-slate-700/50">
-                          <button
-                            onClick={() => setActivePage("quotes")}
-                            className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center space-x-2 font-medium"
-                          >
-                            <FileText className="w-3 h-3" />
-                            <span>Ver na Lista de Cotações</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                    {/* Apenas mensagem de sucesso/erro aqui */}
                   </div>
                 </div>
               </div>
         
-              {/* Lista de Cotações Criadas */}
-              {allQuotes.length > 0 && (
-                <div className="mb-8">
-                  <div className="glass-card bg-gradient-to-br from-slate-900/50 to-slate-800/50 rounded-xl border border-slate-500/20 p-4 sm:p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-slate-500/20 rounded-lg">
-                          <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-base sm:text-lg font-bold text-white">Cotações Recentes</h2>
-                          <p className="text-xs sm:text-sm text-slate-200">Últimas cotações criadas pelo admin</p>
-                        </div>
+              {/* Lista de Cotações Criadas - Histórico Real */}
+              <div className="mb-8">
+                <div className="glass-card bg-gradient-to-br from-slate-900/50 to-slate-800/50 rounded-xl border border-slate-500/20 p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-slate-500/20 rounded-lg">
+                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                       </div>
-                      <div className="bg-slate-500/20 px-3 py-1 rounded-lg">
-                        <span className="text-slate-300 text-xs font-medium">{allQuotes.length} cotações</span>
+                      <div>
+                        <h2 className="text-base sm:text-lg font-bold text-white">Histórico de Cotações Admin</h2>
+                        <p className="text-xs sm:text-sm text-slate-200">Últimas cotações criadas pelo admin</p>
                       </div>
                     </div>
+                    <div className="bg-slate-500/20 px-3 py-1 rounded-lg">
+                      <span className="text-slate-300 text-xs font-medium">{quoteHistory.length} cotações</span>
+                    </div>
+                  </div>
 
-                    <div className="space-y-3">
-                      {/* Placeholder para cotações recentes - dados reais virão do prompt futuramente */}
+                  <div className="space-y-3">
+                    {quoteHistory.length > 0 ? (
+                      <>
+                        {quoteHistory.slice(0, 10).map((entry) => (
+                          <div key={entry.id} className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/20 hover:border-slate-500/40 transition-all duration-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="text-green-400 font-mono text-xs">{entry.id}</p>
+                                <p className="text-slate-400 text-xs">{entry.timestamp}</p>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <div className="bg-green-500/20 px-2 py-1 rounded">
+                                  <span className="text-green-400 text-xs font-medium">Aprovada</span>
+                                </div>
+                                <button
+                                  onClick={() => setActivePage("quotes")}
+                                  className="bg-green-600/30 hover:bg-green-600/50 border border-green-500/40 text-green-300 px-3 py-1.5 rounded text-xs transition-all duration-200 flex items-center space-x-1"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                  <span>Ver Detalhes</span>
+                                </button>
+                              </div>
+                            </div>
+                            <p className="text-white text-sm">{entry.message}</p>
+                            {entry.quote && (
+                              <div className="mt-2 pt-2 border-t border-slate-600/30">
+                                <div className="grid grid-cols-2 gap-3 text-xs">
+                                  <div>
+                                    <span className="text-slate-400">Produto:</span>
+                                    <span className="text-white ml-2">{entry.quote.produto}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400">Valor:</span>
+                                    <span className="text-green-400 ml-2 font-bold">{entry.quote.valor}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
                       <div className="text-center text-slate-400 text-sm py-8">
-                        Nenhuma cotação recente disponível no momento.
-                      </div>
-                    </div>
-
-                    {allQuotes.length > 5 && (
-                      <div className="mt-4 pt-4 border-t border-slate-700/50 text-center">
-                        <button
-                          onClick={() => setActivePage("quotes")}
-                          className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm flex items-center space-x-2 mx-auto"
-                        >
-                          <FileText className="w-4 h-4" />
-                          <span>Ver todas as {allQuotes.length} cotações</span>
-                        </button>
+                        <FileText className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                        <p>Nenhuma cotação criada ainda.</p>
+                        <p className="text-xs mt-1">Use o prompt acima para criar sua primeira cotação.</p>
                       </div>
                     )}
                   </div>
+
+                  {quoteHistory.length > 10 && (
+                    <div className="mt-4 pt-4 border-t border-slate-700/50 text-center">
+                      <button
+                        onClick={() => setActivePage("quotes")}
+                        className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm flex items-center space-x-2 mx-auto"
+                      >
+                        <FileText className="w-4 h-4" />
+                        <span>Ver todas as {quoteHistory.length} cotações</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
             </main>
           </div>

@@ -10,20 +10,22 @@ interface CreateSupplierModalProps {
 }
 
 export function CreateSupplierModal({ isOpen, onClose, onSave, userId }: CreateSupplierModalProps) {
-  let currentUserId: number = 0;
-  if (typeof userId === 'number') currentUserId = userId;
-  else if (typeof userId === 'string' && userId.trim() !== '' && !isNaN(Number(userId))) currentUserId = Number(userId);
+  let currentUserId: number | null = null;
+  if (typeof userId === 'number' && userId > 0) currentUserId = userId;
+  else if (typeof userId === 'string' && userId.trim() !== '' && !isNaN(Number(userId)) && Number(userId) > 0) currentUserId = Number(userId);
   else {
     try {
       const storedUserRaw = typeof window !== 'undefined' ? localStorage.getItem('currentUser') : null;
       if (storedUserRaw) {
         const parsed = JSON.parse(storedUserRaw);
         const rawId = parsed?.id;
-        if (typeof rawId === 'number') currentUserId = rawId;
-        else if (typeof rawId === 'string' && rawId.trim() !== '' && !isNaN(Number(rawId))) currentUserId = Number(rawId);
+        if (typeof rawId === 'number' && rawId > 0) currentUserId = rawId;
+        else if (typeof rawId === 'string' && rawId.trim() !== '' && !isNaN(Number(rawId)) && Number(rawId) > 0) currentUserId = Number(rawId);
       }
     } catch {}
   }
+  // Se não encontrar usuário válido, exibe erro e desabilita o formulário
+  const isUserValid = typeof currentUserId === 'number' && currentUserId > 0;
   const [formData, setFormData] = useState<Omit<Supplier, "id">>({
     nome: '',
     contato_email: '',
@@ -39,15 +41,26 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId }: CreateS
   const [isSaving, setIsSaving] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    const { name, value, type } = e.target;
+    if (type === 'checkbox' && e.target instanceof HTMLInputElement) {
+      setFormData(prev => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isUserValid) {
+      alert('Usuário não identificado. Faça login novamente para cadastrar fornecedor.');
+      return;
+    }
     if (!formData.nome.trim()) {
       alert('Nome do fornecedor é obrigatório');
       return;
@@ -109,6 +122,11 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId }: CreateS
         </div>
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
+          {!isUserValid && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-lg p-4 mb-4 text-center">
+              <p>Usuário não identificado. Faça login novamente para cadastrar fornecedor.</p>
+            </div>
+          )}
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -149,7 +167,7 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId }: CreateS
             <button
               type="submit"
               className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
-              disabled={isSaving}
+              disabled={isSaving || !isUserValid}
             >
               {isSaving ? (
                 <>
