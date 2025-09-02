@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function EmailStatus() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<{
     status: 'ativo' | 'parado' | 'unknown';
     message: string;
@@ -132,8 +134,8 @@ export function EmailStatus() {
           <div className="flex items-center space-x-3">
             <CheckCircle className="w-4 h-4 text-green-400 animate-pulse" />
             <div>
-              <h3 className="text-white font-bold text-sm">Recepção de Email</h3>
-              <p className="text-xs text-green-400">Monitorando</p>
+              <h3 className="text-white font-bold text-sm">{t('dashboard.emailReception')}</h3>
+              <p className="text-xs text-green-400">{t('dashboard.monitoring')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -151,24 +153,24 @@ export function EmailStatus() {
         </div>
         <div className="space-y-2 text-xs">
           <div className="flex justify-between">
-            <span className="text-slate-400">Status:</span>
-            <span className="font-semibold text-green-400">Monitorando</span>
+            <span className="text-slate-400">{t('dashboard.status')}:</span>
+            <span className="font-semibold text-green-400">{t('dashboard.monitoring')}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Serviço:</span>
-            <span className="text-white">Gmail Monitor</span>
+            <span className="text-slate-400">{t('dashboard.service')}:</span>
+            <span className="text-white">{t('dashboard.gmailMonitor')}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Última verificação:</span>
+            <span className="text-slate-400">{t('dashboard.lastCheck')}:</span>
             <span className="text-white">-</span>
           </div>
           <div className="mt-2 p-2 bg-slate-700/50 rounded text-slate-300 text-xs">
-            Carregando status do monitoramento...
+            {t('dashboard.loadingMonitoringStatus')}
           </div>
         </div>
         <div className="mt-3 flex items-center space-x-2 bg-green-500/10 border border-green-500/20 rounded-lg p-2">
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-          <span className="text-green-400 text-xs font-medium">Monitoramento Ativo</span>
+          <span className="text-green-400 text-xs font-medium">{t('dashboard.activeMonitoring')}</span>
         </div>
       </div>
     );
@@ -185,11 +187,11 @@ export function EmailStatus() {
 
   const getStatusText = () => {
     if (status.status === 'ativo') {
-      return 'Monitorando';
+      return t('dashboard.monitoring');
     } else if (status.status === 'parado') {
-      return 'Parado';
+      return t('dashboard.stopped');
     }
-    return 'Desconhecido';
+    return t('dashboard.unknown');
   };
 
   const getStatusColor = () => {
@@ -207,7 +209,7 @@ export function EmailStatus() {
         <div className="flex items-center space-x-3">
           {getStatusIcon()}
           <div>
-            <h3 className="text-white font-bold text-sm">Recepção de Email</h3>
+            <h3 className="text-white font-bold text-sm">{t('dashboard.emailReception')}</h3>
             <p className={`text-xs ${getStatusColor()}`}>{getStatusText()}</p>
           </div>
         </div>
@@ -229,16 +231,16 @@ export function EmailStatus() {
 
       <div className="space-y-2 text-xs">
         <div className="flex justify-between">
-          <span className="text-slate-400">Status:</span>
+          <span className="text-slate-400">{t('dashboard.status')}:</span>
           <span className={`font-semibold ${getStatusColor()}`}>{getStatusText()}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-400">Serviço:</span>
-          <span className="text-white">Gmail Monitor</span>
+          <span className="text-slate-400">{t('dashboard.service')}:</span>
+          <span className="text-white">{t('dashboard.gmailMonitor')}</span>
         </div>
         {status.lastCheck && (
           <div className="flex justify-between">
-            <span className="text-slate-400">Última verificação:</span>
+            <span className="text-slate-400">{t('dashboard.lastCheck')}:</span>
             <span className="text-white">{status.lastCheck.toLocaleDateString('pt-BR')} {status.lastCheck.toLocaleTimeString('pt-BR')}</span>
           </div>
         )}

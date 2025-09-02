@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useApp } from "./../contexts/AppContext";
+import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 
 // Gera dados dinâmicos de performance por mês, usando avaliações reais do campo 'rate'
@@ -57,7 +58,7 @@ function getDynamicPerformanceData(suppliers: any[]): { month: string, performan
 }
 
 // Radar dinâmico: métricas relevantes para os setores de negócio
-function getDynamicRadarDataFromQuotes(): { metric: string, value: number, fullMark: number }[] {
+function getDynamicRadarDataFromQuotes(t: any): { metric: string, value: number, fullMark: number }[] {
   // Tenta pegar do localStorage (igual QuoteRequestsPage)
   let cotacoes: any[] = [];
   try {
@@ -67,14 +68,14 @@ function getDynamicRadarDataFromQuotes(): { metric: string, value: number, fullM
   
   // Métricas otimizadas para os setores de tecnologia e automação
   const metrics = [
-    { label: 'Qualidade Técnica', key: 'qualidade_tecnica', fallback: 94.2 },
-    { label: 'Inovação', key: 'inovacao', fallback: 89.7 },
-    { label: 'Suporte Técnico', key: 'suporte_tecnico', fallback: 92.1 },
-    { label: 'Segurança', key: 'seguranca', fallback: 96.8 },
-    { label: 'Escalabilidade', key: 'escalabilidade', fallback: 88.5 },
-    { label: 'Conformidade', key: 'conformidade', fallback: 91.3 },
-    { label: 'Tempo de Implementação', key: 'tempo_implementacao', fallback: 87.9 },
-    { label: 'Custo-Benefício', key: 'custo_beneficio', fallback: 93.6 }
+    { label: t('supplierPerformance.technicalQuality'), key: 'qualidade_tecnica', fallback: 94.2 },
+    { label: t('supplierPerformance.innovation'), key: 'inovacao', fallback: 89.7 },
+    { label: t('supplierPerformance.technicalSupport'), key: 'suporte_tecnico', fallback: 92.1 },
+    { label: t('supplierPerformance.security'), key: 'seguranca', fallback: 96.8 },
+    { label: t('supplierPerformance.scalability'), key: 'escalabilidade', fallback: 88.5 },
+    { label: t('supplierPerformance.compliance'), key: 'conformidade', fallback: 91.3 },
+    { label: t('supplierPerformance.implementationTime'), key: 'tempo_implementacao', fallback: 87.9 },
+    { label: t('supplierPerformance.costBenefit'), key: 'custo_beneficio', fallback: 93.6 }
   ];
 
   // Se não houver cotações, usa valores otimizados para os setores
@@ -147,6 +148,7 @@ const TrendDownIcon = ({ className }: { className?: string }) => (
 
 export function SupplierPerformanceChart() {
   const { suppliers } = useApp();
+  const { t } = useTranslation();
   const [topSuppliers, setTopSuppliers] = useState<{ 
     name: string; 
     score: number; 
@@ -194,7 +196,7 @@ export function SupplierPerformanceChart() {
   // Dados dinâmicos para o gráfico de tendência
   const performanceData = getDynamicPerformanceData(allSuppliers);
   // Dados dinâmicos para o radar (agora usando cotações)
-  const radarData = getDynamicRadarDataFromQuotes();
+  const radarData = getDynamicRadarDataFromQuotes(t);
 
   useEffect(() => {
     if (allSuppliers.length === 0) return;
@@ -238,8 +240,8 @@ export function SupplierPerformanceChart() {
     <div className="space-y-6 px-2 sm:px-4 md:px-8 w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Performance dos Fornecedores</h1>
-        <p className="text-slate-400">Monitoramento em tempo real das métricas de fornecedores</p>
+        <h1 className="text-3xl font-bold text-white mb-2">{t('supplierPerformance.title')}</h1>
+        <p className="text-slate-400">{t('supplierPerformance.subtitle')}</p>
       </div>
 
         {/* KPI Cards - Estilo Databox */}
@@ -248,7 +250,7 @@ export function SupplierPerformanceChart() {
           <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-6 shadow-sm backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">
-                Performance Geral
+                {t('supplierPerformance.generalPerformance')}
               </div>
               <div className={`flex items-center text-sm font-semibold ${
                 isPositive ? 'text-green-400' : 'text-red-400'
@@ -258,14 +260,14 @@ export function SupplierPerformanceChart() {
               </div>
             </div>
             <div className="text-3xl font-bold text-white mb-1">{currentPerformance}%</div>
-            <div className="text-sm text-slate-400">vs. mês anterior</div>
+            <div className="text-sm text-slate-400">{t('supplierPerformance.vsLastMonth')}</div>
           </div>
 
           {/* Custo-Benefício */}
           <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-6 shadow-sm backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">
-                Custo-Benefício
+                {t('supplierPerformance.costBenefit')}
               </div>
               <div className="flex items-center text-sm font-semibold text-green-400">
                 <TrendUpIcon className="w-4 h-4 mr-1" />
@@ -273,14 +275,14 @@ export function SupplierPerformanceChart() {
               </div>
             </div>
             <div className="text-3xl font-bold text-white mb-1">83.9%</div>
-            <div className="text-sm text-slate-400">Redução de custos</div>
+            <div className="text-sm text-slate-400">{t('supplierPerformance.costReduction')}</div>
           </div>
 
           {/* Qualidade */}
           <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-6 shadow-sm backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">
-                Qualidade
+                {t('supplierPerformance.quality')}
               </div>
               <div className="flex items-center text-sm font-semibold text-green-400">
                 <TrendUpIcon className="w-4 h-4 mr-1" />
@@ -288,14 +290,14 @@ export function SupplierPerformanceChart() {
               </div>
             </div>
             <div className="text-3xl font-bold text-white mb-1">97.8%</div>
-            <div className="text-sm text-slate-400">Índice de qualidade</div>
+            <div className="text-sm text-slate-400">{t('supplierPerformance.qualityIndex')}</div>
           </div>
 
           {/* Eficiência */}
           <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-6 shadow-sm backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">
-                Eficiência
+                {t('supplierPerformance.efficiency')}
               </div>
               <div className="flex items-center text-sm font-semibold text-green-400">
                 <TrendUpIcon className="w-4 h-4 mr-1" />
@@ -303,7 +305,7 @@ export function SupplierPerformanceChart() {
               </div>
             </div>
             <div className="text-3xl font-bold text-white mb-1">97.1%</div>
-            <div className="text-sm text-slate-400">Eficiência operacional</div>
+            <div className="text-sm text-slate-400">{t('supplierPerformance.operationalEfficiency')}</div>
           </div>
         </div>
 
@@ -312,8 +314,8 @@ export function SupplierPerformanceChart() {
           {/* Performance Trend - Gráfico Principal */}
           <div className="xl:col-span-2 bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full">
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white mb-1">Tendência de Performance</h3>
-              <p className="text-sm text-slate-400">Últimos 6 meses</p>
+              <h3 className="text-lg font-semibold text-white mb-1">{t('supplierPerformance.performanceTrend')}</h3>
+              <p className="text-sm text-slate-400">{t('supplierPerformance.lastSixMonths')}</p>
             </div>
             <div className="h-64 md:h-80 min-w-0">
               <ResponsiveContainer width="100%" height="100%">
@@ -348,7 +350,7 @@ export function SupplierPerformanceChart() {
                       fontSize: "14px",
                       color: "#FFFFFF"
                     }}
-                    formatter={(value, name) => [`${value}%`, name === 'performance' ? 'Performance' : 'Meta']}
+                    formatter={(value, name) => [`${value}%`, name === 'performance' ? t('supplierPerformance.generalPerformance') : t('supplierPerformance.target')]}
                   />
                   <Area 
                     type="monotone" 
@@ -375,12 +377,12 @@ export function SupplierPerformanceChart() {
           {/* Top Suppliers - Dynamic from API */}
           <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full">
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white mb-1">Top Fornecedores</h3>
-              <p className="text-sm text-slate-400">Ranking por classificação (estrelas)</p>
+              <h3 className="text-lg font-semibold text-white mb-1">{t('supplierPerformance.topSuppliers')}</h3>
+              <p className="text-sm text-slate-400">{t('supplierPerformance.rankingByRating')}</p>
             </div>
             <div className="space-y-4">
               {topSuppliers.length === 0 && (
-                <div className="text-slate-400 text-sm">Nenhum fornecedor classificado ainda.</div>
+                <div className="text-slate-400 text-sm">{t('supplierPerformance.noSuppliersRated')}</div>
               )}
               {topSuppliers.slice(0, 8).map((supplier, index) => (
                 <div key={supplier.name} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-700/30 transition-colors border-b border-slate-700/50 last:border-b-0">
@@ -441,7 +443,7 @@ export function SupplierPerformanceChart() {
               {topSuppliers.length > 8 && (
                 <div className="text-center pt-4">
                   <button className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors">
-                    Ver todos os {topSuppliers.length} fornecedores
+                    {t('supplierPerformance.viewAllSuppliers', { count: topSuppliers.length })}
                   </button>
                 </div>
               )}
@@ -452,16 +454,16 @@ export function SupplierPerformanceChart() {
         {/* Metrics Analysis - Design Revolucionário */}
         <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full">
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-1">Análise Multidimensional de Performance</h3>
-            <p className="text-sm text-slate-400">Visualização avançada com radar chart e indicadores circulares</p>
+            <h3 className="text-lg font-semibold text-white mb-1">{t('supplierPerformance.multidimensionalAnalysis')}</h3>
+            <p className="text-sm text-slate-400">{t('supplierPerformance.advancedVisualization')}</p>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 overflow-x-auto min-w-0">
             {/* Radar Chart */}
             <div className="relative min-w-0 max-w-full">
               <div className="text-center mb-4">
-                <h4 className="text-md font-semibold text-white mb-2">Radar de Competências</h4>
-                <p className="text-xs text-slate-400">Análise por dimensões críticas de performance</p>
+                <h4 className="text-md font-semibold text-white mb-2">{t('supplierPerformance.competenciesRadar')}</h4>
+                <p className="text-xs text-slate-400">{t('supplierPerformance.criticalDimensions')}</p>
               </div>
               
               {/* Estatísticas rápidas */}
@@ -470,13 +472,13 @@ export function SupplierPerformanceChart() {
                   <div className="text-green-400 font-semibold">
                     {Math.max(...radarData.map(d => d.value)).toFixed(1)}%
                   </div>
-                  <div className="text-slate-400">Melhor Métrica</div>
+                  <div className="text-slate-400">{t('supplierPerformance.bestMetric')}</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-2 text-center">
                   <div className="text-blue-400 font-semibold">
                     {(radarData.reduce((acc, d) => acc + d.value, 0) / radarData.length).toFixed(1)}%
                   </div>
-                  <div className="text-slate-400">Média Geral</div>
+                  <div className="text-slate-400">{t('supplierPerformance.generalAverage')}</div>
                 </div>
               </div>
 
@@ -497,7 +499,7 @@ export function SupplierPerformanceChart() {
                     />
                     {/* Radar de performance atual */}
                     <Radar
-                      name="Performance Atual"
+                      name={t('supplierPerformance.currentPerformance')}
                       dataKey="value"
                       stroke="#3B82F6"
                       fill="#3B82F6"
@@ -507,7 +509,7 @@ export function SupplierPerformanceChart() {
                     />
                     {/* Radar de meta/benchmark */}
                     <Radar
-                      name="Meta (95%)"
+                      name={t('supplierPerformance.target95')}
                       dataKey={() => 95}
                       stroke="#10B981"
                       fill="none"
@@ -517,7 +519,7 @@ export function SupplierPerformanceChart() {
                     />
                     {/* Radar de mínimo aceitável */}
                     <Radar
-                      name="Mínimo (80%)"
+                      name={t('supplierPerformance.minimum80')}
                       dataKey={() => 80}
                       stroke="#F59E0B"
                       fill="none"
@@ -535,9 +537,11 @@ export function SupplierPerformanceChart() {
                         boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
                       }}
                       formatter={(value, name) => {
-                        if (name === 'Performance Atual') {
+                        if (name === t('supplierPerformance.currentPerformance')) {
                           const numValue = Number(value);
-                          const status = numValue >= 95 ? 'Excelente' : numValue >= 85 ? 'Bom' : numValue >= 70 ? 'Regular' : 'Crítico';
+                          const status = numValue >= 95 ? t('supplierPerformance.excellent') : 
+                                        numValue >= 85 ? t('supplierPerformance.good') : 
+                                        numValue >= 70 ? t('supplierPerformance.regular') : t('supplierPerformance.critical');
                           return [`${numValue}% - ${status}`, name];
                         }
                         return [`${value}%`, name];
@@ -552,15 +556,15 @@ export function SupplierPerformanceChart() {
                 <div className="flex items-center justify-center space-x-4 text-xs">
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-0.5 bg-blue-500"></div>
-                    <span className="text-slate-300">Atual</span>
+                    <span className="text-slate-300">{t('supplierPerformance.current')}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-0.5 bg-green-500" style={{borderTop: '1px dashed'}}></div>
-                    <span className="text-slate-300">Meta</span>
+                    <span className="text-slate-300">{t('supplierPerformance.target')}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-0.5 bg-amber-500" style={{borderTop: '1px dashed'}}></div>
-                    <span className="text-slate-300">Mínimo</span>
+                    <span className="text-slate-300">{t('supplierPerformance.minimum')}</span>
                   </div>
                 </div>
               </div>
@@ -569,8 +573,8 @@ export function SupplierPerformanceChart() {
             {/* Indicadores Circulares por Setor */}
             <div className="min-w-0 max-w-full">
               <div className="text-center mb-6">
-                <h4 className="text-md font-semibold text-white mb-2">Performance por Setor</h4>
-                <p className="text-xs text-slate-400">Indicadores circulares com métricas detalhadas</p>
+                <h4 className="text-md font-semibold text-white mb-2">{t('supplierPerformance.performanceBySector')}</h4>
+                <p className="text-xs text-slate-400">{t('supplierPerformance.circularIndicators')}</p>
               </div>
               
               {/* Grid responsivo para todos os setores */}
@@ -627,8 +631,8 @@ export function SupplierPerformanceChart() {
                             <span className="w-3 h-0.5 bg-yellow-400 mr-1"></span> :
                             <TrendDownIcon className="w-3 h-3 mr-1" />
                           }
-                          {sector.performance > 90 ? 'Excelente' : 
-                           sector.performance > 85 ? 'Bom' : 'Melhorar'}
+                          {sector.performance > 90 ? t('supplierPerformance.excellent') : 
+                           sector.performance > 85 ? t('supplierPerformance.good') : t('supplierPerformance.improve')}
                         </div>
                       </div>
                       
@@ -645,8 +649,8 @@ export function SupplierPerformanceChart() {
                       
                       {/* Estatísticas detalhadas */}
                       <div className="flex justify-between text-xs text-slate-400">
-                        <span>{sector.suppliers} fornecedores</span>
-                        <span>Trend: {sector.performance > 90 ? '+2.1%' : sector.performance > 85 ? '+0.8%' : '-1.2%'}</span>
+                        <span>{sector.suppliers} {t('supplierPerformance.suppliers')}</span>
+                        <span>{t('supplierPerformance.trend')}: {sector.performance > 90 ? '+2.1%' : sector.performance > 85 ? '+0.8%' : '-1.2%'}</span>
                       </div>
                     </div>
                   </div>
@@ -656,28 +660,28 @@ export function SupplierPerformanceChart() {
               {/* Resumo Geral */}
               <div className="mt-4 md:mt-6 p-3 md:p-4 bg-slate-700/30 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <h5 className="text-sm font-semibold text-white">Resumo Geral</h5>
+                  <h5 className="text-sm font-semibold text-white">{t('supplierPerformance.generalSummary')}</h5>
                   <div className="flex items-center text-green-400 text-sm font-semibold">
                     <TrendUpIcon className="w-4 h-4 mr-1" />
-                    Performance Global: 93.9%
+                    {t('supplierPerformance.globalPerformance')}: 93.9%
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <span className="text-slate-400">Melhor Setor:</span>
-                    <span className="text-blue-400 ml-2 font-semibold">Soluções Cloud</span>
+                    <span className="text-slate-400">{t('supplierPerformance.bestSector')}:</span>
+                    <span className="text-blue-400 ml-2 font-semibold">{t('supplierPerformance.cloudSolutions')}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400">Oportunidade:</span>
-                    <span className="text-amber-400 ml-2 font-semibold">Quiosques de Self-Service</span>
+                    <span className="text-slate-400">{t('supplierPerformance.opportunity')}:</span>
+                    <span className="text-amber-400 ml-2 font-semibold">{t('supplierPerformance.selfServiceKiosks')}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400">Total Fornecedores:</span>
-                    <span className="text-white ml-2 font-semibold">72 ativos</span>
+                    <span className="text-slate-400">{t('supplierPerformance.totalSuppliers')}:</span>
+                    <span className="text-white ml-2 font-semibold">72 {t('supplierPerformance.active')}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400">Setores Cobertos:</span>
-                    <span className="text-cyan-400 ml-2 font-semibold">8 segmentos</span>
+                    <span className="text-slate-400">{t('supplierPerformance.sectorsCovered')}:</span>
+                    <span className="text-cyan-400 ml-2 font-semibold">8 {t('supplierPerformance.segments')}</span>
                   </div>
                 </div>
               </div>

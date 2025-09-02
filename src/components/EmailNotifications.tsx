@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, X, CheckCircle, Clock, FileText, Check, Eye } from 'lucide-react';
 import { Button } from './ui/button';
+import { useTranslation } from 'react-i18next';
 
 interface EmailAPIMessage {
   id: string;
@@ -30,6 +31,7 @@ interface EmailNotificationsProps {
 }
 
 export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEmails }: EmailNotificationsProps) {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
 
@@ -141,7 +143,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
         <div className="flex items-center space-x-2">
           <Mail className="w-4 h-4 text-cyan-400" />
           <h3 className="text-white font-bold text-sm">
-            Cotações via Email
+            {t('dashboard.emailQuotes')}
             <span className="ml-2 bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full text-xs font-medium align-middle">
               {totalCount}
             </span>
@@ -157,7 +159,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
               className="h-7 px-2 text-xs bg-blue-600/20 border-blue-500/30 text-blue-400 hover:bg-blue-600/30"
             >
               <FileText className="w-3 h-3 mr-1" />
-              Ver Todas
+              {t('dashboard.viewAll')}
             </Button>
           )}
           {onClose && (
@@ -174,9 +176,9 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
       {notifications.length === 0 ? (
         <div className="text-center py-8">
           <Mail className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400 text-sm mb-2">Nenhuma cotação via email recebida</p>
+          <p className="text-slate-400 text-sm mb-2">{t('dashboard.noEmailQuotes')}</p>
           <p className="text-slate-500 text-xs">
-            Envie um email de teste para verificar o funcionamento
+            {t('dashboard.sendTestEmail')}
           </p>
         </div>
       ) : (
@@ -214,7 +216,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
                       markAsRead(notification.id);
                     }}
                     className="bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-400 p-1 rounded text-xs transition-colors duration-200 flex items-center gap-1"
-                    title="Marcar como lida"
+                    title={t('dashboard.markAsRead')}
                   >
                     <Check className="w-3 h-3" />
                   </button>
@@ -225,7 +227,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
                     openEmail(notification);
                   }}
                   className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 p-1 rounded text-xs transition-colors duration-200 flex items-center gap-1"
-                  title="Ver detalhes"
+                  title={t('dashboard.viewDetails')}
                 >
                   <Eye className="w-3 h-3" />
                 </button>

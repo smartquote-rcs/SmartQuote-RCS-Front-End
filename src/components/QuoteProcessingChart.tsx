@@ -2,6 +2,7 @@
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { Search } from "lucide-react";
 import { useState, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 
 // Espera receber as cotações já filtradas por período, status, etc.
 // Cada cotação deve ter pelo menos: { status, dataRecebido }
@@ -49,6 +50,7 @@ function getProcessingData(cotacoes: Cotacao[], dias: number = 7) {
 }
 
 export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
 
   // Filtra por período digitado (ex: "Ago", "Jul", "28")
@@ -65,15 +67,15 @@ export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
         <div className="pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
-              <h3 className="text-xl font-bold text-white mb-2">Processamento de Cotações</h3>
-              <p className="text-sm text-slate-300">Volume e eficiência dos últimos 7 dias</p>
+              <h3 className="text-xl font-bold text-white mb-2">{t('dashboard.quoteProcessing')}</h3>
+              <p className="text-sm text-slate-300">{t('dashboard.volumeEfficiencyLast7Days')}</p>
             </div>
             {/* Campo de Pesquisa */}
             <div className="relative max-w-md group">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-cyan-400 transition-colors duration-300 z-10 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Pesquisar período..."
+                placeholder={t('dashboard.searchPeriod')}
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-4 h-10 bg-slate-800/50 border border-slate-600/50 text-white placeholder:text-slate-400 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none rounded-lg backdrop-blur-sm transition-all duration-300 hover:bg-slate-700/50"
@@ -123,10 +125,10 @@ export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
                   backdropFilter: "blur(16px)"
                 }}
                 formatter={(value, name) => [
-                  `${value}${name === 'efficiency' ? '%' : ' cotações'}`,
-                  name === 'received' ? 'Recebidas' : 
-                  name === 'processed' ? 'Processadas' : 
-                  name === 'pending' ? 'Pendentes' : 'Eficiência'
+                  `${value}${name === 'efficiency' ? '%' : ` ${t('dashboard.quotes')}`}`,
+                  name === 'received' ? t('dashboard.received') : 
+                  name === 'processed' ? t('dashboard.processed') : 
+                  name === 'pending' ? t('dashboard.pending') : t('dashboard.efficiency')
                 ]}
               />
               <Area 
@@ -164,15 +166,15 @@ export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
         <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-slate-700/50">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span className="text-xs text-slate-300 font-medium">Recebidas</span>
+            <span className="text-xs text-slate-300 font-medium">{t('dashboard.received')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-xs text-slate-300 font-medium">Processadas</span>
+            <span className="text-xs text-slate-300 font-medium">{t('dashboard.processed')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <span className="text-xs text-slate-300 font-medium">Pendentes</span>
+            <span className="text-xs text-slate-300 font-medium">{t('dashboard.pending')}</span>
           </div>
         </div>
       </div>

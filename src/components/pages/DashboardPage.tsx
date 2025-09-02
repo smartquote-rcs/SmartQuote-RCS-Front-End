@@ -131,40 +131,40 @@ export function DashboardPage({
     if (isLoadingStats) {
       return [
         {
-          title: "Solicitações de Cotação",
+          title: t('dashboard.quoteRequests'),
           value: "...",
           change: "...",
-          period: "carregando",
+          period: t('common.loading'),
           icon: Mail,
           iconColor: "text-blue-400",
           isPositive: true,
           isLoading: true
         },
         {
-          title: "Fornecedores Ativos",
+          title: t('dashboard.activeSuppliers'),
           value: "...",
           change: "...",
-          period: "carregando",
+          period: t('common.loading'),
           icon: Users,
           iconColor: "text-green-400",
           isPositive: true,
           isLoading: true
         },
         {
-          title: "Aprovações Pendentes",
+          title: t('dashboard.pendingApprovals'),
           value: "...",
           change: "...",
-          period: "carregando",
+          period: t('common.loading'),
           icon: Clock,
           iconColor: "text-orange-400",
           isPositive: true,
           isLoading: true
         },
         {
-          title: "Total de Produtos",
+          title: t('dashboard.totalProducts'),
           value: "...",
           change: "...",
-          period: "carregando",
+          period: t('common.loading'),
           icon: TrendingUp,
           iconColor: "text-purple-400",
           isPositive: true,
@@ -176,40 +176,40 @@ export function DashboardPage({
     if (statsError) {
       return [
         {
-          title: "Solicitações de Cotação",
-          value: "Erro",
+          title: t('dashboard.quoteRequests'),
+          value: t('common.error'),
           change: "N/A",
-          period: "erro de conexão",
+          period: t('dashboard.connectionError'),
           icon: Mail,
           iconColor: "text-red-400",
           isPositive: false,
           isError: true
         },
         {
-          title: "Fornecedores Ativos",
-          value: "Erro",
+          title: t('dashboard.activeSuppliers'),
+          value: t('common.error'),
           change: "N/A",
-          period: "erro de conexão",
+          period: t('dashboard.connectionError'),
           icon: Users,
           iconColor: "text-red-400",
           isPositive: false,
           isError: true
         },
         {
-          title: "Total de Usuários",
-          value: "Erro",
+          title: t('dashboard.totalUsers'),
+          value: t('common.error'),
           change: "N/A",
-          period: "erro de conexão",
+          period: t('dashboard.connectionError'),
           icon: Shield,
           iconColor: "text-red-400",
           isPositive: false,
           isError: true
         },
         {
-          title: "Total de Produtos",
-          value: "Erro",
+          title: t('dashboard.totalProducts'),
+          value: t('common.error'),
           change: "N/A",
-          period: "erro de conexão",
+          period: t('dashboard.connectionError'),
           icon: TrendingUp,
           iconColor: "text-red-400",
           isPositive: false,
@@ -221,37 +221,37 @@ export function DashboardPage({
     if (dashboardStats) {
       return [
         {
-          title: "Solicitações de Cotação",
+          title: t('dashboard.quoteRequests'),
           value: dashboardStats.quotes.total.toString(),
           change: `+${dashboardStats.quotes.approved}`,
-          period: "aprovadas",
+          period: t('dashboard.approved'),
           icon: Mail,
           iconColor: "text-blue-400",
           isPositive: true
         },
         {
-          title: "Fornecedores Ativos",
+          title: t('dashboard.activeSuppliers'),
           value: dashboardStats.suppliers.total.toString(),
           change: `${dashboardStats.suppliers.active}`,
-          period: "ativos",
+          period: t('dashboard.active'),
           icon: Users,
           iconColor: "text-green-400",
           isPositive: true
         },
         {
-          title: "Total de Usuários",
+          title: t('dashboard.totalUsers'),
           value: dashboardStats.users.total.toString(),
           change: `${dashboardStats.users.admin + dashboardStats.users.manager}`,
-          period: "admin/manager",
+          period: t('dashboard.adminManager'),
           icon: Shield,
           iconColor: "text-purple-400",
           isPositive: true
         },
         {
-          title: "Total de Produtos",
+          title: t('dashboard.totalProducts'),
           value: dashboardStats.products.total.toString(),
           change: `${dashboardStats.products.inStock}`,
-          period: "em estoque",
+          period: t('dashboard.inStock'),
           icon: TrendingUp,
           iconColor: "text-purple-400",
           isPositive: true
@@ -262,37 +262,37 @@ export function DashboardPage({
     // Fallback para dados estáticos quando não há dados da API
     return [
       {
-        title: "Solicitações de Cotação",
+        title: t('dashboard.quoteRequests'),
         value: "---",
         change: "---",
-        period: "carregando...",
+        period: t('common.loading') + "...",
         icon: Mail,
         iconColor: "text-blue-400",
         isPositive: true
       },
       {
-        title: "Fornecedores Ativos", 
+        title: t('dashboard.activeSuppliers'), 
         value: "---",
         change: "---",
-        period: "carregando...",
+        period: t('common.loading') + "...",
         icon: Users,
         iconColor: "text-green-400",
         isPositive: true
       },
       {
-        title: "Total de Usuários",
+        title: t('dashboard.totalUsers'),
         value: "---",
         change: "---",
-        period: "carregando...",
+        period: t('common.loading') + "...",
         icon: Shield,
         iconColor: "text-purple-400",
         isPositive: true
       },
       {
-        title: "Total de Produtos",
+        title: t('dashboard.totalProducts'),
         value: "---",
         change: "---",
-        period: "carregando...",
+        period: t('common.loading') + "...",
         icon: TrendingUp,
         iconColor: "text-purple-400",
         isPositive: true
@@ -319,11 +319,11 @@ export function DashboardPage({
                 onClick={onRefreshStats}
                 disabled={isLoadingStats}
                 className="bg-green-600/20 hover:bg-green-600/30 disabled:bg-gray-600/20 text-green-400 disabled:text-gray-400 px-3 py-2 sm:px-4 rounded-lg border border-green-500/30 disabled:border-gray-500/30 transition-colors duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm disabled:cursor-not-allowed"
-                title={isLoadingStats ? "Atualizando..." : "Atualizar Estatísticas"}
+                title={isLoadingStats ? t('dashboard.updating') : t('dashboard.updateStats')}
               >
                 <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoadingStats ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{isLoadingStats ? 'Atualizando...' : 'Atualizar'}</span>
-                <span className="sm:hidden">{isLoadingStats ? '...' : 'Atualizar'}</span>
+                <span className="hidden sm:inline">{isLoadingStats ? t('dashboard.updating') : t('dashboard.update')}</span>
+                <span className="sm:hidden">{isLoadingStats ? '...' : t('dashboard.update')}</span>
               </button>
             )}
             <div className="relative">
