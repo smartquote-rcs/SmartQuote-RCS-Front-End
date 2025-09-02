@@ -56,7 +56,7 @@ function getDynamicPerformanceData(suppliers: any[]): { month: string, performan
   return result;
 }
 
-// Radar dinâmico: usa dados de cotação (QuoteRequestsPage)
+// Radar dinâmico: métricas relevantes para os setores de negócio
 function getDynamicRadarDataFromQuotes(): { metric: string, value: number, fullMark: number }[] {
   // Tenta pegar do localStorage (igual QuoteRequestsPage)
   let cotacoes: any[] = [];
@@ -64,33 +64,36 @@ function getDynamicRadarDataFromQuotes(): { metric: string, value: number, fullM
     const raw = localStorage.getItem('cotacoesList');
     if (raw) cotacoes = JSON.parse(raw);
   } catch {}
-  // Se não houver, retorna mock
-  if (!cotacoes || cotacoes.length === 0) {
-    return [
-      { metric: 'Tempo de Entrega', value: 95, fullMark: 100 },
-      { metric: 'Qualidade', value: 88, fullMark: 100 },
-      { metric: 'Custo-Benefício', value: 92, fullMark: 100 },
-      { metric: 'Comunicação', value: 87, fullMark: 100 },
-      { metric: 'Flexibilidade', value: 93, fullMark: 100 },
-      { metric: 'Inovação', value: 85, fullMark: 100 }
-    ];
-  }
-  // Métricas esperadas nos itens das cotações
+  
+  // Métricas otimizadas para os setores de tecnologia e automação
   const metrics = [
-    { label: 'Tempo de Entrega', key: 'tempo_entrega' },
-    { label: 'Qualidade', key: 'qualidade' },
-    { label: 'Custo-Benefício', key: 'custo_beneficio' },
-    { label: 'Comunicação', key: 'comunicacao' },
-    { label: 'Flexibilidade', key: 'flexibilidade' },
-    { label: 'Inovação', key: 'inovacao' },
+    { label: 'Qualidade Técnica', key: 'qualidade_tecnica', fallback: 94.2 },
+    { label: 'Inovação', key: 'inovacao', fallback: 89.7 },
+    { label: 'Suporte Técnico', key: 'suporte_tecnico', fallback: 92.1 },
+    { label: 'Segurança', key: 'seguranca', fallback: 96.8 },
+    { label: 'Escalabilidade', key: 'escalabilidade', fallback: 88.5 },
+    { label: 'Conformidade', key: 'conformidade', fallback: 91.3 },
+    { label: 'Tempo de Implementação', key: 'tempo_implementacao', fallback: 87.9 },
+    { label: 'Custo-Benefício', key: 'custo_beneficio', fallback: 93.6 }
   ];
+
+  // Se não houver cotações, usa valores otimizados para os setores
+  if (!cotacoes || cotacoes.length === 0) {
+    return metrics.map(({ label, fallback }) => ({
+      metric: label,
+      value: fallback,
+      fullMark: 100
+    }));
+  }
+
   // Junta todos os itens de todas as cotações
   let allItens: any[] = [];
   cotacoes.forEach(c => {
     if (Array.isArray(c.itens)) allItens = allItens.concat(c.itens);
   });
+
   // Para cada métrica, calcula média dos itens que possuem esse campo (0-100)
-  const data = metrics.map(({ label, key }) => {
+  const data = metrics.map(({ label, key, fallback }) => {
     const vals = allItens.map((item: any) => {
       let v = item[key];
       if (typeof v === 'number') {
@@ -99,32 +102,28 @@ function getDynamicRadarDataFromQuotes(): { metric: string, value: number, fullM
       }
       return null;
     }).filter((v: number|null) => v !== null);
-    let avg = 0;
+    
+    let avg = fallback; // Usa fallback se não houver dados
     if (vals.length > 0) {
       avg = Number((vals.reduce((a, b) => a! + b!, 0) / vals.length).toFixed(1));
     }
+    
     return { metric: label, value: avg, fullMark: 100 };
   });
-  // Se todos os valores são 0, retorna mock
-  if (data.every(d => d.value === 0)) {
-    return [
-      { metric: 'Tempo de Entrega', value: 95, fullMark: 100 },
-      { metric: 'Qualidade', value: 88, fullMark: 100 },
-      { metric: 'Custo-Benefício', value: 92, fullMark: 100 },
-      { metric: 'Comunicação', value: 87, fullMark: 100 },
-      { metric: 'Flexibilidade', value: 93, fullMark: 100 },
-      { metric: 'Inovação', value: 85, fullMark: 100 }
-    ];
-  }
+
   return data;
 }
 
 // Dados de performance por setor
 const sectorData = [
-  { sector: 'Tecnologia', performance: 96.2, suppliers: 12, color: '#3B82F6' },
-  { sector: 'Logística', performance: 91.7, suppliers: 8, color: '#10B981' },
-  { sector: 'Manufatura', performance: 87.3, suppliers: 15, color: '#F59E0B' },
-  { sector: 'Serviços', performance: 93.8, suppliers: 6, color: '#8B5CF6' }
+  { sector: 'IT Hardware', performance: 96.2, suppliers: 12, color: '#3B82F6' },
+  { sector: 'Automação de Postos de Combustível', performance: 91.7, suppliers: 8, color: '#10B981' },
+  { sector: 'Licenças de Software', performance: 94.5, suppliers: 15, color: '#F59E0B' },
+  { sector: 'Quiosques de Self-Service', performance: 89.3, suppliers: 6, color: '#8B5CF6' },
+  { sector: 'Soluções Cloud', performance: 97.1, suppliers: 10, color: '#06B6D4' },
+  { sector: 'Cibersegurança', performance: 95.8, suppliers: 7, color: '#EF4444' },
+  { sector: 'KYC - AML e Monitorização de Fraudes', performance: 92.4, suppliers: 5, color: '#84CC16' },
+  { sector: 'Business Intelligence e Desenvolvimento de Software Personalizado', performance: 93.9, suppliers: 9, color: '#F97316' }
 ];
 
 // topSuppliers will be loaded dynamically from localStorage and suppliers context
@@ -462,53 +461,108 @@ export function SupplierPerformanceChart() {
             <div className="relative min-w-0 max-w-full">
               <div className="text-center mb-4">
                 <h4 className="text-md font-semibold text-white mb-2">Radar de Competências</h4>
-                <p className="text-xs text-slate-400">Análise por dimensões de performance</p>
+                <p className="text-xs text-slate-400">Análise por dimensões críticas de performance</p>
               </div>
-              <div className="h-80 md:h-[40rem] min-w-0 max-w-full">
+              
+              {/* Estatísticas rápidas */}
+              <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                <div className="bg-slate-700/30 rounded-lg p-2 text-center">
+                  <div className="text-green-400 font-semibold">
+                    {Math.max(...radarData.map(d => d.value)).toFixed(1)}%
+                  </div>
+                  <div className="text-slate-400">Melhor Métrica</div>
+                </div>
+                <div className="bg-slate-700/30 rounded-lg p-2 text-center">
+                  <div className="text-blue-400 font-semibold">
+                    {(radarData.reduce((acc, d) => acc + d.value, 0) / radarData.length).toFixed(1)}%
+                  </div>
+                  <div className="text-slate-400">Média Geral</div>
+                </div>
+              </div>
+
+              <div className="h-96 md:h-[36rem] lg:h-[40rem] min-w-0 max-w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData} margin={{ top: 120, right: 80, bottom: 60, left: 80 }}>
-                    <PolarGrid stroke="#334155" opacity={0.3} />
+                  <RadarChart data={radarData} margin={{ top: 90, right: 70, bottom: 70, left: 70 }}>
+                    <PolarGrid stroke="#334155" opacity={0.4} />
                     <PolarAngleAxis 
                       dataKey="metric" 
-                      tick={{ fontSize: 11, fill: '#94A3B8' }}
+                      tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: '500' }}
                       className="text-xs"
                     />
                     <PolarRadiusAxis 
                       angle={30} 
                       domain={[0, 100]} 
-                      tick={{ fontSize: 10, fill: '#64748B' }}
+                      tick={{ fontSize: 9, fill: '#64748B' }}
                       tickCount={5}
                     />
+                    {/* Radar de performance atual */}
                     <Radar
-                      name="Performance"
+                      name="Performance Atual"
                       dataKey="value"
                       stroke="#3B82F6"
                       fill="#3B82F6"
-                      fillOpacity={0.2}
-                      strokeWidth={2}
-                      dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                      fillOpacity={0.15}
+                      strokeWidth={3}
+                      dot={{ fill: '#3B82F6', strokeWidth: 2, r: 5 }}
                     />
+                    {/* Radar de meta/benchmark */}
                     <Radar
-                      name="Meta"
-                      dataKey="fullMark"
+                      name="Meta (95%)"
+                      dataKey={() => 95}
                       stroke="#10B981"
                       fill="none"
+                      strokeWidth={2}
+                      strokeDasharray="8 4"
+                      dot={{ fill: '#10B981', strokeWidth: 1, r: 3 }}
+                    />
+                    {/* Radar de mínimo aceitável */}
+                    <Radar
+                      name="Mínimo (80%)"
+                      dataKey={() => 80}
+                      stroke="#F59E0B"
+                      fill="none"
                       strokeWidth={1}
-                      strokeDasharray="5 5"
+                      strokeDasharray="4 4"
                       dot={false}
                     />
                     <Tooltip 
                       contentStyle={{
-                        backgroundColor: "rgba(15, 23, 42, 0.95)",
-                        border: "1px solid rgba(59, 130, 246, 0.3)",
-                        borderRadius: "8px",
+                        backgroundColor: "rgba(15, 23, 42, 0.98)",
+                        border: "1px solid rgba(59, 130, 246, 0.4)",
+                        borderRadius: "12px",
                         fontSize: "12px",
-                        color: "#FFFFFF"
+                        color: "#FFFFFF",
+                        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
                       }}
-                      formatter={(value, name) => [`${value}%`, name === 'value' ? 'Atual' : 'Meta']}
+                      formatter={(value, name) => {
+                        if (name === 'Performance Atual') {
+                          const numValue = Number(value);
+                          const status = numValue >= 95 ? 'Excelente' : numValue >= 85 ? 'Bom' : numValue >= 70 ? 'Regular' : 'Crítico';
+                          return [`${numValue}% - ${status}`, name];
+                        }
+                        return [`${value}%`, name];
+                      }}
                     />
                   </RadarChart>
                 </ResponsiveContainer>
+              </div>
+              
+              {/* Legenda e insights */}
+              <div className="mt-4">
+                <div className="flex items-center justify-center space-x-4 text-xs">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-0.5 bg-blue-500"></div>
+                    <span className="text-slate-300">Atual</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-0.5 bg-green-500" style={{borderTop: '1px dashed'}}></div>
+                    <span className="text-slate-300">Meta</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-0.5 bg-amber-500" style={{borderTop: '1px dashed'}}></div>
+                    <span className="text-slate-300">Mínimo</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -519,31 +573,32 @@ export function SupplierPerformanceChart() {
                 <p className="text-xs text-slate-400">Indicadores circulares com métricas detalhadas</p>
               </div>
               
-              <div className="space-y-4 md:space-y-6">
+              {/* Grid responsivo para todos os setores */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 md:gap-4 max-h-96 overflow-y-auto pr-2">
                 {sectorData.map((sector) => (
-                  <div key={sector.sector} className="flex flex-wrap items-center space-x-4 min-w-0 max-w-full">
+                  <div key={sector.sector} className="flex items-center space-x-3 p-3 bg-slate-700/20 rounded-lg hover:bg-slate-700/30 transition-colors">
                     {/* Indicador Circular */}
-                    <div className="relative w-16 h-16 flex-shrink-0 min-w-0">
-                      <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 64 64">
+                    <div className="relative w-12 h-12 flex-shrink-0">
+                      <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
                         {/* Círculo de fundo */}
                         <circle
-                          cx="32"
-                          cy="32"
-                          r="28"
+                          cx="24"
+                          cy="24"
+                          r="20"
                           stroke="#334155"
-                          strokeWidth="4"
+                          strokeWidth="3"
                           fill="none"
                           opacity="0.3"
                         />
                         {/* Círculo de progresso */}
                         <circle
-                          cx="32"
-                          cy="32"
-                          r="28"
+                          cx="24"
+                          cy="24"
+                          r="20"
                           stroke={sector.color}
-                          strokeWidth="4"
+                          strokeWidth="3"
                           fill="none"
-                          strokeDasharray={`${(sector.performance / 100) * 175.929} 175.929`}
+                          strokeDasharray={`${(sector.performance / 100) * 125.664} 125.664`}
                           strokeLinecap="round"
                           className="transition-all duration-1000 ease-out"
                         />
@@ -557,43 +612,40 @@ export function SupplierPerformanceChart() {
                     </div>
                     
                     {/* Informações do Setor */}
-                    <div className="flex-1 min-w-0 break-words">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <h5 className="text-sm font-semibold text-white">{sector.sector}</h5>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-slate-400">{sector.suppliers} fornecedores</span>
-                          <div className={`flex items-center text-xs font-semibold ${
-                            sector.performance > 90 ? 'text-green-400' : 
-                            sector.performance > 85 ? 'text-yellow-400' : 'text-red-400'
-                          }`}>
-                            {sector.performance > 90 ? 
-                              <TrendUpIcon className="w-3 h-3 mr-1" /> : 
-                              sector.performance > 85 ?
-                              <span className="w-3 h-0.5 bg-yellow-400 mr-1"></span> :
-                              <TrendDownIcon className="w-3 h-3 mr-1" />
-                            }
-                            {sector.performance > 90 ? 'Excelente' : 
-                             sector.performance > 85 ? 'Bom' : 'Melhorar'}
-                          </div>
+                        <h5 className="text-sm font-semibold text-white truncate pr-2" title={sector.sector}>
+                          {sector.sector.length > 25 ? `${sector.sector.substring(0, 25)}...` : sector.sector}
+                        </h5>
+                        <div className={`flex items-center text-xs font-semibold flex-shrink-0 ${
+                          sector.performance > 90 ? 'text-green-400' : 
+                          sector.performance > 85 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                          {sector.performance > 90 ? 
+                            <TrendUpIcon className="w-3 h-3 mr-1" /> : 
+                            sector.performance > 85 ?
+                            <span className="w-3 h-0.5 bg-yellow-400 mr-1"></span> :
+                            <TrendDownIcon className="w-3 h-3 mr-1" />
+                          }
+                          {sector.performance > 90 ? 'Excelente' : 
+                           sector.performance > 85 ? 'Bom' : 'Melhorar'}
                         </div>
                       </div>
                       
                       {/* Barra de progresso */}
-                      <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden mb-2">
                         <div 
-                          className="h-2 rounded-full transition-all duration-1000 ease-out"
+                          className="h-1.5 rounded-full transition-all duration-1000 ease-out"
                           style={{ 
                             width: `${sector.performance}%`,
-                            backgroundColor: sector.color,
-                            minWidth: 0,
-                            maxWidth: '100%'
+                            backgroundColor: sector.color
                           }}
                         ></div>
                       </div>
                       
                       {/* Estatísticas detalhadas */}
-                      <div className="mt-2 flex justify-between text-xs text-slate-400">
-                        <span>Meta: 90%</span>
+                      <div className="flex justify-between text-xs text-slate-400">
+                        <span>{sector.suppliers} fornecedores</span>
                         <span>Trend: {sector.performance > 90 ? '+2.1%' : sector.performance > 85 ? '+0.8%' : '-1.2%'}</span>
                       </div>
                     </div>
@@ -607,17 +659,25 @@ export function SupplierPerformanceChart() {
                   <h5 className="text-sm font-semibold text-white">Resumo Geral</h5>
                   <div className="flex items-center text-green-400 text-sm font-semibold">
                     <TrendUpIcon className="w-4 h-4 mr-1" />
-                    Performance Global: 92.3%
+                    Performance Global: 93.9%
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="text-slate-400">Melhor Setor:</span>
-                    <span className="text-blue-400 ml-2 font-semibold">Tecnologia</span>
+                    <span className="text-blue-400 ml-2 font-semibold">Soluções Cloud</span>
                   </div>
                   <div>
                     <span className="text-slate-400">Oportunidade:</span>
-                    <span className="text-amber-400 ml-2 font-semibold">Manufatura</span>
+                    <span className="text-amber-400 ml-2 font-semibold">Quiosques de Self-Service</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Total Fornecedores:</span>
+                    <span className="text-white ml-2 font-semibold">72 ativos</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Setores Cobertos:</span>
+                    <span className="text-cyan-400 ml-2 font-semibold">8 segmentos</span>
                   </div>
                 </div>
               </div>
