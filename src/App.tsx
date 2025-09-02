@@ -158,7 +158,7 @@ export default function App() {
 
   useEffect(() => {
     // Adiciona o script do Chatbase quando autenticado
-    if (isAuthenticated && !document.getElementById("1ifm9yY-KVOI8QcKpIm4x")) {
+    if (isAuthenticated && !document.getElementById("x0wZThx4dEWO_GESv9oAA")) {
       (function(){
         if(!window.chatbase || window.chatbase("getState") !== "initialized"){
           window.chatbase = (...args: any[]) => {
@@ -175,7 +175,7 @@ export default function App() {
         const onLoad = function() {
           const script = document.createElement("script");
           script.src = "https://www.chatbase.co/embed.min.js";
-          script.id = "1ifm9yY-KVOI8QcKpIm4x";
+          script.id = "x0wZThx4dEWO_GESv9oAA";
           script.setAttribute("domain", "www.chatbase.co");
           document.body.appendChild(script);
         };
@@ -189,7 +189,7 @@ export default function App() {
     
     // Remove o script ao deslogar
     if (!isAuthenticated) {
-      const script = document.getElementById("1ifm9yY-KVOI8QcKpIm4x");
+      const script = document.getElementById("x0wZThx4dEWO_GESv9oAA");
       if (script) script.remove();
       const iframe = document.querySelector('iframe[src*="chatbase.co"]');
       if (iframe) iframe.remove();
