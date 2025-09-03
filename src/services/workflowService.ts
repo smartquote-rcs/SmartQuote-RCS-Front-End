@@ -1,3 +1,13 @@
+// Exemplo de integração: busca usuário e valida cotação
+export async function validarCotacaoComUsuario(cotacao: any, userId: string): Promise<WorkflowValidationResult> {
+  // Busca usuário pela API (ajuste a URL conforme seu backend)
+  const response = await fetch(`/api/users/${userId}`);
+  const result = await response.json();
+  // O objeto do usuário pode estar em result.data ou result diretamente
+  const user = result.data || result;
+  // Chama a validação passando o usuário
+  return await workflowService.validateCotacao(cotacao, user);
+}
 export interface WorkflowRule {
   id: string;
   name: string;
@@ -28,6 +38,13 @@ export interface WorkflowValidationResult {
 }
 
 class WorkflowService {
+  // Verifica se o usuário pode aprovar a cotação pelo cargo e valor
+  async canUserApprove(user: { position: string }, cotacaoValor: number): Promise<boolean> {
+    if (user.position === 'manager' && cotacaoValor > 2000000) {
+      return false;
+    }
+    return true;
+  }
   private storageKey = 'smartquote_workflow_rules';
 
   // Regras padrão do sistema
@@ -182,7 +199,8 @@ class WorkflowService {
   }
 
   // Validar cotação contra todas as regras ativas
-  validateCotacao(cotacao: any): WorkflowValidationResult {
+  // Recebe cotacao e usuario, impede manager aprovar acima de 2 milhões
+  async validateCotacao(cotacao: any, user?: { position: string }): Promise<WorkflowValidationResult> {
     const rules = this.loadRules().filter(rule => rule.isActive);
     const matchedRules: WorkflowRule[] = [];
 
@@ -209,7 +227,6 @@ class WorkflowService {
         const priorities = ['low', 'medium', 'high', 'urgent'];
         const currentPriorityIndex = priorities.indexOf(suggestedPriority);
         const rulePriorityIndex = priorities.indexOf(rule.action.priority);
-        
         if (rulePriorityIndex > currentPriorityIndex) {
           suggestedPriority = rule.action.priority;
         }
@@ -226,22 +243,29 @@ class WorkflowService {
     // Remover aprovadores duplicados
     const uniqueApprovers = [...new Set(requiredApprovers)];
 
-    // Gerar mensagem de validação
+    // Verificação extra para manager
     let validationMessage = 'Cotação validada com sucesso.';
-    
-    if (matchedRules.length === 0) {
+    let isValid = true;
+    if (user && user.position === 'manager') {
+      const valorCotacao = parseFloat(cotacao.valor?.toString().replace(/[€$,\s]/g, '')) || 0;
+      if (valorCotacao > 2000000) {
+        isValid = false;
+        validationMessage = 'Manager não pode aprovar cotações acima de €2.000.000.';
+      }
+    }
+
+    if (isValid && matchedRules.length === 0) {
       validationMessage = 'Nenhuma regra especial aplicada. Segue fluxo padrão.';
-    } else {
+    } else if (isValid) {
       const ruleNames = matchedRules.map(rule => rule.name).join(', ');
       validationMessage = `Regras aplicadas: ${ruleNames}`;
-      
       if (uniqueApprovers.length > 0) {
         validationMessage += ` - Aprovação necessária de: ${uniqueApprovers.join(', ')}`;
       }
     }
 
     return {
-      isValid: true,
+      isValid,
       matchedRules,
       requiredApprovers: uniqueApprovers,
       suggestedPriority,

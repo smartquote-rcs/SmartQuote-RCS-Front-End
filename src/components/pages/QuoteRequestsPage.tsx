@@ -558,10 +558,10 @@ export function QuoteRequestsPage({
 
 
   // Modal de motivo para aprovar / rejeitar / reativar
-  const [approvalModal, setApprovalModal] = useState<{open:boolean; action:'approve'|'set_pending'; cotacaoId:string|null}>({open:false, action:'approve', cotacaoId:null});
+  const [approvalModal, setApprovalModal] = useState<{open:boolean; action:'approve'|'set_pending'|'reject'; cotacaoId:string|null}>({open:false, action:'approve', cotacaoId:null});
   const [motivoInput, setMotivoInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // Feedback visual de envio
-  const openApproval = (id:string, action:'approve'|'set_pending') => {
+  const openApproval = (id:string, action:'approve'|'set_pending'|'reject') => {
     setMotivoInput('');
     setIsSubmitting(false);
     setApprovalModal({open:true, action, cotacaoId:id});
@@ -835,8 +835,16 @@ export function QuoteRequestsPage({
 
   // Função para obter o filtro de cada aba
   const getTabFilter = (tab: string) => {
-    if (tab === 'pending') return (c: any) => c.aprovacao !== true; // false, null ou undefined
-    if (tab === 'approved') return (c: any) => c.aprovacao === true;
+    if (tab === 'pending') {
+      return (c: any) => c.aprovacao !== true;
+    }
+    if (tab === 'approved') {
+      return (c: any) => c.aprovacao === true;
+    }
+    if (tab === 'rejected') {
+      return (c: any) => false; // Sem rejeitados por enquanto
+    }
+    // Todas
     return () => true;
   };
 
@@ -957,21 +965,13 @@ export function QuoteRequestsPage({
                 value="pending"
                 className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-orange-500/20 hover:text-orange-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                {t("quoteRequests.pendingTab")} ({cotacoesList.filter((c) => c.status === 'incompleta' && (!c.motivo || c.motivo.trim() === '')).length})
+                {t("quoteRequests.pendingTab")} ({cotacoesList.filter(getTabFilter('pending')).length})
               </TabsTrigger>
               <TabsTrigger
                 value="approved"
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-green-500/20 hover:text-green-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                {t("quoteRequests.approvedTab")} ({cotacoesList.filter((c) => c.status === 'approved' || c.status === 'processed' || c.status === 'completa').length})
-              </TabsTrigger>
-              {/* Removido tab Processando conforme solicitação */}
-              <TabsTrigger
-                value="rejected"
-                className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
-              >
-                {t("quoteRequests.rejectedTab")} (
-                {cotacoesList.filter((c) => c.status === 'incompleta' && c.motivo && c.motivo.trim() !== '').length})
+                {t("quoteRequests.approvedTab")} ({cotacoesList.filter(getTabFilter('approved')).length})
               </TabsTrigger>
             </TabsList>
 
@@ -1257,17 +1257,6 @@ export function QuoteRequestsPage({
                       <TabsContent value="approved" className="h-full mt-0">
                         <div className="grid gap-4">
                           {getPaginated('approved').map((cotacao) => (
-                            <QuoteCard
-                              key={cotacao.id}
-                              cotacao={cotacao}
-                              onViewDetails={handleViewDetails}
-                            />
-                          ))}
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="rejected" className="h-full mt-0">
-                        <div className="grid gap-4">
-                          {getPaginated('rejected').map((cotacao) => (
                             <QuoteCard
                               key={cotacao.id}
                               cotacao={cotacao}
