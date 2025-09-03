@@ -76,7 +76,6 @@ interface AppContextType {
   // Usuário logado (mínimo necessário para auditoria)
   user: { id: number; name?: string; email?: string } | null;
   setUser: (u: { id: number; name?: string; email?: string } | null) => void;
-  refreshUser: () => Promise<void>;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -114,12 +113,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  // Usuário logado - carregado da API
-  const [user, setUser] = useState<{ id: number; name?: string; email?: string } | null>(null);
+  // Usuário logado (placeholder - em integração real substituir pela autenticação)
+  const [user, setUser] = useState<{ id: number; name?: string; email?: string } | null>({ id: 1, name: 'Usuário Demo' });
   // Nome do sistema global (sempre da API)
   const [systemName, setSystemName] = useState<string>('');
 
-  // Buscar dados do usuário atual e nome do sistema da API ao montar
+  // Buscar nome do sistema da API ao montar
   useEffect(() => {
     async function fetchSystemName() {
       try {
@@ -134,86 +133,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSystemName('');
       }
     }
-
-    async function fetchCurrentUser() {
-      try {
-        const { userService } = await import('../api/services');
-        const result = await userService.getCurrentUser();
-        
-        if (result.success && result.data) {
-          const userData = result.data;
-          console.log('AppContext: Dados do usuário carregados da API:', userData);
-          
-          setUser({
-            id: userData.id || 1,
-            name: userData.name || userData.email?.split('@')[0] || 'Usuário',
-            email: userData.email || ''
-          });
-        } else {
-          console.warn('AppContext: Erro ao buscar usuário atual:', result.error);
-          // Tentar obter dados do localStorage como fallback
-          const savedAuth = localStorage.getItem("smartquote_auth");
-          if (savedAuth) {
-            try {
-              const authData = JSON.parse(savedAuth);
-              const storedUser = authData.user || {};
-              setUser({
-                id: storedUser.id || 1,
-                name: storedUser.name || 'Usuário',
-                email: storedUser.email || ''
-              });
-            } catch (e) {
-              console.error('AppContext: Erro ao ler localStorage:', e);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('AppContext: Erro ao buscar dados do usuário atual:', error);
-        // Fallback para localStorage
-        const savedAuth = localStorage.getItem("smartquote_auth");
-        if (savedAuth) {
-          try {
-            const authData = JSON.parse(savedAuth);
-            const storedUser = authData.user || {};
-            setUser({
-              id: storedUser.id || 1,
-              name: storedUser.name || 'Usuário',
-              email: storedUser.email || ''
-            });
-          } catch (e) {
-            console.error('AppContext: Erro ao ler localStorage:', e);
-          }
-        }
-      }
-    }
-
     fetchSystemName();
-    fetchCurrentUser();
   }, []);
-
-  // Função para forçar atualização dos dados do usuário
-  const refreshUser = async () => {
-    console.log('🔄 AppContext: Forçando atualização dos dados do usuário...');
-    try {
-      const { userService } = await import('../api/services');
-      const result = await userService.getCurrentUser();
-      
-      if (result.success && result.data) {
-        const userData = result.data;
-        console.log('✅ AppContext: Dados do usuário atualizados com sucesso:', userData);
-        
-        setUser({
-          id: userData.id || 1,
-          name: userData.name || userData.email?.split('@')[0] || 'Usuário',
-          email: userData.email || ''
-        });
-      } else {
-        console.warn('⚠️ AppContext: Erro ao atualizar usuário:', result.error);
-      }
-    } catch (error) {
-      console.error('💥 AppContext: Erro ao forçar atualização do usuário:', error);
-    }
-  };
   const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   
@@ -851,7 +772,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateSettings,
     user,
     setUser,
-    refreshUser,
     systemName,
     setSystemName
   };

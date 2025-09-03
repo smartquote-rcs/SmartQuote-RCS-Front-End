@@ -181,17 +181,12 @@ export default function UserManagementPage() {
   };
 
   useEffect(() => {
-    console.log('🚀 UserManagementPage montado - carregando dados frescos...');
-    loadUsers(true); // Forçar dados frescos ao montar o componente
+    loadUsers();
   }, []);
 
-  const loadUsers = async (forceRefresh = false) => {
+  const loadUsers = async () => {
     try {
       setLoading(true);
-      
-      if (forceRefresh) {
-        console.log('🔄 FORÇANDO ATUALIZAÇÃO DE DADOS - Ignorando qualquer cache');
-      }
 
       // Verificar se existe token de autenticação
       const token = localStorage.getItem("auth_token");
@@ -199,6 +194,7 @@ export default function UserManagementPage() {
         "🔑 Debug - Token no localStorage:",
         token ? "Presente" : "Ausente"
       );
+      console.log("🔑 Debug - Token completo:", token);
 
       if (!token) {
         console.error("❌ Token de autenticação não encontrado!");
@@ -211,11 +207,9 @@ export default function UserManagementPage() {
         return;
       }
 
-      console.log('🚀 Fazendo requisição FRESH para buscar usuários...');
       const response = await userService.getAll();
 
-      console.log("✅ Resposta FRESH da API (users):", response);
-      console.log("🕐 Timestamp da requisição:", new Date().toISOString());
+      console.log("🔍 Debug - Resposta completa da API (users):", response);
 
       if (response.success && response.data) {
         console.log("🔍 Debug - response.data:", response.data);
@@ -634,9 +628,9 @@ export default function UserManagementPage() {
       if (response.success) {
         console.log("✅ Usuário criado com sucesso!");
 
-        // Recarregar lista de usuários com dados frescos
-        console.log("🔄 Recarregando lista de usuários com dados atualizados...");
-        await loadUsers(true);
+        // Recarregar lista de usuários
+        console.log("🔄 Recarregando lista de usuários...");
+        await loadUsers();
 
         // Salvar o role do usuário no localStorage para futuro login
         localStorage.setItem("user_role_" + newUser.email, newUser.role);
@@ -719,8 +713,10 @@ export default function UserManagementPage() {
       if (response.success) {
         console.log("✅ Usuário atualizado com sucesso!");
 
-        // Recarregar dados da API para garantir sincronização
-        await loadUsers(true);
+        // Atualizar na lista local
+        setUsers(
+          users.map((user) => (user.id === editingUser.id ? editingUser : user))
+        );
 
         // Atualizar o role do usuário no localStorage se foi alterado
         localStorage.setItem(
@@ -767,10 +763,8 @@ export default function UserManagementPage() {
 
       if (response.success) {
         console.log("✅ Usuário deletado com sucesso!");
-        
-        // Recarregar dados da API para garantir sincronização
-        await loadUsers(true);
-        
+        // Remover da lista local
+        setUsers(users.filter((user) => user.id !== userId));
         showToast(
           "success",
           "Usuário Removido",
@@ -936,7 +930,7 @@ export default function UserManagementPage() {
               <span className="text-blue-200 ml-2">usuários</span>
             </div>
             <Button
-              onClick={() => loadUsers(true)}
+              onClick={loadUsers}
               disabled={loading}
               className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-4 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg"
             >

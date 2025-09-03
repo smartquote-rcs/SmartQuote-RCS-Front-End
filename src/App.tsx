@@ -1,7 +1,8 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { LoginPage } from "./components/LoginPage";
+import { UserDashboard } from "./components/UserDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
-import { AppProvider, AppContext } from "./contexts/AppContext";
+import { AppProvider } from "./contexts/AppContext";
 import { userService } from './api/services';
 import { emailService } from "./services/emailService";
 import { saveLog } from "./services/logService";
@@ -20,12 +21,10 @@ declare global {
   }
 }
 
-// Componente interno que usa o contexto
-function AppContent() {
+export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const appCtx = useContext(AppContext);
 
   // Gera id determinístico simples baseado no email (fallback se backend não retornar id)
   const deriveUserId = (email: string): number => {
@@ -37,17 +36,6 @@ function AppContent() {
     // garante positivo e limita tamanho
     return Math.abs(hash) % 1000000 + 1;
   };
-
-  // Sincronizar dados do usuário com o contexto
-  useEffect(() => {
-    if (user && appCtx?.setUser) {
-      appCtx.setUser({
-        id: user.id,
-        name: user.name,
-        email: user.email
-      });
-    }
-  }, [user, appCtx]);
 
   useEffect(() => {
     // Verificar se o usuário já está logado (localStorage)
@@ -158,10 +146,6 @@ function AppContent() {
     
     setIsAuthenticated(false);
     setUser(null);
-    // Limpar também no contexto
-    if (appCtx?.setUser) {
-      appCtx.setUser(null);
-    }
     localStorage.removeItem("smartquote_auth");
     localStorage.removeItem("auth_token"); // Limpar também o token da API
   };
@@ -228,17 +212,10 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
-      {renderDashboard()}
-    </div>
-  );
-}
-
-// Componente principal que encapsula tudo no AppProvider
-export default function App() {
-  return (
     <AppProvider>
-      <AppContent />
+      <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
+        {renderDashboard()}
+      </div>
     </AppProvider>
   );
 }

@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../hooks/useLanguage';
 import { AppContext } from '../../contexts/AppContext';
 import { emailService, EmailConfig } from '../../services/emailService';
-import { userService } from '../../api/services';
 import {
 	User,
 	Settings,
@@ -85,12 +84,12 @@ export default function SettingsPage() {
 	const { changeLanguage } = useLanguage();
 
 	const [adminProfile, setAdminProfile] = useState<AdminProfile>({
-		firstName: 'Admin', // name da API
-		lastName: 'Sistema', // department da API 
-		email: 'admin@smartquote.com', // email da API
-		company: 'RCS Angola', // fixo
-		role: 'Administrador', // position da API
-		phone: '+244 000 000 000' // contact da API
+		firstName: 'Admin',
+		lastName: 'Sistema',
+		email: 'admin@smartquote.com',
+		company: 'SmartQuote RCS',
+		role: 'Administrador',
+		phone: '+351 000 000 000'
 	});
 
 	const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
@@ -174,66 +173,6 @@ export default function SettingsPage() {
 			}
 		} catch (error) {
 			console.error('Erro ao buscar configurações do sistema:', error);
-		}
-	};
-
-	// Função para buscar dados do usuário atual
-	const fetchCurrentUser = async () => {
-		try {
-			console.log('🔍 Iniciando busca de dados do usuário atual...');
-			console.log('� Forçando atualização de dados (sem cache)...');
-			
-			// SEMPRE buscar dados atualizados da API, ignorar cache
-			const result = await userService.getCurrentUser();
-			console.log('📡 Resultado da API getCurrentUser:', result);
-			
-			if (result.success && result.data) {
-				const userData = result.data;
-				console.log('✅ Dados do usuário atual da API (ATUALIZADOS):', userData);
-				
-				// Mapear os dados da API exatamente como vêm:
-				// name -> firstName
-				// department -> lastName (como solicitado)
-				// email -> email
-				// position -> role
-				// contact -> phone
-				setAdminProfile({
-					firstName: userData.name || 'Usuário API',
-					lastName: userData.department || 'Sem Departamento', // department vai para lastName
-					email: userData.email || 'usuario@api.com',
-					company: 'RCS Angola', // Sempre mostrar "RCS Angola"
-					role: userData.position || 'Usuário',
-					phone: userData.contact || '+244 000 000 000'
-				});
-				
-				console.log('✅ Perfil atualizado com dados frescos da API');
-			} else {
-				console.warn('⚠️ API falhou, erro:', result.error);
-				
-				// Se a API falhar completamente, usar valores padrão
-				console.warn('⚠️ Usando valores padrão devido à falha da API');
-				setAdminProfile({
-					firstName: 'Usuário',
-					lastName: 'Sistema',
-					email: 'usuario@sistema.com',
-					company: 'RCS Angola',
-					role: 'Usuário',
-					phone: '+244 000 000 000'
-				});
-			}
-		} catch (error) {
-			console.error('💥 Erro ao buscar dados do usuário atual:', error);
-			
-			// Em caso de erro, usar valores padrão
-			console.warn('💥 Usando valores padrão devido ao erro');
-			setAdminProfile({
-				firstName: 'Usuário',
-				lastName: 'Sistema',
-				email: 'usuario@sistema.com',
-				company: 'RCS Angola',
-				role: 'Usuário',
-				phone: '+244 000 000 000'
-			});
 		} finally {
 			setLoading(false);
 		}
@@ -241,26 +180,7 @@ export default function SettingsPage() {
 
 	// Carregar configurações do sistema ao montar
 	useEffect(() => {
-		console.log('🚀 SettingsPage montado - iniciando carregamento...');
-		
-		// Debug: verificar dados no localStorage
-		const token = localStorage.getItem('auth_token');
-		const savedAuth = localStorage.getItem("smartquote_auth");
-		console.log('🔍 Debug localStorage:');
-		console.log('  - auth_token:', token ? 'PRESENTE' : 'AUSENTE');
-		console.log('  - smartquote_auth:', savedAuth ? 'PRESENTE' : 'AUSENTE');
-		
-		if (savedAuth) {
-			try {
-				const authData = JSON.parse(savedAuth);
-				console.log('  - dados do usuário salvos:', authData.user);
-			} catch (e) {
-				console.log('  - erro ao parsear smartquote_auth:', e);
-			}
-		}
-		
 		fetchSettings();
-		fetchCurrentUser();
 	}, []);
 
 	useEffect(() => {
@@ -270,95 +190,9 @@ export default function SettingsPage() {
 		}
 	}, [saveSuccess]);
 
-	const handleSaveProfile = async () => {
-		try {
-			console.log('Salvando perfil do admin:', adminProfile);
-			
-			// Obter o ID do usuário atual do contexto
-			const currentUserId = appCtx?.user?.id;
-			
-			if (!currentUserId) {
-				console.error('ID do usuário não encontrado no contexto');
-				setSaveSuccess('Erro: Usuário não identificado');
-				return;
-			}
-
-			// Mapear os dados de volta para a estrutura da API:
-			// firstName -> name
-			// lastName -> department  
-			// email -> email
-			// role -> role (será mapeado para position na API)
-			// phone -> phone (será mapeado para contact na API)
-			const updateData = {
-				name: adminProfile.firstName, // Nome vai para o campo name
-				email: adminProfile.email,
-				department: adminProfile.lastName, // lastName contém o department
-				role: adminProfile.role, // Função/cargo
-				phone: adminProfile.phone // Telefone
-			};
-
-			console.log('Atualizando usuário com ID:', currentUserId, 'Dados:', updateData);
-			
-			// Chamar a API para atualizar o usuário
-			const result = await userService.updateUser(String(currentUserId), updateData);
-			
-			if (result.success) {
-				setSaveSuccess('Perfil atualizado com sucesso!');
-				
-				// Atualizar o contexto da aplicação com os novos dados
-				if (appCtx?.setUser) {
-					const updatedUserData = {
-						id: currentUserId,
-						name: adminProfile.firstName,
-						email: adminProfile.email
-					};
-					appCtx.setUser(updatedUserData);
-					console.log('✅ Contexto do usuário atualizado:', updatedUserData);
-				}
-				
-				// Atualizar também o localStorage para persistir as mudanças
-				const savedAuth = localStorage.getItem("smartquote_auth");
-				if (savedAuth) {
-					try {
-						const authData = JSON.parse(savedAuth);
-						const updatedAuthData = {
-							...authData,
-							user: {
-								...authData.user,
-								id: currentUserId,
-								name: adminProfile.firstName,
-								email: adminProfile.email,
-								department: adminProfile.lastName,
-								role: adminProfile.role,
-								position: adminProfile.role,
-								phone: adminProfile.phone,
-								contact: adminProfile.phone
-							}
-						};
-						localStorage.setItem("smartquote_auth", JSON.stringify(updatedAuthData));
-						console.log('✅ localStorage atualizado com novos dados do usuário');
-					} catch (e) {
-						console.warn('⚠️ Erro ao atualizar localStorage:', e);
-					}
-				}
-				
-				// Forçar atualização do contexto com dados frescos da API
-				if (appCtx?.refreshUser) {
-					console.log('🔄 Forçando atualização do contexto...');
-					await appCtx.refreshUser();
-				}
-				
-				// Recarregar os dados do usuário para refletir as mudanças da API
-				console.log('🔄 Recarregando dados do usuário...');
-				await fetchCurrentUser();
-			} else {
-				console.error('Erro ao atualizar perfil:', result.error);
-				setSaveSuccess(`Erro: ${result.error}`);
-			}
-		} catch (error) {
-			console.error('Erro ao salvar perfil:', error);
-			setSaveSuccess('Erro ao salvar perfil');
-		}
+	const handleSaveProfile = () => {
+		console.log('Salvando perfil do admin:', adminProfile);
+		setSaveSuccess(t('settings.profileUpdated'));
 	};
 
 	const handleSaveGeneral = async () => {
@@ -563,66 +397,50 @@ export default function SettingsPage() {
 								<div className="space-y-3 sm:space-y-4 lg:space-y-5">
 									<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 										<div>
-											<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Nome</Label>
+											<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.firstName')}</Label>
 											<Input
 												value={adminProfile.firstName}
 												onChange={(e) => setAdminProfile({ ...adminProfile, firstName: e.target.value })}
 												className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
-												placeholder="Nome do usuário"
 											/>
 										</div>
 										<div>
-											<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Departamento</Label>
+											<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.role')}</Label>
 											<Input
-												value={adminProfile.lastName}
+												value={adminProfile.role}
 												onChange={(e) => setAdminProfile({ ...adminProfile, lastName: e.target.value })}
 												className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
-												placeholder="Departamento do usuário"
 											/>
 										</div>
 									</div>
 
 									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Função/Cargo</Label>
-										<Input
-											value={adminProfile.role}
-											onChange={(e) => setAdminProfile({ ...adminProfile, role: e.target.value })}
-											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
-											placeholder="Função ou cargo do usuário"
-										/>
-									</div>
-
-									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Email</Label>
+										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.email')}</Label>
 										<Input
 											type="email"
 											value={adminProfile.email}
 											onChange={(e) => setAdminProfile({ ...adminProfile, email: e.target.value })}
 											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
-											placeholder="email@exemplo.com"
 										/>
 									</div>
 								</div>
 
 								<div className="space-y-3 sm:space-y-4 lg:space-y-5">
 									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Empresa</Label>
+										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('Empresa')}</Label>
 										<Input
 											value={adminProfile.company}
-											readOnly
-											disabled
-											className="h-9 sm:h-10 bg-dark-card/50 border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base opacity-75 cursor-not-allowed"
-											title="Campo não editável - sempre RCS Angola"
+											onChange={(e) => setAdminProfile({ ...adminProfile, company: e.target.value })}
+											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
 										/>
 									</div>
 
 									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Telefone</Label>
+										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.phone')}</Label>
 										<Input
 											value={adminProfile.phone}
 											onChange={(e) => setAdminProfile({ ...adminProfile, phone: e.target.value })}
 											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
-											placeholder="+244 000 000 000"
 										/>
 									</div>
 								</div>

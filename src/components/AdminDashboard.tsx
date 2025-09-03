@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, ChangeEvent } from "react";
 import {
   BarChart3,
   FileText,
@@ -17,7 +17,7 @@ import {
   Send,
   RefreshCw,
   Check,
-  // Upload removido
+  Upload,
   Mail,
   Eye
 } from "lucide-react";
@@ -271,56 +271,22 @@ export function AdminDashboard({
     quoteId?: string;
   } | null>(null);
   const [shouldFocusPrompt, setShouldFocusPrompt] = useState(false);
-
   // Estados para novo produto
   const [newProduct, setNewProduct] = useState({
-  fornecedorId: '',
-  codigo: '',
-  nome: '',
-  modelo: '',
-  descricao: '',
-  categoria: '',
-  preco: 0,
-  unidade: '',
-  estoque: 0,
-  origem: '',
+    fornecedorId: '',
+    codigo: '',
+    nome: '',
+    modelo: '',
+    descricao: '',
+    preco: 0,
+    unidade: '',
+    estoque: 0,
+    origem: '',
   image_url: '',
-  // cadastrado_por e atualizado_por serão preenchidos automaticamente
-  // cadastrado_em será preenchido automaticamente
+    // cadastrado_por e atualizado_por serão preenchidos automaticamente
+    // cadastrado_em será preenchido automaticamente
   });
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
-  // Estado para ID do fornecedor RCS
-  const [rcsId, setRcsId] = useState<string | number | null>(null);
-  useEffect(() => {
-    async function ensureRcsSupplier() {
-      const res = await supplierService.getAll();
-      let rcs = null;
-      if (res.success && Array.isArray(res.data)) {
-        rcs = res.data.find((f: any) => f.nome === 'RCS');
-      }
-      if (!rcs) {
-        const now = new Date().toISOString();
-        const createResp = await supplierService.create({
-          nome: 'RCS',
-          contato_email: 'rcs@rcs.com',
-          ativo: true,
-          cadastrado_em: now,
-          cadastrado_por: user?.id ?? 1,
-          atualizado_em: now,
-          atualizado_por: user?.id ?? 1
-        });
-        if (createResp.success && createResp.data && createResp.data.id) {
-          setRcsId(createResp.data.id);
-          setNewProduct(prev => ({ ...prev, fornecedorId: createResp.data.id }));
-        }
-      } else {
-        setRcsId(rcs.id);
-        setNewProduct(prev => ({ ...prev, fornecedorId: rcs.id }));
-      }
-    }
-    ensureRcsSupplier();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Estados para novo fornecedor
   const [newSupplier, setNewSupplier] = useState({
@@ -497,12 +463,11 @@ export function AdminDashboard({
         nome: '',
         modelo: '',
         descricao: '',
-        categoria: '',
         preco: 0,
         unidade: '',
         estoque: 0,
         origem: '',
-        image_url: '',
+  image_url: '',
         // cadastrado_por e atualizado_por serão preenchidos automaticamente
         // cadastrado_em será preenchido automaticamente
       });
@@ -539,20 +504,6 @@ export function AdminDashboard({
         "error",
         "Email Inválido",
         "Por favor, insira um endereço de email válido."
-      );
-      return;
-    }
-
-    // Verificar se já existe um fornecedor com o mesmo nome
-    const fornecedorExistente = fornecedores.find(f => 
-      f.nome && f.nome.toLowerCase().trim() === newSupplier.nome.toLowerCase().trim()
-    );
-    
-    if (fornecedorExistente) {
-      showToast(
-        "error",
-        "Fornecedor Já Existe",
-        `Já existe um fornecedor com o nome "${newSupplier.nome}". Use um nome diferente.`
       );
       return;
     }
@@ -1163,6 +1114,37 @@ export function AdminDashboard({
           </div>
         );
       case "new-product":
+        function handleImageUpload(event: ChangeEvent<HTMLInputElement>): void {
+          try {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const maxBytes = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxBytes) {
+              showToast(
+                'error',
+                'Imagem muito grande',
+                'Tamanho máximo permitido é 10MB.'
+              );
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              setNewProduct(prev => ({ ...prev, image_url: result }));
+            };
+            reader.onerror = () => {
+              showToast(
+                'error',
+                'Falha ao carregar imagem',
+                'Não foi possível ler o arquivo.'
+              );
+            };
+            reader.readAsDataURL(file);
+          } catch (err) {
+            console.error('Erro upload imagem', err);
+            showToast('error','Erro','Erro inesperado ao processar a imagem.');
+          }
+        }
         return (
           <div className="flex flex-col h-full w-full">
             <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
@@ -1174,7 +1156,22 @@ export function AdminDashboard({
                   </h1>
                   <p className="text-xs sm:text-sm text-dark-secondary mt-1">Adicionar novos produtos ao catálogo</p>
                 </div>
-                
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <button
+                      onClick={() => setActivePage("notifications")}
+                      className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
+                    >
+                      <Bell className="w-5 h-5 text-slate-300" />
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-bold text-white">3</span>
+                      </div>
+                    </button>
+                  </div>
+                  <div className="dark-tag text-center sm:text-left flex-shrink-0">
+                    Gestão de Produtos
+                  </div>
+                </div>
               </div>
             </header>
             <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
@@ -1198,14 +1195,24 @@ export function AdminDashboard({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor *</label>
-                          <input
-                            value="RCS"
-                            disabled
-                            className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white opacity-60"
-                            style={{ pointerEvents: 'none', backgroundColor: '#1e293b' }}
+                          <select
+                            value={newProduct.fornecedorId || ''}
+                            onChange={e => setNewProduct(prev => ({ ...prev, fornecedorId: e.target.value }))}
+                            className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
                             required
-                            title="Fornecedor padrão RCS"
-                          />
+                            disabled={isCreatingProduct}
+                            title="Selecione o fornecedor do produto"
+                          >
+                            <option value="">Selecione o fornecedor</option>
+                            {fornecedores && fornecedores.map((f: any) => {
+                              const fornecedorId = f.id || f.fornecedorId || f.ID || f._id;
+                              return (
+                                <option key={fornecedorId} value={fornecedorId}>
+                                  {f.nomeEmpresa || f.nome || fornecedorId}
+                                </option>
+                              );
+                            })}
+                          </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-slate-300 mb-2">Código</label>
@@ -1230,39 +1237,13 @@ export function AdminDashboard({
                           <label className="block text-sm font-medium text-slate-300 mb-2">Descrição *</label>
                           <textarea rows={2} value={newProduct.descricao} onChange={e => setNewProduct(prev => ({ ...prev, descricao: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Descrição" required disabled={isCreatingProduct} />
                         </div>
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Categoria *</label>
-                          <select
-                            value={newProduct.categoria || ''}
-                            onChange={e => setNewProduct(prev => ({ ...prev, categoria: e.target.value }))}
-                            className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                            required
-                            disabled={isCreatingProduct}
-                            size={1}
-                            style={{ maxHeight: '80px', overflowY: 'auto' }}
-                          >
-                            <option value="" disabled>Selecione uma categoria</option>
-                            <option>Hardware de Servidores e Storage</option>
-                            <option>Hardware de Posto de Trabalho</option>
-                            <option>Serviços de Cloud</option>
-                            <option>Networking</option>
-                            <option>Cibersegurança</option>
-                            <option>Videovigilância (CCTV)</option>
-                            <option>Controle de Acesso</option>
-                            <option>Software de Produtividade e Colaboração</option>
-                            <option>Business Intelligence (BI)</option>
-                            <option>Software de Conformidade (Compliance)</option>
-                            <option>Software de Gestão (ERP/CRM)</option>
-                            <option>Automação de Postos de Combustível</option>
-                            <option>Quiosques e Autoatendimento</option>
-                            <option>Internet das Coisas (IoT)</option>
-                            <option>Realidade Virtual e Aumentada (VR/AR)</option>
-                            <option>Soluções para Saúde (Health Tech)</option>
-                          </select>
-                        </div>
                         <div>
                           <label className="block text-sm font-medium text-slate-300 mb-2">Preço *</label>
                           <input type="number" step="0.01" min="0" value={newProduct.preco} onChange={e => setNewProduct(prev => ({ ...prev, preco: parseFloat(e.target.value) || 0 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="0.00" required disabled={isCreatingProduct} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Unidade</label>
+                          <input type="text" value={newProduct.unidade || ''} onChange={e => setNewProduct(prev => ({ ...prev, unidade: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Unidade" disabled={isCreatingProduct} />
                         </div>
                       </div>
                     </div>
@@ -1277,12 +1258,45 @@ export function AdminDashboard({
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-slate-300 mb-2">Origem</label>
-                          <input type="text" value="local" disabled className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white opacity-60" />
+                          <input type="text" value={newProduct.origem || ''} onChange={e => setNewProduct(prev => ({ ...prev, origem: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Origem" disabled={isCreatingProduct} />
                         </div>
                       </div>
                     </div>
                     <hr className="my-2 border-green-700/30" />
-                    {/* Imagem padrão automática para produtos locais */}
+                    {/* Grupo: Imagens do Produto */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-green-300 mb-2">Imagens do Produto</h3>
+                      <div className="flex justify-center">
+                        <div className="flex flex-col items-center w-full">
+                          {/* Preview da imagem carregada */}
+                          {newProduct.image_url && (
+                            <div className="mb-2 flex justify-center w-full">
+                              <img
+                                src={newProduct.image_url}
+                                alt="Preview do Produto"
+                                className="max-h-32 rounded-lg object-contain border border-slate-700 bg-slate-900 p-1 mx-auto"
+                                style={{ maxWidth: '100%', maxHeight: '8rem' }}
+                              />
+                            </div>
+                          )}
+                          <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
+                            <div className="flex flex-col items-center space-y-2">
+                              <Upload className="w-8 h-8 text-slate-400" />
+                              <span className="text-sm text-slate-400">Clique para adicionar</span>
+                              <span className="text-xs text-slate-500">PNG, JPG, GIF até 10MB</span>
+                            </div>
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="hidden"
+                              disabled={isCreatingProduct}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
                     {/* Botões de Ação */}
                     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-5 pt-0">
                       <button
@@ -1305,17 +1319,16 @@ export function AdminDashboard({
                       <button
                         type="button"
                         onClick={() => setNewProduct({
-                          fornecedorId: rcsId ? String(rcsId) : '',
+                          fornecedorId: '',
                           codigo: '',
                           nome: '',
                           modelo: '',
                           descricao: '',
-                          categoria: '',
                           preco: 0,
                           unidade: '',
                           estoque: 0,
-                          origem: 'local',
-                          image_url: '/default-product.jpg',
+                          origem: '',
+                          image_url: '',
                         })}
                         disabled={isCreatingProduct}
                         className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
