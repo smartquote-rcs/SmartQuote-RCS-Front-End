@@ -62,85 +62,186 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
   );
 
   return (
-  <div className="bg-slate-800/60 border border-cyan-900/30 rounded-xl p-4 sm:p-6 flex flex-col gap-3 sm:gap-4 shadow-lg text-base sm:text-lg w-full max-w-screen overflow-x-auto">
-      <div className="flex flex-wrap gap-4 items-center justify-between">
-        <div>
-          <div className="text-white font-semibold text-base">
+    <div className="bg-slate-800/60 border border-cyan-900/30 rounded-xl p-3 sm:p-4 md:p-6 flex flex-col gap-3 sm:gap-4 shadow-lg text-sm sm:text-base md:text-lg w-full overflow-hidden">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="text-white font-semibold text-sm sm:text-base break-words">
             {item.item_nome && item.item_nome.length > 50
               ? item.item_nome.slice(0, 50) + '...'
               : item.item_nome}
           </div>
-          <div className="text-slate-400 text-xs">{t("quoteRequests.supplierLabel")}: <span className="text-cyan-300">{item.provider || item.fornecedor || '-'}</span></div>
-          <div className="text-slate-400 text-xs">{t("quoteRequests.originLabel")}: <span className="text-cyan-300">{item.origem || '-'}</span></div>
+          <div className="text-slate-400 text-xs mt-1 break-words">
+            {t("quoteRequests.supplierLabel")}: <span className="text-cyan-300">{item.provider || item.fornecedor || '-'}</span>
+          </div>
+          <div className="text-slate-400 text-xs break-words">
+            {t("quoteRequests.originLabel")}: <span className="text-cyan-300">{item.origem || '-'}</span>
+          </div>
         </div>
-        <div className="text-right">
-          <div className="text-slate-300 text-sm">{t("quoteRequests.quantityLabel")}: <b>{item.quantidade}</b></div>
-          <div className="text-slate-300 text-sm">{t("quoteRequests.priceLabel")}: <b>{item.item_preco} {item.item_moeda}</b></div>
-          <div className="text-slate-300 text-sm">{t("quoteRequests.subtotalLabel")}: <b>{formatCurrency(item.quantidade * item.item_preco)}</b></div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <button onClick={() => setOpen(true)} className="ml-auto bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border border-cyan-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">{t("quoteRequests.itemDetails")}</button>
-          <button onClick={() => { setShowReplace(v => !v); if (!produtos.length) fetchProdutos(); }} className="ml-auto bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border border-blue-700/40 px-3 py-1 rounded text-xs font-semibold transition-all">{t("quoteRequests.replaceItem")}</button>
+        
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+          {/* Informações de preço responsivas */}
+          <div className="flex flex-col sm:text-right order-2 sm:order-1">
+            <div className="text-slate-300 text-xs sm:text-sm">
+              {t("quoteRequests.quantityLabel")}: <b>{item.quantidade}</b>
+            </div>
+            <div className="text-slate-300 text-xs sm:text-sm break-words">
+              {t("quoteRequests.priceLabel")}: <b>{item.item_preco} {item.item_moeda}</b>
+            </div>
+            <div className="text-slate-300 text-xs sm:text-sm break-words">
+              {t("quoteRequests.subtotalLabel")}: <b>{formatCurrency(item.quantidade * item.item_preco)}</b>
+            </div>
+          </div>
+          
+          {/* Botões responsivos */}
+          <div className="flex flex-row sm:flex-col gap-2 order-1 sm:order-2">
+            <button 
+              onClick={() => setOpen(true)} 
+              className="flex-1 sm:flex-none bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border border-cyan-700/40 px-2 sm:px-3 py-1 sm:py-1 rounded text-xs font-semibold transition-all min-h-[32px] sm:min-h-auto"
+            >
+              {t("quoteRequests.itemDetails")}
+            </button>
+            <button 
+              onClick={() => { setShowReplace(v => !v); if (!produtos.length) fetchProdutos(); }} 
+              className="flex-1 sm:flex-none bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border border-blue-700/40 px-2 sm:px-3 py-1 sm:py-1 rounded text-xs font-semibold transition-all min-h-[32px] sm:min-h-auto"
+            >
+              {t("quoteRequests.replaceItem")}
+            </button>
+          </div>
         </div>
       </div>
-      <div className="text-slate-300 text-xs mt-2">
+      
+      {/* Descrição responsiva */}
+      <div className="text-slate-300 text-xs mt-2 break-words">
         {item.item_descricao && item.item_descricao.length > 50
           ? item.item_descricao.slice(0, 50) + '...'
           : item.item_descricao}
       </div>
       {showReplace && (
-  <div className="mt-4 p-3 sm:p-4 bg-slate-900/90 border border-cyan-700/30 rounded-xl w-full max-w-screen sm:max-w-2xl mx-auto overflow-x-auto">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-slate-900/90 border border-cyan-700/30 rounded-xl w-full overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <input
               type="text"
-              className="flex-1 px-4 py-2 rounded-lg bg-slate-800 text-white border border-cyan-700/30 focus:border-cyan-400 outline-none text-base"
+              className="flex-1 px-3 sm:px-4 py-2 rounded-lg bg-slate-800 text-white border border-cyan-700/30 focus:border-cyan-400 outline-none text-sm sm:text-base min-w-0"
               placeholder={t("quoteRequests.searchProduct")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               disabled={loadingProdutos}
-              style={{ minWidth: 200 }}
             />
-            <Search className="w-5 h-5 text-cyan-400" />
+            <Search className="w-5 h-5 text-cyan-400 flex-shrink-0 self-center sm:self-auto" />
           </div>
-          {replaceError && <div className="text-red-400 text-sm mb-2">{replaceError}</div>}
-          {replaceSuccess && <div className="text-green-400 text-base mb-2 animate-pulse">{replaceSuccess}</div>}
-          <div className="max-h-72 overflow-y-auto divide-y divide-slate-800">
+          {replaceError && <div className="text-red-400 text-sm mb-2 break-words">{replaceError}</div>}
+          {replaceSuccess && <div className="text-green-400 text-sm sm:text-base mb-2 animate-pulse break-words">{replaceSuccess}</div>}
+          <div className="max-h-60 sm:max-h-72 overflow-y-auto divide-y divide-slate-800">
             {loadingProdutos ? (
-              <div className="text-slate-400 text-base p-4">{t("quoteRequests.loadingProducts")}</div>
+              <div className="text-slate-400 text-sm sm:text-base p-3 sm:p-4 text-center">{t("quoteRequests.loadingProducts")}</div>
             ) : produtosFiltrados.length === 0 ? (
-              <div className="text-slate-400 text-base p-4">{t("quoteRequests.noProductsFound")}</div>
+              <div className="text-slate-400 text-sm sm:text-base p-3 sm:p-4 text-center">{t("quoteRequests.noProductsFound")}</div>
             ) : produtosFiltrados.map(prod => (
               <button
                 key={prod.id}
-                className="w-full text-left px-4 py-2 hover:bg-cyan-800/30 rounded text-cyan-200 text-base flex items-center gap-2"
+                className="w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-cyan-800/30 rounded text-cyan-200 text-sm sm:text-base flex items-center gap-2 transition-all break-words min-h-[44px]"
                 onClick={() => handleReplace(prod.id)}
                 disabled={replaceLoading}
               >
-                <Search className="w-4 h-4 text-cyan-400" /> {prod.nome}
+                <Search className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400 flex-shrink-0" /> 
+                <span className="break-words">{prod.nome}</span>
               </button>
             ))}
           </div>
         </div>
       )}
-      {/* Submodal para detalhes completos */}
+      {/* Submodal para detalhes completos - Layout de Fatura 100% Responsivo */}
       <Dialog open={open} onOpenChange={setOpen}>
-  <DialogContent className="w-full max-w-screen sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-4 sm:p-6 rounded-2xl overflow-x-auto">
-          <DialogHeader>
-            <DialogTitle className="text-cyan-300 text-2xl">{t("quoteRequests.itemDetailsTitle")}</DialogTitle>
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl max-h-[95vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl m-2 sm:m-4">
+          <DialogHeader className="pb-3 sm:pb-4">
+            <DialogTitle className="text-cyan-300 text-lg sm:text-xl md:text-2xl flex items-center gap-2 flex-wrap">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+              <span className="break-words">{t("quoteRequests.invoiceTitle", "Fatura do Item")}</span>
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 text-lg">
-            <div><b>{t("quoteRequests.nameLabel")}:</b> {item.item_nome}</div>
-            <div><b>{t("quoteRequests.supplierLabel")}:</b> {item.provider || item.fornecedor || '-'}</div>
-            <div><b>{t("quoteRequests.originLabel")}:</b> {item.origem || '-'}</div>
-            <div><b>{t("quoteRequests.descriptionLabel")}:</b> {item.item_descricao}</div>
-            <div><b>{t("quoteRequests.priceLabel")}:</b> {item.item_preco} {item.item_moeda}</div>
-            <div><b>{t("quoteRequests.quantityLabel")}:</b> {item.quantidade}</div>
-            <div><b>{t("quoteRequests.subtotalLabel")}:</b> {formatCurrency(item.quantidade * item.item_preco)}</div>
-            <div><b>{t("quoteRequests.currencyLabel")}:</b> {item.item_moeda}</div>
-            <div><b>{t("quoteRequests.conditionsLabel")}:</b> <pre className="bg-slate-800 rounded p-2 text-base whitespace-pre-wrap">{item.condicoes ? JSON.stringify(item.condicoes, null, 2) : '-'}</pre></div>
+          
+          {/* Layout de Fatura Responsivo */}
+          <div className="bg-white/5 border border-slate-600/30 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 mt-3 sm:mt-4">
+            {/* Cabeçalho da Fatura Responsivo */}
+            <div className="border-b border-slate-600/30 pb-3 sm:pb-4 mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-cyan-300 mb-1 sm:mb-2 break-words">FATURA DE ITEM</h3>
+                  <p className="text-slate-400 text-xs sm:text-sm">Detalhes da cotação solicitada</p>
+                </div>
+                <div className="text-left sm:text-right flex-shrink-0">
+                  <p className="text-slate-400 text-xs sm:text-sm">Data: {new Date().toLocaleDateString('pt-PT')}</p>
+                  <p className="text-slate-400 text-xs sm:text-sm break-all">ID: #{item.id || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Informações do Item - Grid Responsivo */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+              {/* Informações do Produto */}
+              <div className="space-y-3">
+                <h4 className="text-base sm:text-lg font-semibold text-cyan-300 border-b border-slate-600/30 pb-2">Informações do Produto</h4>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Nome:</span> 
+                    <span className="text-white font-medium text-sm break-words">{item.item_nome}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Descrição:</span> 
+                    <span className="text-white text-sm break-words">{item.item_descricao || '-'}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Fornecedor:</span> 
+                    <span className="text-cyan-300 font-medium text-sm break-words">{item.provider || item.fornecedor || '-'}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Origem:</span> 
+                    <span className="text-white text-sm break-words">{item.origem || '-'}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Detalhes Financeiros */}
+              <div className="space-y-3">
+                <h4 className="text-base sm:text-lg font-semibold text-cyan-300 border-b border-slate-600/30 pb-2">Detalhes Financeiros</h4>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Preço Unitário:</span> 
+                    <span className="text-green-400 font-bold text-sm break-words">{item.item_preco} {item.item_moeda}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Quantidade:</span> 
+                    <span className="text-white font-medium text-sm">{item.quantidade}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Moeda:</span> 
+                    <span className="text-white text-sm">{item.item_moeda}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Total da Fatura - Responsivo */}
+            <div className="border-t border-slate-600/30 pt-3 sm:pt-4">
+              <div className="flex justify-center sm:justify-end">
+                <div className="bg-slate-800/50 rounded-lg p-3 sm:p-4 w-full sm:w-auto sm:min-w-64 max-w-sm">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                    <span className="text-base sm:text-lg font-semibold text-slate-300 text-center sm:text-left">Total:</span>
+                    <span className="text-xl sm:text-2xl font-bold text-green-400 text-center sm:text-right break-all">{formatCurrency(item.quantidade * item.item_preco)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 mt-6 w-full">
-            <button onClick={() => setOpen(false)} className="w-full sm:w-auto px-6 py-3 text-lg rounded-md bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border border-cyan-600/60 font-semibold">{t("quoteRequests.close")}</button>
+          
+          {/* Botões Responsivos */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6 w-full">
+            <button 
+              onClick={() => setOpen(false)} 
+              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-base sm:text-lg rounded-md bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border border-cyan-600/60 font-semibold transition-all duration-200 min-h-[44px]"
+            >
+              {t("quoteRequests.close")}
+            </button>
           </div>
         </DialogContent>
       </Dialog>
