@@ -21,7 +21,7 @@ export function EditProductModal({ product, isOpen, onClose, onSave }: EditProdu
     preco: product?.preco || 0,
     unidade: product?.unidade || '',
     estoque: product?.estoque || 0,
-    origem: product?.origem || '',
+    origem: 'local', // sempre local por padrão
     cadastrado_por: product?.cadastrado_por || 1,
     m: product?.m || '',
     cadastrado_em: product?.cadastrado_em || '',
@@ -94,8 +94,26 @@ export function EditProductModal({ product, isOpen, onClose, onSave }: EditProdu
                 <input type="number" min="0" value={formData.estoque || 0} onChange={e => setFormData(prev => ({ ...prev, estoque: parseInt(e.target.value) || 0 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Estoque" disabled={isSaving} />
               </div>
               <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor</label>
+                <input 
+                  type="text" 
+                  value="RCS" 
+                  className="w-full bg-slate-700 border border-slate-600 rounded-lg p-3 text-slate-400 cursor-not-allowed" 
+                  placeholder="Fornecedor" 
+                  disabled 
+                  title="Campo bloqueado - Fornecedor padrão RCS"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Origem</label>
-                <input type="text" value={formData.origem || ''} onChange={e => setFormData(prev => ({ ...prev, origem: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Origem" disabled={isSaving} />
+                <input 
+                  type="text" 
+                  value={formData.origem || 'local'} 
+                  className="w-full bg-slate-700 border border-slate-600 rounded-lg p-3 text-slate-400 cursor-not-allowed" 
+                  placeholder="Origem" 
+                  disabled 
+                  title="Campo bloqueado - Origem padrão local"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Cadastrado por</label>

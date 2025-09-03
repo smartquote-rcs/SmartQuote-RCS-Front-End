@@ -122,6 +122,9 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
     text: string;
     quoteId?: string;
   } | null>(null);
+  // Estado de paginação para favoritos
+  const [favoritesCurrentPage, setFavoritesCurrentPage] = useState(1);
+  const favoritesItemsPerPage = 15;
   // Forçar atualização ao trocar idioma
   const [, setForceUpdate] = useState(0);
 
@@ -698,6 +701,14 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
         );
       case "favorites":
         const favoriteProducts = getFavoriteProducts();
+        
+        // Calcular paginação para favoritos
+        const totalFavoritesPages = Math.max(1, Math.ceil(favoriteProducts.length / favoritesItemsPerPage));
+        const paginatedFavorites = favoriteProducts.slice(
+          (favoritesCurrentPage - 1) * favoritesItemsPerPage,
+          favoritesCurrentPage * favoritesItemsPerPage
+        );
+        
         return (
           <div className="flex flex-col h-full w-full">
             <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
@@ -729,68 +740,110 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
               </div>
             </header>
             
-            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg">
+            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
               {favoriteProducts.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                  {favoriteProducts.map((produto) => (
-                    <div key={produto.id} className="glass-card p-4 lg:p-6 bg-white/5 rounded-xl border border-white/20 hover:border-yellow-400/50 transition-all duration-300 group">
-                      <div className="relative w-full h-48 bg-gray-800 rounded-xl overflow-hidden mb-4 group-hover:scale-[1.02] transition-all duration-300">
-                        <img 
-                          src={processImageUrl(produto.image_url, 300, 300)} 
-                          alt={produto.nome}
-                          className="w-full h-full object-cover"
-                          onError={handleImageError}
-                        />
-                        {/* Desconto e Popular removidos pois não existem no tipo Product */}
-                        <button
-                          onClick={() => produto.id && toggleFavorite(String(produto.id))}
-                          className="absolute bottom-3 right-3 p-2 bg-red-500/80 hover:bg-red-600 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
-                          title="Remover dos favoritos"
-                        >
-                          <Heart className="w-4 h-4 text-white fill-current" />
-                        </button>
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="mb-4">
-                          <h3 className="font-bold text-dark-primary hover:text-yellow-400 transition-colors duration-300 text-base leading-tight line-clamp-2 mb-2">
-                            {produto.nome}
-                          </h3>
-                          <div className="flex items-center justify-between mb-2">
-                            {/* <p className="text-sm text-blue-300 font-medium truncate mr-2">{produto.categoria}</p> */}
-                            {/* <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[120px]">{produto.fornecedor}</span> */}
-                          </div>
-                          <p className="text-sm text-dark-secondary line-clamp-2">
-                            {produto.descricao}
-                          </p>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 lg:gap-6 mb-6">
+                    {paginatedFavorites.map((produto) => (
+                      <div key={produto.id} className="glass-card p-3 sm:p-4 bg-white/5 rounded-xl border border-white/20 hover:border-yellow-400/50 transition-all duration-300 group flex flex-col h-full">
+                        <div className="relative w-full h-32 sm:h-36 bg-gray-800 rounded-lg overflow-hidden mb-3 group-hover:scale-[1.02] transition-all duration-300 flex-shrink-0">
+                          <img 
+                            src={processImageUrl(produto.image_url, 300, 300)} 
+                            alt={produto.nome}
+                            className="w-full h-full object-cover"
+                            onError={handleImageError}
+                          />
+                          {/* Desconto e Popular removidos pois não existem no tipo Product */}
+                          <button
+                            onClick={() => produto.id && toggleFavorite(String(produto.id))}
+                            className="absolute bottom-2 right-2 p-1.5 bg-red-500/80 hover:bg-red-600 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+                            title="Remover dos favoritos"
+                          >
+                            <Heart className="w-3 h-3 text-white fill-current" />
+                          </button>
                         </div>
 
-                        <div className="mt-auto">
-                          <div className="flex items-center space-x-2 flex-wrap mb-3">
-                            <span className="text-xl font-bold text-green-400">{typeof produto.preco === 'number' ? formatCurrency(produto.preco) : produto.preco}</span>
-                            {/* {produto.precoOriginal && (
-                              <span className="text-sm text-red-400 line-through bg-red-500/20 px-2 py-1 rounded">{produto.precoOriginal}</span>
-                            )} */}
+                        <div className="flex-1 flex flex-col">
+                          <div className="mb-3 flex-grow">
+                            <h3 className="font-bold text-dark-primary hover:text-yellow-400 transition-colors duration-300 text-sm leading-tight line-clamp-2 mb-2">
+                              {produto.nome}
+                            </h3>
+                            <p className="text-xs text-dark-secondary line-clamp-2">
+                              {produto.descricao}
+                            </p>
                           </div>
-                          
-                          <div className="flex items-center space-x-2 w-full">
-                            <button 
-                              onClick={() => setActivePage("product-search")}
-                              className="glass-card p-2 rounded-lg hover:bg-cyan-500/20 hover:border-cyan-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
-                              title="Ver detalhes"
-                            >
-                              <Eye className="w-4 h-4 text-dark-secondary group-hover:text-cyan-400 transition-colors" />
-                            </button>
-                            <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-sm flex items-center justify-center space-x-2 rounded-lg transition-all duration-300 flex-1">
-                              <ShoppingCart className="w-4 h-4 flex-shrink-0" />
-                              <span className="truncate">Solicitar Cotação</span>
-                            </button>
+
+                          <div className="mt-auto">
+                            <div className="flex items-center justify-center mb-3">
+                              <span className="text-base font-bold text-green-400">{typeof produto.preco === 'number' ? formatCurrency(produto.preco) : produto.preco}</span>
+                            </div>
+                            
+                            <div className="flex items-center space-x-1.5 w-full">
+                              <button 
+                                onClick={() => setActivePage("product-search")}
+                                className="glass-card p-1.5 rounded-lg hover:bg-cyan-500/20 hover:border-cyan-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+                                title="Ver detalhes"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-dark-secondary group-hover:text-cyan-400 transition-colors" />
+                              </button>
+                              <button className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 text-xs flex items-center justify-center space-x-1 rounded-lg transition-all duration-300 flex-1">
+                                <ShoppingCart className="w-3 h-3 flex-shrink-0" />
+                                <span className="truncate">Cotação</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                  
+                  {/* Paginação para favoritos */}
+                  {totalFavoritesPages > 1 && (
+                    <div className="flex items-center justify-center space-x-2 mt-6 mb-4">
+                      <button
+                        onClick={() => setFavoritesCurrentPage(Math.max(1, favoritesCurrentPage - 1))}
+                        disabled={favoritesCurrentPage === 1}
+                        className="px-3 py-2 text-sm bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Anterior
+                      </button>
+                      
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: totalFavoritesPages }, (_, i) => i + 1)
+                          .filter(page => 
+                            page === 1 || 
+                            page === totalFavoritesPages || 
+                            Math.abs(page - favoritesCurrentPage) <= 1
+                          )
+                          .map((page, index, array) => (
+                            <div key={page} className="flex items-center">
+                              {index > 0 && array[index - 1] !== page - 1 && (
+                                <span className="text-slate-400 px-2">...</span>
+                              )}
+                              <button
+                                onClick={() => setFavoritesCurrentPage(page)}
+                                className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                                  page === favoritesCurrentPage
+                                    ? 'bg-yellow-600 text-white'
+                                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                      
+                      <button
+                        onClick={() => setFavoritesCurrentPage(Math.min(totalFavoritesPages, favoritesCurrentPage + 1))}
+                        disabled={favoritesCurrentPage === totalFavoritesPages}
+                        className="px-3 py-2 text-sm bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Próxima
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-8 lg:py-12">
                   <Star className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />

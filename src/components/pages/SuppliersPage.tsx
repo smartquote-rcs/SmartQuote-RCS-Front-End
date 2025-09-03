@@ -39,7 +39,7 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
   const { suppliers, isLoadingSuppliers, loadSuppliers, deleteSupplier, updateSupplier, addSupplier } = useApp();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 15;
 
   // All suppliers are displayed with scroll instead of pagination
   

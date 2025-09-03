@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef, ChangeEvent } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   BarChart3,
   FileText,
@@ -17,7 +17,6 @@ import {
   Send,
   RefreshCw,
   Check,
-  Upload,
   Mail,
   Eye
 } from "lucide-react";
@@ -40,6 +39,7 @@ import { produtoService, supplierService, dashboardService } from "../api/servic
 import { buscaGeralService } from "../services/buscaGeralService";
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
+import { useCurrency } from '../hooks/useCurrency';
 
 
 interface User {
@@ -109,6 +109,7 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
   const { t } = useTranslation();
   const { systemName } = useApp();
+  const { currency, formatCurrency } = useCurrency();
   const [activePage, setActivePage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
@@ -273,16 +274,14 @@ export function AdminDashboard({
   const [shouldFocusPrompt, setShouldFocusPrompt] = useState(false);
   // Estados para novo produto
   const [newProduct, setNewProduct] = useState({
-    fornecedorId: '',
+    fornecedorId: '1', // RCS por padrão (ID 1)
     codigo: '',
     nome: '',
-    modelo: '',
+    categoria: '',
     descricao: '',
     preco: 0,
-    unidade: '',
     estoque: 0,
-    origem: '',
-  image_url: '',
+    origem: 'local',
     // cadastrado_por e atualizado_por serão preenchidos automaticamente
     // cadastrado_em será preenchido automaticamente
   });
@@ -381,7 +380,7 @@ export function AdminDashboard({
     e.preventDefault();
 
     // Validar campos obrigatórios
-    const requiredFields = ['fornecedorId', 'nome', 'descricao', 'preco', 'estoque'];
+    const requiredFields = ['fornecedorId', 'nome', 'categoria', 'descricao', 'preco', 'estoque'];
     const emptyFields = requiredFields.filter(field => {
       const value = newProduct[field as keyof typeof newProduct];
       if (field === 'fornecedorId') return !value || value === '';
@@ -391,7 +390,7 @@ export function AdminDashboard({
       showToast(
         "error",
         "Campos Obrigatórios",
-        "Por favor, preencha todos os campos obrigatórios: Fornecedor, Nome, Descrição, Preço e Estoque."
+        "Por favor, preencha todos os campos obrigatórios: Fornecedor, Nome, Categoria, Descrição, Preço e Estoque."
       );
       return;
     }
@@ -418,29 +417,21 @@ export function AdminDashboard({
       if (newProduct.origem === 'local' || newProduct.origem === 'externo') {
         origem = newProduct.origem;
       }
-      // Só incluir image_url se for uma URL válida
-      let image_url: string | undefined = undefined;
-      if (typeof newProduct.image_url === 'string' &&
-          (newProduct.image_url.startsWith('http://') || newProduct.image_url.startsWith('https://'))
-      ) {
-        image_url = newProduct.image_url;
-      }
+      // Só incluir categoria se estiver preenchida
       const productData: any = {
         nome: newProduct.nome,
         descricao: typeof newProduct.descricao === 'string' ? newProduct.descricao : '',
         preco: newProduct.preco,
-        unidade: newProduct.unidade || 'unidade',
         estoque: newProduct.estoque,
         fornecedor_id: Number(newProduct.fornecedorId),
         codigo: newProduct.codigo || '',
-        modelo: newProduct.modelo || '',
+        categoria: newProduct.categoria || '',
         origem,
         cadastrado_por: userId,
         cadastrado_em: currentDate,
         atualizado_por: userId,
         atualizado_em: currentDate
       };
-      if (image_url) productData.image_url = image_url;
       const { success, error } = await produtoService.create(productData);
       if (!success) {
         showToast(
@@ -458,16 +449,14 @@ export function AdminDashboard({
       );
       // Limpar formulário
       setNewProduct({
-        fornecedorId: '',
+        fornecedorId: '1', // RCS por padrão (ID 1)
         codigo: '',
         nome: '',
-        modelo: '',
+        categoria: '',
         descricao: '',
         preco: 0,
-        unidade: '',
         estoque: 0,
-        origem: '',
-  image_url: '',
+        origem: 'local',
         // cadastrado_por e atualizado_por serão preenchidos automaticamente
         // cadastrado_em será preenchido automaticamente
       });
@@ -908,7 +897,7 @@ export function AdminDashboard({
                                 id: `RCS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
                                 produto: result.data?.produto || `Admin: ${newQuotePrompt.substring(0, 30)}...`,
                                 fornecedor: result.data?.fornecedor || "Admin SmartQuote",
-                                valor: result.data?.valor || "€" + (Math.random() * 10000 + 500).toFixed(2),
+                                valor: result.data?.valor || formatCurrency(Math.random() * 10000 + 500),
                                 status: "approved" as const,
                                 data: new Date().toLocaleDateString('pt-PT'),
                                 submittedAt: new Date().toLocaleString('pt-PT'),
@@ -1114,37 +1103,6 @@ export function AdminDashboard({
           </div>
         );
       case "new-product":
-        function handleImageUpload(event: ChangeEvent<HTMLInputElement>): void {
-          try {
-            const file = event.target.files?.[0];
-            if (!file) return;
-            const maxBytes = 10 * 1024 * 1024; // 10MB
-            if (file.size > maxBytes) {
-              showToast(
-                'error',
-                'Imagem muito grande',
-                'Tamanho máximo permitido é 10MB.'
-              );
-              return;
-            }
-            const reader = new FileReader();
-            reader.onload = () => {
-              const result = reader.result as string;
-              setNewProduct(prev => ({ ...prev, image_url: result }));
-            };
-            reader.onerror = () => {
-              showToast(
-                'error',
-                'Falha ao carregar imagem',
-                'Não foi possível ler o arquivo.'
-              );
-            };
-            reader.readAsDataURL(file);
-          } catch (err) {
-            console.error('Erro upload imagem', err);
-            showToast('error','Erro','Erro inesperado ao processar a imagem.');
-          }
-        }
         return (
           <div className="flex flex-col h-full w-full">
             <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
@@ -1157,20 +1115,7 @@ export function AdminDashboard({
                   <p className="text-xs sm:text-sm text-dark-secondary mt-1">Adicionar novos produtos ao catálogo</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <button
-                      onClick={() => setActivePage("notifications")}
-                      className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
-                    >
-                      <Bell className="w-5 h-5 text-slate-300" />
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-bold text-white">3</span>
-                      </div>
-                    </button>
-                  </div>
-                  <div className="dark-tag text-center sm:text-left flex-shrink-0">
-                    Gestão de Produtos
-                  </div>
+                  
                 </div>
               </div>
             </header>
@@ -1191,127 +1136,176 @@ export function AdminDashboard({
                   <form onSubmit={handleSaveProduct} className="space-y-6">
                     {/* Grupo: Dados Básicos */}
                     <div>
-                      <h3 className="text-sm font-semibold text-green-300 mb-2">Dados Básicos</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor *</label>
-                          <select
-                            value={newProduct.fornecedorId || ''}
-                            onChange={e => setNewProduct(prev => ({ ...prev, fornecedorId: e.target.value }))}
-                            className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
-                            required
-                            disabled={isCreatingProduct}
-                            title="Selecione o fornecedor do produto"
-                          >
-                            <option value="">Selecione o fornecedor</option>
-                            {fornecedores && fornecedores.map((f: any) => {
-                              const fornecedorId = f.id || f.fornecedorId || f.ID || f._id;
-                              return (
-                                <option key={fornecedorId} value={fornecedorId}>
-                                  {f.nomeEmpresa || f.nome || fornecedorId}
-                                </option>
-                              );
-                            })}
-                          </select>
+                      <h3 className="text-sm font-semibold text-green-300 mb-4">Dados Básicos</h3>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Fornecedor e Código */}
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor *</label>
+                            <select
+                              value={newProduct.fornecedorId || '1'}
+                              onChange={e => setNewProduct(prev => ({ ...prev, fornecedorId: e.target.value }))}
+                              className="w-full bg-slate-700 border border-slate-500 rounded-lg p-3 text-slate-400 cursor-not-allowed"
+                              required
+                              disabled={true}
+                              title="Fornecedor fixo: RCS"
+                            >
+                              <option value="1">RCS</option>
+                              {fornecedores && fornecedores.map((f: any) => {
+                                const fornecedorId = f.id || f.fornecedorId || f.ID || f._id;
+                                if (fornecedorId === 1 || fornecedorId === '1') return null; // Não duplicar RCS
+                                return (
+                                  <option key={fornecedorId} value={fornecedorId}>
+                                    {f.nomeEmpresa || f.nome || fornecedorId}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Código (SKU)</label>
+                            <input 
+                              type="text" 
+                              value={newProduct.codigo || ''} 
+                              onChange={e => setNewProduct(prev => ({ ...prev, codigo: e.target.value }))} 
+                              className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors" 
+                              placeholder="Ex: RCS-001" 
+                              disabled={isCreatingProduct} 
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Código</label>
-                          <input type="text" value={newProduct.codigo || ''} onChange={e => setNewProduct(prev => ({ ...prev, codigo: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Código/SKU" disabled={isCreatingProduct} />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Nome *</label>
-                          <input type="text" value={newProduct.nome} onChange={e => setNewProduct(prev => ({ ...prev, nome: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Nome do produto" required disabled={isCreatingProduct} />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Modelo</label>
-                          <input type="text" value={newProduct.modelo || ''} onChange={e => setNewProduct(prev => ({ ...prev, modelo: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Modelo" disabled={isCreatingProduct} />
+
+                        {/* Nome e Categoria */}
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Nome do Produto *</label>
+                            <input 
+                              type="text" 
+                              value={newProduct.nome} 
+                              onChange={e => setNewProduct(prev => ({ ...prev, nome: e.target.value }))} 
+                              className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors" 
+                              placeholder="Ex: Servidor Dell PowerEdge" 
+                              required 
+                              disabled={isCreatingProduct} 
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Categoria *</label>
+                            <select
+                              value={newProduct.categoria || ''}
+                              onChange={e => setNewProduct(prev => ({ ...prev, categoria: e.target.value }))}
+                              className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors"
+                              required
+                              disabled={isCreatingProduct}
+                            >
+                              <option value="">Selecione a categoria</option>
+                              <option value="Hardware de Servidores e Storage">Hardware de Servidores e Storage</option>
+                              <option value="Hardware de Posto de Trabalho">Hardware de Posto de Trabalho</option>
+                              <option value="Serviços de Cloud">Serviços de Cloud</option>
+                              <option value="Networking">Networking</option>
+                              <option value="Cibersegurança">Cibersegurança</option>
+                              <option value="Videovigilância (CCTV)">Videovigilância (CCTV)</option>
+                              <option value="Controle de Acesso">Controle de Acesso</option>
+                              <option value="Software de Produtividade e Colaboração">Software de Produtividade e Colaboração</option>
+                              <option value="Business Intelligence (BI)">Business Intelligence (BI)</option>
+                              <option value="Software de Conformidade (Compliance)">Software de Conformidade (Compliance)</option>
+                              <option value="Software de Gestão (ERP/CRM)">Software de Gestão (ERP/CRM)</option>
+                              <option value="Automação de Postos de Combustível">Automação de Postos de Combustível</option>
+                              <option value="Quiosques e Autoatendimento">Quiosques e Autoatendimento</option>
+                              <option value="Internet das Coisas (IoT)">Internet das Coisas (IoT)</option>
+                              <option value="Realidade Virtual e Aumentada (VR/AR)">Realidade Virtual e Aumentada (VR/AR)</option>
+                              <option value="Soluções para Saúde (Health Tech)">Soluções para Saúde (Health Tech)</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <hr className="my-2 border-green-700/30" />
-                    {/* Grupo: Descrição e Preço */}
+
+                    <hr className="border-green-700/30" />
+
+                    {/* Grupo: Descrição */}
                     <div>
-                      <h3 className="text-sm font-semibold text-green-300 mb-2">Descrição e Preço</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Descrição *</label>
-                          <textarea rows={2} value={newProduct.descricao} onChange={e => setNewProduct(prev => ({ ...prev, descricao: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Descrição" required disabled={isCreatingProduct} />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Preço *</label>
-                          <input type="number" step="0.01" min="0" value={newProduct.preco} onChange={e => setNewProduct(prev => ({ ...prev, preco: parseFloat(e.target.value) || 0 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="0.00" required disabled={isCreatingProduct} />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Unidade</label>
-                          <input type="text" value={newProduct.unidade || ''} onChange={e => setNewProduct(prev => ({ ...prev, unidade: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Unidade" disabled={isCreatingProduct} />
-                        </div>
+                      <h3 className="text-sm font-semibold text-green-300 mb-4">Descrição</h3>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Descrição Detalhada *</label>
+                        <textarea 
+                          rows={3} 
+                          value={newProduct.descricao} 
+                          onChange={e => setNewProduct(prev => ({ ...prev, descricao: e.target.value }))} 
+                          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors resize-none" 
+                          placeholder="Descreva as características, especificações e funcionalidades do produto..." 
+                          required 
+                          disabled={isCreatingProduct} 
+                        />
                       </div>
                     </div>
-                    <hr className="my-2 border-green-700/30" />
-                    {/* Grupo: Estoque e Origem */}
+
+                    <hr className="border-green-700/30" />
+
+                    {/* Grupo: Preço, Estoque e Origem */}
                     <div>
-                      <h3 className="text-sm font-semibold text-green-300 mb-2">Estoque e Origem</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <h3 className="text-sm font-semibold text-green-300 mb-4">Informações Comerciais</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Estoque</label>
-                          <input type="number" min="0" value={newProduct.estoque || 0} onChange={e => setNewProduct(prev => ({ ...prev, estoque: parseInt(e.target.value) || 0 }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Estoque" disabled={isCreatingProduct} />
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Preço ({currency.symbol}) *</label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">{currency.symbol}</span>
+                            <input 
+                              type="number" 
+                              step="0.01" 
+                              min="0" 
+                              value={newProduct.preco} 
+                              onChange={e => setNewProduct(prev => ({ ...prev, preco: parseFloat(e.target.value) || 0 }))} 
+                              className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 pl-8 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors" 
+                              placeholder="0.00" 
+                              required 
+                              disabled={isCreatingProduct} 
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Estoque Inicial *</label>
+                          <input 
+                            type="number" 
+                            min="0" 
+                            value={newProduct.estoque || 0} 
+                            onChange={e => setNewProduct(prev => ({ ...prev, estoque: parseInt(e.target.value) || 0 }))} 
+                            className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors" 
+                            placeholder="0" 
+                            required 
+                            disabled={isCreatingProduct} 
+                          />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-slate-300 mb-2">Origem</label>
-                          <input type="text" value={newProduct.origem || ''} onChange={e => setNewProduct(prev => ({ ...prev, origem: e.target.value }))} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white" placeholder="Origem" disabled={isCreatingProduct} />
+                          <input 
+                            type="text" 
+                            value="Local" 
+                            className="w-full bg-slate-700 border border-slate-500 rounded-lg p-3 text-slate-400 cursor-not-allowed" 
+                            disabled={true} 
+                            title="Origem fixa: Local" 
+                          />
                         </div>
                       </div>
                     </div>
-                    <hr className="my-2 border-green-700/30" />
-                    {/* Grupo: Imagens do Produto */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-green-300 mb-2">Imagens do Produto</h3>
-                      <div className="flex justify-center">
-                        <div className="flex flex-col items-center w-full">
-                          {/* Preview da imagem carregada */}
-                          {newProduct.image_url && (
-                            <div className="mb-2 flex justify-center w-full">
-                              <img
-                                src={newProduct.image_url}
-                                alt="Preview do Produto"
-                                className="max-h-32 rounded-lg object-contain border border-slate-700 bg-slate-900 p-1 mx-auto"
-                                style={{ maxWidth: '100%', maxHeight: '8rem' }}
-                              />
-                            </div>
-                          )}
-                          <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
-                            <div className="flex flex-col items-center space-y-2">
-                              <Upload className="w-8 h-8 text-slate-400" />
-                              <span className="text-sm text-slate-400">Clique para adicionar</span>
-                              <span className="text-xs text-slate-500">PNG, JPG, GIF até 10MB</span>
-                            </div>
-                            <input
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              onChange={handleImageUpload}
-                              className="hidden"
-                              disabled={isCreatingProduct}
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    </div>
+
+                    <hr className="border-green-700/30" />
+
                     {/* Botões de Ação */}
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-5 pt-0">
+                    <div className="flex flex-col sm:flex-row gap-4 pt-2">
                       <button
                         type="submit"
                         disabled={isCreatingProduct}
-                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 flex-1 sm:flex-none text-xs sm:text-sm"
+                        className="flex-1 sm:flex-none bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 text-sm"
                       >
                         {isCreatingProduct ? (
                           <>
-                            <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             <span>Adicionando...</span>
                           </>
                         ) : (
                           <>
-                            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Plus className="w-4 h-4" />
                             <span>Adicionar Produto</span>
                           </>
                         )}
@@ -1319,30 +1313,28 @@ export function AdminDashboard({
                       <button
                         type="button"
                         onClick={() => setNewProduct({
-                          fornecedorId: '',
+                          fornecedorId: '1', // RCS por padrão (ID 1)
                           codigo: '',
                           nome: '',
-                          modelo: '',
+                          categoria: '',
                           descricao: '',
                           preco: 0,
-                          unidade: '',
                           estoque: 0,
-                          origem: '',
-                          image_url: '',
+                          origem: 'local',
                         })}
                         disabled={isCreatingProduct}
-                        className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Limpar
+                        Limpar Formulário
                       </button>
                       <button
                         type="button"
                         onClick={() => setActivePage("product-search")}
                         disabled={isCreatingProduct}
-                        className="bg-blue-600/50 hover:bg-blue-700/50 border border-blue-600/50 text-blue-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium flex items-center space-x-2 transition-all duration-300 text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-blue-600/50 hover:bg-blue-700/50 border border-blue-600/50 text-blue-300 px-6 py-3 rounded-lg font-medium transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                       >
-                        <Search className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>Ver Catálogo</span>
+                        <Search className="w-4 h-4" />
+                        <span>Ver Produtos</span>
                       </button>
                     </div>
                   </form>

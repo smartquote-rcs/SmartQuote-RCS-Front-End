@@ -42,7 +42,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 15;
   
   // Estados para toast notifications
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
@@ -126,10 +126,10 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
 
   const ProductCard = ({ produto }: { produto: Product }) => (
     <div className={`glass-card bg-white/5 rounded-xl border border-white/20 transition-all duration-300 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] w-full max-w-full overflow-hidden group relative ${
-      viewMode === "list" ? "flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-6 p-4 lg:p-6" : "p-4 lg:p-6 flex flex-col h-full"
+      viewMode === "list" ? "flex flex-col lg:flex-row lg:items-center space-y-3 lg:space-y-0 lg:space-x-4 p-3 lg:p-4" : "p-3 sm:p-4 flex flex-col h-full"
     }`}>
       {/* Image */}
-      <div className={`relative ${viewMode === "list" ? "w-full lg:w-32 h-48 lg:h-24" : "w-full h-48"} bg-gray-800 rounded-xl overflow-hidden mb-4 ${viewMode === "list" ? "lg:mb-0" : ""} group`}>
+      <div className={`relative ${viewMode === "list" ? "w-full lg:w-24 h-32 lg:h-20" : "w-full h-36 sm:h-40"} bg-gray-800 rounded-lg overflow-hidden mb-3 ${viewMode === "list" ? "lg:mb-0" : ""} group flex-shrink-0`}>
         <img 
           src={processImageUrl(produto.image_url, 400, 300)}
           alt={produto.nome}
@@ -138,62 +138,64 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
         />
         <button
           onClick={() => produto.id && toggleFavorite(produto.id.toString())}
-          className="absolute bottom-3 right-3 p-2 bg-black/60 hover:bg-black/80 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+          className="absolute bottom-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
         >
-          <Heart className={`w-4 h-4 transition-colors ${produto.id && favorites.includes(produto.id.toString()) ? "text-red-400 fill-current" : "text-white hover:text-red-300"}`} />
+          <Heart className={`w-3 h-3 transition-colors ${produto.id && favorites.includes(produto.id.toString()) ? "text-red-400 fill-current" : "text-white hover:text-red-300"}`} />
         </button>
       </div>
 
       {/* Content */}
       <div className={`${viewMode === "list" ? "flex-1" : "flex-1 flex flex-col"}`}>
-        <div className="mb-4 flex-grow">
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between mb-3 space-y-2 lg:space-y-0">
-            <h3 className={`font-bold text-dark-primary hover:text-cyan-400 transition-colors duration-300 ${viewMode === "list" ? "text-lg" : "text-base"} leading-tight line-clamp-2`}>
+        <div className="mb-3 flex-grow">
+          <div className="flex flex-col space-y-2 mb-2">
+            <h3 className={`font-bold text-dark-primary hover:text-cyan-400 transition-colors duration-300 ${viewMode === "list" ? "text-base" : "text-sm"} leading-tight line-clamp-2`}>
               {produto.nome}
             </h3>
-            {getDisponibilidadeBadge(produto.estoque)}
+            <div className="flex items-center justify-between">
+              {getDisponibilidadeBadge(produto.estoque)}
+              <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-0.5 rounded-full truncate max-w-[80px]">ID: {produto.fornecedorId || "N/A"}</span>
+            </div>
           </div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-blue-300 font-medium truncate mr-2">{produto.modelo || t('productSearch.noCategory')}</p>
-            <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[120px]">Fornecedor {produto.fornecedorId || "N/A"}</span>
+          <div className="mb-2">
+            <p className="text-xs text-blue-300 font-medium truncate">{produto.modelo || t('productSearch.noCategory')}</p>
           </div>
         </div>
 
         {viewMode === "list" && (
-          <p className="text-sm text-dark-secondary mb-3 line-clamp-2">
+          <p className="text-xs text-dark-secondary mb-2 line-clamp-2">
             {produto.descricao}
           </p>
         )}
 
         <div className="mt-auto">
-          <div className="flex flex-col space-y-3 mb-3">
+          <div className="flex flex-col space-y-2 mb-3">
             <div>
-              <div className="flex items-center space-x-2 flex-wrap">
-                <span className="text-xl font-bold text-green-400">{formatCurrency(produto.preco || 0)}</span>
+              <div className="flex items-center space-x-1 flex-wrap">
+                <span className={`${viewMode === "list" ? "text-lg" : "text-base"} font-bold text-green-400`}>{formatCurrency(produto.preco || 0)}</span>
               </div>
               <p className="text-xs text-dark-secondary mt-1 flex items-center">
-                <span className="w-2 h-2 bg-green-400 rounded-full mr-2 flex-shrink-0"></span>
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 flex-shrink-0"></span>
                 <span className="truncate">3-5 {t('productSearch.deliveryTime')}</span>
               </p>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2 w-full">
+          <div className="flex items-center space-x-1.5 w-full">
             <button 
               onClick={() => produto.id !== undefined && handleEditProduct(produto.id)}
-              className="glass-card p-2 rounded-lg hover:bg-blue-500/20 hover:border-blue-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+              className="glass-card p-1.5 rounded-lg hover:bg-blue-500/20 hover:border-blue-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
               title={t('productSearch.edit')}
               disabled={produto.id === undefined}
             >
-              <Edit2 className="w-4 h-4 text-dark-secondary group-hover:text-blue-400 transition-colors" />
+              <Edit2 className="w-3.5 h-3.5 text-dark-secondary group-hover:text-blue-400 transition-colors" />
             </button>
             <button 
               onClick={() => produto.id !== undefined && handleDeleteProduct(produto.id)}
-              className="glass-card p-2 rounded-lg hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+              className="glass-card p-1.5 rounded-lg hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
               title={t('productSearch.delete')}
               disabled={produto.id === undefined}
             >
-              <Trash2 className="w-4 h-4 text-dark-secondary group-hover:text-red-400 transition-colors" />
+              <Trash2 className="w-3.5 h-3.5 text-dark-secondary group-hover:text-red-400 transition-colors" />
             </button>
           </div>
         </div>
@@ -513,7 +515,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
               <TabsContent value="all" className="h-full mt-0">
                 <div className={`grid gap-3 md:gap-4 lg:gap-6 w-full min-h-[800px] ${
                   viewMode === "grid" 
-                    ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                    ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" 
                     : "grid-cols-1"
                 }`}>
                   {paginatedProducts.map((produto) => (
