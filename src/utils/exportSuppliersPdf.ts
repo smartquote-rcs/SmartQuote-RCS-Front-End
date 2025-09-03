@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable, { RowInput } from 'jspdf-autotable';
-import { Supplier } from '../types';
+import { Supplier } from '../types/index';
 
 interface ExportOptions {
   companyName?: string;

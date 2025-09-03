@@ -1,347 +1,356 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
-import { Badge } from "../ui/badge";
-import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Search, Activity, AlertCircle, CheckCircle, Info, User, Clock, Download, Filter, Trash2, RefreshCw, Eye } from "lucide-react";
+import { Activity, AlertCircle, CheckCircle, Info, User, Clock, Eye, Award, Ban } from "lucide-react";
+import { cotacaoService } from "../../api/services";
 
-const logs = [
-  {
-    id: "LOG-001",
-    timestamp: "2024-01-24 15:30:22",
-    nivel: "info",
-    categoria: "Sistema",
-    usuario: "Sistema IA",
-    acao: "Processamento de Cotação",
-    detalhes: "Cotação RCS-2024-0892 processada automaticamente com sucesso",
-    ip: "192.168.1.100",
-    duracao: "2.3s"
-  },
-  {
-    id: "LOG-002",
-    timestamp: "2024-01-24 15:28:15",
-    nivel: "warning",
-    categoria: "Aprovação",
-    usuario: "João Silva",
-    acao: "Cotação Pendente",
-    detalhes: "Cotação RCS-2024-0892 enviada para aprovação manual - Excede limite de €2M",
-    ip: "192.168.1.105",
-    duracao: "0.8s"
-  },
-  {
-    id: "LOG-003",
-    timestamp: "2024-01-24 15:25:10",
-    nivel: "success",
-    categoria: "Fornecedor",
-    usuario: "Maria Santos",
-    acao: "Validação Concluída",
-    detalhes: "Nova validação de fornecedor concluída: TechFlow Solutions",
-    ip: "192.168.1.102",
-    duracao: "15.2s"
-  },
-  {
-    id: "LOG-004",
-    timestamp: "2024-01-24 15:20:45",
-    nivel: "error",
-    categoria: "Sistema",
-    usuario: "Sistema IA",
-    acao: "Erro de Processamento",
-    detalhes: "Falha na conexão com API do fornecedor EnerTech - Timeout após 30s",
-    ip: "192.168.1.100",
-    duracao: "30.0s"
-  },
-  {
-    id: "LOG-005",
-    timestamp: "2024-01-24 15:18:30",
-    nivel: "info",
-    categoria: "Usuário",
-    usuario: "Carlos Mendes",
-    acao: "Login",
-    detalhes: "Usuário logou no sistema com sucesso",
-    ip: "192.168.1.108",
-    duracao: "1.1s"
-  },
-  {
-    id: "LOG-006",
-    timestamp: "2024-01-24 15:15:22",
-    nivel: "info",
-    categoria: "Sistema",
-    usuario: "Sistema IA",
-    acao: "Backup Automático",
-    detalhes: "Backup diário dos dados concluído com sucesso - 2.4GB arquivados",
-    ip: "192.168.1.100",
-    duracao: "45.7s"
-  }
-];
-
-const getLevelBadge = (nivel: string) => {
-  switch (nivel) {
-    case "error":
-      return <Badge className="bg-red-600 text-white text-xs">Erro</Badge>;
-    case "warning":
-      return <Badge className="bg-orange-600 text-white text-xs">Aviso</Badge>;
-    case "success":
-      return <Badge className="bg-green-600 text-white text-xs">Sucesso</Badge>;
-    case "info":
-      return <Badge className="bg-blue-600 text-white text-xs">Info</Badge>;
-    default:
-      return <Badge className="text-xs">{nivel}</Badge>;
-  }
-};
+interface LogEntry {
+  id: string;
+  timestamp: string;
+  nivel: string;
+  categoria: string;
+  usuario: string;
+  acao: string;
+  detalhes: string;
+  ip?: string;
+  duracao?: string;
+  type?: string;
+  motivo?: string;
+  cotacaoId?: string;
+  cotacaoNumero?: string;
+  valor?: number;
+  cliente?: string;
+}
 
 const getLevelIcon = (nivel: string) => {
   switch (nivel) {
     case "error":
-      return <AlertCircle className="w-4 h-4 text-red-400" />;
+      return <AlertCircle className="w-4 h-4 text-red-200" />;
     case "warning":
-      return <AlertCircle className="w-4 h-4 text-orange-400" />;
+      return <AlertCircle className="w-4 h-4 text-amber-200" />;
     case "success":
-      return <CheckCircle className="w-4 h-4 text-green-400" />;
+      return <CheckCircle className="w-4 h-4 text-emerald-200" />;
     case "info":
-      return <Info className="w-4 h-4 text-blue-400" />;
+      return <Info className="w-4 h-4 text-cyan-200" />;
     default:
-      return <Activity className="w-4 h-4 text-gray-400" />;
+      return <Activity className="w-4 h-4 text-slate-300" />;
   }
 };
 
-export function LogsPage() {
-  const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [levelFilter, setLevelFilter] = useState("Todos");
-  const [categoryFilter, setCategoryFilter] = useState("Todas");
+const getActionIcon = (type: string) => {
+  switch (type) {
+    case "cotacao_approved":
+      return <Award className="w-4 h-4 text-emerald-300" />;
+    case "cotacao_rejected":
+      return <Ban className="w-4 h-4 text-red-300" />;
+    default:
+      return null;
+  }
+};
 
-  const filteredLogs = logs.filter((log) => {
-    const matchesSearch = log.detalhes.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.acao.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLevel = levelFilter === "Todos" || log.nivel === levelFilter;
-    const matchesCategory = categoryFilter === "Todas" || log.categoria === categoryFilter;
-    
-    return matchesSearch && matchesLevel && matchesCategory;
-  });
+const LogCard = ({ log }: { log: LogEntry }) => {
+  const getBorderColor = (nivel: string) => {
+    switch (nivel) {
+      case "error": return "border-l-red-400";
+      case "warning": return "border-l-amber-400";
+      case "success": return "border-l-emerald-400";
+      case "info": return "border-l-cyan-400";
+      default: return "border-l-slate-400";
+    }
+  };
 
-  const LogCard = ({ log }: { log: any }) => {
-    const getBorderColor = (nivel: string) => {
-      switch (nivel) {
-        case "error": return "border-l-red-500";
-        case "warning": return "border-l-orange-500";
-        case "success": return "border-l-green-500";
-        case "info": return "border-l-blue-500";
-        default: return "border-l-gray-500";
-      }
-    };
+  const isQuoteLog = log.type?.includes('cotacao_');
 
-    return (
-      <div className={`glass-card p-3 sm:p-4 lg:p-5 border-l-4 ${getBorderColor(log.nivel)} hover:shadow-lg hover:scale-[1.01] transition-all duration-300 bg-white/5 rounded-2xl border border-white/20 group`}>
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-          <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
-            <div className="flex-shrink-0 mt-1">
-              {getLevelIcon(log.nivel)}
+  return (
+    <div className={`glass-card bg-dark-card border border-dark-color rounded-xl border-l-4 ${getBorderColor(log.nivel)} 
+                     hover:border-cyan-400/40 transition-all duration-300 group shadow-lg hover:shadow-xl`}>
+      
+      <div className="p-3 sm:p-4 lg:p-4">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-3 lg:space-y-0 lg:space-x-4">
+          
+          {/* Main content */}
+          <div className="flex items-start space-x-3 flex-1 min-w-0">
+            
+            {/* Icon */}
+            <div className="flex-shrink-0">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-500/40 flex items-center justify-center shadow-md backdrop-blur-sm">
+                {getLevelIcon(log.nivel)}
+              </div>
             </div>
+            
+            {/* Content */}
             <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+              
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-dark-secondary flex-shrink-0" />
-                  <span className="font-mono text-xs sm:text-sm text-dark-primary font-medium truncate">{log.timestamp}</span>
+                  <Clock className="w-3 h-3 text-dark-secondary flex-shrink-0" />
+                  <span className="font-mono text-xs sm:text-xs text-dark-secondary font-medium truncate">
+                    {log.timestamp || 'Data não disponível'}
+                  </span>
                 </div>
-                <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-                  {getLevelBadge(log.nivel)}
-                  <Badge className="bg-slate-700/50 text-slate-300 text-xs border border-slate-600/30">{log.categoria}</Badge>
+                <div className="flex items-center space-x-2 mt-1 sm:mt-0">
                 </div>
               </div>
               
+              {/* Action and details */}
               <div className="mb-3">
-                <h3 className="font-semibold text-dark-primary mb-2 text-sm sm:text-base group-hover:text-blue-400 transition-colors duration-300 line-clamp-1">{log.acao}</h3>
-                <p className="text-xs sm:text-sm text-dark-secondary break-words leading-relaxed line-clamp-2">{log.detalhes}</p>
+                <h4 className="text-sm sm:text-sm font-semibold text-dark-primary-text mb-1 flex items-center space-x-2">
+                  <User className="w-3 h-3 text-cyan-300 flex-shrink-0" />
+                  <span className="truncate">
+                    {isQuoteLog 
+                      ? (log.type === 'cotacao_approved' ? 'Cotação Aprovada' : 'Cotação Rejeitada')
+                      : (log.acao || 'Ação não definida')
+                    }
+                  </span>
+                  {isQuoteLog && getActionIcon(log.type || '')}
+                </h4>
+                <p className="text-dark-secondary leading-relaxed text-xs sm:text-xs line-clamp-2 sm:line-clamp-none">
+                  {isQuoteLog 
+                    ? (log.motivo || 'Motivo não informado')
+                    : (log.detalhes || 'Detalhes não disponíveis')
+                  }
+                </p>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 text-xs">
-                <div className="flex items-center space-x-2 bg-slate-800/30 rounded-lg p-2">
-                  <User className="w-3 h-3 text-blue-400 flex-shrink-0" />
-                  <span className="text-slate-400 hidden sm:inline">Usuário:</span>
-                  <span className="text-white truncate font-medium">{log.usuario}</span>
+              {/* Metadata */}
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <div className="flex items-center space-x-1 bg-gradient-to-r from-slate-800/50 to-slate-900/50 px-2 py-1 rounded-md border border-slate-500/50 shadow-sm">
+                  <User className="w-3 h-3 text-cyan-200" />
+                  <span className="text-slate-100 font-medium text-xs truncate max-w-24 sm:max-w-none">
+                    {isQuoteLog 
+                      ? `Status: ${log.type === 'cotacao_approved' ? 'true' : 'false'}`
+                      : (log.usuario || 'N/A')
+                    }
+                  </span>
                 </div>
-                <div className="flex items-center space-x-2 bg-slate-800/30 rounded-lg p-2">
-                  <div className="w-3 h-3 rounded-full bg-cyan-400 flex-shrink-0"></div>
-                  <span className="text-slate-400 hidden sm:inline">IP:</span>
-                  <span className="text-white font-mono">{log.ip}</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-slate-800/30 rounded-lg p-2 sm:col-span-2 lg:col-span-1">
-                  <Clock className="w-3 h-3 text-green-400 flex-shrink-0" />
-                  <span className="text-slate-400 hidden sm:inline">Duração:</span>
-                  <span className="text-white font-mono">{log.duracao}</span>
-                </div>
+                
+                {/* Mostrar usuário responsável */}
+                {!isQuoteLog && (
+                  <div className="flex items-center space-x-1 bg-gradient-to-r from-blue-700/30 to-cyan-700/30 px-2 py-1 rounded-md border border-blue-500/40 shadow-sm">
+                    <span className="text-blue-200">👤</span>
+                    <span className="text-blue-100 font-medium text-xs truncate max-w-20 sm:max-w-none">{log.usuario}</span>
+                  </div>
+                )}
+                
+                {isQuoteLog && log.cliente && (
+                  <div className="flex items-center space-x-1 bg-gradient-to-r from-blue-700/30 to-cyan-700/30 px-2 py-1 rounded-md border border-blue-500/40 shadow-sm">
+                    <span className="text-blue-200">👤</span>
+                    <span className="text-blue-100 font-medium text-xs truncate max-w-20 sm:max-w-none">{log.cliente}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-
-          <div className="flex flex-row sm:flex-col lg:flex-col items-center sm:items-end space-x-2 sm:space-x-0 sm:space-y-2">
-            <span className="font-mono text-xs text-slate-400 bg-slate-800/30 px-2 py-1 rounded flex-1 sm:flex-none text-center">{log.id}</span>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg">
-              <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+          
+          {/* Action button - better mobile positioning */}
+          <div className="flex items-center justify-end lg:justify-start space-x-2 flex-shrink-0 lg:mt-0">
+            <button className="opacity-70 lg:opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-800/50 rounded-lg border border-transparent hover:border-cyan-400/40">
+              <Eye className="w-3 h-3 sm:w-3 sm:h-3 text-slate-400 hover:text-cyan-300 transition-colors" />
             </button>
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
+};
+
+export function LogsPage() {
+  const { t } = useTranslation();
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  // Carregar logs e cotações quando o componente for montado
+  useEffect(() => {
+    console.log('LogsPage: useEffect executado');
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    console.log('LogsPage: fetchData iniciado');
+    setLoading(true);
+    setError(null);
+    try {
+      // Carregar cotações da API
+      const cotacoesResult = await cotacaoService.getAll();
+      
+      console.log('LogsPage: resultado de cotações:', cotacoesResult);
+      
+      // Processar cotações
+      if (cotacoesResult.success && cotacoesResult.data) {
+        const cotacoesArr = Array.isArray(cotacoesResult.data?.data) ? cotacoesResult.data.data : [];
+        console.log('LogsPage: cotações carregadas:', cotacoesArr.length);
+
+        // Gerar logs para todas as cotações
+        const cotacaoLogs: LogEntry[] = cotacoesArr.map((cotacao: any) => {
+          const isApproved = cotacao.aprovacao === true;
+          const isRejected = cotacao.aprovacao === false;
+          
+          return {
+            id: `cotacao_${cotacao.id}`,
+            type: isApproved ? 'cotacao_approved' : (isRejected ? 'cotacao_rejected' : 'cotacao_pending'),
+            nivel: isApproved ? 'success' : (isRejected ? 'warning' : 'info'),
+            categoria: 'Cotação',
+            usuario: cotacao.aprovado_por || cotacao.solicitante || 'Sistema',
+            acao: isApproved ? 'Cotação Aprovada' : (isRejected ? 'Cotação Rejeitada' : 'Cotação Pendente'),
+            detalhes: cotacao.motivo || (isApproved ? 'Cotação aprovada automaticamente' : (isRejected ? 'Cotação rejeitada' : 'Aguardando aprovação')),
+            timestamp: cotacao.data_aprovacao || cotacao.dataRecebido || cotacao.cadastrado_em || new Date().toISOString(),
+            cotacaoId: String(cotacao.id),
+            cotacaoNumero: cotacao.numero || `COT-${cotacao.id}`,
+            motivo: cotacao.motivo,
+            valor: parseFloat(cotacao.valor || cotacao.orcamento_geral || '0'),
+            cliente: cotacao.cliente || cotacao.nome_cliente || cotacao.solicitante,
+            ip: '192.168.1.100',
+            duracao: '1.2s'
+          };
+        });
+
+        setLogs(cotacaoLogs);
+      } else {
+        console.log('LogsPage: erro ao carregar cotações ou dados vazios');
+        setError('Erro ao carregar cotações da API');
+        setLogs([]);
+      }
+      
+    } catch (error) {
+      console.error('LogsPage: erro na função fetchData:', error);
+      setError('Erro ao carregar dados: ' + String(error));
+      setLogs([]);
+    } finally {
+      console.log('LogsPage: fetchData finalizado');
+      setLoading(false);
+    }
   };
 
+  // Função para filtrar logs com segurança
+  const filteredLogs = logs.filter((log) => {
+    if (!log || typeof log !== 'object') return false;
+    
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || [
+      log.detalhes,
+      log.usuario,
+      log.acao,
+      log.cotacaoNumero,
+      log.cliente
+    ].some(field => field && field.toLowerCase().includes(searchLower));
+    
+    return matchesSearch;
+  });
+
+  // Paginação
+  const totalPages = Math.ceil(filteredLogs.length / pageSize);
+  const paginatedLogs = filteredLogs.slice((page - 1) * pageSize, page * pageSize);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="min-h-screen bg-dark-bg flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-          <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
-              <Activity className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              {t('logs.title')}
-            </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">
-              {t('logs.subtitle')}
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-lg">{filteredLogs.length}</span>
-              <span className="text-blue-200 ml-2">registros</span>
+      <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-5 xl:py-6 flex-shrink-0">
+        {/* Uma única linha - Título, subtítulo, busca e paginação */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 lg:gap-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <div className="p-2 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl">
+              <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
             </div>
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 text-sm transition-all duration-300 hover:scale-105">
-                <RefreshCw className="w-4 h-4" />
-                <span>Atualizar</span>
+            <div>
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-dark-primary-text">
+                {t('logs.title')}
+              </h1>
+              <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">
+                {t('logs.subtitle')}
+              </p>
+            </div>
+          </div>
+
+          {/* Pesquisa e paginação - lado direito */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full lg:w-auto">
+            {/* Pesquisa */}
+            <div className="relative group w-full sm:flex-1 sm:min-w-0 sm:max-w-xs lg:max-w-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/70 group-hover:text-cyan-400 transition-colors duration-200 z-10 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" strokeWidth="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2"/></svg>
+              <input
+                type="text"
+                placeholder="Buscar logs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 sm:pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 text-sm sm:text-base"
+              />
+            </div>
+            
+            {/* Paginação */}
+            <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-3">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-xs sm:text-sm disabled:opacity-50"
+                disabled={page === 1}
+              >
+                <span className="hidden sm:inline">Anterior</span>
+                <span className="sm:hidden">‹</span>
               </button>
-              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 text-sm transition-all duration-300 hover:scale-105">
-                <Download className="w-4 h-4" />
-                <span>Exportar</span>
-              </button>
-              <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 text-sm transition-all duration-300 hover:scale-105">
-                <Trash2 className="w-4 h-4" />
-                <span>Limpar</span>
+              <span className="text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">
+                <span className="hidden sm:inline">Página </span>{page} de {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-xs sm:text-sm disabled:opacity-50"
+                disabled={page === totalPages}
+              >
+                <span className="hidden sm:inline">Próxima</span>
+                <span className="sm:hidden">›</span>
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 lg:mb-8">
-          <div className="glass-card p-3 sm:p-4 bg-red-500/10 rounded-xl border border-red-500/20">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-red-400">{logs.filter(log => log.nivel === 'error').length}</h3>
-                <p className="text-xs text-red-300 truncate">Erros</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="glass-card p-3 sm:p-4 bg-orange-500/10 rounded-xl border border-orange-500/20">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-orange-600 flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-orange-400">{logs.filter(log => log.nivel === 'warning').length}</h3>
-                <p className="text-xs text-orange-300 truncate">Avisos</p>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto scrollable-content dashboard-main p-3 sm:p-4 lg:p-6 xl:p-8 bg-dark-bg max-h-[calc(100vh-120px)] sm:max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)] lg:max-h-[calc(100vh-180px)] xl:max-h-[calc(100vh-200px)]">
+        {/* Error display */}
+        {error && (
+          <div className="glass-card bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="w-5 h-5 text-red-400" />
+              <div>
+                <h3 className="text-red-300 font-semibold">Erro detectado</h3>
+                <p className="text-red-200 text-sm">{error}</p>
               </div>
             </div>
           </div>
+        )}
 
-          <div className="glass-card p-3 sm:p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-600 flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-green-400">{logs.filter(log => log.nivel === 'success').length}</h3>
-                <p className="text-xs text-green-300 truncate">Sucessos</p>
-              </div>
-            </div>
+        {/* Loading state */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-8 sm:py-12">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-dark-secondary text-sm sm:text-base">Carregando logs do sistema...</p>
           </div>
+        )}
 
-          <div className="glass-card p-3 sm:p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <Info className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-blue-400">{logs.filter(log => log.nivel === 'info').length}</h3>
-                <p className="text-xs text-blue-300 truncate">Informativos</p>
-              </div>
+        {/* Lista de logs */}
+        {!loading && filteredLogs.length > 0 && (
+          <>
+            <div className="space-y-3 sm:space-y-4">
+              {paginatedLogs.map((log, index) => (
+                <LogCard key={log.id || index} log={log} />
+              ))}
             </div>
+          </>
+        )}
+
+        {/* Empty state */}
+        {!loading && filteredLogs.length === 0 && !error && (
+          <div className="text-center py-8 sm:py-12">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-dark-card rounded-full flex items-center justify-center mx-auto mb-4">
+              <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-dark-secondary" />
+            </div>
+            <h3 className="text-base sm:text-lg font-semibold text-dark-primary-text mb-2">Nenhum log encontrado</h3>
+            <p className="text-dark-secondary max-w-md mx-auto text-sm sm:text-base px-4">
+              Não há registros que correspondam aos seus critérios de pesquisa.
+            </p>
           </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-6 lg:mb-8">
-          <div className="glass-card p-4 bg-white/5 rounded-xl border border-white/20">
-            <div className="flex items-center space-x-2 mb-4">
-              <Filter className="w-5 h-5 text-blue-400" />
-              <h3 className="text-base font-semibold text-white">Filtros de Pesquisa</h3>
-            </div>
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0 lg:space-x-4">
-              {/* Pesquisa - sempre visível */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary z-10" />
-                <Input
-                  placeholder="Pesquisar nos logs..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-slate-700/50 border-slate-600 text-white focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-              
-              {/* Filtros - ocultos no mobile */}
-              <div className="hidden sm:flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                <Select value={levelFilter} onValueChange={setLevelFilter}>
-                  <SelectTrigger className="w-full sm:w-40 bg-slate-700/50 border-slate-600 text-white text-sm">
-                    <SelectValue placeholder="Nível" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-600">
-                    <SelectItem value="Todos">Todos os Níveis</SelectItem>
-                    <SelectItem value="error">🔴 Erro</SelectItem>
-                    <SelectItem value="warning">🟡 Aviso</SelectItem>
-                    <SelectItem value="success">🟢 Sucesso</SelectItem>
-                    <SelectItem value="info">🔵 Info</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-40 bg-slate-700/50 border-slate-600 text-white text-sm">
-                    <SelectValue placeholder="Categoria" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-600">
-                    <SelectItem value="Todas">Todas as Categorias</SelectItem>
-                    <SelectItem value="Sistema">⚙️ Sistema</SelectItem>
-                    <SelectItem value="Usuário">👤 Usuário</SelectItem>
-                    <SelectItem value="Aprovação">✅ Aprovação</SelectItem>
-                    <SelectItem value="Fornecedor">🏢 Fornecedor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Logs List */}
-        <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
-          <div className="grid gap-3 lg:gap-4 min-h-[800px]"> {/* Força altura para scroll */}
-            {filteredLogs.map((log) => (
-              <LogCard key={log.id} log={log} />
-            ))}
-          </div>
-
-          {filteredLogs.length === 0 && (
-            <div className="text-center py-8 lg:py-12">
-              <Activity className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />
-              <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhum log encontrado</h3>
-              <p className="text-sm sm:text-base text-dark-secondary px-4">Tente ajustar os filtros de pesquisa</p>
-            </div>
-          )}
-        </div>
+        )}
       </main>
     </div>
   );

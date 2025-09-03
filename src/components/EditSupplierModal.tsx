@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Save, Loader2 } from "lucide-react";
-import { Supplier } from "../types";
+import { Supplier } from "../types/index";
 
 interface EditSupplierModalProps {
   supplier: Supplier | null;
@@ -79,7 +79,7 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete,
       alert('Nome do fornecedor é obrigatório');
       return;
     }
-    if (!formData.contato_email.trim()) {
+    if (!formData.contato_email?.trim()) {
       alert('Email de contato é obrigatório');
       return;
     }

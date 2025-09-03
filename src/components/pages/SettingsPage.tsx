@@ -227,8 +227,24 @@ export default function SettingsPage() {
 				await fetchSettings();
 				if (appCtx?.setSystemName) appCtx.setSystemName(generalSettings.systemName);
 				// Update localStorage and language for immediate UI effect
+				const oldSettings = JSON.parse(localStorage.getItem('smartquote-general-settings') || '{}');
 				localStorage.setItem('smartquote-language', generalSettings.language);
 				localStorage.setItem('smartquote-general-settings', JSON.stringify(generalSettings));
+				
+				// Disparar evento customizado se a moeda foi alterada
+				if (oldSettings.currency !== generalSettings.currency) {
+					console.log('SettingsPage: Moeda alterada, disparando evento currencyChanged', {
+						de: oldSettings.currency,
+						para: generalSettings.currency
+					});
+					window.dispatchEvent(new CustomEvent('currencyChanged', { 
+						detail: { 
+							oldCurrency: oldSettings.currency, 
+							newCurrency: generalSettings.currency 
+						} 
+					}));
+				}
+				
 				const success = await changeLanguage(newLang);
 				if (success) {
 					setSaveSuccess(t('settings.languageChanged'));

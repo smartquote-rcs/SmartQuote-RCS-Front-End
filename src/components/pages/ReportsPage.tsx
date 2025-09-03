@@ -1,334 +1,504 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
-import { Badge } from "../ui/badge";
-import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { FileText, Download, Calendar, TrendingUp, Users, Euro, Activity, Eye, Search } from "lucide-react";
+import { Card, CardContent } from "../ui/card";
+import { BarChart3, Calendar, TrendingUp, Users, ShoppingCart, Target } from "lucide-react";
+import { cotacaoService, produtoService, supplierService } from "../../api/services";
+import { useCurrency } from "../../hooks/useCurrency";
 
-const relatorios = [
-  {
-    id: "REL-001",
-    titulo: "Relatório Mensal de Cotações",
-    tipo: "Cotações",
-    periodo: "Janeiro 2024",
-    status: "Concluído",
-    tamanho: "2.4 MB",
-    formato: "PDF",
-    gerado: "2024-01-24 14:30",
-    autor: "Sistema Automático",
-    downloads: 15,
-    descricao: "Análise completa das cotações processadas durante o mês de Janeiro."
-  },
-  {
-    id: "REL-002",
-    titulo: "Performance de Fornecedores Q1",
-    tipo: "Fornecedores",
-    periodo: "Q1 2024",
-    status: "Em Processamento",
-    tamanho: "1.8 MB",
-    formato: "Excel",
-    gerado: "2024-01-24 12:15",
-    autor: "Maria Santos",
-    downloads: 8,
-    descricao: "Avaliação detalhada da performance dos fornecedores no primeiro trimestre."
-  },
-  {
-    id: "REL-003",
-    titulo: "Análise de Custos de Procurement",
-    tipo: "Financeiro",
-    periodo: "2023",
-    status: "Concluído",
-    tamanho: "3.2 MB",
-    formato: "PDF",
-    gerado: "2024-01-20 16:45",
-    autor: "Carlos Mendes",
-    downloads: 23,
-    descricao: "Relatório anual de análise de custos e economia obtida através do sistema."
-  },
-  {
-    id: "REL-004",
-    titulo: "Métricas de IA e Automação",
-    tipo: "Sistema",
-    periodo: "Janeiro 2024",
-    status: "Concluído",
-    tamanho: "1.5 MB",
-    formato: "PDF",
-    gerado: "2024-01-22 10:30",
-    autor: "Sistema Automático",
-    downloads: 12,
-    descricao: "Performance da inteligência artificial e índices de automação do sistema."
-  },
-  {
-    id: "REL-005",
-    titulo: "Auditoria de Aprovações",
-    tipo: "Aprovações",
-    periodo: "Dezembro 2023",
-    status: "Concluído",
-    tamanho: "2.1 MB",
-    formato: "Excel",
-    gerado: "2024-01-15 09:20",
-    autor: "João Silva",
-    downloads: 6,
-    descricao: "Auditoria completa das aprovações manuais e motivos de escalonamento."
-  }
-];
-
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "Concluído":
-      return <Badge className="bg-green-600 text-white text-xs">Concluído</Badge>;
-    case "Em Processamento":
-      return <Badge className="bg-blue-600 text-white text-xs">Processando</Badge>;
-    case "Erro":
-      return <Badge className="bg-red-600 text-white text-xs">Erro</Badge>;
-    default:
-      return <Badge className="text-xs">{status}</Badge>;
-  }
-};
-
-const getTypeIcon = (tipo: string) => {
-  switch (tipo) {
-    case "Cotações":
-      return <FileText className="w-4 h-4 text-blue-400" />;
-    case "Fornecedores":
-      return <Users className="w-4 h-4 text-green-400" />;
-    case "Financeiro":
-      return <Euro className="w-4 h-4 text-yellow-400" />;
-    case "Sistema":
-      return <Activity className="w-4 h-4 text-purple-400" />;
-    case "Aprovações":
-      return <TrendingUp className="w-4 h-4 text-orange-400" />;
-    default:
-      return <FileText className="w-4 h-4 text-gray-400" />;
-  }
-};
+interface ReportData {
+  totalCotacoes: number;
+  cotacoesAprovadas: number;
+  cotacoesRejeitadas: number;
+  cotacoesPendentes: number;
+  totalProdutos: number;
+  totalFornecedores: number;
+  valorTotalCotacoes: number;
+  mediaValorCotacao: number;
+}
 
 export function ReportsPage() {
   const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("Todos");
-  const [statusFilter, setStatusFilter] = useState("Todos");
-
-  const filteredRelatorios = relatorios.filter((relatorio) => {
-    const matchesSearch = relatorio.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         relatorio.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         relatorio.autor.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "Todos" || relatorio.tipo === typeFilter;
-    const matchesStatus = statusFilter === "Todos" || relatorio.status === statusFilter;
-    
-    return matchesSearch && matchesType && matchesStatus;
+  const { formatCurrency } = useCurrency();
+  const [loading, setLoading] = useState(true);
+  const [reportData, setReportData] = useState<ReportData>({
+    totalCotacoes: 0,
+    cotacoesAprovadas: 0,
+    cotacoesRejeitadas: 0,
+    cotacoesPendentes: 0,
+    totalProdutos: 0,
+    totalFornecedores: 0,
+    valorTotalCotacoes: 0,
+    mediaValorCotacao: 0
   });
+  const [selectedPeriod, setSelectedPeriod] = useState("30");
+  const [error, setError] = useState<string | null>(null);
 
-  const RelatorioCard = ({ relatorio }: { relatorio: any }) => (
-    <div className="glass-card p-4 sm:p-6 lg:p-8 hover:border-dark-cta transition-colors bg-white/5 rounded-2xl border border-white/20">
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-        <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
-          <div className="flex-shrink-0 mt-1">
-            {getTypeIcon(relatorio.tipo)}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
-              <h3 className="font-bold text-dark-primary text-sm sm:text-base lg:text-lg truncate">{relatorio.titulo}</h3>
-              <div className="flex items-center space-x-2 mt-1 sm:mt-0">
-                {getStatusBadge(relatorio.status)}
-                <Badge className="bg-dark-tag text-white text-xs">{relatorio.tipo}</Badge>
-              </div>
-            </div>
-            
-            <p className="text-xs sm:text-sm text-dark-secondary mb-4 break-words line-clamp-2">{relatorio.descricao}</p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 text-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <span className="text-dark-secondary">Período:</span>
-                <span className="text-dark-primary sm:ml-2 truncate">{relatorio.periodo}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <span className="text-dark-secondary">Formato:</span>
-                <span className="text-dark-primary sm:ml-2">{relatorio.formato}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <span className="text-dark-secondary">Tamanho:</span>
-                <span className="text-dark-primary sm:ml-2">{relatorio.tamanho}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <span className="text-dark-secondary">Downloads:</span>
-                <span className="text-dark-primary sm:ml-2">{relatorio.downloads}</span>
-              </div>
-              <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2 flex flex-col sm:flex-row sm:items-center">
-                <span className="text-dark-secondary">Gerado:</span>
-                <span className="text-dark-primary sm:ml-2 truncate">
-                  {new Date(relatorio.gerado).toLocaleString('pt-PT')}
-                </span>
-              </div>
-              <div className="sm:col-span-2 lg:col-span-1 xl:col-span-2 flex flex-col sm:flex-row sm:items-center">
-                <span className="text-dark-secondary">Autor:</span>
-                <span className="text-dark-primary sm:ml-2 truncate">{relatorio.autor}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+  useEffect(() => {
+    fetchReportData();
+  }, [selectedPeriod]);
 
-        {/* Actions */}
-        <div className="flex flex-row sm:flex-col lg:flex-col space-x-2 sm:space-x-0 sm:space-y-2 min-w-0 lg:min-w-[140px]">
-          {relatorio.status === "Concluído" && (
-            <>
-              <button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl font-medium flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-green-600/20 flex-1 sm:flex-none">
-                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Download</span>
-              </button>
-              <button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl font-medium flex items-center justify-center space-x-1 sm:space-x-2 text-xs sm:text-sm transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-600/20 flex-1 sm:flex-none">
-                <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Visualizar</span>
-              </button>
-            </>
-          )}
-          {relatorio.status === "Em Processamento" && (
-            <div className="glass-card px-3 py-2 sm:px-4 sm:py-2 bg-orange-500/20 border-orange-500/30 rounded-xl text-center flex-1 sm:flex-none">
-              <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400 animate-spin mx-auto mb-1" />
-              <span className="text-orange-300 text-xs">Processando...</span>
+  // Listener para mudanças na configuração de moeda
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'smartquote-general-settings' && e.newValue) {
+        try {
+          const settings = JSON.parse(e.newValue);
+          const oldSettings = e.oldValue ? JSON.parse(e.oldValue) : {};
+          
+          // Verifica se a moeda mudou
+          if (settings.currency !== oldSettings.currency) {
+            console.log('ReportsPage: Moeda alterada, recarregando dados...', {
+              de: oldSettings.currency,
+              para: settings.currency
+            });
+            // Recarrega os dados com a nova moeda
+            fetchReportData();
+          }
+        } catch (error) {
+          console.warn('ReportsPage: Erro ao processar mudança de configuração:', error);
+        }
+      }
+    };
+
+    // Listener para eventos customizados de mudança de moeda
+    const handleCurrencyChange = () => {
+      console.log('ReportsPage: Evento de mudança de moeda detectado, recarregando dados...');
+      fetchReportData();
+    };
+
+    // Escuta mudanças no localStorage
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Escuta eventos customizados de mudança de moeda
+    window.addEventListener('currencyChanged', handleCurrencyChange);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('currencyChanged', handleCurrencyChange);
+    };
+  }, []);
+
+  const fetchReportData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('ReportsPage: fetchReportData iniciado');
+      
+      // Buscar dados das cotações
+      const cotacoesResult = await cotacaoService.getAll();
+      let cotacoes: any[] = [];
+      
+      if (cotacoesResult.success && cotacoesResult.data) {
+        cotacoes = Array.isArray(cotacoesResult.data?.data) ? cotacoesResult.data.data : [];
+      }
+
+      // Buscar dados dos produtos
+      const produtosResult = await produtoService.getAll();
+      let produtos: any[] = [];
+      
+      if (produtosResult.success && produtosResult.data) {
+        produtos = Array.isArray(produtosResult.data?.data) ? produtosResult.data.data : [];
+      }
+
+      // Buscar dados dos fornecedores
+      const fornecedoresResult = await supplierService.getAll();
+      let fornecedores: any[] = [];
+      
+      if (fornecedoresResult.success && fornecedoresResult.data) {
+        fornecedores = Array.isArray(fornecedoresResult.data?.data) ? fornecedoresResult.data.data : [];
+      }
+
+      // Calcular estatísticas
+      const aprovadas = cotacoes.filter(c => c.aprovacao === true).length;
+      const rejeitadas = cotacoes.filter(c => c.aprovacao === false).length;
+      const pendentes = cotacoes.filter(c => c.aprovacao === null || c.aprovacao === undefined).length;
+      
+      const valores = cotacoes
+        .map(c => parseFloat(c.valor || c.orcamento_geral || '0'))
+        .filter(v => !isNaN(v) && v > 0);
+      
+      const valorTotal = valores.reduce((sum, val) => sum + val, 0);
+      const mediaValor = valores.length > 0 ? valorTotal / valores.length : 0;
+
+      setReportData({
+        totalCotacoes: cotacoes.length,
+        cotacoesAprovadas: aprovadas,
+        cotacoesRejeitadas: rejeitadas,
+        cotacoesPendentes: pendentes,
+        totalProdutos: produtos.length,
+        totalFornecedores: fornecedores.length,
+        valorTotalCotacoes: valorTotal,
+        mediaValorCotacao: mediaValor
+      });
+
+      console.log('ReportsPage: dados processados:', {
+        cotacoes: cotacoes.length,
+        produtos: produtos.length,
+        fornecedores: fornecedores.length
+      });
+
+    } catch (error) {
+      console.error('ReportsPage: erro ao buscar dados:', error);
+      setError('Erro ao carregar dados dos relatórios');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Funções para download de PDF
+  const downloadCotacoesPDF = () => {
+    try {
+      const cotacoesData = {
+        total: reportData.totalCotacoes,
+        aprovadas: reportData.cotacoesAprovadas,
+        rejeitadas: reportData.cotacoesRejeitadas,
+        pendentes: reportData.cotacoesPendentes,
+        valorTotal: formatCurrency(reportData.valorTotalCotacoes),
+        valorMedio: formatCurrency(reportData.mediaValorCotacao),
+        periodo: selectedPeriod
+      };
+
+      // Criar conteúdo do PDF
+      const content = [
+        '📊 RELATÓRIO DE COTAÇÕES',
+        '═══════════════════════════════',
+        '',
+        `📅 Período: Últimos ${selectedPeriod} dias`,
+        `📈 Total de Cotações: ${cotacoesData.total}`,
+        `✅ Aprovadas: ${cotacoesData.aprovadas}`,
+        `❌ Rejeitadas: ${cotacoesData.rejeitadas}`,
+        `⏳ Pendentes: ${cotacoesData.pendentes}`,
+        `💰 Valor Total: ${cotacoesData.valorTotal}`,
+        `📊 Valor Médio: ${cotacoesData.valorMedio}`,
+        '',
+        `📅 Gerado em: ${new Date().toLocaleDateString('pt-PT')}`,
+        '═══════════════════════════════'
+      ].join('\n');
+
+      // Simular download (em produção, usar uma biblioteca como jsPDF)
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cotacoes_relatorio_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('✅ Relatório de Cotações baixado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório de cotações:', error);
+    }
+  };
+
+  const downloadProdutosPDF = () => {
+    try {
+      const content = [
+        '📦 RELATÓRIO DE PRODUTOS',
+        '═══════════════════════════════',
+        '',
+        `📅 Período: Últimos ${selectedPeriod} dias`,
+        `📦 Total de Produtos: ${reportData.totalProdutos}`,
+        `🏪 Total de Fornecedores: ${reportData.totalFornecedores}`,
+        '',
+        '📋 Status dos Produtos:',
+        '• Ativos no sistema',
+        '• Disponíveis para cotação',
+        '• Vinculados aos fornecedores',
+        '',
+        `📅 Gerado em: ${new Date().toLocaleDateString('pt-PT')}`,
+        '═══════════════════════════════'
+      ].join('\n');
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `produtos_relatorio_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('✅ Relatório de Produtos baixado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório de produtos:', error);
+    }
+  };
+
+  const downloadFornecedoresPDF = () => {
+    try {
+      const content = [
+        '🏢 RELATÓRIO DE FORNECEDORES',
+        '═══════════════════════════════',
+        '',
+        `📅 Período: Últimos ${selectedPeriod} dias`,
+        `🏢 Total de Fornecedores: ${reportData.totalFornecedores}`,
+        `📦 Total de Produtos: ${reportData.totalProdutos}`,
+        `📊 Total de Cotações: ${reportData.totalCotacoes}`,
+        '',
+        '📋 Informações dos Fornecedores:',
+        '• Fornecedores ativos',
+        '• Produtos por fornecedor',
+        '• Performance nas cotações',
+        '',
+        `📅 Gerado em: ${new Date().toLocaleDateString('pt-PT')}`,
+        '═══════════════════════════════'
+      ].join('\n');
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fornecedores_relatorio_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('✅ Relatório de Fornecedores baixado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório de fornecedores:', error);
+    }
+  };
+
+  const StatCard = ({ icon: Icon, title, value, subtitle, color = "blue" }: {
+    icon: any;
+    title: string;
+    value: string | number;
+    subtitle?: string;
+    color?: "blue" | "green" | "orange" | "purple" | "red";
+  }) => {
+    const colorClasses = {
+      blue: "from-blue-600/20 to-cyan-600/20 text-blue-400",
+      green: "from-green-600/20 to-emerald-600/20 text-green-400",
+      orange: "from-orange-600/20 to-amber-600/20 text-orange-400",
+      purple: "from-purple-600/20 to-pink-600/20 text-purple-400",
+      red: "from-red-600/20 to-rose-600/20 text-red-400"
+    };
+
+    return (
+      <Card className="glass-card bg-dark-card border border-dark-color hover:border-cyan-400/40 transition-all duration-300">
+        <CardContent className="p-3 sm:p-4 lg:p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0 pr-2 sm:pr-3">
+              <p className="text-dark-secondary text-xs sm:text-sm font-medium truncate">{title}</p>
+              <p className="text-dark-primary-text text-lg sm:text-xl lg:text-2xl font-bold mt-0.5 sm:mt-1 truncate">{value}</p>
+              {subtitle && (
+                <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-0.5 sm:mt-1 break-words line-clamp-2">{subtitle}</p>
+              )}
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+            <div className={`p-2 sm:p-3 bg-gradient-to-br ${colorClasses[color]} rounded-xl flex-shrink-0`}>
+              <Icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="min-h-screen bg-dark-bg flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-          <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
-              <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              {t('reports.title')}
-            </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">
-              {t('reports.subtitle')}
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-lg">{filteredRelatorios.length}</span>
-              <span className="text-blue-200 ml-2">{t('reports.title')}</span>
+      <header className="bg-dark-bg border-b border-dark-color px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 py-2 sm:py-3 md:py-4 lg:py-5 xl:py-6 flex-shrink-0">
+        {/* Uma única linha - Título, subtítulo e filtros */}
+        <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 xl:gap-4">
+          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0 flex-1">
+            <div className="p-1.5 sm:p-2 bg-gradient-to-br from-green-600/20 to-emerald-600/20 rounded-xl flex-shrink-0">
+              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-green-400" />
             </div>
-            <button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
-              <FileText className="w-5 h-5" />
-              <span>{t('reports.generateReport')}</span>
-            </button>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-dark-primary-text truncate">
+                {t('reports.title')}
+              </h1>
+              <p className="text-dark-secondary text-xs sm:text-sm md:text-sm lg:text-base mt-0.5 sm:mt-1 truncate">
+                {t('reports.subtitle')}
+              </p>
+            </div>
+          </div>
+
+          {/* Filtros - lado direito */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full xl:w-auto xl:flex-shrink-0">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-dark-secondary flex-shrink-0" />
+              <span className="text-dark-secondary text-xs sm:text-sm whitespace-nowrap">Período:</span>
+            </div>
+            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <SelectTrigger className="w-full sm:w-40 md:w-48 bg-dark-card border-dark-color text-dark-primary-text text-xs sm:text-sm">
+                <SelectValue placeholder="Selecionar período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="90">Últimos 3 meses</SelectItem>
+                <SelectItem value="365">Último ano</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 lg:mb-8">
-          <div className="glass-card p-4 sm:p-6 lg:p-8 bg-white/5 rounded-2xl border border-white/20">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <FileText className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
-              </div>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto scrollable-content dashboard-main p-2 sm:p-3 md:p-4 lg:p-6 xl:p-8 bg-dark-bg max-h-[calc(100vh-100px)] sm:max-h-[calc(100vh-120px)] md:max-h-[calc(100vh-140px)] lg:max-h-[calc(100vh-160px)] xl:max-h-[calc(100vh-180px)]">
+        {/* Error display */}
+        {error && (
+          <div className="glass-card bg-red-500/10 border border-red-500/20 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <Target className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
               <div className="min-w-0">
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">28</h3>
-                <p className="text-xs sm:text-sm text-dark-secondary truncate">Total de Relatórios</p>
+                <h3 className="text-red-300 font-semibold text-sm sm:text-base">Erro detectado</h3>
+                <p className="text-red-200 text-xs sm:text-sm break-words">{error}</p>
               </div>
             </div>
           </div>
-          
-          <div className="glass-card p-4 sm:p-6 lg:p-8 bg-white/5 rounded-2xl">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-green-600 flex items-center justify-center flex-shrink-0">
-                <Download className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">156</h3>
-                <p className="text-xs sm:text-sm text-dark-secondary truncate">Downloads este Mês</p>
-              </div>
-            </div>
-          </div>
+        )}
 
-          <div className="glass-card p-4 sm:p-6 lg:p-8 bg-white/5 rounded-2xl">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-orange-600 flex items-center justify-center flex-shrink-0">
-                <Activity className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">3</h3>
-                <p className="text-xs sm:text-sm text-dark-secondary truncate">Em Processamento</p>
-              </div>
-            </div>
+        {/* Loading state */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-6 sm:py-8 md:py-12">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 border-2 border-green-400 border-t-transparent rounded-full animate-spin mb-3 sm:mb-4"></div>
+            <p className="text-dark-secondary text-xs sm:text-sm md:text-base">Carregando dados dos relatórios...</p>
           </div>
+        )}
 
-          <div className="glass-card p-4 sm:p-6 lg:p-8 bg-white/5 rounded-2xl">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary">12</h3>
-                <p className="text-xs sm:text-sm text-dark-secondary truncate">Automáticos</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-6 lg:mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0 lg:space-x-4">
-            {/* Pesquisa - sempre visível */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
-              <Input
-                placeholder="Pesquisar relatórios..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+        {/* Report Cards */}
+        {!loading && (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Estatísticas principais */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+              <StatCard
+                icon={ShoppingCart}
+                title="Total de Cotações"
+                value={reportData.totalCotacoes}
+                color="blue"
+              />
+              <StatCard
+                icon={Target}
+                title="Cotações Aprovadas"
+                value={reportData.cotacoesAprovadas}
+                subtitle={`${reportData.totalCotacoes > 0 ? ((reportData.cotacoesAprovadas / reportData.totalCotacoes) * 100).toFixed(1) : 0}% do total`}
+                color="green"
+              />
+              <StatCard
+                icon={Users}
+                title="Total de Fornecedores"
+                value={reportData.totalFornecedores}
+                color="purple"
+              />
+              <StatCard
+                icon={TrendingUp}
+                title="Valor Total"
+                value={formatCurrency(reportData.valorTotalCotacoes)}
+                subtitle={`Média: ${formatCurrency(reportData.mediaValorCotacao)}`}
+                color="orange"
               />
             </div>
-            
-            {/* Filtros - ocultos no mobile */}
-            <div className="hidden sm:flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full sm:w-40 bg-dark-card border-dark-color text-dark-primary text-sm">
-                  <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent className="bg-dark-card border-dark-color">
-                  <SelectItem value="Todos">Todos</SelectItem>
-                  <SelectItem value="Cotações">Cotações</SelectItem>
-                  <SelectItem value="Fornecedores">Fornecedores</SelectItem>
-                  <SelectItem value="Financeiro">Financeiro</SelectItem>
-                  <SelectItem value="Sistema">Sistema</SelectItem>
-                  <SelectItem value="Aprovações">Aprovações</SelectItem>
-                </SelectContent>
-              </Select>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-32 bg-dark-card border-dark-color text-dark-primary text-sm">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent className="bg-dark-card border-dark-color">
-                  <SelectItem value="Todos">Todos</SelectItem>
-                  <SelectItem value="Concluído">Concluído</SelectItem>
-                  <SelectItem value="Em Processamento">Processando</SelectItem>
-                  <SelectItem value="Erro">Erro</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Estatísticas detalhadas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+              <StatCard
+                icon={Target}
+                title="Cotações Pendentes"
+                value={reportData.cotacoesPendentes}
+                subtitle="Aguardando aprovação"
+                color="orange"
+              />
+              <StatCard
+                icon={Target}
+                title="Cotações Rejeitadas"
+                value={reportData.cotacoesRejeitadas}
+                subtitle="Não aprovadas"
+                color="red"
+              />
+              <StatCard
+                icon={ShoppingCart}
+                title="Total de Produtos"
+                value={reportData.totalProdutos}
+                subtitle="Cadastrados no sistema"
+                color="blue"
+              />
             </div>
-          </div>
-        </div>
 
-        {/* Reports List */}
-        <div className="grid gap-4 lg:gap-6">
-          {filteredRelatorios.map((relatorio) => (
-            <RelatorioCard key={relatorio.id} relatorio={relatorio} />
-          ))}
-        </div>
+            {/* Cards de Download PDF */}
+            <div className="space-y-4 sm:space-y-6">
+              {/* Total de Cotações do Mês */}
+              <div className="glass-card bg-dark-card border border-dark-color rounded-xl p-3 sm:p-4 lg:p-6 hover:border-cyan-400/40 transition-all duration-300 w-full">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
+                  <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                    <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 rounded-xl flex-shrink-0">
+                      <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-dark-primary-text truncate">Total de Cotações do Mês</h3>
+                      <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">{reportData.totalCotacoes} cotações registradas</p>
+                      <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-1 break-words">Aprovadas: {reportData.cotacoesAprovadas} | Rejeitadas: {reportData.cotacoesRejeitadas} | Pendentes: {reportData.cotacoesPendentes}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={downloadCotacoesPDF}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white py-2 px-4 sm:py-3 sm:px-6 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 flex items-center justify-center space-x-2 w-full md:w-auto md:flex-shrink-0"
+                  >
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Download PDF</span>
+                  </button>
+                </div>
+              </div>
 
-        {filteredRelatorios.length === 0 && (
-          <div className="text-center py-8 lg:py-12">
-            <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-dark-secondary mx-auto mb-4" />
-            <h3 className="text-base sm:text-lg font-medium text-dark-primary mb-2">Nenhum relatório encontrado</h3>
-            <p className="text-sm sm:text-base text-dark-secondary px-4">Tente ajustar os filtros de pesquisa</p>
+              {/* Total de Produtos */}
+              <div className="glass-card bg-dark-card border border-dark-color rounded-xl p-3 sm:p-4 lg:p-6 hover:border-cyan-400/40 transition-all duration-300 w-full">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
+                  <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                    <div className="p-2 sm:p-3 bg-gradient-to-br from-green-600/20 to-emerald-600/20 rounded-xl flex-shrink-0">
+                      <Target className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-green-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-dark-primary-text truncate">Total de Produtos</h3>
+                      <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">{reportData.totalProdutos} produtos cadastrados</p>
+                      <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-1">Disponíveis para cotação no sistema</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={downloadProdutosPDF}
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white py-2 px-4 sm:py-3 sm:px-6 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 flex items-center justify-center space-x-2 w-full md:w-auto md:flex-shrink-0"
+                  >
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Download PDF</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Total de Fornecedores */}
+              <div className="glass-card bg-dark-card border border-dark-color rounded-xl p-3 sm:p-4 lg:p-6 hover:border-cyan-400/40 transition-all duration-300 w-full">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
+                  <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                    <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-xl flex-shrink-0">
+                      <Users className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-purple-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-dark-primary-text truncate">Total de Fornecedores</h3>
+                      <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">{reportData.totalFornecedores} fornecedores ativos</p>
+                      <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-1">Parceiros cadastrados no sistema</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={downloadFornecedoresPDF}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-2 px-4 sm:py-3 sm:px-6 rounded-lg font-medium text-xs sm:text-sm transition-all duration-300 flex items-center justify-center space-x-2 w-full md:w-auto md:flex-shrink-0"
+                  >
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Download PDF</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>

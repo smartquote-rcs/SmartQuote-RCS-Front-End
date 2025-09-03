@@ -18,7 +18,7 @@ import { useApp } from "../../contexts/AppContext";
 import { exportSuppliersPdf } from "../../utils/exportSuppliersPdf";
 import { EditSupplierModal } from "../EditSupplierModal";
 import { CreateSupplierModal } from "../CreateSupplierModal";
-import { Supplier } from "../../types";
+import { Supplier } from "../../types/index";
 
 // Interface para Toast Notifications
 interface ToastNotification {

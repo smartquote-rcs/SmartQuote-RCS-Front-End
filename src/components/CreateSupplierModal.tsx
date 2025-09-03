@@ -65,7 +65,7 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId }: CreateS
       alert('Nome do fornecedor é obrigatório');
       return;
     }
-    if (!formData.contato_email.trim()) {
+    if (!formData.contato_email?.trim()) {
       alert('Email de contato é obrigatório');
       return;
     }
