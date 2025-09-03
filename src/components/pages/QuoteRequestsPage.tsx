@@ -1,7 +1,53 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { exportCotacao, ExportFormat } from "../../utils/exportCotacaoPdf";
 import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../hooks/useCurrency";
+import { Badge } from "../ui/badge";
+import { Input } from "../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import {
+  Search,
+  Eye,
+  Download,
+  Mail,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  FileText,
+  Building,
+  User,
+  Check,
+  Info,
+  SortAsc,
+  SortDesc,
+  Plus,
+  Receipt,
+  Package,
+  MapPin,
+  Hash,
+  DollarSign,
+  Calculator,
+  X,
+} from "lucide-react";
+import { cotacaoService } from "../../api/services";
+import api from '../../api/client';
+
 // Componente para exibir detalhes do item e submodal
 
 type ItemDetalheCardProps = { item: any, onItemReplaced?: () => void };
@@ -127,8 +173,16 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
         <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto bg-white border-0 p-0 rounded-2xl shadow-2xl">
           {/* Cabeçalho da Fatura */}
           <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-3 md:p-4 rounded-t-2xl relative">
+            {/* Botão fechar no canto superior direito */}
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute top-4 right-4 text-slate-300 hover:text-white hover:bg-slate-700 rounded-full p-2 transition-all duration-200"
+              aria-label="Fechar modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
             
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-12">
               <div className="flex items-center gap-3">
                 <Receipt className="w-6 h-6 md:w-8 md:h-8 text-cyan-400" />
                 <div>
@@ -176,7 +230,7 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
                     </div>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="flex items-start gap-3">
                       <MapPin className="w-4 h-4 text-slate-500 mt-1" />
                       <div className="flex-1 min-w-0">
@@ -200,14 +254,14 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
             </div>
 
             {/* Detalhes Financeiros */}
-            <div className="mb-4">
+            <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
                 <Calculator className="w-5 h-5 text-slate-600" />
                 <h3 className="text-xl font-bold text-slate-800">Detalhes Financeiros</h3>
               </div>
               
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 md:p-4 border border-blue-200">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 md:p-6 border border-blue-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Hash className="w-4 h-4 text-blue-600" />
@@ -243,9 +297,9 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
             </div>
 
             {/* Resumo Final */}
-            <div className="border-t-2 border-slate-200 pt-4">
-              <div className="bg-slate-800 text-white rounded-xl p-3 md:p-4">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="border-t-2 border-slate-200 pt-6">
+              <div className="bg-slate-800 text-white rounded-xl p-4 md:p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                   <div className="text-center md:text-left">
                     <div className="text-slate-300 text-sm">Total do Item</div>
                     <div className="text-2xl md:text-3xl font-bold text-white break-words">
@@ -262,7 +316,7 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
           </div>
 
           {/* Rodapé com Ações */}
-          <div className="bg-slate-50 p-3 md:p-4 rounded-b-2xl border-t border-slate-200">
+          <div className="bg-slate-50 p-4 md:p-6 rounded-b-2xl border-t border-slate-200">
             <div className="flex justify-center">
               <Button
                 variant="outline"
@@ -279,53 +333,6 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
     </div>
   );
 };
-
-import { useState, useEffect } from "react";
-import { Badge } from "../ui/badge";
-import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "../ui/dialog";
-import { Button } from "../ui/button";
-import {
-  Search,
-  Eye,
-  Download,
-  Mail,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  FileText,
-  Building,
-  User,
-  Check,
-  Info,
-  SortAsc,
-  SortDesc,
-  Plus,
-  Receipt,
-  Package,
-  MapPin,
-  Hash,
-  DollarSign,
-  Calculator,
-  X,
-} from "lucide-react";
-import { cotacaoService } from "../../api/services";
-import api from '../../api/client';
 
 interface QuoteRequestsPageProps {
   onNavigateToNewQuote?: () => void;

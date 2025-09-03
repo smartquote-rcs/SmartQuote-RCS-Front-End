@@ -1,14 +1,27 @@
-import { useState, useEffect } from "react";
-import { Settings, User, Bell, Globe, Save, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useContext } from "react";
+import { Settings, User, Bell, Globe, Save, Eye, EyeOff, Lock } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { useApp } from "../../contexts/AppContext";
 import { useTranslation } from 'react-i18next';
+import { AppContext } from '../../contexts/AppContext';
+import { userService } from '../../api/services';
+
+interface UserProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  company: string;
+  role: string;
+  phone: string;
+}
 
 export function UserSettingsPage() {
   const { t, i18n } = useTranslation();
   const { userSettings, updateSettings } = useApp();
-  const [showSuccess, setShowSuccess] = useState(false);
+  const appCtx = useContext(AppContext);
+  const [showSuccess, setShowSuccess] = useState<string | null>(null);
   const [localSettings, setLocalSettings] = useState(userSettings);
+  const [loading, setLoading] = useState(true);
 
   // Sincronizar localSettings quando userSettings muda
   useEffect(() => {
@@ -24,11 +37,13 @@ export function UserSettingsPage() {
     }
   }, []);
   
-  const [profileData, setProfileData] = useState({
-    name: "João Silva",
-    email: "joao.silva@empresa.com",
-    phone: "+351 912 345 678",
-    company: "Empresa Exemplo Lda."
+  const [profileData, setProfileData] = useState<UserProfile>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    company: 'RCS Angola',
+    role: '',
+    phone: ''
   });
   const [passwordData, setPasswordData] = useState({
     current: "",
@@ -39,7 +54,45 @@ export function UserSettingsPage() {
     showConfirm: false
   });
 
-    const handleSaveSettings = async () => {
+  // Função para buscar dados do usuário atual
+  const fetchCurrentUser = async () => {
+    try {
+      console.log('🔍 UserSettings: Carregando dados do usuário...');
+      setLoading(true);
+      
+      const result = await userService.getCurrentUser();
+      
+      if (result.success && result.data) {
+        const userData = result.data;
+        console.log('✅ UserSettings: Dados do usuário carregados:', userData);
+        
+        // Mapear os dados da API para o formato local
+        setProfileData({
+          firstName: userData.name || 'Usuário',
+          lastName: userData.department || 'Sem Departamento',
+          email: userData.email || 'sem@email.com',
+          company: 'RCS Angola', // Sempre fixo
+          role: userData.position || 'Usuário',
+          phone: userData.contact || '+244 000 000 000'
+        });
+      } else {
+        console.warn('⚠️ UserSettings: Erro ao carregar dados:', result.error);
+        setShowSuccess('Erro ao carregar dados do usuário.');
+      }
+    } catch (error) {
+      console.error('💥 UserSettings: Erro ao buscar dados:', error);
+      setShowSuccess('Erro ao carregar dados do usuário.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Carregar dados do usuário ao montar o componente
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
+
+  const handleSaveSettings = async () => {
     // Atualizar o contexto
     updateSettings(localSettings);
     
@@ -63,32 +116,53 @@ export function UserSettingsPage() {
     }
   };
 
-  const handleSaveProfile = () => {
-    // Simular salvamento do perfil
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
-  };
-
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (passwordData.new !== passwordData.confirm) {
-      alert("As senhas não coincidem!");
+      setShowSuccess('As senhas não coincidem!');
+      setTimeout(() => setShowSuccess(null), 3000);
       return;
     }
     if (passwordData.new.length < 6) {
-      alert("A senha deve ter pelo menos 6 caracteres!");
+      setShowSuccess('A senha deve ter pelo menos 6 caracteres!');
+      setTimeout(() => setShowSuccess(null), 3000);
       return;
     }
-    // Simular mudança de senha
-    setPasswordData({
-      current: "",
-      new: "",
-      confirm: "",
-      showCurrent: false,
-      showNew: false,
-      showConfirm: false
-    });
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+
+    try {
+      // Obter ID do usuário atual do contexto
+      const currentUserId = appCtx?.user?.id;
+      
+      if (!currentUserId) {
+        setShowSuccess('Erro: Usuário não identificado');
+        setTimeout(() => setShowSuccess(null), 3000);
+        return;
+      }
+
+      // Atualizar senha via API
+      const result = await userService.updateUser(String(currentUserId), {
+        password: passwordData.new
+      });
+
+      if (result.success) {
+        setPasswordData({
+          current: "",
+          new: "",
+          confirm: "",
+          showCurrent: false,
+          showNew: false,
+          showConfirm: false
+        });
+        setShowSuccess('Senha alterada com sucesso!');
+        setTimeout(() => setShowSuccess(null), 3000);
+      } else {
+        setShowSuccess(`Erro ao alterar senha: ${result.error}`);
+        setTimeout(() => setShowSuccess(null), 3000);
+      }
+    } catch (error) {
+      console.error('Erro ao alterar senha:', error);
+      setShowSuccess('Erro ao alterar senha.');
+      setTimeout(() => setShowSuccess(null), 3000);
+    }
   };
 
   return (
@@ -103,8 +177,12 @@ export function UserSettingsPage() {
             <p className="text-sm sm:text-base text-dark-secondary mt-1">Personalize sua conta e preferências</p>
           </div>
           {showSuccess && (
-            <Badge className="bg-green-600 text-white px-3 py-2 text-sm">
-              Configurações salvas com sucesso!
+            <Badge className={`px-3 py-2 text-sm ${
+              showSuccess.includes('Erro') || showSuccess.includes('erro') 
+                ? 'bg-red-600 text-white' 
+                : 'bg-green-600 text-white'
+            }`}>
+              {showSuccess}
             </Badge>
           )}
         </div>
@@ -120,56 +198,83 @@ export function UserSettingsPage() {
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-white">Informações do Perfil</h2>
-                <p className="text-xs sm:text-sm text-blue-200">Atualize seus dados pessoais</p>
+                <p className="text-xs sm:text-sm text-blue-200">Visualização dos seus dados pessoais</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Nome Completo</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">Nome</label>
                 <input
                   type="text"
-                  value={profileData.name}
-                  onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                  className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors text-sm sm:text-base"
+                  value={loading ? 'Carregando...' : profileData.firstName}
+                  readOnly
+                  className="w-full bg-slate-800/30 border border-slate-600/30 rounded-lg p-3 text-slate-300 placeholder-slate-500 cursor-not-allowed text-sm sm:text-base"
+                  title="Este campo não pode ser editado. Contacte o administrador para alterações."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-primary mb-2">Departamento</label>
+                <input
+                  type="text"
+                  value={loading ? 'Carregando...' : profileData.lastName}
+                  readOnly
+                  className="w-full bg-slate-800/30 border border-slate-600/30 rounded-lg p-3 text-slate-300 placeholder-slate-500 cursor-not-allowed text-sm sm:text-base"
+                  title="Este campo não pode ser editado. Contacte o administrador para alterações."
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-dark-primary mb-2">Email</label>
                 <input
                   type="email"
-                  value={profileData.email}
-                  onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                  className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors text-sm sm:text-base"
+                  value={loading ? 'Carregando...' : profileData.email}
+                  readOnly
+                  className="w-full bg-slate-800/30 border border-slate-600/30 rounded-lg p-3 text-slate-300 placeholder-slate-500 cursor-not-allowed text-sm sm:text-base"
+                  title="Este campo não pode ser editado. Contacte o administrador para alterações."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-primary mb-2">Função</label>
+                <input
+                  type="text"
+                  value={loading ? 'Carregando...' : profileData.role}
+                  readOnly
+                  className="w-full bg-slate-800/30 border border-slate-600/30 rounded-lg p-3 text-slate-300 placeholder-slate-500 cursor-not-allowed"
+                  title="Este campo não pode ser editado. Contacte o administrador para alterações."
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-dark-primary mb-2">Telefone</label>
                 <input
                   type="tel"
-                  value={profileData.phone}
-                  onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                  className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors"
+                  value={loading ? 'Carregando...' : profileData.phone}
+                  readOnly
+                  className="w-full bg-slate-800/30 border border-slate-600/30 rounded-lg p-3 text-slate-300 placeholder-slate-500 cursor-not-allowed"
+                  title="Este campo não pode ser editado. Contacte o administrador para alterações."
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-dark-primary mb-2">Empresa</label>
                 <input
                   type="text"
-                  value={profileData.company}
-                  onChange={(e) => setProfileData({...profileData, company: e.target.value})}
-                  className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors"
+                  value={loading ? 'Carregando...' : profileData.company}
+                  readOnly
+                  className="w-full bg-slate-800/30 border border-slate-600/30 rounded-lg p-3 text-slate-300 placeholder-slate-500 cursor-not-allowed"
+                  title="Este campo não pode ser editado. Contacte o administrador para alterações."
                 />
               </div>
             </div>
 
-            <button
-              onClick={handleSaveProfile}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2"
-            >
-              <Save className="w-4 h-4" />
-              <span>Salvar Perfil</span>
-            </button>
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
+              <div className="flex items-center space-x-2 text-blue-300">
+                <Lock className="w-4 h-4" />
+                <span className="text-sm font-medium">Informação</span>
+              </div>
+              <p className="text-sm text-blue-200 mt-1">
+                Os dados do perfil são gerenciados pelo administrador do sistema. 
+                Para alterações, contacte o suporte administrativo.
+              </p>
+            </div>
           </div>
 
           {/* Alterar Senha */}
