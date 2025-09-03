@@ -1,4 +1,4 @@
-// Serviço de Notificações
+            // Serviço de Notificações
 export const notificationService = {
   async getAll() {
     try {
@@ -160,7 +160,14 @@ export const userService = {
   async getAll(): Promise<AuthResponse> {
     try {
       console.log('📤 Fazendo requisição para buscar usuários (GET /users)...');
-      const response = await api.get('/users');
+      // Adicionar cache busting para garantir dados frescos
+      const cacheBuster = `?_t=${Date.now()}`;
+      const response = await api.get(`/users${cacheBuster}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       console.log('📨 Resposta da API (users):', response);
       return { success: true, data: response.data };
     } catch (error: any) {
@@ -253,6 +260,146 @@ export const userService = {
       return { 
         success: false, 
         error: error.response?.data?.error || error.response?.data?.message || 'Erro ao atualizar usuário.' 
+      };
+    }
+  },
+
+  async getCurrentUser(): Promise<AuthResponse> {
+    try {
+      console.log('📤 Fazendo requisição para buscar usuário atual (GET /auth/me)...');
+      
+      // Verificar se há token
+      const token = localStorage.getItem('auth_token');
+      console.log('🔑 Token presente:', token ? 'SIM' : 'NÃO');
+      
+      if (!token) {
+        console.warn('⚠️ Nenhum token encontrado, tentando buscar por email do localStorage...');
+        return await this.getCurrentUserFallback();
+      }
+      
+      console.log('🔑 Token (primeiros 20 chars):', token.substring(0, 20) + '...');
+      
+      // Adicionar cache busting para garantir dados frescos
+      const cacheBuster = `?_t=${Date.now()}`;
+      const response = await api.get(`/auth/me${cacheBuster}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      console.log('📨 Resposta da API (current user):', response);
+      console.log('📊 Status:', response.status);
+      console.log('📄 Data:', response.data);
+      
+      if (response.status === 200 && response.data) {
+        console.log('✅ Dados do usuário obtidos da API com sucesso!');
+        return { success: true, data: response.data };
+      } else {
+        return {
+          success: false,
+          error: 'Resposta inválida da API'
+        };
+      }
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar usuário atual:', error);
+      console.error('📊 Status do erro:', error.response?.status);
+      console.error('📄 Dados do erro:', error.response?.data);
+      console.error('📝 Mensagem do erro:', error.message);
+      
+      // Se for erro 401, pode ser token inválido
+      if (error.response?.status === 401) {
+        console.warn('🚫 Token inválido ou expirado, removendo do localStorage');
+        localStorage.removeItem('auth_token');
+      }
+      
+      // Tentar método alternativo
+      console.log('🔄 Tentando método alternativo...');
+      return await this.getCurrentUserFallback();
+    }
+  },
+
+  async getCurrentUserFallback(): Promise<AuthResponse> {
+    try {
+      console.log('🔄 Método alternativo: buscando usuário por email do localStorage...');
+      
+      // Obter email do localStorage
+      const savedAuth = localStorage.getItem("smartquote_auth");
+      if (!savedAuth) {
+        return {
+          success: false,
+          error: 'Nenhum dado de usuário encontrado no localStorage'
+        };
+      }
+      
+      const authData = JSON.parse(savedAuth);
+      const userEmail = authData.user?.email;
+      
+      if (!userEmail) {
+        return {
+          success: false,
+          error: 'Email do usuário não encontrado no localStorage'
+        };
+      }
+      
+      console.log('📧 Email do usuário:', userEmail);
+      
+      // SEMPRE buscar dados atualizados da API, não usar cache do localStorage
+      console.log('🚀 Buscando dados atualizados de todos os usuários da API...');
+      const usersResponse = await this.getAll();
+      if (usersResponse.success && usersResponse.data) {
+        const users = Array.isArray(usersResponse.data) ? usersResponse.data : usersResponse.data.data || [];
+        const currentUser = users.find((user: any) => user.email === userEmail);
+        
+        if (currentUser) {
+          console.log('✅ Usuário encontrado na lista com dados atualizados:', currentUser);
+          
+          // Atualizar o localStorage com os dados mais recentes da API
+          try {
+            const updatedAuthData = {
+              ...authData,
+              user: {
+                ...authData.user,
+                ...currentUser, // Sobrescrever com dados da API
+                role: currentUser.position || currentUser.role, // Mapear position para role
+                phone: currentUser.contact || currentUser.phone, // Mapear contact para phone
+                department: currentUser.department || authData.user.department
+              }
+            };
+            localStorage.setItem("smartquote_auth", JSON.stringify(updatedAuthData));
+            console.log('✅ localStorage atualizado com dados frescos da API');
+          } catch (e) {
+            console.warn('⚠️ Erro ao atualizar localStorage:', e);
+          }
+          
+          return { success: true, data: currentUser };
+        } else {
+          console.warn('⚠️ Usuário não encontrado na lista de usuários da API');
+          // Como último recurso, retornar dados do localStorage (mas não recomendado)
+          console.log('⚠️ ATENÇÃO: Usando dados antigos do localStorage como último recurso!');
+          return { 
+            success: true, 
+            data: {
+              id: authData.user.id || 1,
+              name: authData.user.name || 'Usuário',
+              email: authData.user.email,
+              department: authData.user.department || authData.user.position || 'Sistema',
+              position: authData.user.role || authData.user.position || 'user',
+              contact: authData.user.phone || authData.user.contact
+            }
+          };
+        }
+      } else {
+        console.error('❌ Erro ao buscar lista de usuários da API:', usersResponse.error);
+        return {
+          success: false,
+          error: 'Erro ao buscar lista de usuários da API'
+        };
+      }
+    } catch (error: any) {
+      console.error('💥 Erro no método alternativo:', error);
+      return {
+        success: false,
+        error: 'Erro no método alternativo de busca'
       };
     }
   }

@@ -224,57 +224,7 @@ export function LogsPage() {
       </header>
 
       <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 lg:mb-8">
-          <div className="glass-card p-3 sm:p-4 bg-red-500/10 rounded-xl border border-red-500/20">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-red-400">{logs.filter(log => log.nivel === 'error').length}</h3>
-                <p className="text-xs text-red-300 truncate">Erros</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="glass-card p-3 sm:p-4 bg-orange-500/10 rounded-xl border border-orange-500/20">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-orange-600 flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-orange-400">{logs.filter(log => log.nivel === 'warning').length}</h3>
-                <p className="text-xs text-orange-300 truncate">Avisos</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-card p-3 sm:p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-600 flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-green-400">{logs.filter(log => log.nivel === 'success').length}</h3>
-                <p className="text-xs text-green-300 truncate">Sucessos</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-card p-3 sm:p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <Info className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-blue-400">{logs.filter(log => log.nivel === 'info').length}</h3>
-                <p className="text-xs text-blue-300 truncate">Informativos</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
+    
         {/* Filters */}
         <div className="mb-6 lg:mb-8">
           <div className="glass-card p-4 bg-white/5 rounded-xl border border-white/20">

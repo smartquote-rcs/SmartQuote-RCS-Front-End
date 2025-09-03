@@ -887,9 +887,8 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
-          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
