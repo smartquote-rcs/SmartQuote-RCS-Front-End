@@ -636,8 +636,8 @@ export const cotacaoService = {
 export const produtoService = {
   async delete(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para deletar produto (DELETE /products/${id})...`);
-      const response = await api.delete(`/products/${id}`);
+      console.log(`📤 Fazendo requisição para deletar produto (DELETE /produtos/${id})...`);
+      const response = await api.delete(`/produtos/${id}`);
       const status = response.status;
       console.log('📥 Resposta delete produto:', status, response.data);
       if (status === 200 || status === 204) {
@@ -661,8 +661,8 @@ export const produtoService = {
   },
   async forceDelete(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para deletar FORÇADO produto (DELETE /products/${id}/force)...`);
-      const response = await api.delete(`/products/${id}/force`);
+      console.log(`📤 Fazendo requisição para deletar FORÇADO produto (DELETE /produtos/${id}/force)...`);
+      const response = await api.delete(`/produtos/${id}/force`);
       const status = response.status;
       if (status === 200 || status === 204) {
         return { success: true, data: response.data || { message: 'Produto removido (forçado).' } };
@@ -678,8 +678,8 @@ export const produtoService = {
   },
   async getAll(): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para buscar produtos (GET /products)...');
-      const response = await api.get('/products');
+      console.log('📤 Fazendo requisição para buscar produtos (GET /produtos)...');
+      const response = await api.get('/produtos');
       console.log('📥 Resposta da API para produtos:', response.data);
       
       if (response.status === 200) {
@@ -750,7 +750,7 @@ export const produtoService = {
     m?: string;
   }>): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para atualizar produto (PATCH /products/${id})...`);
+      console.log(`📤 Fazendo requisição para atualizar produto (PATCH /produtos/${id})...`);
       console.log(`📊 Dados recebidos para atualização:`, productData);
       const response = await api.patch(`/produtos/${id}`, productData);
       if (response.status === 200) {
@@ -907,8 +907,8 @@ export const supplierService = {
     atualizado_por: number;
   }): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para criar fornecedor (POST /suppliers):', supplierData);
-      const response = await api.post('/suppliers', supplierData);
+      console.log('📤 Fazendo requisição para criar fornecedor (POST /fornecedores):', supplierData);
+      const response = await api.post('/fornecedores', supplierData);
       if (response.status === 201 || response.status === 200) {
         return { success: true, data: response.data };
       }
@@ -923,9 +923,9 @@ export const supplierService = {
   },
   async getAll(): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para buscar fornecedores (GET /suppliers)...');
-      const response = await api.get('/suppliers');
-      console.log('📨 Resposta da API (suppliers):', response);
+      console.log('📤 Fazendo requisição para buscar fornecedores (GET /fornecedores)...');
+      const response = await api.get('/fornecedores');
+      console.log('📨 Resposta da API (fornecedores):', response);
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro ao buscar fornecedores:', error);
@@ -938,8 +938,8 @@ export const supplierService = {
 
   async getById(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para buscar fornecedor por ID (GET /suppliers/${id})...`);
-      const response = await api.get(`/suppliers/${id}`);
+      console.log(`📤 Fazendo requisição para buscar fornecedor por ID (GET /fornecedores/${id})...`);
+      const response = await api.get(`/fornecedores/${id}`);
       console.log('📨 Resposta da API (supplier by ID):', response);
       return { success: true, data: response.data };
     } catch (error: any) {
@@ -964,8 +964,8 @@ export const supplierService = {
     rate?: number;
   }>): Promise<AuthResponse> {
     try {
-  console.log(`📤 Fazendo requisição para atualizar fornecedor (PATCH /suppliers/${id}):`, supplierData);
-  const response = await api.patch(`/suppliers/${id}`, supplierData);
+  console.log(`📤 Fazendo requisição para atualizar fornecedor (PATCH /fornecedores/${id}):`, supplierData);
+  const response = await api.patch(`/fornecedores/${id}`, supplierData);
       if (response.status === 200) {
         return { success: true, data: response.data };
       }
@@ -981,8 +981,8 @@ export const supplierService = {
 
   async delete(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para deletar fornecedor (DELETE /suppliers/${id})...`);
-      const response = await api.delete(`/suppliers/${id}`);
+      console.log(`📤 Fazendo requisição para deletar fornecedor (DELETE /fornecedores/${id})...`);
+      const response = await api.delete(`/fornecedores/${id}`);
       if (response.status === 204 || response.status === 200) {
         return { success: true, data: { message: 'Fornecedor removido com sucesso' } };
       }

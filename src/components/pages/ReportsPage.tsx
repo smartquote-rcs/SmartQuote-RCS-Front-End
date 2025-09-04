@@ -5,6 +5,11 @@ import { Card, CardContent } from "../ui/card";
 import { BarChart3, Calendar, TrendingUp, Users, ShoppingCart, Target } from "lucide-react";
 import { cotacaoService, produtoService, supplierService } from "../../api/services";
 import { useCurrency } from "../../hooks/useCurrency";
+import { 
+  exportQuotationsSummaryPdf, 
+  exportProductsSummaryPdf, 
+  exportSuppliersSummaryPdf 
+} from '../../utils/exportReportsPdf';
 
 interface ReportData {
   totalCotacoes: number;
@@ -19,7 +24,7 @@ interface ReportData {
 
 export function ReportsPage() {
   const { t } = useTranslation();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportData>({
     totalCotacoes: 0,
@@ -148,118 +153,91 @@ export function ReportsPage() {
   };
 
   // Funções para download de PDF
-  const downloadCotacoesPDF = () => {
+  const downloadCotacoesPDF = async () => {
     try {
-      const cotacoesData = {
-        total: reportData.totalCotacoes,
-        aprovadas: reportData.cotacoesAprovadas,
-        rejeitadas: reportData.cotacoesRejeitadas,
-        pendentes: reportData.cotacoesPendentes,
-        valorTotal: formatCurrency(reportData.valorTotalCotacoes),
-        valorMedio: formatCurrency(reportData.mediaValorCotacao),
-        periodo: selectedPeriod
+      console.log('🔍 Iniciando download de cotações...');
+      // Buscar dados completos de cotações da API (rota: GET /cotacoes)
+      const cotacoesResponse = await cotacaoService.getAll();
+      console.log('📥 Dados recebidos da API de cotações:', cotacoesResponse);
+      
+      let allCotacoes = [];
+      if (cotacoesResponse.success && cotacoesResponse.data) {
+        allCotacoes = Array.isArray(cotacoesResponse.data) ? cotacoesResponse.data : 
+                     Array.isArray(cotacoesResponse.data.data) ? cotacoesResponse.data.data : [];
+      }
+
+      console.log(`📊 Total de cotações encontradas:`, allCotacoes.length);
+
+      // Calcular estatísticas de status
+      const aprovadas = allCotacoes.filter((c: any) => c.status === 'aprovada' || c.aprovacao === true).length;
+      const rejeitadas = allCotacoes.filter((c: any) => c.status === 'rejeitada' || c.aprovacao === false).length;
+      const pendentes = allCotacoes.filter((c: any) => c.status === 'pendente' || c.aprovacao === null || c.aprovacao === undefined).length;
+
+      const data = {
+        aprovadas,
+        rejeitadas,
+        pendentes,
+        currency: currency.code,
+        cotacoes: allCotacoes
       };
 
-      // Criar conteúdo do PDF
-      const content = [
-        '📊 RELATÓRIO DE COTAÇÕES',
-        '═══════════════════════════════',
-        '',
-        `📅 Período: Últimos ${selectedPeriod} dias`,
-        `📈 Total de Cotações: ${cotacoesData.total}`,
-        `✅ Aprovadas: ${cotacoesData.aprovadas}`,
-        `❌ Rejeitadas: ${cotacoesData.rejeitadas}`,
-        `⏳ Pendentes: ${cotacoesData.pendentes}`,
-        `💰 Valor Total: ${cotacoesData.valorTotal}`,
-        `📊 Valor Médio: ${cotacoesData.valorMedio}`,
-        '',
-        `📅 Gerado em: ${new Date().toLocaleDateString('pt-PT')}`,
-        '═══════════════════════════════'
-      ].join('\n');
-
-      // Simular download (em produção, usar uma biblioteca como jsPDF)
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cotacoes_relatorio_${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      console.log('✅ Relatório de Cotações baixado com sucesso');
+      console.log('📄 Dados que serão enviados para o PDF:', data);
+      await exportQuotationsSummaryPdf(data);
+      console.log('✅ Relatório completo de Cotações baixado em PDF');
     } catch (error) {
       console.error('❌ Erro ao gerar relatório de cotações:', error);
     }
   };
 
-  const downloadProdutosPDF = () => {
+  const downloadProdutosPDF = async () => {
     try {
-      const content = [
-        '📦 RELATÓRIO DE PRODUTOS',
-        '═══════════════════════════════',
-        '',
-        `📅 Período: Últimos ${selectedPeriod} dias`,
-        `📦 Total de Produtos: ${reportData.totalProdutos}`,
-        `🏪 Total de Fornecedores: ${reportData.totalFornecedores}`,
-        '',
-        '📋 Status dos Produtos:',
-        '• Ativos no sistema',
-        '• Disponíveis para cotação',
-        '• Vinculados aos fornecedores',
-        '',
-        `📅 Gerado em: ${new Date().toLocaleDateString('pt-PT')}`,
-        '═══════════════════════════════'
-      ].join('\n');
+      console.log('🔍 Iniciando download de produtos...');
+      // Buscar dados completos de produtos da API (rota: GET /produtos)
+      const produtosResponse = await produtoService.getAll();
+      console.log('📥 Dados recebidos da API de produtos:', produtosResponse);
+      
+      let allProdutos = [];
+      if (produtosResponse.success && produtosResponse.data) {
+        allProdutos = Array.isArray(produtosResponse.data) ? produtosResponse.data : 
+                     Array.isArray(produtosResponse.data.data) ? produtosResponse.data.data : [];
+      }
+      
+      const data = {
+        total: allProdutos.length,
+        currency: currency.code,
+        produtos: allProdutos
+      };
 
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `produtos_relatorio_${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      console.log('✅ Relatório de Produtos baixado com sucesso');
+      console.log('📄 Dados que serão enviados para o PDF de produtos:', data);
+      await exportProductsSummaryPdf(data);
+      console.log('✅ Relatório de Produtos baixado em PDF');
     } catch (error) {
       console.error('❌ Erro ao gerar relatório de produtos:', error);
     }
   };
 
-  const downloadFornecedoresPDF = () => {
+  const downloadFornecedoresPDF = async () => {
     try {
-      const content = [
-        '🏢 RELATÓRIO DE FORNECEDORES',
-        '═══════════════════════════════',
-        '',
-        `📅 Período: Últimos ${selectedPeriod} dias`,
-        `🏢 Total de Fornecedores: ${reportData.totalFornecedores}`,
-        `📦 Total de Produtos: ${reportData.totalProdutos}`,
-        `📊 Total de Cotações: ${reportData.totalCotacoes}`,
-        '',
-        '📋 Informações dos Fornecedores:',
-        '• Fornecedores ativos',
-        '• Produtos por fornecedor',
-        '• Performance nas cotações',
-        '',
-        `📅 Gerado em: ${new Date().toLocaleDateString('pt-PT')}`,
-        '═══════════════════════════════'
-      ].join('\n');
+      console.log('🔍 Iniciando download de fornecedores...');
+      // Buscar dados completos de fornecedores da API (rota: GET /fornecedores)
+      const fornecedoresResponse = await supplierService.getAll();
+      console.log('📥 Dados recebidos da API de fornecedores:', fornecedoresResponse);
+      
+      let allFornecedores = [];
+      if (fornecedoresResponse.success && fornecedoresResponse.data) {
+        allFornecedores = Array.isArray(fornecedoresResponse.data) ? fornecedoresResponse.data : 
+                         Array.isArray(fornecedoresResponse.data.data) ? fornecedoresResponse.data.data : [];
+      }
+      
+      const data = {
+        total: allFornecedores.length,
+        currency: currency.code,
+        fornecedores: allFornecedores
+      };
 
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `fornecedores_relatorio_${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      console.log('✅ Relatório de Fornecedores baixado com sucesso');
+      console.log('📄 Dados que serão enviados para o PDF de fornecedores:', data);
+      await exportSuppliersSummaryPdf(data);
+      console.log('✅ Relatório de Fornecedores baixado em PDF');
     } catch (error) {
       console.error('❌ Erro ao gerar relatório de fornecedores:', error);
     }
@@ -424,7 +402,7 @@ export function ReportsPage() {
 
             {/* Cards de Download PDF */}
             <div className="space-y-4 sm:space-y-6">
-              {/* Total de Cotações do Mês */}
+              {/* Total de Cotações */}
               <div className="glass-card bg-dark-card border border-dark-color rounded-xl p-3 sm:p-4 lg:p-6 hover:border-cyan-400/40 transition-all duration-300 w-full">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
                   <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
@@ -432,9 +410,9 @@ export function ReportsPage() {
                       <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-dark-primary-text truncate">Total de Cotações do Mês</h3>
+                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-dark-primary-text truncate">Relatório Completo de Cotações</h3>
                       <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">{reportData.totalCotacoes} cotações registradas</p>
-                      <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-1 break-words">Aprovadas: {reportData.cotacoesAprovadas} | Rejeitadas: {reportData.cotacoesRejeitadas} | Pendentes: {reportData.cotacoesPendentes}</p>
+                      <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-1 break-words">Todas as cotações + resumo por status no final</p>
                     </div>
                   </div>
                   <button 
