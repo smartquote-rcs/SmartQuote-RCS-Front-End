@@ -1121,3 +1121,87 @@ export const jobService = {
     }
   }
 };
+
+// Serviço de Relatórios
+export const relatorioService = {
+  async gerarPDF(id: string | number) {
+    try {
+      const response = await api.post(`/relatorios/gerar/${id}`, {}, {
+        responseType: 'blob'
+      });
+      
+      // Criar um link para download do arquivo
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `cotacao_${id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao gerar relatório PDF:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao gerar relatório PDF'
+      };
+    }
+  },
+
+  async gerarExcel(id: string | number) {
+    try {
+      const response = await api.post(`/relatorios/gerar-xlsx/${id}`, {}, {
+        responseType: 'blob'
+      });
+      
+      // Criar um link para download do arquivo
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `cotacao_${id}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao gerar relatório Excel:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao gerar relatório Excel'
+      };
+    }
+  },
+
+  async gerarCSV(id: string | number) {
+    try {
+      const response = await api.post(`/relatorios/gerar-csv/${id}`, {}, {
+        responseType: 'blob'
+      });
+      
+      // Criar um link para download do arquivo
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `cotacao_${id}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Erro ao gerar relatório CSV:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao gerar relatório CSV'
+      };
+    }
+  }
+};

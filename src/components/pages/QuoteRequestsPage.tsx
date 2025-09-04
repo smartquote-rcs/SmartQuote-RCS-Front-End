@@ -1,5 +1,5 @@
 import React from "react";
-import { exportCotacao, ExportFormat } from "../../utils/exportCotacaoPdf";
+import { ExportFormat } from "../../utils/exportCotacaoPdf";
 import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../hooks/useCurrency";
 // Componente para exibir detalhes do item e submodal
@@ -286,7 +286,7 @@ import {
   SortDesc,
   Plus,
 } from "lucide-react";
-import { cotacaoService } from "../../api/services";
+import { cotacaoService, relatorioService } from "../../api/services";
 import api from '../../api/client';
 
 interface QuoteRequestsPageProps {
@@ -511,16 +511,76 @@ export function QuoteRequestsPage({
   const [cotacaoItens, setCotacaoItens] = useState<any[]>([]);
   // Modal de erro PDF
   const [pdfErrorModal, setPdfErrorModal] = useState<{open: boolean; message: string}>({open: false, message: ""});
-  // Estado para formato de exportação
-  const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
-  // Função para exportar cotação no formato escolhido
-  const handleExportCotacao = () => {
+  
+  // Modal de escolha de formato de download
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  
+  // Estado para formato de exportação (removido pois não está sendo usado)
+  // const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
+
+  // Função para exportar cotação no formato escolhido (removida pois não está sendo usada)
+  // const handleExportCotacao = () => {
+
+  // Função para exportar cotação com formato específico (usada pelo modal de download)
+  const handleDownloadWithFormat = async (format: ExportFormat) => {
     if (!selectedCotacao) return;
-    if (!cotacaoItens || cotacaoItens.length === 0) {
-      setPdfErrorModal({open: true, message: "Não há itens para exportar nesta cotação."});
-      return;
+    
+    try {
+      let response;
+      
+      switch (format) {
+        case 'pdf':
+          response = await relatorioService.gerarPDF(selectedCotacao.id);
+          break;
+        case 'xlsx':
+          response = await relatorioService.gerarExcel(selectedCotacao.id);
+          break;
+        case 'csv':
+          response = await relatorioService.gerarCSV(selectedCotacao.id);
+          break;
+        default:
+          throw new Error('Formato não suportado');
+      }
+      
+      if (response.success) {
+        // Download iniciado com sucesso
+        window.dispatchEvent(new CustomEvent('toast', { 
+          detail: { 
+            type: 'success', 
+            message: `Download ${format.toUpperCase()} iniciado com sucesso!` 
+          } 
+        }));
+      } else {
+        // Erro no download
+        window.dispatchEvent(new CustomEvent('toast', { 
+          detail: { 
+            type: 'error', 
+            message: response.error || `Erro ao baixar ${format.toUpperCase()}` 
+          } 
+        }));
+      }
+    } catch (error) {
+      console.error('Erro no download:', error);
+      window.dispatchEvent(new CustomEvent('toast', { 
+        detail: { 
+          type: 'error', 
+          message: `Erro ao processar download ${format.toUpperCase()}` 
+        } 
+      }));
     }
-    exportCotacao({ cotacao: selectedCotacao, itens: cotacaoItens, format: exportFormat });
+    
+    setIsDownloadModalOpen(false);
+  };
+
+  // Função para abrir o modal de download
+  const handleOpenDownloadModal = () => {
+    setIsDownloadModalOpen(true);
+  };
+
+  // Função para lidar com download de uma cotação específica
+  const handleDownload = (cotacao: any) => {
+    setSelectedCotacao(cotacao);
+    setIsDownloadModalOpen(true);
   };
 
   // Função para buscar itens da cotação (usada também como callback de atualização)
@@ -648,9 +708,11 @@ export function QuoteRequestsPage({
   const QuoteCard = React.memo(({
     cotacao,
     onViewDetails,
+    onDownload,
   }: {
     cotacao: any;
     onViewDetails: (id: string) => void;
+    onDownload: (cotacao: any) => void;
   }) => (
   <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-3 sm:p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300 group relative w-full max-w-screen overflow-x-auto">
       {/* Borda lateral de status */}
@@ -794,9 +856,13 @@ export function QuoteRequestsPage({
                   <Eye className="w-3 h-3" />
                   <span>Visualizar</span>
                 </button>
-                <button className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400" aria-label="Baixar PDF">
+                <button 
+                  onClick={() => onDownload(cotacao)}
+                  className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400" 
+                  aria-label="Download"
+                >
                   <Download className="w-3 h-3" />
-                  <span>PDF</span>
+                  <span>Download</span>
                 </button>
                 <button
                   onClick={() => openApproval(String(cotacao.id),'set_pending')}
@@ -842,7 +908,7 @@ export function QuoteRequestsPage({
       return (c: any) => c.aprovacao === true;
     }
     if (tab === 'rejected') {
-      return (c: any) => false; // Sem rejeitados por enquanto
+      return () => false; // Sem rejeitados por enquanto
     }
     // Todas
     return () => true;
@@ -1239,6 +1305,7 @@ export function QuoteRequestsPage({
                               key={cotacao.id}
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
+                              onDownload={handleDownload}
                             />
                           ))}
                         </div>
@@ -1250,6 +1317,7 @@ export function QuoteRequestsPage({
                               key={cotacao.id}
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
+                              onDownload={handleDownload}
                             />
                           ))}
                         </div>
@@ -1261,6 +1329,7 @@ export function QuoteRequestsPage({
                               key={cotacao.id}
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
+                              onDownload={handleDownload}
                             />
                           ))}
                         </div>
@@ -1382,23 +1451,13 @@ export function QuoteRequestsPage({
           <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-2 sm:p-4 border border-white/10 mt-6">
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full">
               <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-                <select
-                  className="bg-slate-800 border border-slate-600 text-slate-200 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  value={exportFormat}
-                  onChange={e => setExportFormat(e.target.value as ExportFormat)}
-                  aria-label="Selecionar formato de exportação"
-                >
-                  <option value="pdf">PDF</option>
-                  <option value="xlsx">Excel</option>
-                  <option value="csv">CSV</option>
-                </select>
                 <button
                   className="w-full sm:w-auto bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-400 border border-blue-500/50 hover:border-blue-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm"
-                  onClick={handleExportCotacao}
-                  aria-label="Baixar cotação"
+                  onClick={handleOpenDownloadModal}
+                  aria-label="Download da cotação"
                 >
                   <Download className="h-4 w-4" />
-                  {exportFormat === 'pdf' ? t("quoteRequests.downloadPdf") : exportFormat === 'xlsx' ? t("quoteRequests.downloadExcel") : t("quoteRequests.downloadCsv")}
+                  Download
                 </button>
               </div>
       {/* Modal de erro ao exportar PDF */}
@@ -1428,6 +1487,54 @@ export function QuoteRequestsPage({
                 {t("quoteRequests.sendEmail")}
               </button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Escolha de Formato de Download */}
+      <Dialog open={isDownloadModalOpen} onOpenChange={setIsDownloadModalOpen}>
+        <DialogContent className="w-full max-w-md bg-slate-900/95 border border-cyan-400/30 p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+              <Download className="h-5 w-5 text-cyan-400" />
+              Escolha o formato de download
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 text-sm">
+              Selecione o formato em que deseja baixar esta cotação:
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 mt-4">
+            <button
+              onClick={() => handleDownloadWithFormat('pdf')}
+              className="w-full bg-red-600/20 hover:bg-red-600/40 hover:border-red-400/60 border border-red-500/30 text-red-400 hover:text-red-300 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium hover:scale-105"
+            >
+              <FileText className="w-5 h-5" />
+              <span>Baixar como PDF</span>
+            </button>
+            
+            <button
+              onClick={() => handleDownloadWithFormat('xlsx')}
+              className="w-full bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium hover:scale-105"
+            >
+              <FileText className="w-5 h-5" />
+              <span>Baixar como Excel</span>
+            </button>
+            
+            <button
+              onClick={() => handleDownloadWithFormat('csv')}
+              className="w-full bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium hover:scale-105"
+            >
+              <FileText className="w-5 h-5" />
+              <span>Baixar como CSV</span>
+            </button>
+            
+            <button
+              onClick={() => setIsDownloadModalOpen(false)}
+              className="w-full bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 px-4 py-2 rounded-lg transition-all duration-200 font-medium border border-slate-600/60"
+            >
+              Cancelar
+            </button>
           </div>
         </DialogContent>
       </Dialog>
