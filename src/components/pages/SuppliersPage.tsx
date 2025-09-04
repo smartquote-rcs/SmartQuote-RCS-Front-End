@@ -13,9 +13,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import { SearchCheck, Building, Phone, Mail, Download, Plus, RefreshCw, Edit, Trash2, X, CheckCircle, AlertTriangle } from "lucide-react";
+import { SearchCheck, Building, Phone, Mail, Plus, RefreshCw, Edit, Trash2, X, CheckCircle, AlertTriangle } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
-import { exportSuppliersPdf } from "../../utils/exportSuppliersPdf";
 import { EditSupplierModal } from "../EditSupplierModal";
 import { CreateSupplierModal } from "../CreateSupplierModal";
 import { Supplier } from "../../types/index";
@@ -206,15 +205,6 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
   // Função para recarregar a lista de fornecedores
   const handleRefreshSuppliers = async () => {
     await loadSuppliers();
-  };
-
-  const handleExportPdf = () => {
-    try {
-      exportSuppliersPdf(suppliers, { companyName: 'RCS', username: (user as any)?.name || 'Usuário' });
-    } catch (e) {
-      console.error('Erro ao exportar PDF fornecedores:', e);
-      showToast('error', t('suppliers.exportError'), t('suppliers.exportErrorMessage'));
-    }
   };
 
   // Função para editar fornecedor
@@ -462,10 +452,6 @@ export function SuppliersPage({ user }: SuppliersPageProps) {
                   <span>{t('suppliers.newSupplier')}</span>
                 </button>
               )}
-              <button onClick={handleExportPdf} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm min-w-[160px] h-[44px]">
-                <Download className="w-4 h-4" />
-                <span>{t('suppliers.exportPdf')}</span>
-              </button>
             </div>
       {/* Modal de edição de fornecedor */}
       <EditSupplierModal
