@@ -1,5 +1,5 @@
   // Função universal para substituir item por produto local ou web
-  async function handleReplaceUniversal(produto: any, item: any, sugeridosWeb: any[], setReplaceLoading: any, setReplaceError: any, setReplaceSuccess: any, onItemReplaced: any, t: any) {
+  async function handleReplaceUniversal(produto: any, item: any, setReplaceLoading: any, setReplaceError: any, setReplaceSuccess: any, onItemReplaced: any, t: any) {
     setReplaceLoading(true);
     setReplaceError("");
     setReplaceSuccess("");
@@ -63,8 +63,6 @@
         // Se o item tinha status false, atualiza para true
         if (item.status === false) {
           item.status = true;
-          // Força re-render do componente
-          if (typeof setItemStatus === 'function') setItemStatus(true);
         }
         if (onItemReplaced) onItemReplaced();
       } else {
@@ -75,7 +73,6 @@
     }
     setReplaceLoading(false);
   }
-import { API_BASE_URL } from '../../api/client';
 import React from "react";
 import { ExportFormat } from "../../utils/exportCotacaoPdf";
 import { useTranslation } from "react-i18next";
@@ -85,8 +82,6 @@ import { useCurrency } from "../../hooks/useCurrency";
 type ItemDetalheCardProps = { item: any, onItemReplaced?: () => void };
 
 const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
-  // Estado local para refletir status visual imediatamente
-  const [itemStatus, setItemStatus] = React.useState(item.status);
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
   const [open, setOpen] = React.useState(false);
@@ -128,7 +123,7 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
   );
 
   return (
-  <div className={`border rounded-xl p-3 sm:p-4 md:p-6 flex flex-col gap-3 sm:gap-4 shadow-lg text-sm sm:text-base md:text-lg w-full overflow-hidden ${itemStatus === false ? 'bg-red-900/60 border-red-500/60 text-red-200' : 'bg-slate-800/60 border-cyan-900/30 text-white'}`}>
+  <div className={`border rounded-xl p-3 sm:p-4 md:p-6 flex flex-col gap-3 sm:gap-4 shadow-lg text-sm sm:text-base md:text-lg w-full overflow-hidden ${item.status === false ? 'bg-red-900/60 border-red-500/60 text-red-200' : 'bg-slate-800/60 border-cyan-900/30 text-white'}`}>
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="text-white font-semibold text-sm sm:text-base break-words">
@@ -219,7 +214,7 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
                 <button
                   key={prod.id}
                   className="w-full text-left px-4 py-3 hover:bg-cyan-800/30 rounded text-cyan-200 text-base flex items-center gap-2 transition-all break-words min-h-[44px]"
-                  onClick={() => handleReplaceUniversal(prod, item, sugeridosWeb, setReplaceLoading, setReplaceError, setReplaceSuccess, onItemReplaced, t)}
+                  onClick={() => handleReplaceUniversal(prod, item, setReplaceLoading, setReplaceError, setReplaceSuccess, onItemReplaced, t)}
                   disabled={replaceLoading}
                 >
                   <Search className="w-4 h-4 text-cyan-400 flex-shrink-0" />
@@ -238,7 +233,7 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
                 <button
                   key={prod.url || prod.id || idx}
                   className="w-full text-left px-4 py-3 hover:bg-blue-800/30 rounded text-blue-200 text-base flex items-center gap-2 transition-all break-words min-h-[44px]"
-                  onClick={() => handleReplaceUniversal(prod, item, sugeridosWeb, setReplaceLoading, setReplaceError, setReplaceSuccess, onItemReplaced, t)}
+                  onClick={() => handleReplaceUniversal(prod, item, setReplaceLoading, setReplaceError, setReplaceSuccess, onItemReplaced, t)}
                   disabled={replaceLoading}
                 >
                   <Search className="w-4 h-4 text-blue-400 flex-shrink-0" />
@@ -411,19 +406,6 @@ const getStatusBadge = (cotacao: any) => {
   }
 };
 
-const getPriorityBadge = (priority: string) => {
-  switch (priority) {
-    case "high":
-      return <Badge className="bg-red-500 text-white text-xs">Alta</Badge>;
-    case "medium":
-      return <Badge className="bg-yellow-500 text-white text-xs">Média</Badge>;
-    case "low":
-      return <Badge className="bg-green-500 text-white text-xs">Baixa</Badge>;
-    default:
-      return <Badge className="text-xs">{priority}</Badge>;
-  }
-};
-
 const getStatusIcon = (cotacao: any) => {
   const status = getStatusFromAprovacao(cotacao);
   if (status === "approved") {
@@ -431,105 +413,6 @@ const getStatusIcon = (cotacao: any) => {
   } else {
     return <AlertTriangle className="w-4 h-4 text-orange-400" />;
   }
-};
-
-// Sistema de Validação por Valor
-const getValidationLevel = (valor: string | number) => {
-  let numericValue = 0;
-  if (typeof valor === 'number') {
-    numericValue = valor;
-  } else if (typeof valor === 'string') {
-    // Remove caracteres não numéricos e converte para número
-    const cleaned = valor.replace(/[^\d,\.]/g, '').replace(/\./g, '').replace(/,/g, '.');
-    numericValue = parseFloat(cleaned) || 0;
-  } else {
-    numericValue = 0;
-  }
-
-  if (numericValue >= 2000000) {
-    return {
-      level: "executive",
-      approver: "Direção Executiva",
-      description: "Aprovação da Direção Executiva",
-      color: "red",
-      icon: "🔴",
-      requiresMultipleApprovals: true,
-      approvers: ["CEO", "CFO", "Gestor Comercial"],
-    };
-  } else if (numericValue >= 500000) {
-    return {
-      level: "director",
-      approver: "Gestor Comercial",
-      description: "Aprovação do Gestor Comercial",
-      color: "orange",
-      icon: "🟠",
-      requiresMultipleApprovals: false,
-      approvers: ["Gestor Comercial"],
-    };
-  } else if (numericValue >= 100000) {
-    return {
-      level: "manager",
-      approver: "Gestor Regional",
-      description: "Aprovação do Gestor",
-      color: "yellow",
-      icon: "🟡",
-      requiresMultipleApprovals: false,
-      approvers: ["Gestor Regional"],
-    };
-  } else if (numericValue >= 10000) {
-    return {
-      level: "supervisor",
-      approver: "Supervisor",
-      description: "Aprovação do Supervisor",
-      color: "blue",
-      icon: "🔵",
-      requiresMultipleApprovals: false,
-      approvers: ["Supervisor"],
-    };
-  } else {
-    return {
-      level: "standard",
-      approver: "Aprovação Automática",
-      description: "Aprovação Padrão",
-      color: "green",
-      icon: "🟢",
-      requiresMultipleApprovals: false,
-      approvers: ["Sistema"],
-    };
-  }
-};
-
-// Função para verificar se uma cotação precisa de aprovação especial
-const needsSpecialApproval = (valor: string) => {
-  const validation = getValidationLevel(valor);
-  return validation.level === "executive" || validation.level === "director";
-};
-
-// Função para obter status da validação
-const getValidationStatus = (cotacao: any) => {
-  const validation = getValidationLevel(cotacao.valor);
-
-  if (validation.requiresMultipleApprovals) {
-    // Para valores altos, verificar se todas as aprovações necessárias estão completas
-    const approvedBy = cotacao.approvedBy || [];
-    const pendingApprovals = validation.approvers.filter(
-      (approver) => !approvedBy.includes(approver)
-    );
-
-    return {
-      ...validation,
-      isFullyApproved: pendingApprovals.length === 0,
-      pendingApprovals,
-      approvedBy,
-    };
-  }
-
-  return {
-    ...validation,
-    isFullyApproved: cotacao.aprovacao === true,
-    pendingApprovals: cotacao.aprovacao === true ? [] : validation.approvers,
-    approvedBy: cotacao.aprovacao === true ? validation.approvers : [],
-  };
 };
 
 export function QuoteRequestsPage({

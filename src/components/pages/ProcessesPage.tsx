@@ -5,7 +5,6 @@ import { Button } from '../ui/button';
 import { 
   Clock, 
   Eye, 
-  FileText, 
   CheckCircle,
   XCircle,
   AlertCircle,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import { ProcessDetailsPage } from './ProcessDetailsPage';
 import { jobService } from '../../api/services';
+import { API_BASE_URL } from '../../api/client';
 
 interface QuoteJob {
   id: string;

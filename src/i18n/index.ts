@@ -198,7 +198,7 @@ const ptTranslations = {
       loginLogs: "Logs de Login",
       reports: "Relatórios",
       workflow: "Configuração de Workflow",
-      dataManagement: "Gestão de Dados",
+      dataManagement: "Ajuda",
       userManagement: "Gestão de Usuários"
     },
     dashboard: {
@@ -213,7 +213,7 @@ const ptTranslations = {
       suppliersDesc: "Gerenciar parceiros",
       reportsDesc: "Análises e estatísticas",
       quotesInSystem: "cotações no sistema",
-      dataManagementDesc: "Administração avançada de dados do sistema",
+      dataManagementDesc: "Centro de ajuda e suporte do sistema",
       stored: "armazenados",
       storedData: "Dados Armazenados"
     }
@@ -927,7 +927,7 @@ const enTranslations = {
       logs: "System Logs",
       reports: "Reports",
       workflow: "Workflow Configuration",
-      dataManagement: "Data Management",
+      dataManagement: "Help",
       userManagement: "User Management"
     },
     dashboard: {
@@ -942,7 +942,7 @@ const enTranslations = {
       suppliersDesc: "Manage partners",
       reportsDesc: "Analytics and statistics",
       quotesInSystem: "quotes in system",
-      dataManagementDesc: "Advanced system data administration",
+      dataManagementDesc: "Help center and system support",
       stored: "stored",
       storedData: "Stored Data"
     }
