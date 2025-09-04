@@ -916,7 +916,8 @@ export function QuoteRequestsPage({
 
   // Função para obter o total de páginas da aba ativa
   const getTotalPages = () => {
-    const filtered = cotacoesList.filter(getTabFilter(activeTab));
+    // Primeiro aplica os filtros de pesquisa, depois o filtro da aba
+    const filtered = filteredCotacoes.filter(getTabFilter(activeTab));
     return Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   };
 
@@ -1025,19 +1026,19 @@ export function QuoteRequestsPage({
                 value="all"
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                {t("quoteRequests.allTab")} ({cotacoesList.length})
+                {t("quoteRequests.allTab")} ({filteredCotacoes.length})
               </TabsTrigger>
               <TabsTrigger
                 value="pending"
                 className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-orange-500/20 hover:text-orange-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                {t("quoteRequests.pendingTab")} ({cotacoesList.filter(getTabFilter('pending')).length})
+                {t("quoteRequests.pendingTab")} ({filteredCotacoes.filter(getTabFilter('pending')).length})
               </TabsTrigger>
               <TabsTrigger
                 value="approved"
                 className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-green-500/20 hover:text-green-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
               >
-                {t("quoteRequests.approvedTab")} ({cotacoesList.filter(getTabFilter('approved')).length})
+                {t("quoteRequests.approvedTab")} ({filteredCotacoes.filter(getTabFilter('approved')).length})
               </TabsTrigger>
             </TabsList>
 
@@ -1291,7 +1292,8 @@ export function QuoteRequestsPage({
                 {/* Funções para filtrar e paginar por aba */}
                 {(() => {
                   const getPaginated = (tab: string) => {
-                    const filtered = cotacoesList.filter(getTabFilter(tab));
+                    // Primeiro aplica os filtros de pesquisa, depois o filtro da aba
+                    const filtered = filteredCotacoes.filter(getTabFilter(tab));
                     const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
                     const page = Math.min(currentPage, totalPages);
                     return filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
