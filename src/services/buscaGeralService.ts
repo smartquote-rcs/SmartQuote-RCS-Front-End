@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../api/client';
 // Serviço para busca geral usando IA
 export interface BuscaGeralRequest {
   solicitacao: string;
@@ -22,7 +23,7 @@ export interface BuscaGeralResponse {
 }
 
 class BuscaGeralService {
-  private readonly baseUrl = 'http://localhost:2000/api';
+  private readonly baseUrl = API_BASE_URL;
 
   async buscarGeral(solicitacao: string): Promise<BuscaGeralResponse> {
     try {

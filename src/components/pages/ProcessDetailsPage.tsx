@@ -84,7 +84,7 @@ export function ProcessDetailsPage({ jobId, onBack, onDelete }: ProcessDetailsPa
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://localhost:2000/api/busca-automatica/job/${id}`);
+  const response = await fetch(`${API_BASE_URL}/busca-automatica/job/${id}`);
       if (!response.ok) throw new Error('Erro ao buscar detalhes do processo');
       
       const data = await response.json();

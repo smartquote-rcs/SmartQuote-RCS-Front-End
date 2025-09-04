@@ -73,7 +73,7 @@ interface QuoteJob {
 // Função para buscar jobs da API
 async function fetchJobs(): Promise<QuoteJob[]> {
   try {
-    const response = await fetch('http://localhost:2000/api/busca-automatica/jobs/');
+  const response = await fetch(`${API_BASE_URL}/busca-automatica/jobs/`);
     if (!response.ok) throw new Error('Erro ao buscar processos');
     const data = await response.json();
     

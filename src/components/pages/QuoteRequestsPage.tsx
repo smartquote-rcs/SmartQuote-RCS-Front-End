@@ -1,3 +1,81 @@
+  // Função universal para substituir item por produto local ou web
+  async function handleReplaceUniversal(produto: any, item: any, sugeridosWeb: any[], setReplaceLoading: any, setReplaceError: any, setReplaceSuccess: any, onItemReplaced: any, t: any) {
+    setReplaceLoading(true);
+    setReplaceError("");
+    setReplaceSuccess("");
+    try {
+      let productId = produto.id;
+      // Se produto web já tem id, trata como local
+      if (!productId) {
+        // Se não tem id, aí sim cria produto web
+        let precoNum = 0;
+        if (typeof produto.preco === 'number') {
+          precoNum = produto.preco;
+        } else if (typeof produto.preco === 'string') {
+          precoNum = parseFloat(produto.preco.replace(/[^\d.,]/g, '').replace(/\./g, '').replace(/,/g, '.')) || 0;
+        }
+        const productData = {
+          fornecedor_id: produto.fornecedor_id || 1,
+          codigo: produto.codigo && produto.codigo.trim() ? produto.codigo : "web-" + Date.now(),
+          nome: produto.nome && produto.nome.trim() ? produto.nome : "Produto Web",
+          modelo: produto.modelo && produto.modelo.trim() ? produto.modelo : "N/A",
+          descricao: produto.descricao && produto.descricao.trim() ? produto.descricao : produto.nome || "Produto importado da web",
+          preco: precoNum || 0,
+          unidade: produto.unidade || "un",
+          estoque: produto.estoque || 200,
+          origem: "externo" as "externo",
+          image_url: produto.image_url && produto.image_url.trim() ? produto.image_url : "https://example.com/produto-web-image.png",
+          produto_url: produto.url && produto.url.trim() ? produto.url : "https://example.com/produto-web",
+          categoria: produto.categoria || null,
+          tags: produto.tags || [],
+          disponibilidade: produto.disponibilidade || "imediata",
+          especificacoes_tecnicas: produto.especificacoes_tecnicas || {},
+          cadastrado_por: 1,
+          cadastrado_em: new Date().toISOString(),
+          atualizado_por: 1,
+          atualizado_em: new Date().toISOString(),
+        };
+        const { create } = await import('../../api/services').then(m => m.produtoService);
+  const createRes = await create(productData);
+  console.log('Resposta da API ao criar produto web:', createRes);
+        console.log('DEBUG createRes:', createRes);
+        console.log('DEBUG createRes.data:', createRes.data);
+        const newId = createRes.data?.data?.id;
+        if (createRes.success && newId) {
+            productId = newId;
+        } else {
+          let errMsg = '';
+          if (typeof createRes.error === 'object') {
+            errMsg = JSON.stringify(createRes.error);
+          } else {
+            errMsg = String(createRes.error || 'Erro desconhecido.');
+          }
+          setReplaceError('Erro ao criar produto web: ' + errMsg);
+          setReplaceLoading(false);
+          return;
+        }
+      }
+      // Chama o replace
+      const { replaceProduct } = await import('../../api/services').then(m => m.produtoService);
+      const res = await replaceProduct(item.id, productId);
+      if (res.success) {
+        setReplaceSuccess(`${t("quoteRequests.itemReplacedSuccess")} (ID usado: ${productId})`);
+        // Se o item tinha status false, atualiza para true
+        if (item.status === false) {
+          item.status = true;
+          // Força re-render do componente
+          if (typeof setItemStatus === 'function') setItemStatus(true);
+        }
+        if (onItemReplaced) onItemReplaced();
+      } else {
+        setReplaceError(`${res.error || t("quoteRequests.errorReplacingItem")}. (ID usado: ${productId})`);
+      }
+    } catch (e) {
+      setReplaceError(t("quoteRequests.errorReplacingItem"));
+    }
+    setReplaceLoading(false);
+  }
+import { API_BASE_URL } from '../../api/client';
 import React from "react";
 import { ExportFormat } from "../../utils/exportCotacaoPdf";
 import { useTranslation } from "react-i18next";
@@ -5,64 +83,52 @@ import { useCurrency } from "../../hooks/useCurrency";
 // Componente para exibir detalhes do item e submodal
 
 type ItemDetalheCardProps = { item: any, onItemReplaced?: () => void };
+
 const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
+  // Estado local para refletir status visual imediatamente
+  const [itemStatus, setItemStatus] = React.useState(item.status);
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
-  const [open, setOpen] = useState(false);
-  const [showReplace, setShowReplace] = useState(false);
-  const [produtos, setProdutos] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
-  const [loadingProdutos, setLoadingProdutos] = useState(false);
-  const [replaceLoading, setReplaceLoading] = useState(false);
-  const [replaceError, setReplaceError] = useState("");
-  const [replaceSuccess, setReplaceSuccess] = useState("");
+  const [open, setOpen] = React.useState(false);
+  const [showReplace, setShowReplace] = React.useState(false);
+  const [sugeridosLocal, setSugeridosLocal] = React.useState<any[]>([]);
+  const [sugeridosWeb, setSugeridosWeb] = React.useState<any[]>([]);
+  const [search, setSearch] = React.useState("");
+  const [loadingSugeridos, setLoadingSugeridos] = React.useState(false);
+  const [replaceLoading, setReplaceLoading] = React.useState(false);
+  const [replaceError, setReplaceError] = React.useState("");
+  const [replaceSuccess, setReplaceSuccess] = React.useState("");
 
-  // Buscar produtos ao abrir combobox
-  const fetchProdutos = async () => {
-    setLoadingProdutos(true);
+  // Buscar sugestões locais e web ao abrir modal
+  const fetchSugeridos = async () => {
+    console.log('fetchSugeridos chamado para item.id:', item.id);
+    setLoadingSugeridos(true);
     setReplaceError("");
     try {
-      const res = await import('../../api/services').then(m => m.produtoService.getAll());
-      if (res.success && Array.isArray(res.data?.data)) {
-        setProdutos(res.data.data);
-      } else {
-        setReplaceError(t("quoteRequests.errorFetchingProducts"));
-      }
+      const api = (await import('../../api/client')).default;
+      const [localRes, webRes] = await Promise.all([
+        api.get(`/cotacoes-itens/sugeridos/local/${item.id}`).then(r => r.data),
+        api.get(`/cotacoes-itens/sugeridos/web/${item.id}`).then(r => r.data)
+      ]);
+      setSugeridosLocal(Array.isArray(localRes) ? localRes : []);
+      setSugeridosWeb(Array.isArray(webRes) ? webRes : []);
     } catch (e) {
       setReplaceError(t("quoteRequests.errorFetchingProducts"));
     }
-    setLoadingProdutos(false);
+    setLoadingSugeridos(false);
   };
 
-  const handleReplace = async (newProductId: number) => {
-    setReplaceLoading(true);
-    setReplaceError("");
-    setReplaceSuccess("");
-    try {
-      const res = await import('../../api/services').then(m => m.produtoService.replaceProduct(item.id, newProductId));
-      if (res.success) {
-        setReplaceSuccess(t("quoteRequests.itemReplacedSuccess"));
-        setTimeout(() => {
-          setShowReplace(false);
-          setReplaceSuccess("");
-          if (onItemReplaced) onItemReplaced();
-        }, 800);
-      } else {
-        setReplaceError(res.error || t("quoteRequests.errorReplacingItem"));
-      }
-    } catch (e) {
-      setReplaceError(t("quoteRequests.errorReplacingItem"));
-    }
-    setReplaceLoading(false);
-  };
 
   // Filtro de produtos
-  const produtosFiltrados = produtos.filter(p =>
+  const sugeridosLocalFiltrados = sugeridosLocal.filter(p =>
+    p.nome?.toLowerCase().includes(search.toLowerCase())
+  );
+  const sugeridosWebFiltrados = sugeridosWeb.filter(p =>
     p.nome?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div className="bg-slate-800/60 border border-cyan-900/30 rounded-xl p-3 sm:p-4 md:p-6 flex flex-col gap-3 sm:gap-4 shadow-lg text-sm sm:text-base md:text-lg w-full overflow-hidden">
+  <div className={`border rounded-xl p-3 sm:p-4 md:p-6 flex flex-col gap-3 sm:gap-4 shadow-lg text-sm sm:text-base md:text-lg w-full overflow-hidden ${itemStatus === false ? 'bg-red-900/60 border-red-500/60 text-red-200' : 'bg-slate-800/60 border-cyan-900/30 text-white'}`}>
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="text-white font-semibold text-sm sm:text-base break-words">
@@ -100,12 +166,22 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
             >
               {t("quoteRequests.itemDetails")}
             </button>
-            <button 
-              onClick={() => { setShowReplace(v => !v); if (!produtos.length) fetchProdutos(); }} 
-              className="flex-1 sm:flex-none bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border border-blue-700/40 px-2 sm:px-3 py-1 sm:py-1 rounded text-xs font-semibold transition-all min-h-[32px] sm:min-h-auto"
-            >
-              {t("quoteRequests.replaceItem")}
-            </button>
+            {item.status === true && (
+              <button 
+                onClick={() => { setShowReplace(v => { if (!v) fetchSugeridos(); return !v; }); }} 
+                className="flex-1 sm:flex-none bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border border-blue-700/40 px-2 sm:px-3 py-1 sm:py-1 rounded text-xs font-semibold transition-all min-h-[32px] sm:min-h-auto"
+              >
+                {t("quoteRequests.replaceItem")}
+              </button>
+            )}
+            {item.status === false && (
+              <button 
+                onClick={() => { setShowReplace(v => { if (!v) fetchSugeridos(); return !v; }); }} 
+                className="flex-1 sm:flex-none bg-green-900/30 hover:bg-green-700/40 text-green-300 border border-green-700/40 px-2 sm:px-3 py-1 sm:py-1 rounded text-xs font-semibold transition-all min-h-[32px] sm:min-h-auto"
+              >
+                Adicionar Item
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -117,36 +193,59 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
           : item.item_descricao}
       </div>
       {showReplace && (
-        <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-slate-900/90 border border-cyan-700/30 rounded-xl w-full overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="mt-3 sm:mt-4 p-6 sm:p-8 bg-slate-900/90 border border-cyan-700/30 rounded-2xl w-full overflow-hidden min-h-[400px] max-h-[80vh]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4">
             <input
               type="text"
-              className="flex-1 px-3 sm:px-4 py-2 rounded-lg bg-slate-800 text-white border border-cyan-700/30 focus:border-cyan-400 outline-none text-sm sm:text-base min-w-0"
+              className="flex-1 px-4 py-3 rounded-xl bg-slate-800 text-white border border-cyan-700/30 focus:border-cyan-400 outline-none text-base min-w-0"
               placeholder={t("quoteRequests.searchProduct")}
               value={search}
               onChange={e => setSearch(e.target.value)}
-              disabled={loadingProdutos}
+              disabled={loadingSugeridos}
             />
-            <Search className="w-5 h-5 text-cyan-400 flex-shrink-0 self-center sm:self-auto" />
+            <Search className="w-5 h-5 text-cyan-400" />
           </div>
-          {replaceError && <div className="text-red-400 text-sm mb-2 break-words">{replaceError}</div>}
-          {replaceSuccess && <div className="text-green-400 text-sm sm:text-base mb-2 animate-pulse break-words">{replaceSuccess}</div>}
-          <div className="max-h-60 sm:max-h-72 overflow-y-auto divide-y divide-slate-800">
-            {loadingProdutos ? (
-              <div className="text-slate-400 text-sm sm:text-base p-3 sm:p-4 text-center">{t("quoteRequests.loadingProducts")}</div>
-            ) : produtosFiltrados.length === 0 ? (
-              <div className="text-slate-400 text-sm sm:text-base p-3 sm:p-4 text-center">{t("quoteRequests.noProductsFound")}</div>
-            ) : produtosFiltrados.map(prod => (
-              <button
-                key={prod.id}
-                className="w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-cyan-800/30 rounded text-cyan-200 text-sm sm:text-base flex items-center gap-2 transition-all break-words min-h-[44px]"
-                onClick={() => handleReplace(prod.id)}
-                disabled={replaceLoading}
-              >
-                <Search className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400 flex-shrink-0" /> 
-                <span className="break-words">{prod.nome}</span>
-              </button>
-            ))}
+          {replaceError && <div className="text-red-400 text-base mb-3 break-words">{replaceError}</div>}
+          {replaceSuccess && <div className="text-green-400 text-base mb-3 animate-pulse break-words">{replaceSuccess}</div>}
+          <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-800 flex flex-col gap-6">
+            {/* SUGESTÕES LOCAIS */}
+            <div>
+              <h3 className="text-cyan-300 text-lg font-bold mb-2">Sugestões Locais</h3>
+              {loadingSugeridos ? (
+                <div className="text-slate-400 text-base p-4 text-center">{t("quoteRequests.loadingProducts")}</div>
+              ) : sugeridosLocalFiltrados.length === 0 ? (
+                <div className="text-slate-400 text-base p-4 text-center">Nenhum produto local encontrado.</div>
+              ) : sugeridosLocalFiltrados.map(prod => (
+                <button
+                  key={prod.id}
+                  className="w-full text-left px-4 py-3 hover:bg-cyan-800/30 rounded text-cyan-200 text-base flex items-center gap-2 transition-all break-words min-h-[44px]"
+                  onClick={() => handleReplaceUniversal(prod, item, sugeridosWeb, setReplaceLoading, setReplaceError, setReplaceSuccess, onItemReplaced, t)}
+                  disabled={replaceLoading}
+                >
+                  <Search className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                  <span className="break-words">{prod.nome}</span>
+                </button>
+              ))}
+            </div>
+            {/* SUGESTÕES WEB */}
+            <div>
+              <h3 className="text-blue-300 text-lg font-bold mb-2">Sugestões Web</h3>
+              {loadingSugeridos ? (
+                <div className="text-slate-400 text-base p-4 text-center">{t("quoteRequests.loadingProducts")}</div>
+              ) : sugeridosWebFiltrados.length === 0 ? (
+                <div className="text-slate-400 text-base p-4 text-center">Nenhum produto web encontrado.</div>
+              ) : sugeridosWebFiltrados.map((prod, idx) => (
+                <button
+                  key={prod.url || prod.id || idx}
+                  className="w-full text-left px-4 py-3 hover:bg-blue-800/30 rounded text-blue-200 text-base flex items-center gap-2 transition-all break-words min-h-[44px]"
+                  onClick={() => handleReplaceUniversal(prod, item, sugeridosWeb, setReplaceLoading, setReplaceError, setReplaceSuccess, onItemReplaced, t)}
+                  disabled={replaceLoading}
+                >
+                  <Search className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                  <span className="break-words">{prod.nome}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

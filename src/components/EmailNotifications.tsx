@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../api/client';
 
 import { useState, useEffect } from 'react';
 import { Mail, X, CheckCircle, Clock, FileText, Check, Eye } from 'lucide-react';
@@ -66,7 +67,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
   useEffect(() => {
     const fetchRecentEmailQuotes = async () => {
       try {
-        const response = await fetch('http://localhost:2000/api/prompts/with-dados-bruto');
+  const response = await fetch(`${API_BASE_URL}/prompts/with-dados-bruto`);
         if (!response.ok) throw new Error('Erro ao buscar emails');
         const data = await response.json();
 

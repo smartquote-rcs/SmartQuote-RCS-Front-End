@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../../api/client';
 import { useState, useEffect } from "react";
 import {
   Mail,
@@ -80,7 +81,7 @@ export function EmailsPage() {
   const loadEmails = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:2000/api/prompts/with-dados-bruto');
+  const response = await fetch(`${API_BASE_URL}/prompts/with-dados-bruto`);
       if (!response.ok) throw new Error('Erro ao buscar emails');
       const data = await response.json();
 
@@ -185,7 +186,7 @@ export function EmailsPage() {
       ));
       // Atualizar no backend (ajuste a rota se necessário)
       try {
-        await fetch(`http://localhost:2000/api/prompts/with-dados-bruto/${email.id}/read`, {
+  await fetch(`${API_BASE_URL}/prompts/with-dados-bruto/${email.id}/read`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: 'Lido', isRead: true })

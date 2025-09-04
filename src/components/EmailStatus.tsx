@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../api/client';
 import { useState, useEffect } from 'react';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,7 @@ export function EmailStatus() {
   // Busca o status do monitoramento automático
   const fetchStatus = async () => {
     try {
-      const response = await fetch('http://localhost:2000/api/email/auto-monitor/status');
+  const response = await fetch(`${API_BASE_URL}/email/auto-monitor/status`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -81,8 +82,8 @@ export function EmailStatus() {
     setIsLoading(true);
     try {
       const endpoint = wantsActive
-        ? 'http://localhost:2000/api/email/auto-monitor/start'
-        : 'http://localhost:2000/api/email/auto-monitor/stop';
+  ? `${API_BASE_URL}/email/auto-monitor/start`
+  : `${API_BASE_URL}/email/auto-monitor/stop`;
       console.log(`Tentando endpoint: ${endpoint}, Valor desejado: ${wantsActive}`);
       const response = await fetch(endpoint, {
         method: 'POST',
