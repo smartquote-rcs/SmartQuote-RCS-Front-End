@@ -12,6 +12,114 @@ export const notificationService = {
       };
     }
   },
+
+  // Rotas para notificações não lidas
+  async getUnread() {
+    try {
+      const response = await api.get('/notifications/unread/list');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar notificações não lidas:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar notificações não lidas'
+      };
+    }
+  },
+
+  async getUnreadCount() {
+    try {
+      const response = await api.get('/notifications/unread/count');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar contagem de notificações não lidas:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar contagem de notificações não lidas'
+      };
+    }
+  },
+
+  // Rotas para marcar como lida
+  async markAsRead(id: string) {
+    try {
+      const response = await api.patch(`/notifications/${id}/read`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao marcar notificação como lida:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao marcar notificação como lida'
+      };
+    }
+  },
+
+  async markMultipleAsRead(ids: string[]) {
+    try {
+      const response = await api.patch('/notifications/read/multiple', { ids });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao marcar múltiplas notificações como lidas:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao marcar múltiplas notificações como lidas'
+      };
+    }
+  },
+
+  async markAllAsRead() {
+    try {
+      const response = await api.patch('/notifications/read/all');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao marcar todas as notificações como lidas:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao marcar todas as notificações como lidas'
+      };
+    }
+  },
+
+  // Rotas específicas para monitoramento de estoque
+  async verificarEstoqueBaixo() {
+    try {
+      const response = await api.post('/notifications/verificar-estoque');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao verificar estoque baixo:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao verificar estoque baixo'
+      };
+    }
+  },
+
+  async verificacaoAutomatica() {
+    try {
+      const response = await api.post('/notifications/verificacao-automatica');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro na verificação automática:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro na verificação automática'
+      };
+    }
+  },
+
+  async limparNotificacoesObsoletas() {
+    try {
+      const response = await api.delete('/notifications/limpar-obsoletas');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao limpar notificações obsoletas:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao limpar notificações obsoletas'
+      };
+    }
+  },
+
   async delete(id: string) {
     try {
       const response = await api.delete(`/notifications/${id}`);
@@ -24,6 +132,7 @@ export const notificationService = {
       };
     }
   },
+
   async deleteAll() {
     try {
       const response = await api.delete('/notifications');
