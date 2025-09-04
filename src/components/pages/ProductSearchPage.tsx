@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Badge } from "../ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Search, Heart, Grid, List, Plus, Edit2, Trash2, RefreshCw, CheckCircle, X, Activity } from "lucide-react";
+import { Search, Heart, Plus, Edit2, Trash2, RefreshCw, CheckCircle, X, Activity } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from "../../hooks/useCurrency";
@@ -35,7 +35,7 @@ interface ProductSearchPageProps {
 export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageProps = {}) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode] = useState<"grid" | "list">("grid");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditingInline, setIsEditingInline] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -152,7 +152,7 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
               {produto.nome}
             </h3>
             <div className="flex items-center justify-between">
-              {getDisponibilidadeBadge(produto.estoque)}
+              {getDisponibilidadeBadge(produto.estoque || 0)}
               <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-0.5 rounded-full truncate max-w-[80px]">ID: {produto.fornecedorId || "N/A"}</span>
             </div>
           </div>
@@ -284,13 +284,6 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
               >
                 <RefreshCw className={`w-4 h-4 ${isLoadingProducts ? 'animate-spin' : ''}`} />
                 <span>{isLoadingProducts ? t('productSearch.loading') : t('productSearch.refresh')}</span>
-              </button>
-              <button
-                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto"
-              >
-                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-                <span>{viewMode === "grid" ? t('productSearch.listView') : t('productSearch.gridView')}</span>
               </button>
               <button
                 onClick={() => onNavigateToNewProduct?.()}

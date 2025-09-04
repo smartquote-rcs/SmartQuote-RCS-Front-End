@@ -20,10 +20,19 @@ export interface Product {
   nome: string;
   descricao?: string;
   categoria?: string;
+  codigo?: string;
+  modelo?: string;
+  origem?: string;
+  unidade?: string;
+  estoque?: number;
   preco?: number;
+  image_url?: string;
+  fornecedorId?: number;
   ativo: boolean;
   cadastrado_em?: string;
   atualizado_em?: string;
+  cadastrado_por?: string;
+  atualizado_por?: string;
 }
 
 export interface User {
