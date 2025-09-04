@@ -596,6 +596,122 @@ export const authService = {
   // Verificar se está logado
   isLoggedIn(): boolean {
     return !!localStorage.getItem('auth_token');
+  },
+
+  // Recuperar senha
+  async recoverPassword(email: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      console.log('🔌 Fazendo requisição para:', '/auth/forget/');
+      console.log('📧 Email enviado:', email);
+      
+      const response = await api.post('/auth/forget/', {
+        email: email
+      });
+      
+      console.log('📨 Resposta recebida:', response.data);
+      return { 
+        success: true, 
+        message: response.data.message || 'Email de recuperação enviado com sucesso!'
+      };
+    } catch (error: any) {
+      console.error('💥 Erro na requisição de recuperação:', error);
+      console.error('📊 Status do erro:', error.response?.status);
+      console.error('📄 Dados do erro:', error.response?.data);
+      
+      let errorMessage = 'Erro ao enviar email de recuperação';
+      
+      // Tratamento específico por código de status HTTP
+      switch (error.response?.status) {
+        case 400:
+          errorMessage = 'Email inválido. Verifique o formato do email.';
+          break;
+        case 404:
+          errorMessage = 'Email não encontrado no sistema.';
+          break;
+        case 429:
+          errorMessage = 'Muitas tentativas de recuperação. Aguarde alguns minutos.';
+          break;
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          errorMessage = 'Erro no servidor. Tente novamente em alguns minutos.';
+          break;
+        default:
+          if (!error.response) {
+            errorMessage = 'Erro de conexão. Verifique sua internet.';
+          } else {
+            // Usar mensagem do servidor se disponível
+            errorMessage = error.response?.data?.error || error.response?.data?.message || 'Erro desconhecido ao recuperar senha.';
+          }
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage
+      };
+    }
+  },
+
+  // Renovar senha com token
+  async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      console.log('🔌 Fazendo requisição para:', '/auth/reset-password');
+      console.log('🔑 Token enviado:', token.substring(0, 10) + '...');
+      
+      const response = await api.post('/auth/reset-password', {
+        token: token,
+        newPassword: newPassword
+      });
+      
+      console.log('📨 Resposta recebida:', response.data);
+      return { 
+        success: true, 
+        message: response.data.message || 'Senha alterada com sucesso!'
+      };
+    } catch (error: any) {
+      console.error('💥 Erro na renovação de senha:', error);
+      console.error('📊 Status do erro:', error.response?.status);
+      console.error('📄 Dados do erro:', error.response?.data);
+      
+      let errorMessage = 'Erro ao alterar senha';
+      
+      // Tratamento específico por código de status HTTP
+      switch (error.response?.status) {
+        case 400:
+          errorMessage = 'Dados inválidos. Verifique o token e a nova senha.';
+          break;
+        case 401:
+          errorMessage = 'Token inválido ou expirado. Solicite uma nova recuperação de senha.';
+          break;
+        case 404:
+          errorMessage = 'Token não encontrado. Verifique se o código está correto.';
+          break;
+        case 422:
+          errorMessage = 'Nova senha não atende aos critérios de segurança.';
+          break;
+        case 429:
+          errorMessage = 'Muitas tentativas. Aguarde alguns minutos.';
+          break;
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          errorMessage = 'Erro no servidor. Tente novamente em alguns minutos.';
+          break;
+        default:
+          if (!error.response) {
+            errorMessage = 'Erro de conexão. Verifique sua internet.';
+          } else {
+            errorMessage = error.response?.data?.error || error.response?.data?.message || 'Erro desconhecido ao alterar senha.';
+          }
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage
+      };
+    }
   }
 };
 

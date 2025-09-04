@@ -10,8 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Eye, EyeOff, Lock, Mail, CheckCircle, AlertCircle, TrendingUp, Shield, Cpu, Key, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, CheckCircle, AlertCircle, TrendingUp, Shield, Cpu, KeyRound, Send, Timer, ArrowLeft } from "lucide-react";
 import { authService } from "../api/services.ts";
+import { twoFactorService } from "../services/twoFactorService";
+import { useTranslation } from 'react-i18next';
 
 interface LoginPageProps {
   onLogin: (credentials: {
@@ -261,96 +263,206 @@ const AnimatedTitle = () => {
 };
 
 export function LoginPage({ onLogin }: LoginPageProps) {
-  // Atualizar senha quando a senha mudar
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPassword = e.target.value;
-    setPassword(newPassword);
-  };
+  // Estados básicos
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
   const [isLoginSuccess, setIsLoginSuccess] = useState(false);
+  
+  // Estados para 2FA
+  const [use2FA, setUse2FA] = useState(true); // Por padrão usar 2FA
+  const [twoFactorStep, setTwoFactorStep] = useState<'email' | 'code' | 'password' | 'none'>('none');
+  const [verificationCode, setVerificationCode] = useState("");
+  const [temporaryToken, setTemporaryToken] = useState("");
+  const [codeCountdown, setCodeCountdown] = useState(0);
+  
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
-  
-  // Estados para renovação de senha
-  const [resetToken, setResetToken] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Detectar token de reset na URL ao carregar a página
+  // Countdown para reenvio de código
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenFromUrl = urlParams.get('token') || urlParams.get('resetToken');
-    
-    if (tokenFromUrl) {
-      console.log('🔑 Token de reset detectado na URL:', tokenFromUrl.substring(0, 10) + '...');
-      setResetToken(tokenFromUrl);
-      setShowResetPassword(true);
-      setShowForgotPassword(false);
-      
-      // Limpar a URL para não expor o token
-      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
+    let interval: NodeJS.Timeout;
+    if (codeCountdown > 0) {
+      interval = setInterval(() => {
+        setCodeCountdown(prev => prev - 1);
+      }, 1000);
     }
-  }, []);
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setFeedback({ type: null, message: '' });
+    return () => clearInterval(interval);
+  }, [codeCountdown]);
 
-    console.log('🔍 Tentando fazer login com:', { email });
-
-    // Validações locais primeiro
-    if (!email || !password) {
+  // Atualizar senha quando a senha mudar
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+  };
+  // Iniciar processo 2FA
+  const handleInitiate2FA = async () => {
+    if (!email) {
       setFeedback({ 
         type: 'error', 
-        message: 'Por favor, preencha todos os campos obrigatórios.' 
+        message: 'Por favor, insira seu email primeiro.' 
       });
-      setIsLoading(false);
       return;
     }
 
-    // Validação de formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setFeedback({ 
         type: 'error', 
         message: 'Por favor, insira um endereço de email válido.' 
       });
-      setIsLoading(false);
       return;
     }
 
-    // Validação de senha
-    if (password.length < 6) {
+    setIsLoading(true);
+    setFeedback({ type: null, message: '' });
+
+    try {
+      const result = await twoFactorService.initiateTwoFactor(email);
+      
+      if (result.success) {
+        setTwoFactorStep('code');
+        setCodeCountdown(300); // 5 minutos
+        setFeedback({ 
+          type: 'success', 
+          message: 'Código de verificação enviado para seu email!' 
+        });
+      } else {
+        setFeedback({ 
+          type: 'error', 
+          message: result.message || 'Erro ao enviar código de verificação' 
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao iniciar 2FA:', error);
+      setFeedback({ 
+        type: 'error', 
+        message: 'Erro inesperado ao enviar código' 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Verificar código 2FA
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length < 4) {
+      setFeedback({ 
+        type: 'error', 
+        message: 'Por favor, insira o código de verificação completo.' 
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    setFeedback({ type: null, message: '' });
+
+    try {
+      const result = await twoFactorService.verifyCode(email, verificationCode);
+      
+      if (result.success && result.temporaryToken) {
+        setTemporaryToken(result.temporaryToken);
+        setTwoFactorStep('password');
+        setFeedback({ 
+          type: 'success', 
+          message: 'Código verificado! Agora insira sua senha.' 
+        });
+      } else {
+        setFeedback({ 
+          type: 'error', 
+          message: result.message || 'Código inválido ou expirado' 
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao verificar código:', error);
+      setFeedback({ 
+        type: 'error', 
+        message: 'Erro inesperado ao verificar código' 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Completar login com senha
+  const handleCompleteLogin = async () => {
+    if (!password || password.length < 6) {
       setFeedback({ 
         type: 'error', 
         message: 'A senha deve ter pelo menos 6 caracteres.' 
       });
-      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
+    setFeedback({ type: null, message: '' });
+
     try {
-      // Usar a API real para fazer login
-      const result = await authService.signin({ email, password });
-      
-      console.log('📡 Resposta da API:', result);
+      const result = await twoFactorService.completeLogin(temporaryToken, password);
       
       if (result.success) {
-        console.log('✅ Login bem-sucedido!', result.data);
         // Buscar o papel real do usuário na API
         try {
           const { getUserRoleByEmail } = await import('../api/services');
           const roleRes = await getUserRoleByEmail(email);
+          console.log('� Resposta do getUserRoleByEmail:', roleRes);
+          
+          const userRole = roleRes.role?.toLowerCase() || 'user';
+          let roleLabel = 'Usuário';
+          if (userRole === 'admin') roleLabel = 'Administrador';
+          else if (userRole === 'manager') roleLabel = 'Gestor';
+          
+          setFeedback({ 
+            type: 'success', 
+            message: `Login realizado com sucesso! Entrando como ${roleLabel}...` 
+          });
+          setIsLoginSuccess(true);
+          
+          setTimeout(() => {
+            let roleTyped: 'user' | 'admin' | 'manager' = 'user';
+            if (userRole === 'admin') roleTyped = 'admin';
+            else if (userRole === 'manager') roleTyped = 'manager';
+            onLogin({ email, password, role: roleTyped, position: userRole });
+          }, 2000);
+        } catch (roleErr) {
+          setFeedback({ type: 'error', message: 'Erro ao buscar permissões do usuário.' });
+        }
+      } else {
+        setFeedback({ 
+          type: 'error', 
+          message: result.message || 'Senha incorreta' 
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao completar login:', error);
+      setFeedback({ 
+        type: 'error', 
+        message: 'Erro inesperado ao completar login' 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Determinar qual ação executar baseado no estado atual
+    if (twoFactorStep === 'none') {
+      // Iniciar processo 2FA
+      await handleInitiate2FA();
+    } else if (twoFactorStep === 'code') {
+      // Verificar código
+      await handleVerifyCode();
+    } else if (twoFactorStep === 'password') {
+      // Completar login
+      await handleCompleteLogin();
+    }
+  };
           console.log('🔎 Resposta do getUserRoleByEmail:', roleRes);
           // role pode ser 'admin', 'manager' ou 'user' (direto do backend)
           const userRole = roleRes.role?.toLowerCase() || 'user';
@@ -438,110 +550,28 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setFeedback({ type: null, message: '' });
     
     try {
-      // Enviar diretamente para o backend - ele fará toda a validação
-      console.log('📧 Enviando email de recuperação...');
-      const response = await authService.recoverPassword(email);
+      // Simular envio de email de recuperação
+      // Aqui você poderia integrar com uma API real de recuperação de senha
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      if (response.success) {
-        setFeedback({ 
-          type: 'success', 
-          message: 'Email de recuperação enviado! Verifique sua caixa de entrada e siga as instruções.' 
-        });
-        
-        // Limpar o formulário e voltar para o login após 3 segundos
-        setTimeout(() => {
-          setEmail('');
-          setShowForgotPassword(false);
-          setFeedback({ type: null, message: '' });
-        }, 3000);
-      } else {
-        setFeedback({ 
-          type: 'error', 
-          message: response.error || 'Erro ao enviar email de recuperação.' 
-        });
-      }
+      setFeedback({ 
+        type: 'success', 
+        message: 'Email de recuperação enviado! Verifique sua caixa de entrada e siga as instruções.' 
+      });
+      
+      // Limpar o formulário e voltar para o login após 3 segundos
+      setTimeout(() => {
+        setEmail('');
+        setShowForgotPassword(false);
+        setFeedback({ type: null, message: '' });
+      }, 3000);
       
     } catch (error) {
-      console.error('❌ Erro ao recuperar senha:', error);
+      console.error('❌ Erro ao enviar email de recuperação:', error);
       
       setFeedback({ 
         type: 'error', 
-        message: 'Erro ao processar recuperação de senha. Tente novamente mais tarde.' 
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    // Validações
-    if (!resetToken) {
-      setFeedback({ 
-        type: 'error', 
-        message: 'Por favor, insira o código de verificação recebido por email.' 
-      });
-      return;
-    }
-
-    if (!newPassword) {
-      setFeedback({ 
-        type: 'error', 
-        message: 'Por favor, insira a nova senha.' 
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setFeedback({ 
-        type: 'error', 
-        message: 'A nova senha deve ter pelo menos 6 caracteres.' 
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setFeedback({ 
-        type: 'error', 
-        message: 'As senhas não coincidem. Verifique e tente novamente.' 
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    setFeedback({ type: null, message: '' });
-    
-    try {
-      console.log('🔄 Renovando senha...');
-      const response = await authService.resetPassword(resetToken, newPassword);
-      
-      if (response.success) {
-        setFeedback({ 
-          type: 'success', 
-          message: 'Senha alterada com sucesso! Você pode fazer login com a nova senha.' 
-        });
-        
-        // Limpar o formulário e voltar para o login após 3 segundos
-        setTimeout(() => {
-          setResetToken('');
-          setNewPassword('');
-          setConfirmPassword('');
-          setShowResetPassword(false);
-          setShowForgotPassword(false);
-          setFeedback({ type: null, message: '' });
-        }, 3000);
-      } else {
-        setFeedback({ 
-          type: 'error', 
-          message: response.error || 'Erro ao alterar senha. Verifique o código e tente novamente.' 
-        });
-      }
-      
-    } catch (error) {
-      console.error('❌ Erro ao renovar senha:', error);
-      
-      setFeedback({ 
-        type: 'error', 
-        message: 'Erro ao processar renovação de senha. Tente novamente mais tarde.' 
+        message: 'Erro ao enviar email de recuperação. Tente novamente mais tarde.' 
       });
     } finally {
       setIsLoading(false);
@@ -791,15 +821,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   transition={{ delay: 1.4, duration: 0.6 }}
                 >
                   <div className="flex items-center justify-center mb-2">
-                    {showResetPassword ? (
-                      <motion.div
-                        initial={{ scale: 0, rotate: 180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg"
-                      >
-                        <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                      </motion.div>
-                    ) : showForgotPassword ? (
+                    {showForgotPassword ? (
                       <motion.div
                         initial={{ scale: 0, rotate: 180 }}
                         animate={{ scale: 1, rotate: 0 }}
@@ -817,16 +839,13 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                       </motion.div>
                     )}
                   </div>
-
                   <CardTitle className="text-lg sm:text-xl md:text-2xl text-center text-white font-bold mb-1 sm:mb-2"
                   >
-                    {showResetPassword ? 'Renovar Senha' : showForgotPassword ? 'Recuperar Senha' : 'Acesso Seguro'}
+                    {showForgotPassword ? 'Recuperar Senha' : 'Acesso Seguro'}
                   </CardTitle>
                   <CardDescription className="text-center text-blue-100/90 text-xs sm:text-sm md:text-base leading-relaxed font-medium"
                   >
-                    {showResetPassword 
-                      ? 'Digite o código recebido por email e sua nova senha'
-                      : showForgotPassword 
+                    {showForgotPassword 
                       ? 'Digite seu email para receber as instruções'
                       : 'Autentique-se para acessar o sistema'
                     }
@@ -842,134 +861,32 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.6, duration: 0.6 }}
                 >
-                  {/* Campo de email - sempre visível */}
-                  {!showResetPassword && (
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="email"
-                        className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
-                      >
-                        <Mail className="w-3 h-3 text-blue-400" />
-                        Email Corporativo
-                      </Label>
-                      <div className="relative group">
-                        <Mail className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400 z-10 transition-colors group-focus-within:text-cyan-400" />
-                        <Input
-                          id="email"
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-8 sm:pl-10 pr-3 h-9 sm:h-10 bg-slate-800/60 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/30 focus:bg-white/10 transition-all duration-300 text-xs sm:text-sm shadow-inner backdrop-blur-sm"
-                          placeholder="usuario@empresa.com"
-                          autoComplete="off"
-                          required
-                        />
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/10 via-transparent to-cyan-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                      </div>
+                  {/* Campo de nome removido - não necessário para recuperação de senha */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="email"
+                      className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
+                    >
+                      <Mail className="w-3 h-3 text-blue-400" />
+                      Email Corporativo
+                    </Label>
+                    <div className="relative group">
+                      <Mail className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400 z-10 transition-colors group-focus-within:text-cyan-400" />
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-8 sm:pl-10 pr-3 h-9 sm:h-10 bg-slate-800/60 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/30 focus:bg-white/10 transition-all duration-300 text-xs sm:text-sm shadow-inner backdrop-blur-sm"
+                        placeholder="usuario@empresa.com"
+                        autoComplete="off"
+                        required
+                      />
+                      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/10 via-transparent to-cyan-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                     </div>
-                  )}
+                  </div>
 
-                  {/* Campos para renovação de senha */}
-                  {showResetPassword && (
-                    <>
-                      <div className="space-y-1">
-                        <Label
-                          htmlFor="resetToken"
-                          className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
-                        >
-                          <Key className="w-3 h-3 text-green-400" />
-                          Código de Verificação
-                        </Label>
-                        <div className="relative group">
-                          <Key className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-400 z-10 transition-colors group-focus-within:text-emerald-400" />
-                          <Input
-                            id="resetToken"
-                            type="text"
-                            value={resetToken}
-                            onChange={(e) => setResetToken(e.target.value)}
-                            className="pl-8 sm:pl-10 pr-3 h-9 sm:h-10 bg-slate-800/60 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/30 focus:bg-white/10 transition-all duration-300 text-xs sm:text-sm shadow-inner backdrop-blur-sm"
-                            placeholder="Código recebido por email"
-                            autoComplete="off"
-                            required
-                          />
-                          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-green-500/10 via-transparent to-emerald-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label
-                          htmlFor="newPassword"
-                          className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
-                        >
-                          <Lock className="w-3 h-3 text-green-400" />
-                          Nova Senha
-                        </Label>
-                        <div className="relative group">
-                          <Lock className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-400 z-10 transition-colors group-focus-within:text-emerald-400" />
-                          <Input
-                            id="newPassword"
-                            type={showNewPassword ? "text" : "password"}
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="pl-8 sm:pl-10 pr-10 h-9 sm:h-10 bg-slate-800/60 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/30 focus:bg-white/10 transition-all duration-300 text-xs sm:text-sm shadow-inner backdrop-blur-sm"
-                            placeholder="••••••••••••"
-                            autoComplete="off"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowNewPassword(!showNewPassword)}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded bg-slate-700/60 hover:bg-slate-600/80 text-green-400 hover:text-emerald-300 transition-all duration-300 z-10 border border-slate-600/30 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
-                          >
-                            {showNewPassword ? (
-                              <EyeOff className="w-3 h-3" />
-                            ) : (
-                              <Eye className="w-3 h-3" />
-                            )}
-                          </button>
-                          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-green-500/10 via-transparent to-emerald-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label
-                          htmlFor="confirmPassword"
-                          className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
-                        >
-                          <Lock className="w-3 h-3 text-green-400" />
-                          Confirmar Nova Senha
-                        </Label>
-                        <div className="relative group">
-                          <Lock className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-400 z-10 transition-colors group-focus-within:text-emerald-400" />
-                          <Input
-                            id="confirmPassword"
-                            type={showConfirmPassword ? "text" : "password"}
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="pl-8 sm:pl-10 pr-10 h-9 sm:h-10 bg-slate-800/60 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/30 focus:bg-white/10 transition-all duration-300 text-xs sm:text-sm shadow-inner backdrop-blur-sm"
-                            placeholder="••••••••••••"
-                            autoComplete="off"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded bg-slate-700/60 hover:bg-slate-600/80 text-green-400 hover:text-emerald-300 transition-all duration-300 z-10 border border-slate-600/30 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="w-3 h-3" />
-                            ) : (
-                              <Eye className="w-3 h-3" />
-                            )}
-                          </button>
-                          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-green-500/10 via-transparent to-emerald-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Campo de senha - apenas para login */}
-                  {!showForgotPassword && !showResetPassword && (
+                  {!showForgotPassword && (
                     <div className="space-y-1">
                       <Label
                         htmlFor="password"
@@ -1014,13 +931,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   >
                     <Button
                       type="submit"
-                      className={`w-full font-semibold py-2 shadow-lg hover:shadow-xl transition-all duration-300 text-xs sm:text-sm rounded-lg h-9 sm:h-10 relative overflow-hidden group ${
-                        showResetPassword
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
-                          : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
-                      } text-white`}
+                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 shadow-lg hover:shadow-xl transition-all duration-300 text-xs sm:text-sm rounded-lg h-9 sm:h-10 relative overflow-hidden group"
                       disabled={isLoading}
-                      onClick={showResetPassword ? (e) => { e.preventDefault(); handleResetPassword(); } : showForgotPassword ? (e) => { e.preventDefault(); handleForgotPassword(); } : undefined}
+                      onClick={showForgotPassword ? (e) => { e.preventDefault(); handleForgotPassword(); } : undefined}
                     >
                       {/* Efeito de brilho */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -1041,17 +954,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                             }}
                           />
                           <span className="text-xs sm:text-sm">
-                            {showResetPassword ? 'Alterando...' : showForgotPassword ? 'Enviando...' : 'Entrando...'}
+                            {showForgotPassword ? 'Enviando...' : 'Entrando...'}
                           </span>
                         </motion.div>
                       ) : (
                         <div className="flex items-center justify-center space-x-1 relative z-10">
-                          {showResetPassword ? (
-                            <>
-                              <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
-                              <span className="text-xs sm:text-sm">Alterar Senha</span>
-                            </>
-                          ) : showForgotPassword ? (
+                          {showForgotPassword ? (
                             <>
                               <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
                               <span className="text-xs sm:text-sm">Enviar Email</span>
@@ -1104,55 +1012,38 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   )}
 
                   {/* Botão para alternar entre login e recuperação de senha */}
-                  {!showResetPassword && (
-                    <motion.div
-                      className="text-center pt-2 sm:pt-3"
-                      whileHover={{ scale: 1.02 }}
+                  <motion.div
+                    className="text-center pt-2 sm:pt-3"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <motion.button
+                      type="button"
+                      onClick={() => {
+                        setShowForgotPassword(!showForgotPassword);
+                        setFeedback({ type: null, message: '' });
+                        setPassword('');
+                      }}
+                      className="inline-flex items-center gap-2 text-slate-400 text-xs sm:text-sm leading-relaxed hover:text-cyan-300 transition-all duration-300 px-3 py-2 rounded-lg hover:bg-white/5 backdrop-blur-sm"
+                      whileHover={{ y: -1 }}
+                      whileTap={{ y: 0 }}
                     >
-                      <motion.button
-                        type="button"
-                        onClick={() => {
-                          setShowForgotPassword(!showForgotPassword);
-                          setFeedback({ type: null, message: '' });
-                          setPassword('');
-                        }}
-                        className="inline-flex items-center gap-2 text-slate-400 text-xs sm:text-sm leading-relaxed hover:text-cyan-300 transition-all duration-300 px-3 py-2 rounded-lg hover:bg-white/5 backdrop-blur-sm"
-                        whileHover={{ y: -1 }}
-                        whileTap={{ y: 0 }}
-                      >
-                        {showForgotPassword ? (
-                          <>
-                            <Lock className="w-3 h-3" />
-                            <span className="text-xs">
-                              <span className="text-cyan-300 font-semibold">Lembrou?</span> Voltar
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <Mail className="w-3 h-3" />
-                            <span className="text-xs">
-                              <span className="text-cyan-300 font-semibold">Esqueceu?</span> Recuperar
-                            </span>
-                          </>
-                        )}
-                      </motion.button>
-                    </motion.div>
-                  )}
-
-                  {/* Informação especial para página de renovação de senha */}
-                  {showResetPassword && (
-                    <motion.div
-                      className="text-center pt-2 sm:pt-3"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <div className="flex items-center justify-center gap-2 text-emerald-100/80 text-xs mb-3 bg-emerald-500/10 border border-emerald-400/20 rounded-lg px-3 py-2 backdrop-blur-sm">
-                        <Key className="w-3 h-3 text-emerald-400" />
-                        <span>Página acessada via link do email</span>
-                      </div>
-                    </motion.div>
-                  )}
+                      {showForgotPassword ? (
+                        <>
+                          <Lock className="w-3 h-3" />
+                          <span className="text-xs">
+                            <span className="text-cyan-300 font-semibold">Lembrou?</span> Voltar
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="w-3 h-3" />
+                          <span className="text-xs">
+                            <span className="text-cyan-300 font-semibold">Esqueceu?</span> Recuperar
+                          </span>
+                        </>
+                      )}
+                    </motion.button>
+                  </motion.div>
                 </motion.form>
               </CardContent>
             </Card>
