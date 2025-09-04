@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																								import { useState, useEffect, useContext } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -84,13 +84,47 @@ export default function SettingsPage() {
 	const { changeLanguage } = useLanguage();
 
 	const [adminProfile, setAdminProfile] = useState<AdminProfile>({
-		firstName: 'Admin',
-		lastName: 'Sistema',
-		email: 'admin@smartquote.com',
-		company: 'SmartQuote RCS',
-		role: 'Administrador',
-		phone: '+351 000 000 000'
+		firstName: '',
+		lastName: '',
+		email: '',
+		company: 'RCS Angola',
+		role: '',
+		phone: ''
 	});
+
+	const [isAdmin, setIsAdmin] = useState(false);
+
+	// Carregar dados do usuário logado
+	useEffect(() => {
+		try {
+			const raw = localStorage.getItem('smartquote_auth');
+			if (raw) {
+				const parsed = JSON.parse(raw);
+				const user = parsed?.user;
+				if (user) {
+					setIsAdmin(user.role === 'admin');
+					setAdminProfile(prev => ({
+						...prev,
+						firstName: user.name?.split(' ')[0] || '',
+						lastName: user.name?.split(' ').slice(1).join(' ') || '',
+						email: user.email || '',
+						role: user.role === 'admin' ? 'Administrador' : user.position || user.role || '',
+						phone: user.phone || user.contact || ''
+					}));
+
+					// Preencher senha atual se disponível
+					if (user.password) {
+						setPasswordData(prev => ({
+							...prev,
+							current: user.password
+						}));
+					}
+				}
+			}
+		} catch (error) {
+			console.error('Erro ao carregar dados do usuário:', error);
+		}
+	}, []);
 
 	const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
 		systemName: '',
@@ -399,13 +433,15 @@ export default function SettingsPage() {
 									</div>
 								</div>
 
-								<Button
-									onClick={handleSaveProfile}
-									className="h-9 sm:h-10 px-4 sm:px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-xl text-sm sm:text-base w-full sm:w-auto"
-								>
-									<Save className="w-4 h-4 mr-2" />
-									Salvar Perfil
-								</Button>
+								{isAdmin && (
+									<Button
+										onClick={handleSaveProfile}
+										className="h-9 sm:h-10 px-4 sm:px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-xl text-sm sm:text-base w-full sm:w-auto"
+									>
+										<Save className="w-4 h-4 mr-2" />
+										Salvar Perfil
+									</Button>
+								)}
 							</div>
 
 							{/* Profile Form - Flowing Layout */}
@@ -417,15 +453,17 @@ export default function SettingsPage() {
 											<Input
 												value={adminProfile.firstName}
 												onChange={(e) => setAdminProfile({ ...adminProfile, firstName: e.target.value })}
-												className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+												disabled={!isAdmin}
+												className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 											/>
 										</div>
 										<div>
-											<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.role')}</Label>
+											<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Posição</Label>
 											<Input
 												value={adminProfile.role}
-												onChange={(e) => setAdminProfile({ ...adminProfile, lastName: e.target.value })}
-												className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+												onChange={(e) => setAdminProfile({ ...adminProfile, role: e.target.value })}
+												disabled={!isAdmin}
+												className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 											/>
 										</div>
 									</div>
@@ -436,7 +474,8 @@ export default function SettingsPage() {
 											type="email"
 											value={adminProfile.email}
 											onChange={(e) => setAdminProfile({ ...adminProfile, email: e.target.value })}
-											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+											disabled={!isAdmin}
+											className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 										/>
 									</div>
 								</div>
@@ -447,16 +486,20 @@ export default function SettingsPage() {
 										<Input
 											value={adminProfile.company}
 											onChange={(e) => setAdminProfile({ ...adminProfile, company: e.target.value })}
-											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+											disabled
+											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base opacity-60 cursor-not-allowed"
 										/>
 									</div>
 
 									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.phone')}</Label>
+										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Contacto</Label>
 										<Input
+											type="tel"
 											value={adminProfile.phone}
 											onChange={(e) => setAdminProfile({ ...adminProfile, phone: e.target.value })}
-											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base"
+											placeholder="Ex: +244 900 000 000"
+											disabled={!isAdmin}
+											className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 										/>
 									</div>
 								</div>
@@ -490,12 +533,14 @@ export default function SettingsPage() {
 											type={passwordData.showCurrent ? "text" : "password"}
 											value={passwordData.current}
 											onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
-											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary pr-12 text-sm sm:text-base"
+											disabled
+											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary pr-12 text-sm sm:text-base opacity-60 cursor-not-allowed"
 										/>
 										<button
 											type="button"
 											onClick={() => setPasswordData({ ...passwordData, showCurrent: !passwordData.showCurrent })}
 											className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-secondary hover:text-dark-primary-text"
+											disabled
 										>
 											{passwordData.showCurrent ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
 										</button>
@@ -565,13 +610,15 @@ export default function SettingsPage() {
 										<p className="text-green-200 text-xs sm:text-sm">Configurações globais do sistema</p>
 									</div>
 								</div>
-								<Button
-									onClick={handleSaveGeneral}
-									className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 h-8 sm:h-9 text-sm sm:text-base w-full sm:w-auto"
-								>
-									<Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-									Salvar
-								</Button>
+								{isAdmin && (
+									<Button
+										onClick={handleSaveGeneral}
+										className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 h-8 sm:h-9 text-sm sm:text-base w-full sm:w-auto"
+									>
+										<Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+										Salvar
+									</Button>
+								)}
 							</div>
 
 							<div className="space-y-3 sm:space-y-4">
@@ -580,7 +627,8 @@ export default function SettingsPage() {
 									<Input
 										value={generalSettings.systemName}
 										onChange={(e) => setGeneralSettings({ ...generalSettings, systemName: e.target.value })}
-										className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary text-sm sm:text-base"
+										disabled={!isAdmin}
+										className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 									/>
 								</div>
 
@@ -589,8 +637,9 @@ export default function SettingsPage() {
 									<Select
 										value={generalSettings.language}
 										onValueChange={(value) => setGeneralSettings({ ...generalSettings, language: value })}
+										disabled={!isAdmin}
 									>
-										<SelectTrigger className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base">
+										<SelectTrigger className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}>
 											<SelectValue />
 										</SelectTrigger>
 										<SelectContent className="bg-dark-card border-dark-color">
@@ -610,8 +659,9 @@ export default function SettingsPage() {
 										<Select
 											value={generalSettings.timezone}
 											onValueChange={(value) => setGeneralSettings({ ...generalSettings, timezone: value })}
+											disabled={!isAdmin}
 										>
-											<SelectTrigger className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base">
+											<SelectTrigger className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}>
 												<SelectValue />
 											</SelectTrigger>
 											<SelectContent className="bg-dark-card border-dark-color">
@@ -627,8 +677,9 @@ export default function SettingsPage() {
 										<Select
 											value={generalSettings.currency}
 											onValueChange={(value) => setGeneralSettings({ ...generalSettings, currency: value })}
+											disabled={!isAdmin}
 										>
-											<SelectTrigger className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base">
+											<SelectTrigger className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}>
 												<SelectValue />
 											</SelectTrigger>
 											<SelectContent className="bg-dark-card border-dark-color">
@@ -653,7 +704,8 @@ export default function SettingsPage() {
 									<Switch
 										checked={generalSettings.autoBackup}
 										onCheckedChange={(checked) => setGeneralSettings({ ...generalSettings, autoBackup: checked })}
-										className="data-[state=checked]:bg-blue-600"
+										disabled={!isAdmin}
+										className={`data-[state=checked]:bg-blue-600 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 									/>
 								</div>
 
@@ -665,7 +717,8 @@ export default function SettingsPage() {
 									<Switch
 										checked={generalSettings.maintenanceMode}
 										onCheckedChange={(checked) => setGeneralSettings({ ...generalSettings, maintenanceMode: checked })}
-										className="data-[state=checked]:bg-blue-600"
+										disabled={!isAdmin}
+										className={`data-[state=checked]:bg-blue-600 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 									/>
 								</div>
 							</div>
