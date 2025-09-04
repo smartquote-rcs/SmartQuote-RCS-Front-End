@@ -16,6 +16,8 @@ import {
   X
 } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+
 interface QuoteJob {
   id: string;
   status: 'pendente' | 'em-andamento' | 'concluido' | 'erro' | 'cancelado';

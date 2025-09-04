@@ -3,25 +3,17 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
-import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../hooks/useLanguage';
 import { AppContext } from '../../contexts/AppContext';
-import { emailService, EmailConfig } from '../../services/emailService';
 import {
 	User,
 	Settings,
-	Bell,
-	Shield,
 	Save,
 	Eye,
 	EyeOff,
-	Lock,
-	Mail,
-	TestTube,
-	CheckCircle,
-	AlertTriangle
+	Lock
 } from 'lucide-react';
 
 interface AdminProfile {
@@ -40,33 +32,6 @@ interface GeneralSettings {
 	currency: string;
 	autoBackup: boolean;
 	maintenanceMode: boolean;
-}
-
-interface NotificationSettings {
-	emailNotifications: boolean;
-	quotesApproval: boolean;
-	systemAlerts: boolean;
-	weeklyReports: boolean;
-	supplierUpdates: boolean;
-}
-
-interface SecuritySettings {
-	twoFactorAuth: boolean;
-	sessionTimeout: string;
-	passwordPolicy: string;
-	auditLogging: boolean;
-	ipWhitelist: string;
-}
-
-interface EmailSettings {
-	enabled: boolean;
-	host: string;
-	port: number;
-	username: string;
-	password: string;
-	secure: boolean;
-	checkInterval: number;
-	showPassword: boolean;
 }
 
 interface PasswordData {
@@ -134,38 +99,6 @@ export default function SettingsPage() {
 		autoBackup: true,
 		maintenanceMode: true
 	});
-	const [loading, setLoading] = useState(true);
-
-
-	const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-		emailNotifications: true,
-		quotesApproval: true,
-		systemAlerts: true,
-		weeklyReports: true,
-		supplierUpdates: true
-	});
-
-	const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
-		twoFactorAuth: true,
-		sessionTimeout: '8',
-		passwordPolicy: 'strong',
-		auditLogging: true,
-		ipWhitelist: ''
-	});
-
-	const [emailSettings, setEmailSettings] = useState<EmailSettings>({
-		enabled: false,
-		host: '',
-		port: 993,
-		username: '',
-		password: '',
-		secure: true,
-		checkInterval: 5,
-		showPassword: false
-	});
-
-	const [emailTestResult, setEmailTestResult] = useState<{ success?: boolean; message?: string } | null>(null);
-	const [isTestingEmail, setIsTestingEmail] = useState(false);
 
 	const [passwordData, setPasswordData] = useState<PasswordData>({
 		current: '',
@@ -197,18 +130,9 @@ export default function SettingsPage() {
 					maintenanceMode: !!config.manutencao
 				});
 				if (appCtx?.setSystemName) appCtx.setSystemName(sysName);
-				setSecuritySettings(prev => ({
-					...prev,
-					sessionTimeout: config.tempo_de_sessao ? String(config.tempo_de_sessao) : prev.sessionTimeout,
-					passwordPolicy: (config.politica_senha?.trim() === 'forte') ? 'strong' : (config.politica_senha?.trim() === 'medio' ? 'medium' : prev.passwordPolicy),
-					auditLogging: !!config.log_auditoria,
-					ipWhitelist: typeof config.ip_permitidos === 'string' ? config.ip_permitidos.trim() : ''
-				}));
 			}
 		} catch (error) {
 			console.error('Erro ao buscar configurações do sistema:', error);
-		} finally {
-			setLoading(false);
 		}
 	};
 
@@ -291,70 +215,6 @@ export default function SettingsPage() {
 		} catch (error) {
 			console.error('Erro ao salvar configurações do sistema:', error);
 			setSaveSuccess('Erro ao salvar configurações do sistema.');
-		}
-	};
-
-	const handleSaveNotifications = () => {
-		console.log('Salvando configurações de notificações:', notificationSettings);
-		setSaveSuccess(t('settings.notificationsSaved'));
-	};
-
-	const handleSaveSecurity = () => {
-		console.log('Salvando configurações de segurança:', securitySettings);
-		setSaveSuccess(t('settings.securitySaved'));
-	};
-
-	const handleTestEmailConnection = async () => {
-		setIsTestingEmail(true);
-		setEmailTestResult(null);
-
-		try {
-			const config: EmailConfig = {
-				host: emailSettings.host,
-				port: emailSettings.port,
-				username: emailSettings.username,
-				password: emailSettings.password,
-				secure: emailSettings.secure,
-				checkInterval: emailSettings.checkInterval,
-				enabled: emailSettings.enabled
-			};
-
-			const success = await emailService.configure(config);
-
-			if (success) {
-				setEmailTestResult({ success: true, message: 'Conexão testada com sucesso!' });
-			} else {
-				setEmailTestResult({ success: false, message: 'Falha na conexão. Verifique as configurações.' });
-			}
-		} catch (error) {
-			setEmailTestResult({ success: false, message: 'Erro ao testar conexão.' });
-		} finally {
-			setIsTestingEmail(false);
-		}
-	};
-
-	const handleSaveEmail = async () => {
-		try {
-			const config: EmailConfig = {
-				host: emailSettings.host,
-				port: emailSettings.port,
-				username: emailSettings.username,
-				password: emailSettings.password,
-				secure: emailSettings.secure,
-				checkInterval: emailSettings.checkInterval,
-				enabled: emailSettings.enabled
-			};
-
-			const success = await emailService.configure(config);
-
-			if (success) {
-				setSaveSuccess('Configurações de email salvas com sucesso!');
-			} else {
-				setSaveSuccess('Erro ao salvar configurações de email.');
-			}
-		} catch (error) {
-			console.error('Erro ao salvar email:', error);
-			setSaveSuccess('Erro ao salvar configurações de email.');
 		}
 	};
 

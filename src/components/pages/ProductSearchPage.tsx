@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Badge } from "../ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Search, Heart, Plus, Edit2, Trash2, RefreshCw, CheckCircle, X, Activity } from "lucide-react";
+import { Search, Heart, Plus, Edit2, Trash2, RefreshCw, CheckCircle, X, Activity, ExternalLink } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from "../../hooks/useCurrency";
@@ -181,6 +181,18 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
           </div>
           
           <div className="flex items-center space-x-1.5 w-full">
+            {/* Botão para visitar site do produto */}
+            {produto.produto_url && (
+              <a
+                href={produto.produto_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass-card p-1.5 rounded-lg hover:bg-green-500/20 hover:border-green-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+                title={t('productSearch.visitSite')}
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-dark-secondary group-hover:text-green-400 transition-colors" />
+              </a>
+            )}
             <button 
               onClick={() => produto.id !== undefined && handleEditProduct(produto.id)}
               className="glass-card p-1.5 rounded-lg hover:bg-blue-500/20 hover:border-blue-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
@@ -440,6 +452,16 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                       onChange={e => setEditingProduct(p => p ? { ...p, origem: e.target.value } : p)}
                       className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
                       placeholder={t('productSearch.originPlaceholder')}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">URL do Produto</label>
+                    <input
+                      type="url"
+                      value={editingProduct.produto_url || ''}
+                      onChange={e => setEditingProduct(p => p ? { ...p, produto_url: e.target.value } : p)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      placeholder="https://exemplo.com/produto"
                     />
                   </div>
                 </div>

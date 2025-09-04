@@ -255,6 +255,7 @@ const ptTranslations = {
     deleteProduct: "Remover Produto",
     edit: "Editar",
     delete: "Remover",
+    visitSite: "Visitar Site",
     noCategory: "Sem Categoria",
     deliveryTime: "dias úteis",
     searchProducts: "Pesquisar por nome, descrição, código...",

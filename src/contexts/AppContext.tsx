@@ -381,15 +381,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Mapear para os campos esperados pela API
       const payload = {
         nome: supplier.nome,
-        contato_email: supplier.contato_email,
+        contato_email: supplier.contato_email || '',
         contato_telefone: supplier.contato_telefone || '',
         site: supplier.site || '',
         observacoes: supplier.observacoes || '',
         ativo: supplier.ativo ?? true,
         cadastrado_em: cadastradoEm,
-        cadastrado_por: supplier.cadastrado_por,
+        cadastrado_por: supplier.cadastrado_por || 1,
         atualizado_em: atualizadoEm,
-        atualizado_por: supplier.atualizado_por
+        atualizado_por: supplier.atualizado_por || 1
       };
       console.log('🛰️ Payload final POST /suppliers:', JSON.stringify(payload, null, 2));
       const response = await supplierService.create(payload);
@@ -551,14 +551,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Mapear para os campos esperados pela API
       const response = await produtoService.create({
         nome: product.nome,
-        descricao: product.descricao,
-        preco: product.preco,
-        estoque: product.estoque,
+        descricao: product.descricao || '',
+        preco: product.preco || 0,
+        estoque: product.estoque || 0,
         unidade: product.unidade ?? '',
-        cadastrado_por: product.cadastrado_por,
-        cadastrado_em: product.cadastrado_em,
-        atualizado_por: product.atualizado_por,
-        atualizado_em: product.atualizado_em,
+        cadastrado_por: typeof product.cadastrado_por === 'string' ? parseInt(product.cadastrado_por) : (product.cadastrado_por || 1),
+        cadastrado_em: product.cadastrado_em || new Date().toISOString(),
+        atualizado_por: typeof product.atualizado_por === 'string' ? parseInt(product.atualizado_por) : (product.atualizado_por || 1),
+        atualizado_em: product.atualizado_em || new Date().toISOString(),
         fornecedor_id: typeof product.fornecedorId === 'number' ? product.fornecedorId : 0,
         codigo: product.codigo ?? '',
         modelo: product.modelo ?? '',
@@ -673,19 +673,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const productId = product.id || 0;
       const response = await produtoService.update(productId.toString(), {
         nome: product.nome,
-        descricao: product.descricao,
-        preco: product.preco,
-        estoque: product.estoque,
+        descricao: product.descricao || '',
+        preco: product.preco || 0,
+        estoque: product.estoque || 0,
         unidade: product.unidade ?? '',
-        cadastrado_por: product.cadastrado_por,
-        cadastrado_em: product.cadastrado_em,
-        atualizado_por: product.atualizado_por,
-        atualizado_em: product.atualizado_em,
+        cadastrado_por: typeof product.cadastrado_por === 'string' ? parseInt(product.cadastrado_por) : (product.cadastrado_por || 1),
+        cadastrado_em: product.cadastrado_em || new Date().toISOString(),
+        atualizado_por: typeof product.atualizado_por === 'string' ? parseInt(product.atualizado_por) : (product.atualizado_por || 1),
+        atualizado_em: product.atualizado_em || new Date().toISOString(),
         fornecedorId: product.fornecedorId,
         codigo: product.codigo ?? '',
         modelo: product.modelo ?? '',
-        origem: product.origem === 'externo' ? 'externo' : 'local',
-        m: product.m
+        origem: product.origem === 'externo' ? 'externo' : 'local'
       });
       
       if (response.success) {

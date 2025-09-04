@@ -27,6 +27,7 @@ export interface Product {
   estoque?: number;
   preco?: number;
   image_url?: string;
+  produto_url?: string;
   fornecedorId?: number;
   ativo: boolean;
   cadastrado_em?: string;

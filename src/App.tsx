@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { LoginPage } from "./components/LoginPage";
-import { UserDashboard } from "./components/UserDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AppProvider } from "./contexts/AppContext";
 import { userService } from './api/services';

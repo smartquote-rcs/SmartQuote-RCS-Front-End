@@ -3,7 +3,6 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { useApp } from "../../contexts/AppContext";
 import {
   Select,
   SelectContent,

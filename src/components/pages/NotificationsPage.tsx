@@ -219,20 +219,8 @@ export function NotificationsPage() {
     setIsMarkAllReadDialogOpen(true);
   };
 
-  const handleClearAllClick = () => {
-    if (notifications.length === 0) {
-      showToast('info', 'Nenhuma ação necessária', 'Não há notificações para eliminar.');
-      return;
-    }
-    setIsClearAllDialogOpen(true);
-  };
-
   const handleStockCheckClick = () => {
     setIsStockCheckDialogOpen(true);
-  };
-
-  const handleClearObsoleteClick = () => {
-    setIsClearObsoleteDialogOpen(true);
   };
 
   const handleBulkDeleteClick = () => {
