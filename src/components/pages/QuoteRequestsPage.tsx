@@ -276,7 +276,7 @@ const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
             </div>
 
             {/* Informações do Item - Grid Responsivo */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6">
               {/* Informações do Produto */}
               <div className="space-y-3">
                 <h4 className="text-base sm:text-lg font-semibold text-cyan-300 border-b border-slate-600/30 pb-2">Informações do Produto</h4>

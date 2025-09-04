@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Eye, EyeOff, Lock, Mail, CheckCircle, AlertCircle, TrendingUp } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, CheckCircle, AlertCircle, TrendingUp, Shield, Cpu } from "lucide-react";
 import { authService } from "../api/services.ts";
 
 interface LoginPageProps {
@@ -243,7 +243,7 @@ const AnimatedTitle = () => {
   return (
     <motion.h1
       ref={titleRef}
-      className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-200 bg-clip-text text-transparent mb-1 sm:mb-2 text-center leading-tight"
+      className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-200 bg-clip-text text-transparent mb-1 sm:mb-2 text-center leading-tight"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1, duration: 0.3 }}
@@ -557,12 +557,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           }}
         >
           <motion.div
-            className="flex items-center justify-center space-x-2 sm:space-x-3 md:space-x-4 mb-2 sm:mb-3"
+            className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2 sm:mb-3"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 200 }}
           >
             <motion.div
-              className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 2xl:w-32 2xl:h-32 bg-gradient-to-br from-cyan-400 via-blue-300 to-indigo-400 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center shadow-2xl relative overflow-hidden p-1"
+              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-cyan-400 via-blue-300 to-indigo-400 rounded-lg sm:rounded-xl flex items-center justify-center shadow-2xl relative overflow-hidden p-1"
               whileHover={{
                 rotate: [0, 5, -5, 0],
                 scale: 1.1,
@@ -611,7 +611,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               <motion.img
                 src="/RCS.png"
                 alt="RCS Angola Logo"
-                className="w-full h-full object-contain relative z-10 rounded-lg p-2"
+                className="w-full h-full object-contain relative z-10 rounded-lg p-1 sm:p-2"
                 animate={{
                   scale: [1, 1.02, 1],
                   filter: [
@@ -632,7 +632,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <AnimatedTitle />
 
           <motion.div
-            className="mt-1 sm:mt-2 text-blue-200 text-xs sm:text-sm md:text-base px-2 sm:px-4 md:px-6 text-center font-medium leading-relaxed"
+            className="mt-1 text-blue-200 text-xs px-2 sm:px-4 text-center font-medium leading-relaxed"
             initial={{ opacity: 0 }}
             animate={{
               opacity: [0.7, 1, 0.7],
@@ -644,12 +644,17 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               ease: "easeInOut",
             }}
           >
-            Processamento inteligente com IA avançada
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Shield className="w-2 h-2 sm:w-3 sm:h-3 text-cyan-400" />
+              <span className="text-xs">Plataforma Segura</span>
+              <Cpu className="w-2 h-2 sm:w-3 sm:h-3 text-cyan-400" />
+            </div>
+            <span className="text-xs">Processamento inteligente com IA</span>
           </motion.div>
         </motion.div>
 
-        {/* Login Form Container - Responsive */}
-        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mt-2 sm:mt-3 md:mt-4 px-3 sm:px-4 md:px-6"
+        {/* Login Form Container - Width Reduzida */}
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md mt-2 sm:mt-3 md:mt-4 px-3 sm:px-4 md:px-6"
         >
           {/* Login Card */}
           <motion.div
@@ -663,92 +668,120 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             }}
             whileHover={{
               y: -8,
-              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+              boxShadow: "0 25px 70px rgba(0, 0, 0, 0.4)",
             }}
           >
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20 shadow-2xl rounded-lg sm:rounded-xl lg:rounded-2xl"
+            <Card className="bg-white/12 backdrop-blur-xl border border-white/25 shadow-2xl rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden relative"
             >
-              <CardHeader className="space-y-1 pb-2 sm:pb-3 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-5"
+              {/* Card Header Background Gradient */}
+              <div className="absolute top-0 left-0 right-0 h-20 sm:h-24 bg-gradient-to-br from-blue-600/20 via-cyan-500/10 to-transparent"></div>
+              
+              <CardHeader className="space-y-1 sm:space-y-2 pb-2 sm:pb-3 md:pb-4 px-4 sm:px-6 md:px-8 pt-3 sm:pt-4 md:pt-6 relative z-10"
               >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 1.4, duration: 0.6 }}
                 >
-                  <CardTitle className="text-lg sm:text-xl md:text-2xl text-center text-white font-semibold"
+                  <div className="flex items-center justify-center mb-2">
+                    {showForgotPassword ? (
+                      <motion.div
+                        initial={{ scale: 0, rotate: 180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center shadow-lg"
+                      >
+                        <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center shadow-lg"
+                      >
+                        <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                      </motion.div>
+                    )}
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl md:text-2xl text-center text-white font-bold mb-1 sm:mb-2"
                   >
-                    {showForgotPassword ? 'Recuperar Senha' : 'Acesso ao Sistema'}
+                    {showForgotPassword ? 'Recuperar Senha' : 'Acesso Seguro'}
                   </CardTitle>
-                  <CardDescription className="text-center text-blue-100 text-sm sm:text-base leading-relaxed mt-1"
+                  <CardDescription className="text-center text-blue-100/90 text-xs sm:text-sm md:text-base leading-relaxed font-medium"
                   >
                     {showForgotPassword 
-                      ? 'Digite seu email para receber as instruções de recuperação'
-                      : 'Entre com suas credenciais para acessar a plataforma'
+                      ? 'Digite seu email para receber as instruções'
+                      : 'Autentique-se para acessar o sistema'
                     }
                   </CardDescription>
                 </motion.div>
               </CardHeader>
-              <CardContent className="space-y-2 sm:space-y-3 pt-1 sm:pt-2 px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-5"
+              <CardContent className="space-y-2 sm:space-y-3 pt-1 sm:pt-2 px-4 sm:px-6 md:px-8 pb-3 sm:pb-4 md:pb-6 relative z-10"
               >
                 <motion.form
                   onSubmit={handleSubmit}
-                  className="space-y-2 sm:space-y-3"
+                  className="space-y-2"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.6, duration: 0.6 }}
                 >
                   {/* Campo de nome removido - não necessário para recuperação de senha */}
-                  <div className="space-y-1 sm:space-y-2">
+                  <div className="space-y-1">
                     <Label
                       htmlFor="email"
-                      className="text-white text-xs sm:text-sm md:text-base font-medium"
+                      className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
                     >
-                      Email
+                      <Mail className="w-3 h-3 text-blue-400" />
+                      Email Corporativo
                     </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-blue-400 z-10" />
+                    <div className="relative group">
+                      <Mail className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400 z-10 transition-colors group-focus-within:text-cyan-400" />
                       <Input
                         id="email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-8 sm:pl-10 md:pl-12 pr-3 sm:pr-4 h-8 sm:h-10 md:h-11 bg-slate-800/50 border border-slate-600/50 rounded-md sm:rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200 text-xs sm:text-sm md:text-base"
-                        placeholder="seu@email.com"
+                        className="pl-8 sm:pl-10 pr-3 h-9 sm:h-10 bg-slate-800/60 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/30 focus:bg-white/10 transition-all duration-300 text-xs sm:text-sm shadow-inner backdrop-blur-sm"
+                        placeholder="usuario@empresa.com"
+                        autoComplete="off"
                         required
                       />
+                      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/10 via-transparent to-cyan-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                     </div>
                   </div>
 
                   {!showForgotPassword && (
-                    <div className="space-y-1 sm:space-y-2">
+                    <div className="space-y-1">
                       <Label
                         htmlFor="password"
-                        className="text-white text-xs sm:text-sm md:text-base font-medium"
+                        className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
                       >
-                        Senha
+                        <Lock className="w-3 h-3 text-blue-400" />
+                        Senha de Acesso
                       </Label>
-                      <div className="relative">
-                        <Lock className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-blue-400 z-10" />
+                      <div className="relative group">
+                        <Lock className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400 z-10 transition-colors group-focus-within:text-cyan-400" />
                         <Input
                           id="password"
                           type={showPassword ? "text" : "password"}
                           value={password}
                           onChange={handlePasswordChange}
-                          className="pl-8 sm:pl-10 md:pl-12 pr-10 sm:pr-12 h-8 sm:h-10 md:h-11 bg-slate-800/50 border border-slate-600/50 rounded-md sm:rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 focus:bg-white/5 transition-all duration-200 text-xs sm:text-sm md:text-base"
-                          placeholder="••••••••"
+                          className="pl-8 sm:pl-10 pr-10 h-9 sm:h-10 bg-slate-800/60 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/30 focus:bg-white/10 transition-all duration-300 text-xs sm:text-sm shadow-inner backdrop-blur-sm"
+                          placeholder="••••••••••••"
+                          autoComplete="off"
                           required
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full bg-slate-700/50 hover:bg-slate-600/70 text-blue-400 hover:text-white transition-colors duration-200 z-10 border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded bg-slate-700/60 hover:bg-slate-600/80 text-blue-400 hover:text-cyan-300 transition-all duration-300 z-10 border border-slate-600/30 focus:outline-none focus:ring-1 focus:ring-cyan-400/50"
                         >
                           {showPassword ? (
-                            <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <EyeOff className="w-3 h-3" />
                           ) : (
-                            <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Eye className="w-3 h-3" />
                           )}
                         </button>
+                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/10 via-transparent to-cyan-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                       </div>
                     </div>
                   )}
@@ -756,18 +789,21 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   {/* Indicador de força da senha removido - não necessário para recuperação */}
 
                   <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     <Button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-300 text-xs sm:text-sm md:text-base rounded-md sm:rounded-lg h-8 sm:h-10 md:h-11"
+                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 shadow-lg hover:shadow-xl transition-all duration-300 text-xs sm:text-sm rounded-lg h-9 sm:h-10 relative overflow-hidden group"
                       disabled={isLoading}
                       onClick={showForgotPassword ? (e) => { e.preventDefault(); handleForgotPassword(); } : undefined}
                     >
+                      {/* Efeito de brilho */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                      
                       {isLoading ? (
                         <motion.div
-                          className="flex items-center space-x-2"
+                          className="flex items-center justify-center space-x-2"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                         >
@@ -780,10 +816,24 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                               ease: "linear",
                             }}
                           />
-                          <span>{showForgotPassword ? 'Enviando...' : 'Entrando...'}</span>
+                          <span className="text-xs sm:text-sm">
+                            {showForgotPassword ? 'Enviando...' : 'Entrando...'}
+                          </span>
                         </motion.div>
                       ) : (
-                        showForgotPassword ? "Enviar Email de Recuperação" : "Entrar no Sistema"
+                        <div className="flex items-center justify-center space-x-1 relative z-10">
+                          {showForgotPassword ? (
+                            <>
+                              <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span className="text-xs sm:text-sm">Enviar Email</span>
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span className="text-xs sm:text-sm">Entrar</span>
+                            </>
+                          )}
+                        </div>
                       )}
                     </Button>
                   </motion.div>
@@ -794,7 +844,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                       initial={{ opacity: 0, y: 20, scale: 0.8 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -20, scale: 0.8 }}
-                      className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-md sm:rounded-lg backdrop-blur-sm border text-xs sm:text-sm ${
+                      className={`flex items-center space-x-2 p-2 rounded-lg backdrop-blur-sm border text-xs ${
                         feedback.type === 'success' 
                           ? 'bg-green-500/20 border-green-400/30 text-green-100' 
                           : 'bg-red-500/20 border-red-400/30 text-red-100'
@@ -815,39 +865,47 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         }}
                       >
                         {feedback.type === 'success' ? (
-                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" />
+                          <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
                         ) : (
-                          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
+                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 flex-shrink-0" />
                         )}
                       </motion.div>
-                      <span className="text-xs sm:text-sm font-medium leading-relaxed">{feedback.message}</span>
+                      <span className="text-xs font-medium leading-relaxed">{feedback.message}</span>
                     </motion.div>
                   )}
 
                   {/* Botão para alternar entre login e recuperação de senha */}
                   <motion.div
-                    className="text-center pt-1"
+                    className="text-center pt-2 sm:pt-3"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <button
+                    <motion.button
                       type="button"
                       onClick={() => {
                         setShowForgotPassword(!showForgotPassword);
                         setFeedback({ type: null, message: '' });
                         setPassword('');
                       }}
-                      className="text-slate-400 text-xs sm:text-sm leading-relaxed hover:text-blue-300 transition-colors duration-200"
+                      className="inline-flex items-center gap-2 text-slate-400 text-xs sm:text-sm leading-relaxed hover:text-cyan-300 transition-all duration-300 px-3 py-2 rounded-lg hover:bg-white/5 backdrop-blur-sm"
+                      whileHover={{ y: -1 }}
+                      whileTap={{ y: 0 }}
                     >
                       {showForgotPassword ? (
                         <>
-                          <span className="text-blue-300 font-medium">Lembrou da senha?</span> Voltar ao login
+                          <Lock className="w-3 h-3" />
+                          <span className="text-xs">
+                            <span className="text-cyan-300 font-semibold">Lembrou?</span> Voltar
+                          </span>
                         </>
                       ) : (
                         <>
-                          <span className="text-blue-300 font-medium">Esqueceu a senha?</span> Clique aqui para recuperar
+                          <Mail className="w-3 h-3" />
+                          <span className="text-xs">
+                            <span className="text-cyan-300 font-semibold">Esqueceu?</span> Recuperar
+                          </span>
                         </>
                       )}
-                    </button>
+                    </motion.button>
                   </motion.div>
                 </motion.form>
               </CardContent>
@@ -855,42 +913,60 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           </motion.div>
         </div>
         
-        {/* Footer limpo e elegante - Responsivo */}
+        {/* Footer elegante e profissional - Responsivo */}
         <motion.div
-          className="absolute bottom-0 left-0 right-0 h-10 sm:h-12 bg-gradient-to-t from-slate-900/90 to-transparent backdrop-blur-sm border-t border-slate-700/30"
+          className="absolute bottom-0 left-0 right-0 h-12 sm:h-14 bg-gradient-to-t from-slate-900/95 via-slate-900/80 to-transparent backdrop-blur-md border-t border-slate-700/40"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 2, duration: 0.8 }}
         >
-          <div className="h-full flex items-center justify-center px-3 sm:px-4 md:px-6">
+          <div className="h-full flex items-center justify-between px-4 sm:px-6 md:px-8">
             <motion.div
-              className="flex items-center gap-2 sm:gap-3 md:gap-4 text-slate-400"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              className="flex items-center gap-3 sm:gap-4 text-slate-400"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 2.5, duration: 0.6 }}
             >
-              <div className="flex items-center gap-1 sm:gap-2">
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
-                <span className="text-xs sm:text-sm font-medium">SmartQuote</span>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
+                <span className="text-sm sm:text-base font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                  SmartQuote
+                </span>
               </div>
               
-              <div className="w-px h-3 sm:h-4 bg-slate-600"></div>
+              <div className="w-px h-4 sm:h-5 bg-slate-600"></div>
               
               <motion.div
-                className="flex items-center gap-1"
-                animate={{ opacity: [1, 0.5, 1] }}
+                className="flex items-center gap-2"
+                animate={{ opacity: [1, 0.6, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-400"></div>
-                <span className="text-xs hidden sm:inline">Sistema Online</span>
-                <span className="text-xs sm:hidden">Online</span>
+                <div className="w-2 h-2 rounded-full bg-green-400 shadow-lg shadow-green-400/50"></div>
+                <span className="text-xs sm:text-sm font-medium">Sistema Online</span>
               </motion.div>
-              
-              <div className="w-px h-3 sm:h-4 bg-slate-600 hidden md:block"></div>
-              
-              <span className="text-xs hidden md:inline">© 2025 - Plataforma de Cotações Inteligentes</span>
+            </motion.div>
+
+            <motion.div
+              className="text-xs sm:text-sm text-slate-500 font-medium"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 2.7, duration: 0.6 }}
+            >
+              <div className="flex items-center gap-2">
+                <Cpu className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
+                <span className="hidden sm:inline">Powered by AI Technology</span>
+                <span className="sm:hidden">AI Tech</span>
+              </div>
             </motion.div>
           </div>
+
+          {/* Barra de progresso decorativa */}
+          <motion.div
+            className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500"
+            initial={{ width: 0 }}
+            animate={{ width: "100%" }}
+            transition={{ delay: 3, duration: 2, ease: "easeInOut" }}
+          />
         </motion.div>
       </div>
     </div>

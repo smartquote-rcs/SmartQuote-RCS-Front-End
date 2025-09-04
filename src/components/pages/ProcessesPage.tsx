@@ -185,27 +185,27 @@ export function ProcessesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-dark-bg min-h-screen">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 bg-dark-bg min-h-screen">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-dark-primary">
+          <h1 className="text-xl sm:text-2xl font-bold text-dark-primary">
             Processos de Cotação
           </h1>
-          <p className="text-dark-secondary mt-1">
+          <p className="text-sm sm:text-base text-dark-secondary mt-1">
             Acompanhe o status e progresso das cotações em andamento
           </p>
         </div>
       </div>
 
       {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex flex-col">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="flex flex-col w-full sm:w-auto">
           <label className="text-sm font-medium text-dark-primary mb-1">Status</label>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-dark-border rounded-lg bg-dark-card text-dark-primary focus:outline-none focus:ring-2 focus:ring-dark-cta"
+            className="px-3 py-2 border border-dark-border rounded-lg bg-dark-card text-dark-primary focus:outline-none focus:ring-2 focus:ring-dark-cta text-sm sm:text-base w-full sm:w-48"
           >
             <option value="todos">Todos os Status</option>
             <option value="pendente">Pendente</option>
@@ -226,37 +226,38 @@ export function ProcessesPage() {
             <span className="text-sm mt-2">Nenhum processo de cotação foi encontrado no momento.</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 min-h-[800px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2 min-h-[800px]">
           {filteredJobs.map((job) => {
           const produtos = job.resultado?.produtos || [];
           
           return (
             <Card key={job.id} className="bg-dark-card border-dark-border hover:border-dark-cta transition-colors h-fit">
-              <div className="p-4">
+              <div className="p-3 sm:p-4">
                 {/* Header do Card */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
+                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-mono text-dark-secondary">{job.id.substring(0, 8)}</span>
                     </div>
-                    <h3 className="font-medium text-dark-primary mb-1 line-clamp-1 text-sm">
+                    <h3 className="font-medium text-dark-primary mb-1 line-clamp-1 text-sm truncate">
                       {job.parametros.termo}
                     </h3>
                     <p className="text-xs text-dark-secondary">
                       {new Date(job.criadoEm).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-dark-secondary hover:text-dark-primary h-6 w-6 p-0">
+                  <Button variant="ghost" size="sm" className="text-dark-secondary hover:text-dark-primary h-6 w-6 p-0 flex-shrink-0">
                     <MoreHorizontal className="h-3 w-3" />
                   </Button>
                 </div>
 
                 {/* Status */}
-                <div className="mb-3">
+                <div className="mb-2 sm:mb-3">
                   <div className="flex items-center justify-between mb-2">
-                    <Badge className={`${getStatusColor(job.status)} text-xs flex items-center gap-1`}>
+                    <Badge className={`${getStatusColor(job.status)} text-xs flex items-center gap-1 flex-shrink-0`}>
                       {getStatusIcon(job.status)}
-                      {job.status.replace('-', ' ').toUpperCase()}
+                      <span className="hidden sm:inline">{job.status.replace('-', ' ').toUpperCase()}</span>
+                      <span className="sm:hidden">{job.status.charAt(0).toUpperCase()}</span>
                     </Badge>
                     {job.resultado && (
                       <span className="text-xs font-medium text-dark-primary">
@@ -267,33 +268,34 @@ export function ProcessesPage() {
                 </div>
 
                 {/* Informações resumidas */}
-                <div className="space-y-1 mb-3">
+                <div className="space-y-1 mb-2 sm:mb-3">
                   <div className="flex items-center gap-2 text-xs text-dark-secondary">
-                    <Building className="h-3 w-3" />
-                    <span>{job.parametros.fornecedores.length} fornecedores</span>
+                    <Building className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{job.parametros.fornecedores.length} fornecedores</span>
                   </div>
                   {produtos.length > 0 && (
                     <div className="flex items-center gap-2 text-xs text-dark-secondary">
-                      <Package className="h-3 w-3" />
-                      <span>{produtos.length} produtos</span>
+                      <Package className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{produtos.length} produtos</span>
                     </div>
                   )}
                 </div>
 
                 {/* Ações */}
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button 
                     size="sm" 
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 h-7 flex items-center justify-center gap-1"
                     onClick={() => viewJobDetails(job.id)}
                   >
                     <Eye className="h-3 w-3" />
-                    Ver Detalhes
+                    <span className="hidden sm:inline">Ver Detalhes</span>
+                    <span className="sm:hidden">Detalhes</span>
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-dark-error border-dark-border hover:bg-dark-error/10 hover:text-dark-error h-7 w-7 p-0"
+                    className="text-dark-error border-dark-border hover:bg-dark-error/10 hover:text-dark-error h-7 sm:w-7 p-0 sm:flex-shrink-0"
                     onClick={() => setShowDeleteConfirm(job.id)}
                   >
                     <Trash2 className="h-3 w-3" />
