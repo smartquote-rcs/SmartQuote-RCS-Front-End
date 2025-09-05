@@ -113,6 +113,7 @@ export function AdminDashboard({
   const { currency, formatCurrency } = useCurrency();
   const [activePage, setActivePage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isOnboardingMode, setIsOnboardingMode] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
 
@@ -232,6 +233,19 @@ export function AdminDashboard({
     allowedPages,
     defaultPage
   } = getNavConfig(userPosition);
+
+  // Verificar se é primeira vez do usuário e redirecionar para onboarding
+  useEffect(() => {
+    if (user?.email) {
+      const onboardingKey = `onboarding_completed_${user.email}`;
+      const hasCompletedOnboarding = localStorage.getItem(onboardingKey);
+      
+      if (!hasCompletedOnboarding && activePage !== 'help') {
+        setActivePage('help');
+        setIsOnboardingMode(true);
+      }
+    }
+  }, [user?.email, activePage]);
 
   useEffect(() => {
     if (!allowedPages.includes(activePage)) {
@@ -1583,7 +1597,23 @@ export function AdminDashboard({
       case "user-management":
         return <UserManagementPage />;
       case "help":
-        return <HelpPage />;
+        return (
+          <HelpPage 
+            user={user}
+            isOnboarding={isOnboardingMode}
+            onNavigateToDashboard={() => {
+              setIsOnboardingMode(false);
+              setActivePage("dashboard");
+            }}
+            onNavigateToQuotes={() => {
+              setIsOnboardingMode(false);
+              setActivePage("quotes");
+            }}
+            onOnboardingComplete={() => {
+              setIsOnboardingMode(false);
+            }}
+          />
+        );
       default:
         return <DashboardPage />;
     }
@@ -1604,15 +1634,16 @@ export function AdminDashboard({
         />
       )}
 
-      {/* Sidebar */}
-      <div
-        className={`
-        ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        fixed lg:relative z-50 lg:z-auto
-        w-56 sm:w-64 h-full bg-dark-bg border-r border-dark-color 
-        flex flex-col transition-transform duration-300 ease-in-out
-      `}
-      >
+      {/* Sidebar - Oculta durante onboarding */}
+      {!isOnboardingMode && (
+        <div
+          className={`
+          ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          fixed lg:relative z-50 lg:z-auto
+          w-56 sm:w-64 h-full bg-dark-bg border-r border-dark-color 
+          flex flex-col transition-transform duration-300 ease-in-out
+        `}
+        >
         {/* Logo */}
         <div className="p-3 sm:p-4 lg:p-6 border-b border-dark-color flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -1730,31 +1761,34 @@ export function AdminDashboard({
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Header */}
-        <div className="lg:hidden bg-dark-bg border-b border-dark-color p-3 sm:p-4 flex items-center justify-between flex-shrink-0">
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-lg hover:bg-dark-hover text-dark-secondary"
-          >
-            <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-          <button
-            onClick={() => setActivePage('dashboard')}
-            className="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200 group"
-          >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-800 rounded-lg flex items-center justify-center p-1 group-hover:scale-105 transition-transform duration-200">
-              <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="font-bold text-dark-primary text-sm sm:text-base group-hover:text-blue-400 transition-colors duration-200">
-              {systemName || 'SmartQuote-RCS'}
-            </span>
-          </button>
-          <div className="w-9 sm:w-10"></div>
-        </div>
+      <div className={`flex-1 flex flex-col overflow-hidden ${isOnboardingMode ? 'w-full' : ''}`}>
+        {/* Mobile Header - Oculto durante onboarding */}
+        {!isOnboardingMode && (
+          <div className="lg:hidden bg-dark-bg border-b border-dark-color p-3 sm:p-4 flex items-center justify-between flex-shrink-0">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 rounded-lg hover:bg-dark-hover text-dark-secondary"
+            >
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+            <button
+              onClick={() => setActivePage('dashboard')}
+              className="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200 group"
+            >
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-800 rounded-lg flex items-center justify-center p-1 group-hover:scale-105 transition-transform duration-200">
+                <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
+              </div>
+              <span className="font-bold text-dark-primary text-sm sm:text-base group-hover:text-blue-400 transition-colors duration-200">
+                {systemName || 'SmartQuote-RCS'}
+              </span>
+            </button>
+            <div className="w-9 sm:w-10"></div>
+          </div>
+        )}
 
         {/* Page Content */}
         <div className="flex-1 overflow-hidden">

@@ -10,10 +10,81 @@ interface CarouselSlide {
   category: 'dashboard' | 'quotes' | 'management' | 'settings' | 'reports';
 }
 
-export const HelpPage: React.FC<{ onNavigateToDashboard?: () => void }> = ({ 
-  onNavigateToDashboard 
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  position?: string;
+}
+
+interface HelpPageProps {
+  onNavigateToDashboard?: () => void;
+  onNavigateToQuotes?: () => void;
+  user?: User | null;
+  isOnboarding?: boolean;
+  onOnboardingComplete?: () => void;
+}
+
+export const HelpPage: React.FC<HelpPageProps> = ({ 
+  onNavigateToDashboard,
+  onNavigateToQuotes,
+  user,
+  isOnboarding = false,
+  onOnboardingComplete
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Estados para controle de onboarding
+  const [isFirstTime, setIsFirstTime] = useState(false);
+  const [canExit, setCanExit] = useState(!isOnboarding);
+
+  // Verificar se é primeira vez do usuário
+  useEffect(() => {
+    if (user?.email) {
+      const onboardingKey = `onboarding_completed_${user.email}`;
+      const hasCompletedOnboarding = localStorage.getItem(onboardingKey);
+      
+      if (!hasCompletedOnboarding && isOnboarding) {
+        setIsFirstTime(true);
+        setCanExit(false);
+        
+        // Bloquear navegação do browser (F5, back button, etc.)
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+          e.preventDefault();
+          e.returnValue = 'Você precisa completar o tutorial antes de sair.';
+        };
+
+        const handlePopState = (e: PopStateEvent) => {
+          e.preventDefault();
+          window.history.pushState(null, '', window.location.href);
+        };
+
+        if (!canExit) {
+          window.addEventListener('beforeunload', handleBeforeUnload);
+          window.addEventListener('popstate', handlePopState);
+          window.history.pushState(null, '', window.location.href);
+        }
+
+        return () => {
+          window.removeEventListener('beforeunload', handleBeforeUnload);
+          window.removeEventListener('popstate', handlePopState);
+        };
+      }
+    }
+  }, [user?.email, isOnboarding, canExit]);
+
+  const completeOnboarding = () => {
+    if (user?.email) {
+      const onboardingKey = `onboarding_completed_${user.email}`;
+      localStorage.setItem(onboardingKey, 'true');
+      setCanExit(true);
+      
+      if (onOnboardingComplete) {
+        onOnboardingComplete();
+      }
+    }
+  };
 
   // Slides com imagens fornecidas (screenshots) com descrições detalhadas
   const onboardingSlides: CarouselSlide[] = [
@@ -133,20 +204,34 @@ export const HelpPage: React.FC<{ onNavigateToDashboard?: () => void }> = ({
 
   const currentSlideData = onboardingSlides[currentSlide];
 
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-  };
-
   const nextSlide = () => {
     setCurrentSlide((prev) => {
       if (prev >= onboardingSlides.length - 1) {
-        // Se está no último slide e há uma função de navegação, redireciona para o dashboard
-        if (onNavigateToDashboard) {
-          onNavigateToDashboard();
-          return prev;
+        // Se está no último slide
+        if (isOnboarding || isFirstTime) {
+          completeOnboarding();
         }
-        // Se não há função de navegação, tenta recarregar a página para o dashboard
-        window.location.href = '/dashboard';
+        
+        // Determinar redirecionamento baseado no role do usuário
+        const userRole = user?.role || user?.position || 'user';
+        const isAdmin = userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'manager';
+        
+        if (isAdmin) {
+          // Admin/Manager vai para dashboard
+          if (onNavigateToDashboard) {
+            onNavigateToDashboard();
+          } else {
+            window.location.href = '/dashboard';
+          }
+        } else {
+          // Usuário comum vai para lista de cotações
+          if (onNavigateToQuotes) {
+            onNavigateToQuotes();
+          } else {
+            window.location.href = '/quotes';
+          }
+        }
+        
         return prev;
       }
       return prev + 1;
@@ -164,6 +249,15 @@ export const HelpPage: React.FC<{ onNavigateToDashboard?: () => void }> = ({
 
 return (
   <div className="min-h-screen w-full bg-dark-bg flex flex-col">
+    {/* Aviso de onboarding obrigatório */}
+    {(isOnboarding || isFirstTime) && (
+      <div className="w-full bg-yellow-600/20 border-b border-yellow-500/30 px-4 py-2 text-center">
+        <p className="text-yellow-200 text-sm font-medium">
+          ⚠️ Primeiro acesso detectado. Complete o tutorial para acessar o sistema.
+        </p>
+      </div>
+    )}
+    
     {/* Header compacto */}
     <div className="w-full py-3 px-4 bg-gradient-to-r from-blue-900/40 to-purple-900/40 border-b border-white/10 shadow-lg">
       <div className="max-w-6xl mx-auto">
@@ -174,10 +268,10 @@ return (
             </div>
             <div>
               <h1 className="text-lg md:text-xl font-bold text-white">
-                Guia do Sistema SmartQuote
+                {isOnboarding || isFirstTime ? 'Bem-vindo ao SmartQuote!' : 'Guia do Sistema SmartQuote'}
               </h1>
               <p className="text-xs text-blue-200/80 hidden sm:block">
-                Tutorial interativo
+                {isOnboarding || isFirstTime ? 'Tutorial obrigatório - Complete para continuar' : 'Tutorial interativo'}
               </p>
             </div>
           </div>
@@ -222,13 +316,19 @@ return (
             {/* Botões de navegação com estados desabilitados */}
             <button
               onClick={prevSlide}
-              disabled={currentSlide === 0}
+              disabled={currentSlide === 0 || (isOnboarding || isFirstTime)}
               className={`absolute left-4 top-1/2 -translate-y-1/2 p-3 backdrop-blur-sm rounded-full text-white transition-all duration-300 shadow-2xl ${
-                currentSlide === 0 
+                currentSlide === 0 || (isOnboarding || isFirstTime)
                   ? 'bg-gray-600/40 opacity-40 cursor-not-allowed' 
                   : 'bg-black/60 hover:bg-black/80 opacity-0 group-hover:opacity-100 hover:scale-110'
               }`}
-              title={currentSlide === 0 ? "Primeiro slide" : "Slide anterior"}
+              title={
+                (isOnboarding || isFirstTime)
+                  ? "Navegação bloqueada durante onboarding"
+                  : currentSlide === 0 
+                    ? "Primeiro slide" 
+                    : "Slide anterior"
+              }
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
@@ -237,10 +337,22 @@ return (
               onClick={nextSlide}
               className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 backdrop-blur-sm rounded-full text-white transition-all duration-300 shadow-2xl ${
                 currentSlide === onboardingSlides.length - 1 
-                  ? 'bg-green-600/60 hover:bg-green-700/80 opacity-0 group-hover:opacity-100 hover:scale-110' 
+                  ? (isOnboarding || isFirstTime)
+                    ? 'bg-green-600/60 hover:bg-green-700/80 opacity-0 group-hover:opacity-100 hover:scale-110'
+                    : 'bg-green-600/60 hover:bg-green-700/80 opacity-0 group-hover:opacity-100 hover:scale-110'
                   : 'bg-black/60 hover:bg-black/80 opacity-0 group-hover:opacity-100 hover:scale-110'
               }`}
-              title={currentSlide === onboardingSlides.length - 1 ? "Ir para Dashboard" : "Próximo slide"}
+              title={
+                currentSlide === onboardingSlides.length - 1 
+                  ? (isOnboarding || isFirstTime)
+                    ? (() => {
+                        const userRole = user?.role || user?.position || 'user';
+                        const isAdmin = userRole.toLowerCase() === 'admin' || userRole.toLowerCase() === 'manager';
+                        return isAdmin ? 'Concluir e ir para Dashboard' : 'Concluir e ir para Cotações';
+                      })()
+                    : 'Ir para Dashboard'
+                  : 'Próximo slide'
+              }
             >
               <ChevronRight className="w-6 h-6" />
             </button>
