@@ -247,8 +247,14 @@ export const userService = {
         email: typeof requestData.email,
         department: typeof requestData.department,
         position: typeof requestData.position,
-        contact: typeof requestData.contact,
-        password: requestData.password ? 'presente' : 'ausente'
+        password: requestData.password ? 'definida' : 'não definida',
+        contact: requestData.contact ? 'definido' : 'não definido'
+      });
+      console.log('📐 Validação dos campos:', {
+        name: requestData.name ? `✅ "${requestData.name}"` : '❌ vazio',
+        email: requestData.email ? `✅ "${requestData.email}"` : '❌ vazio',
+        department: requestData.department ? `✅ "${requestData.department}"` : '❌ vazio',
+        position: requestData.position ? `✅ "${requestData.position}"` : '❌ vazio'
       });
 
       let response;
@@ -263,19 +269,42 @@ export const userService = {
         const alternativeData: any = {
           username: requestData.name,      // Talvez API espere 'username'
           email: requestData.email,
-          dept: requestData.department,     // Talvez API espere 'dept'
-          role: requestData.position,       // Talvez API espere 'role' ao invés de 'position'
+          department: requestData.department,     
+          role: requestData.position,       // Mudando para 'role'
         };
         
         if (requestData.password) {
           alternativeData.password = requestData.password;
         }
         if (requestData.contact) {
-          alternativeData.phone = requestData.contact; // Talvez API espere 'phone'
+          alternativeData.contact = requestData.contact;
         }
         
         console.log('🔄 Tentativa alternativa com:', alternativeData);
-        response = await api.post('/users/create', alternativeData);
+        try {
+          response = await api.post('/users/create', alternativeData);
+        } catch (secondError: any) {
+          console.log('❌ Segunda tentativa também falhou, tentando terceira estrutura...');
+          console.log('� Erro da segunda tentativa:', secondError.response?.data);
+          
+          // Terceira tentativa com estrutura baseada em employees
+          const thirdData: any = {
+            name: requestData.name,
+            email: requestData.email,
+            dept: requestData.department,     // Talvez API espere 'dept'
+            position: requestData.position,   // Mantendo position
+          };
+          
+          if (requestData.password) {
+            thirdData.password = requestData.password;
+          }
+          if (requestData.contact) {
+            thirdData.phone = requestData.contact;
+          }
+          
+          console.log('🔄 Terceira tentativa com:', thirdData);
+          response = await api.post('/users/create', thirdData);
+        }
       }
       
       if (response.status === 204 || response.status === 201 || response.status === 200) {
@@ -293,7 +322,26 @@ export const userService = {
       
       if (error.response) {
         // Erro da API
-        if (error.response.data?.error) {
+        console.log('🔍 Verificando estrutura de erro:', error.response.data);
+        
+        // Verificar se há erros específicos de validação
+        if (error.response.data?.errors) {
+          const errors = error.response.data.errors;
+          const errorMessages = [];
+          
+          // Extrair mensagens específicas de erro
+          for (const field in errors) {
+            if (Array.isArray(errors[field])) {
+              errorMessages.push(`${field}: ${errors[field].join(', ')}`);
+            } else {
+              errorMessages.push(`${field}: ${errors[field]}`);
+            }
+          }
+          
+          if (errorMessages.length > 0) {
+            errorMessage = `Erros de validação:\n${errorMessages.join('\n')}`;
+          }
+        } else if (error.response.data?.error) {
           errorMessage = error.response.data.error;
         } else if (error.response.data?.message) {
           errorMessage = error.response.data.message;

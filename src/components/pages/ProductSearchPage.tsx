@@ -125,11 +125,11 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
   );
 
   const ProductCard = ({ produto }: { produto: Product }) => (
-    <div className={`glass-card bg-white/5 rounded-xl border border-white/20 transition-all duration-300 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] w-full max-w-full overflow-hidden group relative ${
-      viewMode === "list" ? "flex flex-col lg:flex-row lg:items-center space-y-3 lg:space-y-0 lg:space-x-4 p-3 lg:p-4" : "p-3 sm:p-4 flex flex-col h-full"
+    <div className={`glass-card bg-white/5 rounded-xl border border-white/20 transition-all duration-300 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] w-full overflow-hidden group relative ${
+      viewMode === "list" ? "flex flex-col lg:flex-row lg:items-center space-y-3 lg:space-y-0 lg:space-x-4 p-3 lg:p-4" : "p-3 sm:p-4 flex flex-col h-full min-h-[320px]"
     }`}>
       {/* Image */}
-      <div className={`relative ${viewMode === "list" ? "w-full lg:w-24 h-32 lg:h-20" : "w-full h-36 sm:h-40"} bg-gray-800 rounded-lg overflow-hidden mb-3 ${viewMode === "list" ? "lg:mb-0" : ""} group flex-shrink-0`}>
+      <div className={`relative ${viewMode === "list" ? "w-full lg:w-24 h-32 lg:h-20" : "w-full h-40"} bg-gray-800 rounded-lg overflow-hidden mb-3 ${viewMode === "list" ? "lg:mb-0" : ""} group flex-shrink-0`}>
         <img 
           src={processImageUrl(produto.image_url, 400, 300)}
           alt={produto.nome}
@@ -147,25 +147,25 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
       {/* Content */}
       <div className={`${viewMode === "list" ? "flex-1" : "flex-1 flex flex-col"}`}>
         <div className="mb-3 flex-grow">
-          <div className="flex flex-col space-y-2 mb-2">
-            <h3 className={`font-bold text-dark-primary hover:text-cyan-400 transition-colors duration-300 ${viewMode === "list" ? "text-base" : "text-sm"} leading-tight line-clamp-2`}>
+          <div className="flex flex-col space-y-2 mb-3">
+            <h3 className={`font-bold text-dark-primary hover:text-cyan-400 transition-colors duration-300 ${viewMode === "list" ? "text-base" : "text-sm"} leading-tight line-clamp-2 min-h-[2.5rem]`}>
               {produto.nome}
             </h3>
             <div className="flex items-center justify-between">
               {getDisponibilidadeBadge(produto.estoque || 0)}
-              <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-0.5 rounded-full truncate max-w-[80px]">ID: {produto.fornecedorId || "N/A"}</span>
+              <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[80px]">ID: {produto.fornecedorId || "N/A"}</span>
             </div>
           </div>
-          <div className="mb-2">
+          <div className="mb-3">
             <p className="text-xs text-blue-300 font-medium truncate">{produto.modelo || t('productSearch.noCategory')}</p>
           </div>
+          
+          {viewMode === "list" && (
+            <p className="text-xs text-dark-secondary mb-2 line-clamp-2">
+              {produto.descricao}
+            </p>
+          )}
         </div>
-
-        {viewMode === "list" && (
-          <p className="text-xs text-dark-secondary mb-2 line-clamp-2">
-            {produto.descricao}
-          </p>
-        )}
 
         <div className="mt-auto">
           <div className="flex flex-col space-y-2 mb-3">
@@ -187,27 +187,27 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
                 href={produto.produto_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="glass-card p-1.5 rounded-lg hover:bg-green-500/20 hover:border-green-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+                className="glass-card p-2 rounded-lg hover:bg-green-500/20 hover:border-green-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
                 title={t('productSearch.visitSite')}
               >
-                <ExternalLink className="w-3.5 h-3.5 text-dark-secondary group-hover:text-green-400 transition-colors" />
+                <ExternalLink className="w-4 h-4 text-dark-secondary group-hover:text-green-400 transition-colors" />
               </a>
             )}
             <button 
               onClick={() => produto.id !== undefined && handleEditProduct(produto.id)}
-              className="glass-card p-1.5 rounded-lg hover:bg-blue-500/20 hover:border-blue-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+              className="glass-card p-2 rounded-lg hover:bg-blue-500/20 hover:border-blue-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
               title={t('productSearch.edit')}
               disabled={produto.id === undefined}
             >
-              <Edit2 className="w-3.5 h-3.5 text-dark-secondary group-hover:text-blue-400 transition-colors" />
+              <Edit2 className="w-4 h-4 text-dark-secondary group-hover:text-blue-400 transition-colors" />
             </button>
             <button 
               onClick={() => produto.id !== undefined && handleDeleteProduct(produto.id)}
-              className="glass-card p-1.5 rounded-lg hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+              className="glass-card p-2 rounded-lg hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
               title={t('productSearch.delete')}
               disabled={produto.id === undefined}
             >
-              <Trash2 className="w-3.5 h-3.5 text-dark-secondary group-hover:text-red-400 transition-colors" />
+              <Trash2 className="w-4 h-4 text-dark-secondary group-hover:text-red-400 transition-colors" />
             </button>
           </div>
         </div>
@@ -528,9 +528,9 @@ export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageP
           {!isEditingInline && (
           <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
               <TabsContent value="all" className="h-full mt-0">
-                <div className={`grid gap-3 md:gap-4 lg:gap-6 w-full min-h-[800px] ${
+                <div className={`grid gap-3 md:gap-4 lg:gap-6 w-full min-h-[400px] ${
                   viewMode === "grid" 
-                    ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" 
+                    ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 auto-rows-fr" 
                     : "grid-cols-1"
                 }`}>
                   {paginatedProducts.map((produto) => (

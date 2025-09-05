@@ -805,12 +805,16 @@ export default function UserManagementPage() {
   };
 
   const UserCard = ({ user }: { user: UserData }) => (
-    <div className="glass-card p-6 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-2xl border border-white/20">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between space-y-4 sm:space-y-0 sm:space-x-6">
-        <div className="flex items-start space-x-4 flex-1 min-w-0">
+    <div className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-xl border border-white/20">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0 sm:space-x-6">
+        {/* Left Side - User Info */}
+        <div className="flex items-center space-x-4 flex-1 min-w-0">
+          {/* Avatar */}
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-lg">
             {getRoleIcon(user.role)}
           </div>
+          
+          {/* User Details */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
               <h3 className="font-bold text-dark-primary text-base sm:text-lg truncate">
@@ -821,34 +825,36 @@ export default function UserManagementPage() {
                 {getStatusBadge(user.status)}
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-dark-secondary">
+            
+            {/* User Info Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 text-sm text-dark-secondary">
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <span className="truncate">{user.email}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <User className="w-4 h-4 text-green-400 flex-shrink-0" />
-                <span>{user.department}</span>
+                <Building className="w-4 h-4 text-green-400 flex-shrink-0" />
+                <span className="truncate">{user.department}</span>
               </div>
               {user.phone && (
                 <div className="flex items-center space-x-2">
                   <Phone className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                  <span>{user.phone}</span>
+                  <span className="truncate">{user.phone}</span>
                 </div>
               )}
               <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-orange-400 flex-shrink-0" />
-                <span>Login: {user.lastLogin}</span>
+                <Clock className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                <span className="text-xs truncate">Login: {user.lastLogin}</span>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Actions */}
-        <div className="flex items-center space-x-2 flex-shrink-0">
+        
+        {/* Right Side - Actions */}
+        <div className="flex items-center space-x-2 flex-shrink-0 self-start sm:self-center">
           <button
             onClick={() => handleToggleUserStatus(user.id)}
-            className={`p-3 rounded-xl transition-all duration-300 hover:scale-110 ${
+            className={`p-2.5 rounded-lg transition-all duration-300 hover:scale-110 ${
               user.status === "active"
                 ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
                 : "bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 border border-gray-500/30"
@@ -856,25 +862,25 @@ export default function UserManagementPage() {
             title={user.status === "active" ? "Desativar" : "Ativar"}
           >
             {user.status === "active" ? (
-              <Eye className="w-5 h-5" />
+              <Eye className="w-4 h-4" />
             ) : (
-              <EyeOff className="w-5 h-5" />
+              <EyeOff className="w-4 h-4" />
             )}
           </button>
           <button
             onClick={() => handleEditUser(user)}
-            className="p-3 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 transition-all duration-300 hover:scale-110"
+            className="p-2.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 transition-all duration-300 hover:scale-110"
             title="Editar"
           >
-            <Edit className="w-5 h-5" />
+            <Edit className="w-4 h-4" />
           </button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
-                className="p-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 transition-all duration-300 hover:scale-110"
+                className="p-2.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 transition-all duration-300 hover:scale-110"
                 title="Remover"
               >
-                <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </AlertDialogTrigger>
             <AlertDialogContent className="glass-card border-white/20 bg-slate-800/95 backdrop-blur-sm">
@@ -1395,9 +1401,9 @@ export default function UserManagementPage() {
           )}
         </div>
 
-        {/* Users Grid */}
+        {/* Users List */}
         <div className="flex-1 force-scroll scrollable-content min-h-0 overflow-y-scroll">
-          <div className="grid gap-4 lg:gap-6 min-h-[800px]"> {/* Força altura para scroll */}
+          <div className="space-y-4 min-h-[400px]"> {/* Lista vertical com espaçamento entre cards */}
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
                 <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
