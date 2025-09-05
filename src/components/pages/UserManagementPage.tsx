@@ -322,13 +322,6 @@ export default function UserManagementPage() {
 
           console.log("🔍 Debug - Usuários mapeados:", mappedUsers);
           setUsers(mappedUsers);
-
-          showToast(
-            "success",
-            "Dados Carregados",
-            `${mappedUsers.length} usuários carregados da API com sucesso!`,
-            3000
-          );
         } catch (mappingError) {
           console.error(
             "💥 Erro durante o mapeamento dos usuários:",
