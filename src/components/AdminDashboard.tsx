@@ -1718,23 +1718,6 @@ export function AdminDashboard({
 
         {/* System Status & User */}
         <div className="p-2 sm:p-3 lg:p-4 border-t border-dark-color space-y-2 sm:space-y-3 flex-shrink-0">
-          {/* System Status */}
-          <div className="glass-card p-3 lg:p-4 text-center border border-white/20 rounded-xl transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 bg-white/5">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full status-online"></div>
-              <h4 className="text-xs sm:text-sm font-bold text-dark-primary">
-                Sistema Ativo
-              </h4>
-            </div>
-            <p className="text-xs text-dark-secondary mb-3">
-              IA: Online | Admin: Ativo
-            </p>
-            <button className="bg-blue-600 hover:bg-blue-500 text-white text-xs py-2 px-3 lg:px-4 w-full flex items-center justify-center space-x-1 hover:scale-105 transition-all duration-200 rounded-lg">
-              <HelpCircle className="w-3 h-3" />
-              <span>Ver Status</span>
-            </button>
-          </div>
-
           {/* User Info */}
           <div className="flex items-center space-x-3 p-3 rounded-xl glass-card border border-white/20 transition-all duration-300 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10 bg-white/5">
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-red-500 hover:to-red-400 hover:shadow-lg hover:shadow-red-500/25">
