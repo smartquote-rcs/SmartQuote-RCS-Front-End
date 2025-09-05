@@ -79,9 +79,9 @@ import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../hooks/useCurrency";
 // Componente para exibir detalhes do item e submodal
 
-type ItemDetalheCardProps = { item: any, onItemReplaced?: () => void };
+type ItemDetalheCardProps = { item: any, onItemReplaced?: () => void, isLight?: boolean };
 
-const ItemDetalheCard = ({ item, onItemReplaced }: ItemDetalheCardProps) => {
+const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheCardProps) => {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
   const [open, setOpen] = React.useState(false);
@@ -385,6 +385,7 @@ import api from '../../api/client';
 
 interface QuoteRequestsPageProps {
   onNavigateToNewQuote?: () => void;
+  isLight?: boolean;
 }
 
 const getStatusFromAprovacao = (cotacao: any) => {
@@ -417,6 +418,7 @@ const getStatusIcon = (cotacao: any) => {
 
 export function QuoteRequestsPage({
   onNavigateToNewQuote,
+  isLight = false,
 }: QuoteRequestsPageProps = {}) {
   const { t } = useTranslation();
   const { formatCurrency, currency } = useCurrency();
@@ -691,12 +693,14 @@ export function QuoteRequestsPage({
     cotacao,
     onViewDetails,
     onDownload,
+    isLight,
   }: {
     cotacao: any;
     onViewDetails: (id: string) => void;
     onDownload: (cotacao: any) => void;
+    isLight?: boolean;
   }) => (
-  <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-3 sm:p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300 group relative w-full max-w-screen overflow-x-auto">
+  <div className={`glass-card ${isLight ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 hover:border-blue-400/60' : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-white/10 hover:border-cyan-400/30'} rounded-xl p-3 sm:p-4 backdrop-blur-sm transition-all duration-300 group relative w-full max-w-screen overflow-x-auto`}>
       {/* Borda lateral de status */}
       <div
         className={`absolute left-0 top-0 w-1 h-full rounded-l-xl ${
@@ -720,11 +724,11 @@ export function QuoteRequestsPage({
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3">
               <div className="flex flex-col">
-                <h3 className="font-mono text-base font-bold text-white group-hover:text-cyan-400 transition-colors duration-300">
+                <h3 className={`font-mono text-base font-bold ${isLight ? 'text-gray-800 group-hover:text-blue-600' : 'text-white group-hover:text-cyan-400'} transition-colors duration-300`}>
                   {cotacao.id}
                 </h3>
                 {cotacao.prompt && cotacao.prompt.texto_original && (
-                  <span className="block text-lg font-semibold text-cyan-300 mt-1 truncate" title={cotacao.prompt.texto_original}>
+                  <span className={`block text-lg font-semibold ${isLight ? 'text-blue-600' : 'text-cyan-300'} mt-1 truncate`} title={cotacao.prompt.texto_original}>
                     {cotacao.prompt.texto_original.length > 50
                       ? cotacao.prompt.texto_original.slice(0, 50) + '...'
                       : cotacao.prompt.texto_original}
@@ -738,22 +742,22 @@ export function QuoteRequestsPage({
 
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <Building className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <span className="font-medium text-white text-sm">
+                <Building className={`w-4 h-4 ${isLight ? 'text-gray-500' : 'text-slate-400'} flex-shrink-0`} />
+                <span className={`font-medium ${isLight ? 'text-gray-800' : 'text-white'} text-sm`}>
                   {cotacao.aprovado_por}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <span className="text-slate-300 text-sm">
+                <FileText className={`w-4 h-4 ${isLight ? 'text-gray-500' : 'text-slate-400'} flex-shrink-0`} />
+                <span className={`${isLight ? 'text-gray-600' : 'text-slate-300'} text-sm`}>
                   {cotacao.motivo}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <span className="text-slate-300 text-sm">
+                <User className={`w-4 h-4 ${isLight ? 'text-gray-500' : 'text-slate-400'} flex-shrink-0`} />
+                <span className={`${isLight ? 'text-gray-600' : 'text-slate-300'} text-sm`}>
                   {t("approvals.responsible")}:{" "}
-                  <span className="text-white font-medium">
+                  <span className={`${isLight ? 'text-gray-800' : 'text-white'} font-medium`}>
                     {cotacao.aprovado_por}
                   </span>
                 </span>
@@ -761,27 +765,27 @@ export function QuoteRequestsPage({
             </div>
 
             <div className="mt-2 grid grid-cols-2 lg:grid-cols-3 gap-1 sm:gap-2 text-xs">
-              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
-                <span className="text-slate-400 text-xs block mb-1">
+              <div className={`${isLight ? 'bg-gray-100 border-gray-200' : 'bg-slate-800/30 border-slate-700/50'} rounded-lg p-2 border`}>
+                <span className={`${isLight ? 'text-gray-500' : 'text-slate-400'} text-xs block mb-1`}>
                   Fornecedor:
                 </span>
-                <span className="text-white font-medium">
+                <span className={`${isLight ? 'text-gray-800' : 'text-white'} font-medium`}>
                   {cotacao.fornecedor && cotacao.fornecedor !== '' ? cotacao.fornecedor : '-'}
                 </span>
               </div>
-              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
-                <span className="text-slate-400 text-xs block mb-1">
+              <div className={`${isLight ? 'bg-gray-100 border-gray-200' : 'bg-slate-800/30 border-slate-700/50'} rounded-lg p-2 border`}>
+                <span className={`${isLight ? 'text-gray-500' : 'text-slate-400'} text-xs block mb-1`}>
                   {t("quoteRequests.received")}:
                 </span>
-                <span className="text-white font-medium">
+                <span className={`${isLight ? 'text-gray-800' : 'text-white'} font-medium`}>
                   {new Date(cotacao.dataRecebido).toLocaleDateString("pt-PT")}
                 </span>
               </div>
-              <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50 col-span-2 lg:col-span-1">
-                <span className="text-slate-400 text-xs block mb-1">
+              <div className={`${isLight ? 'bg-gray-100 border-gray-200' : 'bg-slate-800/30 border-slate-700/50'} rounded-lg p-2 border col-span-2 lg:col-span-1`}>
+                <span className={`${isLight ? 'text-gray-500' : 'text-slate-400'} text-xs block mb-1`}>
                   {t("approvals.deadline")}:
                 </span>
-                <span className="text-white font-medium">
+                <span className={`${isLight ? 'text-gray-800' : 'text-white'} font-medium`}>
                   {new Date(cotacao.prazoResposta).toLocaleDateString("pt-PT")}
                 </span>
               </div>
@@ -791,14 +795,14 @@ export function QuoteRequestsPage({
 
         {/* Valor e Actions */}
   <div className="flex flex-col space-y-2 sm:space-y-3 min-w-0 lg:min-w-[140px]">
-          <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/30 text-center">
+          <div className={`${isLight ? 'bg-green-50 border-green-200' : 'bg-green-500/10 border-green-500/30'} rounded-lg p-3 border text-center`}>
             <div className="flex items-center justify-center space-x-1 mb-1">
-              <span className="text-sm text-green-400 font-medium">{currency.symbol}</span>
-              <span className="text-xs text-green-400 font-medium">
+              <span className={`text-sm ${isLight ? 'text-green-600' : 'text-green-400'} font-medium`}>{currency.symbol}</span>
+              <span className={`text-xs ${isLight ? 'text-green-600' : 'text-green-400'} font-medium`}>
                 {t("approvals.value")}
               </span>
             </div>
-            <div className="text-lg font-bold text-green-400">
+            <div className={`text-lg font-bold ${isLight ? 'text-green-700' : 'text-green-400'}`}>
               {formatCurrency(parseFloat(cotacao.orcamento_geral) || 0, false)}
             </div>
           </div>
@@ -813,7 +817,7 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => openApproval(String(cotacao.id),'approve')}
                   aria-label="Aprovar cotação"
-                  className="bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700 hover:text-green-800 focus:ring-green-500' : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 text-green-400 hover:text-green-300 focus:ring-green-400'} hover:border-green-400/60 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`}
                 >
                   <Check className="w-3 h-3" />
                   <span>Aprovar</span>
@@ -821,7 +825,7 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
                   aria-label="Ver detalhes da cotação"
-                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 text-blue-400 hover:text-blue-300 focus:ring-blue-400'} hover:border-blue-400/60 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`}
                 >
                   <Info className="w-3 h-3" />
                   <span>Ver Detalhes</span>
@@ -833,14 +837,14 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
                   aria-label="Visualizar cotação"
-                  className="bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 text-blue-400 hover:text-blue-300 focus:ring-blue-400'} hover:border-blue-400/60 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`}
                 >
                   <Eye className="w-3 h-3" />
                   <span>Visualizar</span>
                 </button>
                 <button 
                   onClick={() => onDownload(cotacao)}
-                  className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-purple-500/30 border border-slate-600/50 text-slate-300 hover:text-purple-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400" 
+                  className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 hover:text-purple-700 focus:ring-purple-500' : 'bg-slate-700/50 hover:bg-slate-600/70 border-slate-600/50 text-slate-300 hover:text-purple-300 focus:ring-purple-400'} hover:border-purple-500/30 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`} 
                   aria-label="Download"
                 >
                   <Download className="w-3 h-3" />
@@ -849,7 +853,7 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => openApproval(String(cotacao.id),'set_pending')}
                   aria-label="Colocar como pendente"
-                  className="bg-orange-600/20 hover:bg-orange-600/40 hover:border-orange-400/60 border border-orange-500/30 text-orange-400 hover:text-orange-300 px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 text-orange-400 hover:text-orange-300 focus:ring-orange-400'} hover:border-orange-400/60 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`}
                 >
                   <Clock className="w-3 h-3" />
                   <span>Pendente</span>
@@ -927,10 +931,10 @@ export function QuoteRequestsPage({
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Header - Compacto no mobile */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0">
+      <header className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-bg border-dark-color'} border-b px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0`}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-1 md:space-y-4 lg:space-y-0">
           <div className="hidden md:block">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-3`}>
               <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               {t("quoteRequests.title")}
               {activeFiltersCount > 0 && (
@@ -940,7 +944,7 @@ export function QuoteRequestsPage({
                 </span>
               )}
             </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">
+            <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
               {t("quoteRequests.subtitle")}
               {activeFiltersCount > 0 && (
                 <span className="text-blue-400 ml-2">
@@ -953,22 +957,22 @@ export function QuoteRequestsPage({
           
           {/* Header mobile compacto */}
           <div className="md:hidden flex items-center justify-between">
-            <h1 className="text-lg font-bold text-dark-primary flex items-center gap-2">
+            <h1 className={`text-lg font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-2`}>
               <FileText className="w-5 h-5 text-blue-400" />
               {t("quoteRequests.title")}
             </h1>
-            <span className="text-blue-300 font-bold text-sm">
+            <span className={`${isLight ? 'text-blue-600' : 'text-blue-300'} font-bold text-sm`}>
               {filteredCotacoes.length}
             </span>
           </div>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
             <div className="hidden md:flex items-center gap-3 w-full justify-center">
-              <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[160px] h-[44px]">
+              <div className={`glass-card ${isLight ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white/5 border-blue-500/30 text-blue-300'} px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm min-w-[160px] h-[44px]`}>
                 <span className="font-bold text-lg">{filteredCotacoes.length}</span>
-                <span className="ml-2 text-blue-200">{t("quoteRequests.quotations")}</span>
+                <span className={`ml-2 ${isLight ? 'text-blue-600' : 'text-blue-200'}`}>{t("quoteRequests.quotations")}</span>
                 {filteredCotacoes.length !== cotacoesList.length && (
-                  <span className="text-slate-400 text-xs block ml-2">
+                  <span className={`${isLight ? 'text-gray-500' : 'text-slate-400'} text-xs block ml-2`}>
                     {t("quoteRequests.totalOf")} {cotacoesList.length} {t("quoteRequests.total")}
                   </span>
                 )}
@@ -999,11 +1003,11 @@ export function QuoteRequestsPage({
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-3 md:p-4 lg:p-8 bg-dark-bg overflow-hidden">
+      <main className={`flex-1 dashboard-main p-3 md:p-4 lg:p-8 ${isLight ? 'bg-gray-50' : 'bg-dark-bg'} overflow-hidden`}>
   <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
             {/* Tabs - ocultas no mobile */}
-            <TabsList className="hidden md:flex bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-xl p-1 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+            <TabsList className={`hidden md:flex ${isLight ? 'bg-gray-200 border-gray-300' : 'bg-slate-800/50 border-slate-700/50'} backdrop-blur-sm rounded-xl p-1 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent`}>
               <TabsTrigger
                 value="all"
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
@@ -1290,6 +1294,7 @@ export function QuoteRequestsPage({
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
+                              isLight={isLight}
                             />
                           ))}
                         </div>
@@ -1302,6 +1307,7 @@ export function QuoteRequestsPage({
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
+                              isLight={isLight}
                             />
                           ))}
                         </div>
@@ -1314,6 +1320,7 @@ export function QuoteRequestsPage({
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
+                              isLight={isLight}
                             />
                           ))}
                         </div>
@@ -1365,15 +1372,15 @@ export function QuoteRequestsPage({
       {/* Modal de Motivo para Aprovar / Rejeitar / Reativar */}
       {/* Modal de Motivo para Aprovar / Rejeitar / Reativar */}
       <Dialog open={approvalModal.open} onOpenChange={(o)=>!o && closeApproval()}>
-  <DialogContent className="w-full max-w-4xl bg-slate-900/95 border border-cyan-500/30 p-8 rounded-2xl overflow-y-auto">
+  <DialogContent className={`w-full max-w-4xl ${isLight ? 'bg-white border-gray-300' : 'bg-slate-900/95 border-cyan-500/30'} p-8 rounded-2xl overflow-y-auto`}>
           <DialogHeader>
-            <DialogTitle className="text-white font-semibold flex items-center gap-2">
+            <DialogTitle className={`${isLight ? 'text-gray-800' : 'text-white'} font-semibold flex items-center gap-2`}>
               {approvalModal.action === 'approve' && <Check className="w-4 h-4 text-green-400"/>}
               {approvalModal.action === 'set_pending' && <Clock className="w-4 h-4 text-orange-400"/>}
               {approvalModal.action === 'approve' && 'Aprovar Cotação'}
               {approvalModal.action === 'set_pending' && 'Marcar como Pendente'}
             </DialogTitle>
-            <DialogDescription className="text-slate-300 text-sm">
+            <DialogDescription className={`${isLight ? 'text-gray-600' : 'text-slate-300'} text-sm`}>
               Informe o motivo. Esse registro ficará salvo no histórico.
             </DialogDescription>
           </DialogHeader>
@@ -1383,18 +1390,22 @@ export function QuoteRequestsPage({
               onChange={(e)=>setMotivoInput(e.target.value)}
               placeholder={t("quoteRequests.reasonPlaceholder")}
               aria-label="Motivo da aprovação/rejeição"
-              className={`w-full h-28 rounded-md bg-slate-800/70 border ${!motivoInput.trim() && isSubmitting ? 'border-red-500' : 'border-slate-600/50'} focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm text-white p-3 resize-none outline-none`}
+              className={`w-full h-28 rounded-md ${isLight ? 'bg-gray-100 text-gray-800 border-gray-300 focus:border-blue-500 focus:ring-blue-500' : 'bg-slate-800/70 text-white border-slate-600/50 focus:border-cyan-400 focus:ring-cyan-400'} border ${!motivoInput.trim() && isSubmitting ? 'border-red-500' : ''} focus:ring-1 text-sm p-3 resize-none outline-none`}
             />
             {!motivoInput.trim() && isSubmitting && (
               <div className="text-red-400 text-xs">{t("quoteRequests.reasonRequired")}</div>
             )}
             <div className="flex flex-col sm:flex-row justify-end gap-2 w-full mt-2">
-              <button onClick={closeApproval} aria-label="Cancelar" className="w-full sm:w-auto px-4 py-2 text-sm rounded-md bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 border border-slate-600/60 focus:outline-none focus:ring-2 focus:ring-slate-400">{t("quoteRequests.cancel")}</button>
+              <button onClick={closeApproval} aria-label="Cancelar" className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700 border-gray-300 focus:ring-gray-500' : 'bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 border-slate-600/60 focus:ring-slate-400'} border focus:outline-none focus:ring-2`}>{t("quoteRequests.cancel")}</button>
               <button
                 onClick={submitApproval}
                 aria-label="Confirmar aprovação/pendente"
                 disabled={isSubmitting || !motivoInput.trim()}
-                className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md font-semibold flex items-center gap-1 border transition-colors ${approvalModal.action==='set_pending' ? 'bg-orange-600/30 hover:bg-orange-600/50 text-orange-300 border-orange-500/40' : 'bg-green-600/30 hover:bg-green-600/50 text-green-300 border-green-500/40'} focus:outline-none focus:ring-2 focus:ring-cyan-400 disabled:opacity-60`}
+                className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md font-semibold flex items-center gap-1 border transition-colors focus:outline-none focus:ring-2 disabled:opacity-60 ${
+                  approvalModal.action==='set_pending' 
+                    ? isLight ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300 focus:ring-orange-500' : 'bg-orange-600/30 hover:bg-orange-600/50 text-orange-300 border-orange-500/40 focus:ring-cyan-400'
+                    : isLight ? 'bg-green-100 hover:bg-green-200 text-green-700 border-green-300 focus:ring-green-500' : 'bg-green-600/30 hover:bg-green-600/50 text-green-300 border-green-500/40 focus:ring-cyan-400'
+                }`}
               >
                 {isSubmitting ? (
                   <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
@@ -1408,9 +1419,9 @@ export function QuoteRequestsPage({
 
       {/* Modal de Detalhes da Cotação com Sistema de Validação */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-  <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-900/95 to-slate-800/95 border border-cyan-400/30 backdrop-blur-xl p-8 rounded-2xl">
-          <DialogHeader className="border-b border-slate-700/50 pb-2">
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+  <DialogContent className={`w-full max-w-4xl max-h-[90vh] overflow-y-auto ${isLight ? 'bg-white border-gray-300' : 'bg-gradient-to-br from-slate-900/95 to-slate-800/95 border-cyan-400/30'} backdrop-blur-xl p-8 rounded-2xl`}>
+          <DialogHeader className={`${isLight ? 'border-gray-200' : 'border-slate-700/50'} border-b pb-2`}>
+            <DialogTitle className={`text-lg font-bold ${isLight ? 'text-gray-800' : 'text-white'} flex items-center gap-2`}>
               <FileText className="h-5 w-5 text-cyan-400" />
               {t("quoteRequests.quotationDetails")} {selectedCotacao?.id}
             </DialogTitle>
@@ -1425,7 +1436,7 @@ export function QuoteRequestsPage({
               </h3>
               <div className="space-y-4">
                 {cotacaoItens.map(item => (
-                  <ItemDetalheCard key={item.id} item={item} onItemReplaced={fetchCotacaoItens} />
+                  <ItemDetalheCard key={item.id} item={item} onItemReplaced={fetchCotacaoItens} isLight={isLight} />
                 ))}
               </div>
             </div>

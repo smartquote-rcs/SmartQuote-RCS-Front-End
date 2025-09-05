@@ -178,7 +178,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       suppliers: false
     },
     language: "pt-PT",
-    theme: "dark"
+    theme: "light"
   });
 
   const toggleFavorite = (productId: string) => {

@@ -29,9 +29,11 @@ interface EmailNotificationsProps {
   onClose?: () => void;
   onNavigateToQuotes?: () => void;
   onNavigateToEmails?: () => void;
+  themeClasses?: any;
+  isLight?: boolean;
 }
 
-export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEmails }: EmailNotificationsProps) {
+export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEmails, themeClasses, isLight = false }: EmailNotificationsProps) {
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState<EmailNotification[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -139,11 +141,11 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
   };
 
   return (
-    <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-white/10 backdrop-blur-sm">
+    <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-white/10'} rounded-xl p-4 border backdrop-blur-sm`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Mail className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-white font-bold text-sm">
+          <h3 className={`${themeClasses?.textPrimary || 'text-white'} font-bold text-sm`}>
             {t('dashboard.emailQuotes')}
             <span className="ml-2 bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full text-xs font-medium align-middle">
               {totalCount}
@@ -176,9 +178,9 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
 
       {notifications.length === 0 ? (
         <div className="text-center py-8">
-          <Mail className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400 text-sm mb-2">{t('dashboard.noEmailQuotes')}</p>
-          <p className="text-slate-500 text-xs">
+          <Mail className={`w-12 h-12 ${isLight ? 'text-gray-500' : 'text-slate-600'} mx-auto mb-3`} />
+          <p className={`${isLight ? 'text-gray-600' : 'text-slate-400'} text-sm mb-2`}>{t('dashboard.noEmailQuotes')}</p>
+          <p className={`${isLight ? 'text-gray-500' : 'text-slate-500'} text-xs`}>
             {t('dashboard.sendTestEmail')}
           </p>
         </div>
@@ -189,8 +191,12 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
             key={notification.id}
             className={`relative p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
               notification.read
-                ? 'bg-slate-800/30 border-slate-700/50 opacity-75'
-                : 'bg-cyan-900/20 border-cyan-500/30 hover:bg-cyan-900/30'
+                ? isLight 
+                  ? 'bg-gray-50 border-gray-200 opacity-75' 
+                  : 'bg-slate-800/30 border-slate-700/50 opacity-75'
+                : isLight
+                  ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                  : 'bg-cyan-900/20 border-cyan-500/30 hover:bg-cyan-900/30'
             }`}
             onClick={() => openEmail(notification)}
           >
@@ -202,10 +208,10 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
                   ) : (
                     <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" />
                   )}
-                  <h4 className="text-white text-xs font-medium truncate">{notification.title}</h4>
+                  <h4 className={`${isLight ? 'text-gray-800' : 'text-white'} text-xs font-medium truncate`}>{notification.title}</h4>
                 </div>
-                <p className="text-slate-300 text-xs leading-relaxed">{notification.message}</p>
-                <p className="text-slate-500 text-xs mt-1">{getTimeAgo(notification.timestamp)}</p>
+                <p className={`${isLight ? 'text-gray-600' : 'text-slate-300'} text-xs leading-relaxed`}>{notification.message}</p>
+                <p className={`${isLight ? 'text-gray-500' : 'text-slate-500'} text-xs mt-1`}>{getTimeAgo(notification.timestamp)}</p>
               </div>
               
               {/* Botões de ação */}
@@ -236,7 +242,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
             </div>
             
             {!notification.read && (
-              <div className="absolute top-2 right-2 w-2 h-2 bg-cyan-400 rounded-full"></div>
+              <div className={`absolute top-2 right-2 w-2 h-2 ${isLight ? 'bg-blue-500' : 'bg-cyan-400'} rounded-full`}></div>
             )}
           </div>
         ))}

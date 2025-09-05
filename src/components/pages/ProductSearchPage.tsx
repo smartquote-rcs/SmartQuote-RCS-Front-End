@@ -30,9 +30,10 @@ interface ToastNotification {
 
 interface ProductSearchPageProps {
   onNavigateToNewProduct?: () => void;
+  isLight?: boolean;
 }
 
-export function ProductSearchPage({ onNavigateToNewProduct }: ProductSearchPageProps = {}) {
+export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: ProductSearchPageProps = {}) {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrency();
   const [viewMode] = useState<"grid" | "list">("grid");

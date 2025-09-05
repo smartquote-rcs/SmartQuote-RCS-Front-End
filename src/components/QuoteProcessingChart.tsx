@@ -13,6 +13,8 @@ export interface Cotacao {
 
 interface QuoteProcessingChartProps {
   cotacoes: Cotacao[];
+  themeClasses?: any;
+  isLight?: boolean;
 }
 
 
@@ -49,7 +51,7 @@ function getProcessingData(cotacoes: Cotacao[], dias: number = 7) {
   return data;
 }
 
-export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
+export function QuoteProcessingChart({ cotacoes, themeClasses, isLight = false }: QuoteProcessingChartProps) {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -63,22 +65,22 @@ export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
   return (
     <div className="space-y-6">
       {/* Gráfico Principal - Area Chart estilo Databox */}
-      <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-6 border border-white/10 backdrop-blur-sm">
+      <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-white/10'} rounded-xl p-6 border backdrop-blur-sm`}>
         <div className="pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
-              <h3 className="text-xl font-bold text-white mb-2">{t('dashboard.quoteProcessing')}</h3>
-              <p className="text-sm text-slate-300">{t('dashboard.volumeEfficiencyLast7Days')}</p>
+              <h3 className={`text-xl font-bold ${isLight ? 'text-gray-800' : 'text-white'} mb-2`}>{t('dashboard.quoteProcessing')}</h3>
+              <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>{t('dashboard.volumeEfficiencyLast7Days')}</p>
             </div>
             {/* Campo de Pesquisa */}
             <div className="relative max-w-md group">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-cyan-400 transition-colors duration-300 z-10 pointer-events-none" />
+              <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isLight ? 'text-gray-400 group-focus-within:text-blue-500' : 'text-slate-400 group-focus-within:text-cyan-400'} transition-colors duration-300 z-10 pointer-events-none`} />
               <input
                 type="text"
                 placeholder={t('dashboard.searchPeriod')}
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 h-10 bg-slate-800/50 border border-slate-600/50 text-white placeholder:text-slate-400 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none rounded-lg backdrop-blur-sm transition-all duration-300 hover:bg-slate-700/50"
+                className={`w-full pl-12 pr-4 h-10 ${isLight ? 'bg-gray-100 border-gray-300 text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500/20 hover:bg-gray-50' : 'bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:border-cyan-400/50 focus:ring-cyan-400/20 hover:bg-slate-700/50'} border focus:ring-2 focus:outline-none rounded-lg backdrop-blur-sm transition-all duration-300`}
               />
             </div>
           </div>
@@ -100,28 +102,28 @@ export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
                   <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
+              <CartesianGrid strokeDasharray="3 3" stroke={isLight ? "#D1D5DB" : "#475569"} opacity={isLight ? 0.6 : 0.4} />
               <XAxis 
                 dataKey="date" 
-                stroke="#94A3B8"
+                stroke={isLight ? "#6B7280" : "#94A3B8"}
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis 
-                stroke="#94A3B8" 
+                stroke={isLight ? "#6B7280" : "#94A3B8"} 
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <Tooltip 
                 contentStyle={{
-                  backgroundColor: "rgba(15, 23, 42, 0.95)",
-                  border: "1px solid rgba(59, 130, 246, 0.3)",
+                  backgroundColor: isLight ? "rgba(255, 255, 255, 0.95)" : "rgba(15, 23, 42, 0.95)",
+                  border: isLight ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid rgba(59, 130, 246, 0.3)",
                   borderRadius: "12px",
-                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+                  boxShadow: isLight ? "0 25px 50px -12px rgba(0, 0, 0, 0.2)" : "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
                   fontWeight: 500,
-                  color: "#FFFFFF",
+                  color: isLight ? "#1F2937" : "#FFFFFF",
                   backdropFilter: "blur(16px)"
                 }}
                 formatter={(value, name) => [
@@ -138,7 +140,7 @@ export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
                 strokeWidth={3}
                 fill="url(#receivedGradient)"
                 dot={{ fill: "#10B981", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#10B981", strokeWidth: 2, fill: "#FFFFFF" }}
+                activeDot={{ r: 6, stroke: "#10B981", strokeWidth: 2, fill: isLight ? "#1F2937" : "#FFFFFF" }}
               />
               <Area 
                 type="monotone" 
@@ -147,7 +149,7 @@ export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
                 strokeWidth={3}
                 fill="url(#processedGradient)"
                 dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#3B82F6", strokeWidth: 2, fill: "#FFFFFF" }}
+                activeDot={{ r: 6, stroke: "#3B82F6", strokeWidth: 2, fill: isLight ? "#1F2937" : "#FFFFFF" }}
               />
               <Area 
                 type="monotone" 
@@ -156,25 +158,25 @@ export function QuoteProcessingChart({ cotacoes }: QuoteProcessingChartProps) {
                 strokeWidth={2}
                 fill="url(#pendingGradient)"
                 dot={{ fill: "#F59E0B", strokeWidth: 2, r: 3 }}
-                activeDot={{ r: 5, stroke: "#F59E0B", strokeWidth: 2, fill: "#FFFFFF" }}
+                activeDot={{ r: 5, stroke: "#F59E0B", strokeWidth: 2, fill: isLight ? "#1F2937" : "#FFFFFF" }}
               />
             </AreaChart>
           </ResponsiveContainer>
         </div>
         
         {/* Legenda moderna */}
-        <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-slate-700/50">
+        <div className={`grid grid-cols-3 gap-4 mt-6 pt-4 border-t ${isLight ? 'border-gray-200' : 'border-slate-700/50'}`}>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span className="text-xs text-slate-300 font-medium">{t('dashboard.received')}</span>
+            <span className={`text-xs ${isLight ? 'text-gray-600' : 'text-slate-300'} font-medium`}>{t('dashboard.received')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-xs text-slate-300 font-medium">{t('dashboard.processed')}</span>
+            <span className={`text-xs ${isLight ? 'text-gray-600' : 'text-slate-300'} font-medium`}>{t('dashboard.processed')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <span className="text-xs text-slate-300 font-medium">{t('dashboard.pending')}</span>
+            <span className={`text-xs ${isLight ? 'text-gray-600' : 'text-slate-300'} font-medium`}>{t('dashboard.pending')}</span>
           </div>
         </div>
       </div>

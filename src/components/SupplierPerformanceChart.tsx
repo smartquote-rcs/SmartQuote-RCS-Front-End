@@ -146,7 +146,7 @@ const TrendDownIcon = ({ className }: { className?: string }) => (
 
 
 
-export function SupplierPerformanceChart() {
+export function SupplierPerformanceChart({ isLight = false }: { isLight?: boolean } = {}) {
   const { suppliers } = useApp();
   const { t } = useTranslation();
   const [topSuppliers, setTopSuppliers] = useState<{ 
@@ -240,16 +240,16 @@ export function SupplierPerformanceChart() {
     <div className="space-y-6 px-2 sm:px-4 md:px-8 w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">{t('supplierPerformance.title')}</h1>
-        <p className="text-slate-400">{t('supplierPerformance.subtitle')}</p>
+        <h1 className={`text-3xl font-bold mb-2 ${isLight ? 'text-gray-800' : 'text-white'}`}>{t('supplierPerformance.title')}</h1>
+        <p className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.subtitle')}</p>
       </div>
 
         {/* KPI Cards - Estilo Databox */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 overflow-x-auto min-w-0">
           {/* Performance Principal */}
-          <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-6 shadow-sm backdrop-blur-sm">
+          <div className={`${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-slate-800/50 border-slate-700/50'} rounded-lg border p-6 shadow-sm backdrop-blur-sm`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">
+              <div className={`text-sm font-medium uppercase tracking-wide ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>
                 {t('supplierPerformance.generalPerformance')}
               </div>
               <div className={`flex items-center text-sm font-semibold ${
@@ -259,14 +259,14 @@ export function SupplierPerformanceChart() {
                 {isPositive ? '+' : ''}{performanceChange.toFixed(1)}%
               </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{currentPerformance}%</div>
-            <div className="text-sm text-slate-400">{t('supplierPerformance.vsLastMonth')}</div>
+            <div className={`text-3xl font-bold mb-1 ${isLight ? 'text-gray-800' : 'text-white'}`}>{currentPerformance}%</div>
+            <div className={`text-sm ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{t('supplierPerformance.vsLastMonth')}</div>
           </div>
 
           {/* Custo-Benefício */}
-          <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-6 shadow-sm backdrop-blur-sm">
+          <div className={`${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-slate-800/50 border-slate-700/50'} rounded-lg border p-6 shadow-sm backdrop-blur-sm`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">
+              <div className={`text-sm font-medium uppercase tracking-wide ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>
                 {t('supplierPerformance.costBenefit')}
               </div>
               <div className="flex items-center text-sm font-semibold text-green-400">
@@ -274,14 +274,14 @@ export function SupplierPerformanceChart() {
                 +5.2%
               </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">83.9%</div>
-            <div className="text-sm text-slate-400">{t('supplierPerformance.costReduction')}</div>
+            <div className={`text-3xl font-bold mb-1 ${isLight ? 'text-gray-800' : 'text-white'}`}>83.9%</div>
+            <div className={`text-sm ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{t('supplierPerformance.costReduction')}</div>
           </div>
 
           {/* Qualidade */}
-          <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-6 shadow-sm backdrop-blur-sm">
+          <div className={`${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-slate-800/50 border-slate-700/50'} rounded-lg border p-6 shadow-sm backdrop-blur-sm`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">
+              <div className={`text-sm font-medium uppercase tracking-wide ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>
                 {t('supplierPerformance.quality')}
               </div>
               <div className="flex items-center text-sm font-semibold text-green-400">
@@ -289,14 +289,14 @@ export function SupplierPerformanceChart() {
                 +1.5%
               </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">97.8%</div>
-            <div className="text-sm text-slate-400">{t('supplierPerformance.qualityIndex')}</div>
+            <div className={`text-3xl font-bold mb-1 ${isLight ? 'text-gray-800' : 'text-white'}`}>97.8%</div>
+            <div className={`text-sm ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{t('supplierPerformance.qualityIndex')}</div>
           </div>
 
           {/* Eficiência */}
-          <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-6 shadow-sm backdrop-blur-sm">
+          <div className={`${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-slate-800/50 border-slate-700/50'} rounded-lg border p-6 shadow-sm backdrop-blur-sm`}>
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">
+              <div className={`text-sm font-medium uppercase tracking-wide ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>
                 {t('supplierPerformance.efficiency')}
               </div>
               <div className="flex items-center text-sm font-semibold text-green-400">
@@ -304,18 +304,18 @@ export function SupplierPerformanceChart() {
                 +1.9%
               </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">97.1%</div>
-            <div className="text-sm text-slate-400">{t('supplierPerformance.operationalEfficiency')}</div>
+            <div className={`text-3xl font-bold mb-1 ${isLight ? 'text-gray-800' : 'text-white'}`}>97.1%</div>
+            <div className={`text-sm ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{t('supplierPerformance.operationalEfficiency')}</div>
           </div>
         </div>
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 overflow-x-auto min-w-0">
           {/* Performance Trend - Gráfico Principal */}
-          <div className="xl:col-span-2 bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full">
+          <div className={`xl:col-span-2 ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-slate-800/50 border-slate-700/50'} rounded-lg border p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full`}>
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white mb-1">{t('supplierPerformance.performanceTrend')}</h3>
-              <p className="text-sm text-slate-400">{t('supplierPerformance.lastSixMonths')}</p>
+              <h3 className={`text-lg font-semibold mb-1 ${isLight ? 'text-gray-800' : 'text-white'}`}>{t('supplierPerformance.performanceTrend')}</h3>
+              <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.lastSixMonths')}</p>
             </div>
             <div className="h-64 md:h-80 min-w-0">
               <ResponsiveContainer width="100%" height="100%">
@@ -326,17 +326,17 @@ export function SupplierPerformanceChart() {
                       <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isLight ? "#D1D5DB" : "#475569"} opacity={isLight ? 0.6 : 0.4} />
                   <XAxis 
                     dataKey="month" 
-                    stroke="#94A3B8" 
+                    stroke={isLight ? "#6B7280" : "#94A3B8"}
                     fontSize={12}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis 
                     domain={[85, 100]} 
-                    stroke="#94A3B8" 
+                    stroke={isLight ? "#6B7280" : "#94A3B8"} 
                     fontSize={12}
                     axisLine={false}
                     tickLine={false}
@@ -375,17 +375,19 @@ export function SupplierPerformanceChart() {
           </div>
 
           {/* Top Suppliers - Dynamic from API */}
-          <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full">
+          <div className={`${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-slate-800/50 border-slate-700/50'} rounded-lg border p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full`}>
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white mb-1">{t('supplierPerformance.topSuppliers')}</h3>
-              <p className="text-sm text-slate-400">{t('supplierPerformance.rankingByRating')}</p>
+              <h3 className={`text-lg font-semibold mb-1 ${isLight ? 'text-gray-800' : 'text-white'}`}>{t('supplierPerformance.topSuppliers')}</h3>
+              <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.rankingByRating')}</p>
             </div>
             <div className="space-y-4">
               {topSuppliers.length === 0 && (
-                <div className="text-slate-400 text-sm">{t('supplierPerformance.noSuppliersRated')}</div>
+                <div className={`text-sm ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{t('supplierPerformance.noSuppliersRated')}</div>
               )}
               {topSuppliers.slice(0, 8).map((supplier, index) => (
-                <div key={supplier.name} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-700/30 transition-colors border-b border-slate-700/50 last:border-b-0">
+                <div key={supplier.name} className={`flex items-center justify-between py-3 px-2 rounded-lg transition-colors border-b last:border-b-0 ${
+                  isLight ? 'hover:bg-gray-50 border-gray-200' : 'hover:bg-slate-700/30 border-slate-700/50'
+                }`}>
                   <div className="flex items-center space-x-4 flex-1 min-w-0">
                     {/* Posição */}
                     <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
@@ -399,9 +401,9 @@ export function SupplierPerformanceChart() {
                     
                     {/* Informações do fornecedor */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{supplier.name}</p>
+                      <p className={`text-sm font-medium truncate ${isLight ? 'text-gray-800' : 'text-white'}`}>{supplier.name}</p>
                       {supplier.empresa && (
-                        <p className="text-xs text-slate-400 truncate">{supplier.empresa}</p>
+                        <p className={`text-xs truncate ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{supplier.empresa}</p>
                       )}
                       
                       {/* Estrelas de classificação */}
@@ -410,7 +412,7 @@ export function SupplierPerformanceChart() {
                           <svg
                             key={star}
                             className={`w-3 h-3 ${
-                              star <= supplier.score ? 'text-yellow-400' : 'text-slate-600'
+                              star <= supplier.score ? 'text-yellow-400' : (isLight ? 'text-gray-300' : 'text-slate-600')
                             }`}
                             fill="currentColor"
                             viewBox="0 0 20 20"
@@ -418,7 +420,7 @@ export function SupplierPerformanceChart() {
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                           </svg>
                         ))}
-                        <span className="text-xs text-slate-400 ml-2">
+                        <span className={`text-xs ml-2 ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>
                           {supplier.score.toFixed(1)}/5.0
                         </span>
                       </div>
@@ -452,33 +454,33 @@ export function SupplierPerformanceChart() {
         </div>
 
         {/* Metrics Analysis - Design Revolucionário */}
-        <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full">
+        <div className={`${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-slate-800/50 border-slate-700/50'} rounded-lg border p-4 md:p-6 shadow-sm backdrop-blur-sm min-w-0 max-w-full`}>
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-1">{t('supplierPerformance.multidimensionalAnalysis')}</h3>
-            <p className="text-sm text-slate-400">{t('supplierPerformance.advancedVisualization')}</p>
+            <h3 className={`text-lg font-semibold mb-1 ${isLight ? 'text-gray-800' : 'text-white'}`}>{t('supplierPerformance.multidimensionalAnalysis')}</h3>
+            <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.advancedVisualization')}</p>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 overflow-x-auto min-w-0">
             {/* Radar Chart */}
             <div className="relative min-w-0 max-w-full">
               <div className="text-center mb-4">
-                <h4 className="text-md font-semibold text-white mb-2">{t('supplierPerformance.competenciesRadar')}</h4>
-                <p className="text-xs text-slate-400">{t('supplierPerformance.criticalDimensions')}</p>
+                <h4 className={`text-md font-semibold mb-2 ${isLight ? 'text-gray-800' : 'text-white'}`}>{t('supplierPerformance.competenciesRadar')}</h4>
+                <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.criticalDimensions')}</p>
               </div>
               
               {/* Estatísticas rápidas */}
               <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-                <div className="bg-slate-700/30 rounded-lg p-2 text-center">
+                <div className={`${isLight ? 'bg-gray-100' : 'bg-slate-700/30'} rounded-lg p-2 text-center`}>
                   <div className="text-green-400 font-semibold">
                     {Math.max(...radarData.map(d => d.value)).toFixed(1)}%
                   </div>
-                  <div className="text-slate-400">{t('supplierPerformance.bestMetric')}</div>
+                  <div className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.bestMetric')}</div>
                 </div>
-                <div className="bg-slate-700/30 rounded-lg p-2 text-center">
+                <div className={`${isLight ? 'bg-gray-100' : 'bg-slate-700/30'} rounded-lg p-2 text-center`}>
                   <div className="text-blue-400 font-semibold">
                     {(radarData.reduce((acc, d) => acc + d.value, 0) / radarData.length).toFixed(1)}%
                   </div>
-                  <div className="text-slate-400">{t('supplierPerformance.generalAverage')}</div>
+                  <div className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.generalAverage')}</div>
                 </div>
               </div>
 
@@ -556,15 +558,15 @@ export function SupplierPerformanceChart() {
                 <div className="flex items-center justify-center space-x-4 text-xs">
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-0.5 bg-blue-500"></div>
-                    <span className="text-slate-300">{t('supplierPerformance.current')}</span>
+                    <span className={`${isLight ? 'text-gray-700' : 'text-slate-300'}`}>{t('supplierPerformance.current')}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-0.5 bg-green-500" style={{borderTop: '1px dashed'}}></div>
-                    <span className="text-slate-300">{t('supplierPerformance.target')}</span>
+                    <span className={`${isLight ? 'text-gray-700' : 'text-slate-300'}`}>{t('supplierPerformance.target')}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-0.5 bg-amber-500" style={{borderTop: '1px dashed'}}></div>
-                    <span className="text-slate-300">{t('supplierPerformance.minimum')}</span>
+                    <span className={`${isLight ? 'text-gray-700' : 'text-slate-300'}`}>{t('supplierPerformance.minimum')}</span>
                   </div>
                 </div>
               </div>
@@ -573,14 +575,16 @@ export function SupplierPerformanceChart() {
             {/* Indicadores Circulares por Setor */}
             <div className="min-w-0 max-w-full">
               <div className="text-center mb-6">
-                <h4 className="text-md font-semibold text-white mb-2">{t('supplierPerformance.performanceBySector')}</h4>
-                <p className="text-xs text-slate-400">{t('supplierPerformance.circularIndicators')}</p>
+                <h4 className={`text-md font-semibold mb-2 ${isLight ? 'text-gray-800' : 'text-white'}`}>{t('supplierPerformance.performanceBySector')}</h4>
+                <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.circularIndicators')}</p>
               </div>
               
               {/* Grid responsivo para todos os setores */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 md:gap-4 max-h-96 overflow-y-auto pr-2">
                 {sectorData.map((sector) => (
-                  <div key={sector.sector} className="flex items-center space-x-3 p-3 bg-slate-700/20 rounded-lg hover:bg-slate-700/30 transition-colors">
+                  <div key={sector.sector} className={`flex items-center space-x-3 p-3 rounded-lg transition-colors border-b last:border-b-0 ${
+                    isLight ? 'bg-gray-50 hover:bg-gray-100 border-gray-200' : 'bg-slate-700/20 hover:bg-slate-700/30 border-slate-700/50'
+                  }`}>
                     {/* Indicador Circular */}
                     <div className="relative w-12 h-12 flex-shrink-0">
                       <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
@@ -609,7 +613,7 @@ export function SupplierPerformanceChart() {
                       </svg>
                       {/* Porcentagem no centro */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-bold text-white">
+                        <span className={`text-xs font-bold ${isLight ? 'text-gray-800' : 'text-white'}`}>
                           {sector.performance}%
                         </span>
                       </div>
@@ -618,7 +622,7 @@ export function SupplierPerformanceChart() {
                     {/* Informações do Setor */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <h5 className="text-sm font-semibold text-white truncate pr-2" title={sector.sector}>
+                        <h5 className={`text-sm font-semibold truncate pr-2 ${isLight ? 'text-gray-800' : 'text-white'}`} title={sector.sector}>
                           {sector.sector.length > 25 ? `${sector.sector.substring(0, 25)}...` : sector.sector}
                         </h5>
                         <div className={`flex items-center text-xs font-semibold flex-shrink-0 ${
@@ -637,7 +641,7 @@ export function SupplierPerformanceChart() {
                       </div>
                       
                       {/* Barra de progresso */}
-                      <div className="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden mb-2">
+                      <div className={`w-full ${isLight ? 'bg-gray-200' : 'bg-slate-700'} rounded-full h-1.5 overflow-hidden mb-2`}>
                         <div 
                           className="h-1.5 rounded-full transition-all duration-1000 ease-out"
                           style={{ 
@@ -648,7 +652,7 @@ export function SupplierPerformanceChart() {
                       </div>
                       
                       {/* Estatísticas detalhadas */}
-                      <div className="flex justify-between text-xs text-slate-400">
+                      <div className={`flex justify-between text-xs ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>
                         <span>{sector.suppliers} {t('supplierPerformance.suppliers')}</span>
                         <span>{t('supplierPerformance.trend')}: {sector.performance > 90 ? '+2.1%' : sector.performance > 85 ? '+0.8%' : '-1.2%'}</span>
                       </div>
@@ -658,9 +662,9 @@ export function SupplierPerformanceChart() {
               </div>
               
               {/* Resumo Geral */}
-              <div className="mt-4 md:mt-6 p-3 md:p-4 bg-slate-700/30 rounded-lg">
+              <div className={`mt-4 md:mt-6 p-3 md:p-4 ${isLight ? 'bg-gray-100 border border-gray-200' : 'bg-slate-700/30'} rounded-lg`}>
                 <div className="flex items-center justify-between mb-2">
-                  <h5 className="text-sm font-semibold text-white">{t('supplierPerformance.generalSummary')}</h5>
+                  <h5 className={`text-sm font-semibold ${isLight ? 'text-gray-800' : 'text-white'}`}>{t('supplierPerformance.generalSummary')}</h5>
                   <div className="flex items-center text-green-400 text-sm font-semibold">
                     <TrendUpIcon className="w-4 h-4 mr-1" />
                     {t('supplierPerformance.globalPerformance')}: 93.9%
@@ -668,20 +672,20 @@ export function SupplierPerformanceChart() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <span className="text-slate-400">{t('supplierPerformance.bestSector')}:</span>
-                    <span className="text-blue-400 ml-2 font-semibold">{t('supplierPerformance.cloudSolutions')}</span>
+                    <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.bestSector')}:</span>
+                    <span className={`ml-2 font-semibold ${isLight ? 'text-blue-600' : 'text-blue-400'}`}>{t('supplierPerformance.cloudSolutions')}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400">{t('supplierPerformance.opportunity')}:</span>
-                    <span className="text-amber-400 ml-2 font-semibold">{t('supplierPerformance.selfServiceKiosks')}</span>
+                    <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.opportunity')}:</span>
+                    <span className={`ml-2 font-semibold ${isLight ? 'text-amber-600' : 'text-amber-400'}`}>{t('supplierPerformance.selfServiceKiosks')}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400">{t('supplierPerformance.totalSuppliers')}:</span>
-                    <span className="text-white ml-2 font-semibold">72 {t('supplierPerformance.active')}</span>
+                    <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.totalSuppliers')}:</span>
+                    <span className={`ml-2 font-semibold ${isLight ? 'text-gray-800' : 'text-white'}`}>72 {t('supplierPerformance.active')}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400">{t('supplierPerformance.sectorsCovered')}:</span>
-                    <span className="text-cyan-400 ml-2 font-semibold">8 {t('supplierPerformance.segments')}</span>
+                    <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('supplierPerformance.sectorsCovered')}:</span>
+                    <span className={`ml-2 font-semibold ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}>8 {t('supplierPerformance.segments')}</span>
                   </div>
                 </div>
               </div>

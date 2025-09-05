@@ -88,7 +88,11 @@ async function fetchJobs(): Promise<QuoteJob[]> {
   }
 }
 
-export function ProcessesPage() {
+interface ProcessesPageProps {
+  isLight?: boolean;
+}
+
+export function ProcessesPage({ isLight = false }: ProcessesPageProps = {}) {
   const [jobs, setJobs] = useState<QuoteJob[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<QuoteJob[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('todos');

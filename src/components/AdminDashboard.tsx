@@ -41,6 +41,7 @@ import { buscaGeralService } from "../services/buscaGeralService";
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { useCurrency } from '../hooks/useCurrency';
+import { useTheme } from '../hooks/useTheme';
 
 
 interface User {
@@ -111,6 +112,7 @@ export function AdminDashboard({
   const { t } = useTranslation();
   const { systemName } = useApp();
   const { currency, formatCurrency } = useCurrency();
+  const { isLight, toggleTheme, themeClasses } = useTheme();
   const [activePage, setActivePage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOnboardingMode, setIsOnboardingMode] = useState(false);
@@ -802,14 +804,14 @@ export function AdminDashboard({
           setIsMobileMenuOpen(false);
         }}
         className={`flex items-center space-x-2 p-2 rounded-md w-full text-left transition-all duration-300 ${isActive
-          ? "bg-white/10 backdrop-blur-md border border-blue-400 text-blue-400"
-          : "hover:bg-white/5 hover:backdrop-blur-md border border-transparent hover:border-blue-400/30 text-dark-secondary hover:text-blue-300"
+          ? `${themeClasses.navItemActive} backdrop-blur-md border`
+          : `${themeClasses.navItem} ${themeClasses.hoverStrong} border border-transparent ${themeClasses.borderHover}`
           }`}
       >
         <Icon
-          className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`}
+          className={`w-4 h-4 flex-shrink-0 ${isActive ? themeClasses.iconAccent : themeClasses.iconSecondary}`}
         />
-        <span className={`text-xs sm:text-sm truncate ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>
+        <span className={`text-xs sm:text-sm truncate ${isActive ? themeClasses.iconAccent : themeClasses.textSecondary}`}>
           {t(item.label)}
         </span>
       </button>
@@ -829,38 +831,41 @@ export function AdminDashboard({
             dashboardStats={dashboardStats}
             isLoadingStats={isLoadingStats}
             statsError={statsError}
+            themeClasses={themeClasses}
+            isLight={isLight}
+            toggleTheme={toggleTheme}
           />
         );
       case "quotes":
-        return <QuoteRequestsPage onNavigateToNewQuote={navigateToNewQuote} />;
+        return <QuoteRequestsPage onNavigateToNewQuote={navigateToNewQuote} isLight={isLight} />;
       case "processes":
-        return <ProcessesPage />;
+        return <ProcessesPage isLight={isLight} />;
       case "new-quote":
         return (
           <div className="flex flex-col h-full w-full">
-            <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
+            <header className={`${themeClasses?.bg || 'bg-dark-bg'} border-b ${themeClasses?.border || 'border-dark-color'} px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                 <div className="min-w-0">
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary truncate flex items-center gap-3">
+                  <h1 className={`text-lg sm:text-xl lg:text-2xl font-bold ${themeClasses?.textPrimary || 'text-dark-primary'} truncate flex items-center gap-3`}>
                     <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                     {t('newQuote.title')} - Admin
                   </h1>
-                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">{t('newQuote.subtitle')} para qualquer cliente</p>
+                  <p className={`text-xs sm:text-sm ${themeClasses?.textSecondary || 'text-dark-secondary'} mt-1`}>{t('newQuote.subtitle')} para qualquer cliente</p>
                 </div>
               </div>
             </header>
 
-            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
+            <main className={`flex-1 dashboard-main p-3 sm:p-4 lg:p-8 ${themeClasses?.bg || 'bg-dark-bg'} overflow-y-auto`}>
               {/* Nova Cotação com IA */}
               <div className="mb-8">
-                <div className="glass-card bg-gradient-to-br from-blue-900/30 to-cyan-900/30 rounded-xl border border-blue-500/20 p-4 sm:p-6">
+                <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-blue-900/30 to-cyan-900/30 border-blue-500/20'} rounded-xl border p-4 sm:p-6 backdrop-blur-sm`}>
                   <div className="flex items-center space-x-3 mb-4">
-                    <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <div className={`p-2 ${isLight ? 'bg-blue-100' : 'bg-blue-500/20'} rounded-lg`}>
                       <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                     </div>
                     <div>
-                      <h2 className="text-base sm:text-lg font-bold text-white">{t('newQuote.createWithAI')} - Admin</h2>
-                      <p className="text-xs sm:text-sm text-blue-200">{t('newQuote.aiDescription')}</p>
+                      <h2 className={`text-base sm:text-lg font-bold ${themeClasses?.textPrimary || (isLight ? 'text-gray-800' : 'text-white')}`}>{t('newQuote.createWithAI')} - Admin</h2>
+                      <p className={`text-xs sm:text-sm ${isLight ? 'text-blue-600' : 'text-blue-200'}`}>{t('newQuote.aiDescription')}</p>
                     </div>
                   </div>
 
@@ -871,10 +876,10 @@ export function AdminDashboard({
                         value={newQuotePrompt}
                         onChange={(e) => setNewQuotePrompt(e.target.value)}
                         placeholder={t('newQuote.placeholder')}
-                        className="w-full h-20 sm:h-24 bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 sm:p-4 text-white placeholder-slate-400 resize-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors text-xs sm:text-sm"
+                        className={`w-full h-20 sm:h-24 ${isLight ? 'bg-gray-100 border-gray-300 text-gray-800 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500/20' : 'bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-blue-500/50'} border rounded-lg p-3 sm:p-4 resize-none focus:ring-1 transition-colors text-xs sm:text-sm`}
                         maxLength={500}
                       />
-                      <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 text-xs text-slate-400">
+                      <div className={`absolute bottom-2 sm:bottom-3 right-2 sm:right-3 text-xs ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>
                         {newQuotePrompt.length}/500
                       </div>
                     </div>
@@ -975,10 +980,10 @@ export function AdminDashboard({
                     </div>
 
                     {isCreatingQuote && (
-                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 sm:p-4">
+                      <div className={`${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/20'} border rounded-lg p-3 sm:p-4`}>
                         <div className="flex items-center space-x-3">
                           <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                          <span className="text-blue-300 text-xs sm:text-sm">Admin: Nossa IA está processando a cotação e conectando com fornecedores premium...</span>
+                          <span className={`${isLight ? 'text-blue-700' : 'text-blue-300'} text-xs sm:text-sm`}>Admin: Nossa IA está processando a cotação e conectando com fornecedores premium...</span>
                         </div>
                       </div>
                     )}
@@ -986,8 +991,12 @@ export function AdminDashboard({
                     {/* Mensagem de Sucesso/Erro */}
                     {quoteMessage && (
                       <div className={`${quoteMessage.type === 'success'
-                        ? 'bg-green-500/10 border-green-500/20 text-green-300'
-                        : 'bg-red-500/10 border-red-500/20 text-red-300'
+                        ? isLight 
+                          ? 'bg-green-50 border-green-200 text-green-700'
+                          : 'bg-green-500/10 border-green-500/20 text-green-300'
+                        : isLight
+                          ? 'bg-red-50 border-red-200 text-red-700'
+                          : 'bg-red-500/10 border-red-500/20 text-red-300'
                         } border rounded-lg p-3 sm:p-4 transition-all duration-300`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
@@ -1018,19 +1027,19 @@ export function AdminDashboard({
         
               {/* Lista de Cotações Criadas - Histórico Real */}
               <div className="mb-8">
-                <div className="glass-card bg-gradient-to-br from-slate-900/50 to-slate-800/50 rounded-xl border border-slate-500/20 p-4 sm:p-6">
+                <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-900/50 to-slate-800/50 border-slate-500/20'} rounded-xl border backdrop-blur-sm p-4 sm:p-6`}>
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-slate-500/20 rounded-lg">
-                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+                      <div className={`p-2 ${isLight ? 'bg-gray-100' : 'bg-slate-500/20'} rounded-lg`}>
+                        <FileText className={`w-4 h-4 sm:w-5 sm:h-5 ${isLight ? 'text-gray-600' : 'text-slate-400'}`} />
                       </div>
                       <div>
-                        <h2 className="text-base sm:text-lg font-bold text-white">Histórico de Cotações Admin</h2>
-                        <p className="text-xs sm:text-sm text-slate-200">Últimas cotações criadas pelo admin</p>
+                        <h2 className={`text-base sm:text-lg font-bold ${themeClasses?.textPrimary || (isLight ? 'text-gray-800' : 'text-white')}`}>Histórico de Cotações Admin</h2>
+                        <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-slate-200'}`}>Últimas cotações criadas pelo admin</p>
                       </div>
                     </div>
-                    <div className="bg-slate-500/20 px-3 py-1 rounded-lg">
-                      <span className="text-slate-300 text-xs font-medium">{quoteHistory.length} cotações</span>
+                    <div className={`${isLight ? 'bg-gray-100' : 'bg-slate-500/20'} px-3 py-1 rounded-lg`}>
+                      <span className={`${isLight ? 'text-gray-700' : 'text-slate-300'} text-xs font-medium`}>{quoteHistory.length} cotações</span>
                     </div>
                   </div>
 
@@ -1038,35 +1047,35 @@ export function AdminDashboard({
                     {quoteHistory.length > 0 ? (
                       <>
                         {quoteHistory.slice(0, 10).map((entry) => (
-                          <div key={entry.id} className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/20 hover:border-slate-500/40 transition-all duration-200">
+                          <div key={entry.id} className={`${isLight ? 'bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-sm' : 'bg-slate-700/30 border-slate-600/20 hover:border-slate-500/40'} rounded-lg p-4 border transition-all duration-200`}>
                             <div className="flex items-center justify-between mb-2">
                               <div>
-                                <p className="text-green-400 font-mono text-xs">{entry.id}</p>
-                                <p className="text-slate-400 text-xs">{entry.timestamp}</p>
+                                <p className={`text-green-400 font-mono text-xs`}>{entry.id}</p>
+                                <p className={`${isLight ? 'text-gray-600' : 'text-slate-400'} text-xs`}>{entry.timestamp}</p>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <div className="bg-green-500/20 px-2 py-1 rounded">
-                                  <span className="text-green-400 text-xs font-medium">Aprovada</span>
+                                <div className={`${isLight ? 'bg-green-100' : 'bg-green-500/20'} px-2 py-1 rounded`}>
+                                  <span className={`${isLight ? 'text-green-700' : 'text-green-400'} text-xs font-medium`}>Aprovada</span>
                                 </div>
                                 <button
                                   onClick={() => setActivePage("quotes")}
-                                  className="bg-green-600/30 hover:bg-green-600/50 border border-green-500/40 text-green-300 px-3 py-1.5 rounded text-xs transition-all duration-200 flex items-center space-x-1"
+                                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700' : 'bg-green-600/30 hover:bg-green-600/50 border-green-500/40 text-green-300'} border px-3 py-1.5 rounded text-xs transition-all duration-200 flex items-center space-x-1`}
                                 >
                                   <Eye className="w-3 h-3" />
                                   <span>Ver Detalhes</span>
                                 </button>
                               </div>
                             </div>
-                            <p className="text-white text-sm">{entry.message}</p>
+                            <p className={`${themeClasses?.textPrimary || (isLight ? 'text-gray-800' : 'text-white')} text-sm`}>{entry.message}</p>
                             {entry.quote && (
-                              <div className="mt-2 pt-2 border-t border-slate-600/30">
+                              <div className={`mt-2 pt-2 border-t ${isLight ? 'border-gray-200' : 'border-slate-600/30'}`}>
                                 <div className="grid grid-cols-2 gap-3 text-xs">
                                   <div>
-                                    <span className="text-slate-400">Produto:</span>
-                                    <span className="text-white ml-2">{entry.quote.produto}</span>
+                                    <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>Produto:</span>
+                                    <span className={`${themeClasses?.textPrimary || (isLight ? 'text-gray-800' : 'text-white')} ml-2`}>{entry.quote.produto}</span>
                                   </div>
                                   <div>
-                                    <span className="text-slate-400">Valor:</span>
+                                    <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>Valor:</span>
                                     <span className="text-green-400 ml-2 font-bold">{entry.quote.valor}</span>
                                   </div>
                                 </div>
@@ -1076,8 +1085,8 @@ export function AdminDashboard({
                         ))}
                       </>
                     ) : (
-                      <div className="text-center text-slate-400 text-sm py-8">
-                        <FileText className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                      <div className={`text-center ${isLight ? 'text-gray-600' : 'text-slate-400'} text-sm py-8`}>
+                        <FileText className={`w-8 h-8 mx-auto mb-3 opacity-50 ${isLight ? 'text-gray-400' : 'text-slate-500'}`} />
                         <p>Nenhuma cotação criada ainda.</p>
                         <p className="text-xs mt-1">Use o prompt acima para criar sua primeira cotação.</p>
                       </div>
@@ -1085,10 +1094,10 @@ export function AdminDashboard({
                   </div>
 
                   {quoteHistory.length > 10 && (
-                    <div className="mt-4 pt-4 border-t border-slate-700/50 text-center">
+                    <div className={`mt-4 pt-4 border-t ${isLight ? 'border-gray-200' : 'border-slate-700/50'} text-center`}>
                       <button
                         onClick={() => setActivePage("quotes")}
-                        className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm flex items-center space-x-2 mx-auto"
+                        className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700' : 'bg-slate-700/50 hover:bg-slate-600/50 border-slate-600/50 text-slate-300'} border px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm flex items-center space-x-2 mx-auto`}
                       >
                         <FileText className="w-4 h-4" />
                         <span>Ver todas as {quoteHistory.length} cotações</span>
@@ -1579,9 +1588,9 @@ export function AdminDashboard({
           </div>
         );
       case "product-search":
-        return <ProductSearchPage onNavigateToNewProduct={navigateToNewProduct} />;
+        return <ProductSearchPage onNavigateToNewProduct={navigateToNewProduct} isLight={isLight} />;
       case "suppliers":
-        return <SuppliersPage user={user} />;
+        return <SuppliersPage user={user} isLight={isLight} />;
       case "notifications":
         return <NotificationsPage />;
       case "emails":
@@ -1623,7 +1632,7 @@ export function AdminDashboard({
 
   return (
     <div
-      className="flex h-screen max-w-full bg-dark-bg overflow-hidden"
+      className={`flex h-screen max-w-full ${themeClasses.bg} overflow-hidden`}
       style={{ fontFamily: "Inter, system-ui, sans-serif" }}
     >
       {/* Mobile Menu Overlay */}
@@ -1640,12 +1649,12 @@ export function AdminDashboard({
           className={`
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           fixed lg:relative z-50 lg:z-auto
-          w-56 sm:w-64 h-full bg-dark-bg border-r border-dark-color 
+          w-56 sm:w-64 h-full ${themeClasses.sidebarBg} border-r
           flex flex-col transition-transform duration-300 ease-in-out
         `}
         >
         {/* Logo */}
-        <div className="p-3 sm:p-4 lg:p-6 border-b border-dark-color flex-shrink-0">
+        <div className={`p-3 sm:p-4 lg:p-6 border-b ${themeClasses.border} flex-shrink-0`}>
           <div className="flex items-center justify-between">
             <button
               onClick={() => setActivePage('dashboard')}
@@ -1656,17 +1665,17 @@ export function AdminDashboard({
               </div>
 
               <div className="min-w-0">
-                <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-dark-primary truncate group-hover:text-blue-400 transition-colors duration-200">
+                <h1 className={`text-sm sm:text-lg lg:text-xl font-bold ${themeClasses.textPrimary} truncate group-hover:text-blue-400 transition-colors duration-200`}>
                   {systemName || 'SMARTQUOTE'}
                 </h1>
-                <p className="text-xs text-dark-secondary font-medium truncate">
+                <p className={`text-xs ${themeClasses.textSecondary} font-medium truncate`}>
                   Painel Administrativo
                 </p>
               </div>
             </button>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="lg:hidden p-2 rounded-lg hover:bg-dark-hover text-dark-secondary flex-shrink-0"
+              className={`lg:hidden p-2 rounded-lg ${themeClasses.hover} ${themeClasses.textSecondary} flex-shrink-0`}
               title="Fechar menu"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -1683,12 +1692,12 @@ export function AdminDashboard({
             )}
           </div>
 
-          <Separator style={{ backgroundColor: "#374151" }} />
+          <Separator style={{ backgroundColor: isLight ? "#d1d5db" : "#374151" }} />
 
           {/* System Group */}
           <div className="space-y-2">
             <div className="px-2 sm:px-3">
-              <h3 className="text-xs font-bold text-dark-primary uppercase tracking-widest">
+              <h3 className={`text-xs font-bold ${themeClasses.textPrimary} uppercase tracking-widest`}>
                 Sistema
               </h3>
             </div>
@@ -1699,12 +1708,12 @@ export function AdminDashboard({
             </div>
           </div>
 
-          <Separator style={{ backgroundColor: "#374151" }} />
+          <Separator style={{ backgroundColor: isLight ? "#d1d5db" : "#374151" }} />
 
           {/* Admin Group */}
           <div className="space-y-2">
             <div className="px-2 sm:px-3">
-              <h3 className="text-xs font-bold text-dark-Primary uppercase tracking-widest">
+              <h3 className={`text-xs font-bold ${themeClasses.textPrimary} uppercase tracking-widest`}>
                 Administração
               </h3>
             </div>
@@ -1717,17 +1726,17 @@ export function AdminDashboard({
         </nav>
 
         {/* System Status & User */}
-        <div className="p-2 sm:p-3 lg:p-4 border-t border-dark-color space-y-2 sm:space-y-3 flex-shrink-0">
+        <div className={`p-2 sm:p-3 lg:p-4 border-t ${themeClasses.border} space-y-2 sm:space-y-3 flex-shrink-0`}>
           {/* User Info */}
-          <div className="flex items-center space-x-3 p-3 rounded-xl glass-card border border-white/20 transition-all duration-300 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10 bg-white/5">
+          <div className={`flex items-center space-x-3 p-3 rounded-xl ${themeClasses.userCard} transition-all duration-300 hover:shadow-lg`}>
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-red-500 hover:to-red-400 hover:shadow-lg hover:shadow-red-500/25">
               <Shield className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-dark-primary truncate transition-colors duration-300 hover:text-red-400">
+              <p className={`text-xs sm:text-sm font-medium ${themeClasses.textPrimary} truncate transition-colors duration-300 hover:text-red-400`}>
                 {user?.name || "Administrador"}
               </p>
-              <p className="text-xs text-dark-secondary truncate">
+              <p className={`text-xs ${themeClasses.textSecondary} truncate`}>
                 {userPosition === "admin"
                   ? "Administrador do Sistema"
                   : userPosition === "manager"
@@ -1737,7 +1746,7 @@ export function AdminDashboard({
             </div>
             <button
               onClick={onLogout}
-              className="p-2 rounded-lg hover:bg-dark-hover text-dark-secondary hover:text-red-400 transition-all duration-300 flex-shrink-0 hover:scale-110 hover:shadow-lg"
+              className={`p-2 rounded-lg ${themeClasses.hover} ${themeClasses.textSecondary} hover:text-red-400 transition-all duration-300 flex-shrink-0 hover:scale-110 hover:shadow-lg`}
               title="Sair"
             >
               <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -1751,10 +1760,10 @@ export function AdminDashboard({
       <div className={`flex-1 flex flex-col overflow-hidden ${isOnboardingMode ? 'w-full' : ''}`}>
         {/* Mobile Header - Oculto durante onboarding */}
         {!isOnboardingMode && (
-          <div className="lg:hidden bg-dark-bg border-b border-dark-color p-3 sm:p-4 flex items-center justify-between flex-shrink-0">
+          <div className={`lg:hidden ${themeClasses.bg} border-b ${themeClasses.border} p-3 sm:p-4 flex items-center justify-between flex-shrink-0`}>
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 rounded-lg hover:bg-dark-hover text-dark-secondary"
+              className={`p-2 rounded-lg ${themeClasses.hover} ${themeClasses.textSecondary}`}
             >
               <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
@@ -1765,7 +1774,7 @@ export function AdminDashboard({
               <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-800 rounded-lg flex items-center justify-center p-1 group-hover:scale-105 transition-transform duration-200">
                 <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="font-bold text-dark-primary text-sm sm:text-base group-hover:text-blue-400 transition-colors duration-200">
+              <span className={`font-bold ${themeClasses.textPrimary} text-sm sm:text-base group-hover:text-blue-400 transition-colors duration-200`}>
                 {systemName || 'SmartQuote-RCS'}
               </span>
             </button>

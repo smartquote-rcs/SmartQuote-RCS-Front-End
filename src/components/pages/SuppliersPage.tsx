@@ -31,9 +31,10 @@ interface ToastNotification {
 type MinimalUser = { role?: string | null };
 interface SuppliersPageProps {
   user?: MinimalUser | null;
+  isLight?: boolean;
 }
 
-export function SuppliersPage({ user }: SuppliersPageProps) {
+export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
   const { t } = useTranslation();
   const { suppliers, isLoadingSuppliers, loadSuppliers, deleteSupplier, updateSupplier, addSupplier } = useApp();
   const [searchTerm, setSearchTerm] = useState("");

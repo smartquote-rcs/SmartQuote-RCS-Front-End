@@ -3,7 +3,12 @@ import { useState, useEffect } from 'react';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-export function EmailStatus() {
+interface EmailStatusProps {
+  themeClasses?: any;
+  isLight?: boolean;
+}
+
+export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps = {}) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<{
     status: 'ativo' | 'parado' | 'unknown';
@@ -130,12 +135,12 @@ export function EmailStatus() {
   if (!status) {
     // Estado inicial: mostrar toggle ativado e status monitorando
     return (
-      <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300">
+      <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-white/10'} rounded-xl p-4 border backdrop-blur-sm ${isLight ? 'hover:border-blue-300 hover:shadow-xl' : 'hover:border-cyan-400/30'} transition-all duration-300`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
             <CheckCircle className="w-4 h-4 text-green-400 animate-pulse" />
             <div>
-              <h3 className="text-white font-bold text-sm">{t('dashboard.emailReception')}</h3>
+              <h3 className={`${themeClasses?.textPrimary || 'text-white'} font-bold text-sm`}>{t('dashboard.emailReception')}</h3>
               <p className="text-xs text-green-400">{t('dashboard.monitoring')}</p>
             </div>
           </div>
@@ -154,18 +159,18 @@ export function EmailStatus() {
         </div>
         <div className="space-y-2 text-xs">
           <div className="flex justify-between">
-            <span className="text-slate-400">{t('dashboard.status')}:</span>
+            <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('dashboard.status')}:</span>
             <span className="font-semibold text-green-400">{t('dashboard.monitoring')}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">{t('dashboard.service')}:</span>
-            <span className="text-white">{t('dashboard.gmailMonitor')}</span>
+            <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('dashboard.service')}:</span>
+            <span className={`${isLight ? 'text-gray-800' : 'text-white'}`}>{t('dashboard.gmailMonitor')}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">{t('dashboard.lastCheck')}:</span>
-            <span className="text-white">-</span>
+            <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('dashboard.lastCheck')}:</span>
+            <span className={`${isLight ? 'text-gray-800' : 'text-white'}`}>-</span>
           </div>
-          <div className="mt-2 p-2 bg-slate-700/50 rounded text-slate-300 text-xs">
+          <div className={`mt-2 p-2 ${isLight ? 'bg-gray-100' : 'bg-slate-700/50'} rounded ${isLight ? 'text-gray-700' : 'text-slate-300'} text-xs`}>
             {t('dashboard.loadingMonitoringStatus')}
           </div>
         </div>
@@ -205,12 +210,12 @@ export function EmailStatus() {
   };
 
   return (
-    <div className="glass-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-xl p-4 border border-white/10 backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300">
+    <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-white/10'} rounded-xl p-4 border backdrop-blur-sm ${isLight ? 'hover:border-blue-300 hover:shadow-xl' : 'hover:border-cyan-400/30'} transition-all duration-300`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-3">
           {getStatusIcon()}
           <div>
-            <h3 className="text-white font-bold text-sm">{t('dashboard.emailReception')}</h3>
+            <h3 className={`${themeClasses?.textPrimary || 'text-white'} font-bold text-sm`}>{t('dashboard.emailReception')}</h3>
             <p className={`text-xs ${getStatusColor()}`}>{getStatusText()}</p>
           </div>
         </div>
@@ -232,21 +237,21 @@ export function EmailStatus() {
 
       <div className="space-y-2 text-xs">
         <div className="flex justify-between">
-          <span className="text-slate-400">{t('dashboard.status')}:</span>
+          <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('dashboard.status')}:</span>
           <span className={`font-semibold ${getStatusColor()}`}>{getStatusText()}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-400">{t('dashboard.service')}:</span>
-          <span className="text-white">{t('dashboard.gmailMonitor')}</span>
+          <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('dashboard.service')}:</span>
+          <span className={`${isLight ? 'text-gray-800' : 'text-white'}`}>{t('dashboard.gmailMonitor')}</span>
         </div>
         {status.lastCheck && (
           <div className="flex justify-between">
-            <span className="text-slate-400">{t('dashboard.lastCheck')}:</span>
-            <span className="text-white">{status.lastCheck.toLocaleDateString('pt-BR')} {status.lastCheck.toLocaleTimeString('pt-BR')}</span>
+            <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('dashboard.lastCheck')}:</span>
+            <span className={`${isLight ? 'text-gray-800' : 'text-white'}`}>{status.lastCheck.toLocaleDateString('pt-BR')} {status.lastCheck.toLocaleTimeString('pt-BR')}</span>
           </div>
         )}
         {status.message && (
-          <div className="mt-2 p-2 bg-slate-700/50 rounded text-slate-300 text-xs">
+          <div className={`mt-2 p-2 ${isLight ? 'bg-gray-100' : 'bg-slate-700/50'} rounded ${isLight ? 'text-gray-700' : 'text-slate-300'} text-xs`}>
             {status.message}
           </div>
         )}
