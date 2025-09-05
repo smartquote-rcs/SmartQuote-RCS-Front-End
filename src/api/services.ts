@@ -211,23 +211,72 @@ export const userService = {
       });
       
       const requestData: any = {
-        name: userData.nome,
-        email: userData.email,
-        department: userData.departamento,
-        position: userData.função, // API espera 'position' não 'role'
+        name: userData.nome?.trim(),
+        email: userData.email?.trim().toLowerCase(),
+        department: userData.departamento?.trim(),
+        position: userData.função?.trim(), // API espera 'position' não 'role'
       };
       
+      // Validar campos obrigatórios antes de enviar
+      if (!requestData.name || requestData.name.length === 0) {
+        throw new Error('Nome é obrigatório');
+      }
+      if (!requestData.email || requestData.email.length === 0) {
+        throw new Error('Email é obrigatório');
+      }
+      if (!requestData.department || requestData.department.length === 0) {
+        throw new Error('Departamento é obrigatório');
+      }
+      if (!requestData.position || requestData.position.length === 0) {
+        throw new Error('Função/Cargo é obrigatório');
+      }
+      
       // Só incluir senha se foi fornecida
-      if (userData.password && userData.password.length > 0) {
-        requestData.password = userData.password;
+      if (userData.password && userData.password.trim().length > 0) {
+        requestData.password = userData.password.trim();
       }
       
       // Só incluir contato se foi fornecido
-      if (userData.contacto && userData.contacto.length > 0) {
-        requestData.contact = userData.contacto; // API espera 'contact' não 'phone'
+      if (userData.contacto && userData.contacto.trim().length > 0) {
+        requestData.contact = userData.contacto.trim(); // API espera 'contact' não 'phone'
       }
       
-      const response = await api.post('/users/create', requestData);
+      console.log('🔍 Dados finais enviados para API:', requestData);
+      console.log('📋 Estrutura dos dados:', {
+        name: typeof requestData.name,
+        email: typeof requestData.email,
+        department: typeof requestData.department,
+        position: typeof requestData.position,
+        contact: typeof requestData.contact,
+        password: requestData.password ? 'presente' : 'ausente'
+      });
+
+      let response;
+      try {
+        // Primeira tentativa com a estrutura atual
+        response = await api.post('/users/create', requestData);
+      } catch (firstError: any) {
+        console.log('❌ Primeira tentativa falhou, tentando estrutura alternativa...');
+        console.log('📄 Erro da primeira tentativa:', firstError.response?.data);
+        
+        // Segunda tentativa com estrutura alternativa
+        const alternativeData: any = {
+          username: requestData.name,      // Talvez API espere 'username'
+          email: requestData.email,
+          dept: requestData.department,     // Talvez API espere 'dept'
+          role: requestData.position,       // Talvez API espere 'role' ao invés de 'position'
+        };
+        
+        if (requestData.password) {
+          alternativeData.password = requestData.password;
+        }
+        if (requestData.contact) {
+          alternativeData.phone = requestData.contact; // Talvez API espere 'phone'
+        }
+        
+        console.log('🔄 Tentativa alternativa com:', alternativeData);
+        response = await api.post('/users/create', alternativeData);
+      }
       
       if (response.status === 204 || response.status === 201 || response.status === 200) {
         return { success: true, data: response.data || { message: 'Usuário criado com sucesso' } };
@@ -235,6 +284,9 @@ export const userService = {
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro ao criar usuário:', error);
+      console.error('📊 Status:', error.response?.status);
+      console.error('📄 Dados do erro completo:', error.response?.data);
+      console.error('📋 Headers da resposta:', error.response?.headers);
       
       // Melhor tratamento de erros da API
       let errorMessage = 'Erro ao criar usuário';

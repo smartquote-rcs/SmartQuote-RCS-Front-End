@@ -28,13 +28,13 @@ import { LogsPage } from "./pages/LogsPage";
 import { LogIn } from "lucide-react";
 import { LoginLogsPage } from "./pages/LoginLogsPage";
 import { ReportsPage } from "./pages/ReportsPage";
+import { HelpPage } from "./pages/HelpPage";
 import SettingsPage from "./pages/SettingsPage";
 import { ProductSearchPage } from "./pages/ProductSearchPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { EmailsPage } from "./pages/EmailsPage";
 import { ProcessesPage } from "./pages/ProcessesPage";
-import { HelpPage } from "./pages/HelpPage";
 import { useApp } from "../contexts/AppContext";
 import { produtoService, supplierService, dashboardService } from "../api/services";
 import { buscaGeralService } from "../services/buscaGeralService";
@@ -833,6 +833,22 @@ export function AdminDashboard({
                   </h1>
                   <p className="text-xs sm:text-sm text-dark-secondary mt-1">{t('newQuote.subtitle')} para qualquer cliente</p>
                 </div>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <button
+                      onClick={() => setActivePage("notifications")}
+                      className="p-2 bg-slate-800/50 rounded-full hover:bg-slate-700/50 transition-colors"
+                    >
+                      <Bell className="w-5 h-5 text-slate-300" />
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-bold text-white">3</span>
+                      </div>
+                    </button>
+                  </div>
+                  <div className="dark-tag text-center sm:text-left flex-shrink-0">
+                    {allQuotes.length} {t('admin.dashboard.quotesInSystem')}
+                  </div>
+                </div>
               </div>
             </header>
 
@@ -1584,6 +1600,709 @@ export function AdminDashboard({
         return <UserManagementPage />;
       case "help":
         return <HelpPage />;
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+                <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-green-600 to-green-500 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-dark-primary">
+                        Guias
+                      </h3>
+                      <p className="text-xs text-dark-secondary truncate">
+                        Passo a passo
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-dark-primary">
+                        FAQ
+                      </h3>
+                      <p className="text-xs text-dark-secondary truncate">
+                        Perguntas frequentes
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-purple-600 to-purple-500 flex items-center justify-center flex-shrink-0">
+                      <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-dark-primary">
+                        Tutoriais
+                      </h3>
+                      <p className="text-xs text-dark-secondary truncate">
+                        Videos e demos
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass-card bg-white/5 rounded-xl p-3 lg:p-4 border border-white/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-orange-600 to-orange-500 flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-dark-primary">
+                        Contato
+                      </h3>
+                      <p className="text-xs text-dark-secondary truncate">
+                        Suporte técnico
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sobre a RCS */}
+              <div className="glass-card bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl p-3 sm:p-4 lg:p-5 border border-blue-400/30 hover:border-blue-300/50 transition-all duration-300 shadow-lg hover:shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <img src="/RCS.png" alt="RCS Logo" className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 object-contain" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-base sm:text-lg font-bold text-white mb-1 truncate">Conheça mais sobre a RCS</h3>
+                      <p className="text-blue-100 text-xs sm:text-sm hidden sm:block">Visite nosso website oficial para saber mais</p>
+                      <p className="text-blue-100 text-xs sm:hidden">Website oficial</p>
+                    </div>
+                  </div>
+                  <a 
+                    href="https://www.rcsangola.co.ao/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center justify-center gap-2 bg-gradient-to-r from-white to-blue-50 text-blue-600 px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 border border-white/20 flex-shrink-0 w-full sm:w-auto"
+                  >
+                    <span>Visitar Site</span>
+                    <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-blue-600 flex items-center justify-center group-hover:bg-blue-700 transition-colors">
+                      <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
+      default:
+        return <DashboardPage />;
+    }
+  }
+
+  // Definições para controle de acesso por posição
+
+  return (
+                {/* Getting Started */}
+                <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                  <h2 className="text-xl font-bold text-dark-primary mb-4 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-green-500 flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-white" />
+                    </div>
+                    Como começar a usar o SmartQuote RCS
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-dark-primary">1. Primeira Cotação</h3>
+                      <ul className="space-y-2 text-dark-secondary">
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Acesse "Solicitações de Cotação" no menu lateral</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Clique no botão "Nova Cotação" para iniciar</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Preencha dados do cliente (nome, email, empresa)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Adicione produtos utilizando a busca inteligente</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Revise e envie para processamento automático</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-dark-primary">2. Gestão de Fornecedores</h3>
+                      <ul className="space-y-2 text-dark-secondary">
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Navegue até "Fornecedores" no menu</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Cadastre novos fornecedores com dados completos</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Configure contatos, especialidades e categorias</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Monitore performance através de métricas</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <span>Utilize relatórios para análise de desempenho</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation Guide */}
+                <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                  <h2 className="text-xl font-bold text-dark-primary mb-4 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-purple-500 flex items-center justify-center">
+                      <BarChart3 className="w-4 h-4 text-white" />
+                    </div>
+                    Guia de Navegação do Sistema
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="p-4 bg-slate-800/30 rounded-lg border border-slate-600/30">
+                      <h3 className="font-semibold text-green-400 mb-2">Dashboard Principal</h3>
+                      <p className="text-sm text-dark-secondary mb-2">Visão geral do sistema com estatísticas em tempo real</p>
+                      <ul className="text-xs text-dark-secondary space-y-1">
+                        <li>• Métricas de cotações ativas</li>
+                        <li>• Gráficos de performance</li>
+                        <li>• Notificações importantes</li>
+                        <li>• Atalhos para ações rápidas</li>
+                      </ul>
+                    </div>
+                    <div className="p-4 bg-slate-800/30 rounded-lg border border-slate-600/30">
+                      <h3 className="font-semibold text-blue-400 mb-2">Cotações e Processos</h3>
+                      <p className="text-sm text-dark-secondary mb-2">Gestão completa do fluxo de cotações</p>
+                      <ul className="text-xs text-dark-secondary space-y-1">
+                        <li>• Criar novas cotações com IA</li>
+                        <li>• Acompanhar status em tempo real</li>
+                        <li>• Aprovar/rejeitar cotações</li>
+                        <li>• Histórico completo de processos</li>
+                      </ul>
+                    </div>
+                    <div className="p-4 bg-slate-800/30 rounded-lg border border-slate-600/30">
+                      <h3 className="font-semibold text-orange-400 mb-2">Emails e Notificações</h3>
+                      <p className="text-sm text-dark-secondary mb-2">Central de comunicação do sistema</p>
+                      <ul className="text-xs text-dark-secondary space-y-1">
+                        <li>• Emails automáticos para clientes</li>
+                        <li>• Notificações personalizáveis</li>
+                        <li>• Histórico de comunicações</li>
+                        <li>• Templates customizáveis</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Key Features */}
+                <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                  <h2 className="text-xl font-bold text-dark-primary mb-4 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
+                      <Settings className="w-4 h-4 text-white" />
+                    </div>
+                    Principais Funcionalidades do Sistema
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold text-dark-primary flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-green-500/20 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-green-400" />
+                        </div>
+                        Cotações Inteligentes
+                      </h3>
+                      <p className="text-dark-secondary text-sm">
+                        Sistema automatizado com IA para processamento de cotações, busca de produtos e comparação de preços em tempo real.
+                      </p>
+                      <ul className="text-xs text-dark-secondary space-y-1">
+                        <li>• Busca automática de produtos</li>
+                        <li>• Comparação de preços</li>
+                        <li>• Sugestões inteligentes</li>
+                        <li>• Aprovação automática baseada em regras</li>
+                      </ul>
+                    </div>
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold text-dark-primary flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                          <Search className="w-4 h-4 text-blue-400" />
+                        </div>
+                        Busca Avançada
+                      </h3>
+                      <p className="text-dark-secondary text-sm">
+                        Pesquise produtos por nome, categoria, especificações técnicas com algoritmos de correspondência inteligente.
+                      </p>
+                      <ul className="text-xs text-dark-secondary space-y-1">
+                        <li>• Filtros por categoria</li>
+                        <li>• Busca por especificações</li>
+                        <li>• Histórico de pesquisas</li>
+                        <li>• Sugestões automáticas</li>
+                      </ul>
+                    </div>
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold text-dark-primary flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                          <BarChart3 className="w-4 h-4 text-purple-400" />
+                        </div>
+                        Relatórios e Analytics
+                      </h3>
+                      <p className="text-dark-secondary text-sm">
+                        Dashboards com métricas de performance, gráficos de tendências e relatórios exportáveis em múltiplos formatos.
+                      </p>
+                      <ul className="text-xs text-dark-secondary space-y-1">
+                        <li>• Exportação PDF, Excel, CSV</li>
+                        <li>• Gráficos interativos</li>
+                        <li>• Métricas de performance</li>
+                        <li>• Análise de tendências</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Advanced Features */}
+                <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                  <h2 className="text-xl font-bold text-dark-primary mb-4 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-cyan-500 flex items-center justify-center">
+                      <Activity className="w-4 h-4 text-white" />
+                    </div>
+                    Recursos Avançados
+                  </h2>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-cyan-400">Gestão de Usuários</h3>
+                        <div className="pl-4 border-l-2 border-cyan-500/30">
+                          <p className="text-sm text-dark-secondary mb-2">
+                            Sistema completo de controle de acesso e permissões
+                          </p>
+                          <ul className="text-xs text-dark-secondary space-y-1">
+                            <li>• Níveis de acesso: Admin, Gestor, Usuário</li>
+                            <li>• Permissões personalizáveis por módulo</li>
+                            <li>• Auditoria de ações dos usuários</li>
+                            <li>• Logs de login e atividade</li>
+                            <li>• Gestão de senhas e autenticação</li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-cyan-400">Configurações do Sistema</h3>
+                        <div className="pl-4 border-l-2 border-cyan-500/30">
+                          <p className="text-sm text-dark-secondary mb-2">
+                            Personalização completa do comportamento do sistema
+                          </p>
+                          <ul className="text-xs text-dark-secondary space-y-1">
+                            <li>• Configuração de moeda e formatação</li>
+                            <li>• Idiomas: Português e Inglês</li>
+                            <li>• Templates de email personalizáveis</li>
+                            <li>• Regras de aprovação automática</li>
+                            <li>• Integração com sistemas externos</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-cyan-400">Monitoramento em Tempo Real</h3>
+                        <div className="pl-4 border-l-2 border-cyan-500/30">
+                          <p className="text-sm text-dark-secondary mb-2">
+                            Acompanhe todas as atividades do sistema em tempo real
+                          </p>
+                          <ul className="text-xs text-dark-secondary space-y-1">
+                            <li>• Status de cotações atualizadas automaticamente</li>
+                            <li>• Notificações push para eventos importantes</li>
+                            <li>• Monitoramento de performance do sistema</li>
+                            <li>• Alertas de problemas ou falhas</li>
+                            <li>• Dashboard com métricas ao vivo</li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-cyan-400">Integração e API</h3>
+                        <div className="pl-4 border-l-2 border-cyan-500/30">
+                          <p className="text-sm text-dark-secondary mb-2">
+                            Conecte o SmartQuote com outros sistemas empresariais
+                          </p>
+                          <ul className="text-xs text-dark-secondary space-y-1">
+                            <li>• API RESTful para integrações</li>
+                            <li>• Webhooks para eventos automáticos</li>
+                            <li>• Importação/exportação de dados</li>
+                            <li>• Sincronização com ERPs externos</li>
+                            <li>• Backup automático de dados</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* FAQ Expandido */}
+                <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                  <h2 className="text-xl font-bold text-dark-primary mb-4 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-purple-500 flex items-center justify-center">
+                      <HelpCircle className="w-4 h-4 text-white" />
+                    </div>
+                    Perguntas Frequentes (FAQ)
+                  </h2>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="border-l-4 border-green-500 pl-4 py-2">
+                          <h3 className="font-semibold text-dark-primary mb-1">Como criar uma nova cotação?</h3>
+                          <p className="text-dark-secondary text-sm">
+                            Acesse "Solicitações de Cotação" → "Nova Cotação". Preencha os dados do cliente, adicione produtos usando a busca inteligente e envie para processamento. O sistema automaticamente buscará os melhores preços.
+                          </p>
+                        </div>
+                        <div className="border-l-4 border-blue-500 pl-4 py-2">
+                          <h3 className="font-semibold text-dark-primary mb-1">Como acompanhar o status de uma cotação?</h3>
+                          <p className="text-dark-secondary text-sm">
+                            Na página "Processos", todas as cotações aparecem com status em tempo real: Pendente, Em Análise, Aprovada, Rejeitada. Use os filtros para encontrar cotações específicas rapidamente.
+                          </p>
+                        </div>
+                        <div className="border-l-4 border-purple-500 pl-4 py-2">
+                          <h3 className="font-semibold text-dark-primary mb-1">Posso exportar relatórios?</h3>
+                          <p className="text-dark-secondary text-sm">
+                            Sim! Use o botão "Download" em qualquer página de relatórios. Escolha entre PDF (para apresentações), Excel (para análise) ou CSV (para importar em outros sistemas).
+                          </p>
+                        </div>
+                        <div className="border-l-4 border-orange-500 pl-4 py-2">
+                          <h3 className="font-semibold text-dark-primary mb-1">Como configurar notificações?</h3>
+                          <p className="text-dark-secondary text-sm">
+                            Vá em "Configurações" → "Notificações". Configure alertas por email para: novas cotações, aprovações necessárias, cotações vencidas e relatórios semanais.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="border-l-4 border-cyan-500 pl-4 py-2">
+                          <h3 className="font-semibold text-dark-primary mb-1">O sistema funciona offline?</h3>
+                          <p className="text-dark-secondary text-sm">
+                            O SmartQuote RCS é um sistema online que requer conexão com internet para sincronização de dados, busca de produtos e envio de emails automáticos.
+                          </p>
+                        </div>
+                        <div className="border-l-4 border-red-500 pl-4 py-2">
+                          <h3 className="font-semibold text-dark-primary mb-1">Como adicionar novos fornecedores?</h3>
+                          <p className="text-dark-secondary text-sm">
+                            Em "Fornecedores", clique "Novo Fornecedor". Preencha dados da empresa, contatos, especialidades e categorias de produtos. O sistema automaticamente incluirá o fornecedor nas buscas.
+                          </p>
+                        </div>
+                        <div className="border-l-4 border-yellow-500 pl-4 py-2">
+                          <h3 className="font-semibold text-dark-primary mb-1">Posso personalizar templates de email?</h3>
+                          <p className="text-dark-secondary text-sm">
+                            Sim! Em "Configurações" → "Templates", edite os modelos de email para cotações, aprovações e notificações. Use variáveis como [CLIENTE], [PRODUTO] para personalização automática.
+                          </p>
+                        </div>
+                        <div className="border-l-4 border-indigo-500 pl-4 py-2">
+                          <h3 className="font-semibold text-dark-primary mb-1">Como gerenciar usuários do sistema?</h3>
+                          <p className="text-dark-secondary text-sm">
+                            (Apenas Admins) Acesse "Gestão de Usuários" para adicionar, remover ou alterar permissões. Defina níveis: Admin (acesso total), Gestor (aprovações) ou Usuário (consultas).
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Troubleshooting */}
+                <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                  <h2 className="text-xl font-bold text-dark-primary mb-4 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-600 to-red-500 flex items-center justify-center">
+                      <Settings className="w-4 h-4 text-white" />
+                    </div>
+                    Solução de Problemas Comuns
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-red-400">Problemas de Login</h3>
+                      <div className="space-y-3">
+                        <div className="p-3 bg-red-900/20 rounded-lg border border-red-500/30">
+                          <h4 className="font-medium text-dark-primary mb-1">Esqueci minha senha</h4>
+                          <p className="text-sm text-dark-secondary">
+                            Use "Esqueci a senha" na tela de login ou contate o administrador do sistema para redefinição.
+                          </p>
+                        </div>
+                        <div className="p-3 bg-red-900/20 rounded-lg border border-red-500/30">
+                          <h4 className="font-medium text-dark-primary mb-1">Conta bloqueada</h4>
+                          <p className="text-sm text-dark-secondary">
+                            Após 5 tentativas incorretas, a conta é bloqueada por 15 minutos. Contate o admin se persistir.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-yellow-400">Problemas de Performance</h3>
+                      <div className="space-y-3">
+                        <div className="p-3 bg-yellow-900/20 rounded-lg border border-yellow-500/30">
+                          <h4 className="font-medium text-dark-primary mb-1">Sistema lento</h4>
+                          <p className="text-sm text-dark-secondary">
+                            Verifique sua conexão. Limpe cache do navegador (Ctrl+Shift+Del). Use navegadores atualizados.
+                          </p>
+                        </div>
+                        <div className="p-3 bg-yellow-900/20 rounded-lg border border-yellow-500/30">
+                          <h4 className="font-medium text-dark-primary mb-1">Busca não retorna resultados</h4>
+                          <p className="text-sm text-dark-secondary">
+                            Use termos mais genéricos. Verifique ortografia. Tente buscar por categoria em vez de nome específico.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Support */}
+                <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                  <h2 className="text-xl font-bold text-dark-primary mb-4 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-600 to-orange-500 flex items-center justify-center">
+                      <Mail className="w-4 h-4 text-white" />
+                    </div>
+                    Precisa de Mais Ajuda?
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-orange-400">Suporte Técnico</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 bg-orange-900/20 rounded-lg border border-orange-500/30">
+                          <Mail className="w-5 h-5 text-orange-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-dark-primary">Email</p>
+                            <p className="text-sm text-dark-secondary">suporte@smartquote-rcs.com</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-green-900/20 rounded-lg border border-green-500/30">
+                          <Shield className="w-5 h-5 text-green-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-dark-primary">Disponibilidade</p>
+                            <p className="text-sm text-dark-secondary">24/7 - Suporte contínuo</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-blue-900/20 rounded-lg border border-blue-500/30">
+                          <RefreshCw className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-dark-primary">Tempo de Resposta</p>
+                            <p className="text-sm text-dark-secondary">Até 2h (horário comercial)</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-blue-400">Recursos de Aprendizado</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 bg-blue-900/20 rounded-lg border border-blue-500/30 hover:border-blue-400/50 transition-colors cursor-pointer">
+                          <FileText className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-dark-primary">Manual do Usuário</p>
+                            <p className="text-sm text-dark-secondary">Guia completo em PDF</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-purple-900/20 rounded-lg border border-purple-500/30 hover:border-purple-400/50 transition-colors cursor-pointer">
+                          <Users className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-dark-primary">Treinamentos Online</p>
+                            <p className="text-sm text-dark-secondary">Vídeos e tutoriais</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-cyan-900/20 rounded-lg border border-cyan-500/30 hover:border-cyan-400/50 transition-colors cursor-pointer">
+                          <BarChart3 className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-dark-primary">Portal de Conhecimento</p>
+                            <p className="text-sm text-dark-secondary">Base de conhecimento completa</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-green-400">Atualizações e Novidades</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 bg-green-900/20 rounded-lg border border-green-500/30">
+                          <Bell className="w-5 h-5 text-green-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-dark-primary">Versão Atual</p>
+                            <p className="text-sm text-dark-secondary">v2.1.0 - Janeiro 2025</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-indigo-900/20 rounded-lg border border-indigo-500/30">
+                          <Activity className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-dark-primary">Novidades</p>
+                            <p className="text-sm text-dark-secondary">IA aprimorada, novos relatórios</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-pink-900/20 rounded-lg border border-pink-500/30">
+                          <Plus className="w-5 h-5 text-pink-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-dark-primary">Próximas Features</p>
+                            <p className="text-sm text-dark-secondary">App móvel, API pública</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informações da Empresa */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Informações Gerais */}
+                  <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                    <h2 className="text-xl font-bold text-dark-primary mb-6 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
+                        <HelpCircle className="w-4 h-4 text-white" />
+                      </div>
+                      Informações
+                    </h2>
+                    <div className="space-y-4">
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-blue-400 flex items-center gap-2">
+                          <div className="w-5 h-5 rounded bg-blue-500/20 flex items-center justify-center">
+                            <Activity className="w-3 h-3 text-blue-400" />
+                          </div>
+                          Sede Principal
+                        </h3>
+                        <div className="pl-7 space-y-2">
+                          <p className="text-dark-secondary text-sm flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-blue-400"></div>
+                            Rua Comandante Arguelles, nº103 – Prenda
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-green-400 flex items-center gap-2">
+                          <div className="w-5 h-5 rounded bg-green-500/20 flex items-center justify-center">
+                            <Activity className="w-3 h-3 text-green-400" />
+                          </div>
+                          Filial
+                        </h3>
+                        <div className="pl-7 space-y-2">
+                          <p className="text-dark-secondary text-sm flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-green-400"></div>
+                            Rua de Liberdade, nº94 – Vila Alice
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-purple-400 flex items-center gap-2">
+                          <div className="w-5 h-5 rounded bg-purple-500/20 flex items-center justify-center">
+                            <Shield className="w-3 h-3 text-purple-400" />
+                          </div>
+                          Política de Privacidade
+                        </h3>
+                        <div className="pl-7">
+                          <p className="text-dark-secondary text-xs">
+                            Todos os dados são tratados com máxima confidencialidade seguindo as melhores práticas de segurança e privacidade.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contactos */}
+                  <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                    <h2 className="text-xl font-bold text-dark-primary mb-6 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-600 to-green-500 flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-white" />
+                      </div>
+                      Contactos
+                    </h2>
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-green-400 flex items-center gap-2">
+                          <div className="w-5 h-5 rounded bg-green-500/20 flex items-center justify-center">
+                            <Bell className="w-3 h-3 text-green-400" />
+                          </div>
+                          Call Center
+                        </h3>
+                        <div className="pl-7 space-y-2">
+                          <p className="text-lg font-bold text-dark-primary">932 896 190</p>
+                          <div className="flex items-center gap-2 text-dark-secondary text-sm">
+                            <div className="w-1 h-1 rounded-full bg-green-400"></div>
+                            Segunda-feira – Sexta-feira
+                          </div>
+                          <div className="flex items-center gap-2 text-dark-secondary text-sm">
+                            <div className="w-1 h-1 rounded-full bg-green-400"></div>
+                            7h30 – 17h00
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-blue-400 flex items-center gap-2">
+                          <div className="w-5 h-5 rounded bg-blue-500/20 flex items-center justify-center">
+                            <Activity className="w-3 h-3 text-blue-400" />
+                          </div>
+                          Helpdesk
+                        </h3>
+                        <div className="pl-7 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                            <span className="text-lg font-bold text-green-400">24/7</span>
+                          </div>
+                          <p className="text-dark-secondary text-sm">
+                            Suporte técnico disponível 24 horas por dia, 7 dias por semana
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 rounded-lg border border-indigo-500/30">
+                        <p className="text-sm text-dark-secondary text-center">
+                          <span className="font-semibold text-indigo-400">Resposta Garantida</span><br/>
+                          Suporte técnico com tempo de resposta máximo de 2 horas durante horário comercial
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="glass-card bg-white/5 rounded-xl p-4 lg:p-6 border border-white/20">
+                  <h2 className="text-xl font-bold text-dark-primary mb-4 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-500 flex items-center justify-center">
+                      <Send className="w-4 h-4 text-white" />
+                    </div>
+                    Ações Rápidas
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <button 
+                      onClick={() => setActivePage('quotes')}
+                      className="p-4 bg-gradient-to-br from-green-600/20 to-green-500/20 rounded-lg border border-green-500/30 hover:border-green-400/50 transition-all duration-200 hover:scale-105 text-left"
+                    >
+                      <Plus className="w-6 h-6 text-green-400 mb-2" />
+                      <h3 className="font-semibold text-dark-primary mb-1">Nova Cotação</h3>
+                      <p className="text-xs text-dark-secondary">Criar cotação com IA</p>
+                    </button>
+                    <button 
+                      onClick={() => setActivePage('suppliers')}
+                      className="p-4 bg-gradient-to-br from-blue-600/20 to-blue-500/20 rounded-lg border border-blue-500/30 hover:border-blue-400/50 transition-all duration-200 hover:scale-105 text-left"
+                    >
+                      <Users className="w-6 h-6 text-blue-400 mb-2" />
+                      <h3 className="font-semibold text-dark-primary mb-1">Fornecedores</h3>
+                      <p className="text-xs text-dark-secondary">Gerenciar fornecedores</p>
+                    </button>
+                    <button 
+                      onClick={() => setActivePage('reports')}
+                      className="p-4 bg-gradient-to-br from-purple-600/20 to-purple-500/20 rounded-lg border border-purple-500/30 hover:border-purple-400/50 transition-all duration-200 hover:scale-105 text-left"
+                    >
+                      <BarChart3 className="w-6 h-6 text-purple-400 mb-2" />
+                      <h3 className="font-semibold text-dark-primary mb-1">Relatórios</h3>
+                      <p className="text-xs text-dark-secondary">Visualizar analytics</p>
+                    </button>
+                    <button 
+                      onClick={() => setActivePage('settings')}
+                      className="p-4 bg-gradient-to-br from-orange-600/20 to-orange-500/20 rounded-lg border border-orange-500/30 hover:border-orange-400/50 transition-all duration-200 hover:scale-105 text-left"
+                    >
+                      <Settings className="w-6 h-6 text-orange-400 mb-2" />
+                      <h3 className="font-semibold text-dark-primary mb-1">Configurações</h3>
+                      <p className="text-xs text-dark-secondary">Personalizar sistema</p>
       default:
         return <DashboardPage />;
     }
