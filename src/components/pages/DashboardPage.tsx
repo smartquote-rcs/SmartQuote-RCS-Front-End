@@ -330,12 +330,15 @@ export function DashboardPage({
               <button 
                 onClick={onRefreshStats}
                 disabled={isLoadingStats}
-                className="bg-green-600/20 hover:bg-green-600/30 disabled:bg-gray-600/20 text-green-400 disabled:text-gray-400 px-3 py-2 sm:px-4 rounded-lg border border-green-500/30 disabled:border-gray-500/30 transition-colors duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm disabled:cursor-not-allowed"
+                className={`${finalIsLight 
+                  ? 'bg-blue-50 hover:bg-blue-100 disabled:bg-gray-100 text-blue-600 disabled:text-gray-400 border-blue-200 disabled:border-gray-200' 
+                  : 'bg-gradient-to-r from-blue-600/20 to-cyan-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 disabled:bg-gray-600/20 text-blue-400 disabled:text-gray-500 border-blue-500/30 disabled:border-gray-500/30'
+                } px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg border transition-all duration-300 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm disabled:cursor-not-allowed hover:scale-105 disabled:hover:scale-100 shadow-sm hover:shadow-md disabled:shadow-none`}
                 title={isLoadingStats ? t('dashboard.updating') : t('dashboard.updateStats')}
               >
-                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoadingStats ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{isLoadingStats ? t('dashboard.updating') : t('dashboard.update')}</span>
-                <span className="sm:hidden">{isLoadingStats ? '...' : t('dashboard.update')}</span>
+                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoadingStats ? 'animate-spin' : ''} transition-transform`} />
+                <span className="hidden sm:inline font-medium">{isLoadingStats ? t('dashboard.updating') : t('dashboard.update')}</span>
+                <span className="sm:hidden font-medium">{isLoadingStats ? '...' : t('dashboard.update')}</span>
               </button>
             )}
             {/* Theme Toggle Button */}

@@ -1,5 +1,122 @@
 @custom-variant dark (&:is(.dark *));
 
+/* Responsive utilities */
+@layer utilities {
+  /* Mobile-first responsive spacing */
+  .responsive-p {
+    @apply p-3 sm:p-4 md:p-6 lg:p-8;
+  }
+  
+  .responsive-px {
+    @apply px-3 sm:px-4 md:px-6 lg:px-8;
+  }
+  
+  .responsive-py {
+    @apply py-3 sm:py-4 md:py-6 lg:py-8;
+  }
+  
+  /* Button responsive sizing */
+  .btn-responsive {
+    @apply px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] md:min-h-[52px];
+  }
+  
+  /* Text responsive sizing */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm md:text-base;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm sm:text-base md:text-lg;
+  }
+  
+  .text-responsive-base {
+    @apply text-base sm:text-lg md:text-xl;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+  
+  /* Grid responsive patterns */
+  .grid-responsive-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6;
+  }
+  
+  .grid-responsive-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6;
+  }
+  
+  .grid-responsive-4 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
+  }
+  
+  /* Icon responsive sizing */
+  .icon-responsive-sm {
+    @apply w-4 h-4 sm:w-5 sm:h-5;
+  }
+  
+  .icon-responsive-base {
+    @apply w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7;
+  }
+  
+  /* Safe area handling for mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Mobile-first responsive behavior */
+@media (max-width: 640px) {
+  .scrollable-content {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Improve touch targets on mobile */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboard-main {
+    padding: 1.5rem;
+  }
+}
+
+/* Desktop optimizations */
+@media (min-width: 1024px) {
+  .dashboard-main {
+    padding: 2rem;
+  }
+  
+  /* Enable hover effects only on devices that can hover */
+  .hover\:scale-105:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1536px) {
+  .dashboard-main {
+    padding: 3rem;
+  }
+}
+
 :root {
   --font-size: 14px;
   

@@ -43,7 +43,7 @@ interface PasswordData {
 	showConfirm: boolean;
 }
 
-export default function SettingsPage() {
+export default function SettingsPage({ isLight = false }: { isLight?: boolean } = {}) {
 	const appCtx = useContext(AppContext);
 	const { t } = useTranslation();
 	const { changeLanguage } = useLanguage();
@@ -242,19 +242,19 @@ export default function SettingsPage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-dark-bg flex flex-col overflow-hidden">
+		<div className={`min-h-screen ${isLight ? 'bg-gray-50' : 'bg-dark-bg'} flex flex-col overflow-hidden`}>
 			{/* Header */}
-			<header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-5 xl:py-6 flex-shrink-0">
+			<header className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-bg border-dark-color'} border-b px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-5 xl:py-6 flex-shrink-0`}>
 				<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
 					<div className="flex items-center space-x-3 sm:space-x-4">
-						<div className="p-2 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl">
-							<Settings className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+						<div className={`p-2 ${isLight ? 'bg-gradient-to-br from-blue-100 to-purple-100' : 'bg-gradient-to-br from-blue-600/20 to-purple-600/20'} rounded-xl`}>
+							<Settings className={`w-5 h-5 sm:w-6 sm:h-6 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
 						</div>
 						<div>
-							<h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-dark-primary-text">
+							<h1 className={`text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>
 								{t('settings.systemSettings')}
 							</h1>
-							<p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">
+							<p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>
 								{t('settings.subtitle')}
 							</p>
 						</div>
@@ -262,7 +262,7 @@ export default function SettingsPage() {
 
 					{/* Status Notification */}
 					{saveSuccess && (
-						<div className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-300 self-start sm:self-auto">
+						<div className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl ${isLight ? 'bg-green-50 border-green-200 text-green-700' : 'bg-green-500/10 border-green-500/20 text-green-300'} border self-start sm:self-auto`}>
 							<div className="flex items-center space-x-2">
 								<Save className="w-4 h-4 sm:w-5 sm:h-5" />
 								<span className="font-medium text-sm sm:text-base">{saveSuccess}</span>
@@ -273,23 +273,23 @@ export default function SettingsPage() {
 			</header>
 
 			{/* Main Content */}
-			<main className="flex-1 overflow-y-auto scrollable-content dashboard-main p-3 sm:p-4 lg:p-6 xl:p-8 bg-dark-bg max-h-[calc(100vh-80px)] sm:max-h-[calc(100vh-90px)] md:max-h-[calc(100vh-100px)] lg:max-h-[calc(100vh-110px)] xl:max-h-[calc(100vh-120px)]">
+			<main className={`flex-1 overflow-y-auto scrollable-content dashboard-main p-3 sm:p-4 lg:p-6 xl:p-8 ${isLight ? 'bg-gray-50' : 'bg-dark-bg'} max-h-[calc(100vh-80px)] sm:max-h-[calc(100vh-90px)] md:max-h-[calc(100vh-100px)] lg:max-h-[calc(100vh-110px)] xl:max-h-[calc(100vh-120px)]`}>
 				{/* Profile Section - Fluid Design */}
 				<div className="relative mb-4 sm:mb-6 lg:mb-8">
-					<div className="absolute inset-0 bg-dark-card backdrop-blur-3xl rounded-2xl sm:rounded-[2rem]"></div>
-					<div className="relative glass-card bg-dark-card rounded-2xl sm:rounded-[2rem] border border-dark-color overflow-hidden shadow-2xl">
-						<div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-purple-600/5 to-cyan-600/5"></div>
+					<div className={`absolute inset-0 ${isLight ? 'bg-white/80 backdrop-blur-sm' : 'bg-dark-card backdrop-blur-3xl'} rounded-2xl sm:rounded-[2rem]`}></div>
+					<div className={`relative glass-card ${isLight ? 'bg-white/90 border-gray-200' : 'bg-dark-card border-dark-color'} rounded-2xl sm:rounded-[2rem] border overflow-hidden shadow-2xl backdrop-blur-sm`}>
+						<div className={`absolute inset-0 ${isLight ? 'bg-gradient-to-br from-blue-50/80 via-purple-50/80 to-cyan-50/80' : 'bg-gradient-to-br from-blue-600/5 via-purple-600/5 to-cyan-600/5'}`}></div>
 
 						<div className="relative p-4 sm:p-6 lg:p-8">
 							{/* Section Header */}
 							<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-4 sm:mb-6">
 								<div className="flex items-center space-x-3 sm:space-x-4">
-									<div className="p-2 sm:p-3 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
-										<User className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+									<div className={`p-2 sm:p-3 ${isLight ? 'bg-gradient-to-br from-blue-100 to-purple-100' : 'bg-gradient-to-br from-blue-600/20 to-purple-600/20'} rounded-xl sm:rounded-2xl backdrop-blur-sm`}>
+										<User className={`w-5 h-5 sm:w-6 sm:h-6 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
 									</div>
 									<div>
-										<h2 className="text-lg sm:text-xl font-bold text-dark-primary-text mb-1">{t('settings.adminProfile')}</h2>
-										<p className="text-blue-200 text-sm">{t('settings.personalInfo')}</p>
+										<h2 className={`text-lg sm:text-xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} mb-1`}>{t('settings.adminProfile')}</h2>
+										<p className={`${isLight ? 'text-blue-600' : 'text-blue-200'} text-sm`}>{t('settings.personalInfo')}</p>
 									</div>
 								</div>
 
@@ -309,57 +309,57 @@ export default function SettingsPage() {
 								<div className="space-y-3 sm:space-y-4 lg:space-y-5">
 									<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 										<div>
-											<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.firstName')}</Label>
+											<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm font-medium`}>{t('settings.firstName')}</Label>
 											<Input
 												value={adminProfile.firstName}
 												onChange={(e) => setAdminProfile({ ...adminProfile, firstName: e.target.value })}
 												disabled={!isAdmin}
-												className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+												className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 											/>
 										</div>
 										<div>
-											<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Posição</Label>
+											<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm font-medium`}>Posição</Label>
 											<Input
 												value={adminProfile.role}
 												onChange={(e) => setAdminProfile({ ...adminProfile, role: e.target.value })}
 												disabled={!isAdmin}
-												className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+												className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 											/>
 										</div>
 									</div>
 
 									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('settings.email')}</Label>
+										<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm font-medium`}>{t('settings.email')}</Label>
 										<Input
 											type="email"
 											value={adminProfile.email}
 											onChange={(e) => setAdminProfile({ ...adminProfile, email: e.target.value })}
 											disabled={!isAdmin}
-											className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 										/>
 									</div>
 								</div>
 
 								<div className="space-y-3 sm:space-y-4 lg:space-y-5">
 									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">{t('Empresa')}</Label>
+										<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm font-medium`}>{t('Empresa')}</Label>
 										<Input
 											value={adminProfile.company}
 											onChange={(e) => setAdminProfile({ ...adminProfile, company: e.target.value })}
 											disabled
-											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base opacity-60 cursor-not-allowed"
+											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} backdrop-blur-sm text-sm sm:text-base opacity-60 cursor-not-allowed`}
 										/>
 									</div>
 
 									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm font-medium">Contacto</Label>
+										<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm font-medium`}>Contacto</Label>
 										<Input
 											type="tel"
 											value={adminProfile.phone}
 											onChange={(e) => setAdminProfile({ ...adminProfile, phone: e.target.value })}
 											placeholder="Ex: +244 900 000 000"
 											disabled={!isAdmin}
-											className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} backdrop-blur-sm text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 										/>
 									</div>
 								</div>
@@ -373,33 +373,33 @@ export default function SettingsPage() {
 				<div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
 					{/* Password Management */}
 					<div className="relative">
-						<div className="absolute inset-0 bg-dark-card backdrop-blur-2xl rounded-2xl sm:rounded-3xl"></div>
-						<div className="relative glass-card bg-dark-card rounded-2xl sm:rounded-3xl border border-dark-color overflow-hidden shadow-2xl p-4 sm:p-6">
+						<div className={`absolute inset-0 ${isLight ? 'bg-white/80 backdrop-blur-sm' : 'bg-dark-card backdrop-blur-2xl'} rounded-2xl sm:rounded-3xl`}></div>
+						<div className={`relative glass-card ${isLight ? 'bg-white/90 border-gray-200' : 'bg-dark-card border-dark-color'} rounded-2xl sm:rounded-3xl border overflow-hidden shadow-2xl p-4 sm:p-6`}>
 							<div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-4 sm:mb-6">
-								<div className="p-2 bg-gradient-to-br from-red-600/20 to-red-500/20 rounded-xl">
-									<Lock className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
+								<div className={`p-2 ${isLight ? 'bg-gradient-to-br from-red-100 to-red-200' : 'bg-gradient-to-br from-red-600/20 to-red-500/20'} rounded-xl`}>
+									<Lock className={`w-4 h-4 sm:w-5 sm:h-5 ${isLight ? 'text-red-600' : 'text-red-400'}`} />
 								</div>
 								<div>
-									<h3 className="text-base sm:text-lg font-bold text-dark-primary-text">Alterar Senha</h3>
-									<p className="text-red-200 text-xs sm:text-sm">Mantenha sua conta segura</p>
+									<h3 className={`text-base sm:text-lg font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>Alterar Senha</h3>
+									<p className={`${isLight ? 'text-red-600' : 'text-red-200'} text-xs sm:text-sm`}>Mantenha sua conta segura</p>
 								</div>
 							</div>
 
 							<div className="space-y-4 sm:space-y-6">
 								<div className="relative">
-									<Label className="text-dark-primary-text mb-2 block text-sm">Senha Atual</Label>
+									<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm`}>Senha Atual</Label>
 									<div className="relative">
 										<Input
 											type={passwordData.showCurrent ? "text" : "password"}
 											value={passwordData.current}
 											onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
 											disabled
-											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary pr-12 text-sm sm:text-base opacity-60 cursor-not-allowed"
+											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} pr-12 text-sm sm:text-base opacity-60 cursor-not-allowed`}
 										/>
 										<button
 											type="button"
 											onClick={() => setPasswordData({ ...passwordData, showCurrent: !passwordData.showCurrent })}
-											className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-secondary hover:text-dark-primary-text"
+											className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isLight ? 'text-gray-500 hover:text-gray-700' : 'text-dark-secondary hover:text-dark-primary-text'}`}
 											disabled
 										>
 											{passwordData.showCurrent ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
@@ -408,18 +408,18 @@ export default function SettingsPage() {
 								</div>
 
 								<div className="relative">
-									<Label className="text-dark-primary-text mb-2 block text-sm">Nova Senha</Label>
+									<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm`}>Nova Senha</Label>
 									<div className="relative">
 										<Input
 											type={passwordData.showNew ? "text" : "password"}
 											value={passwordData.new}
 											onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
-											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary pr-12 text-sm sm:text-base"
+											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} pr-12 text-sm sm:text-base`}
 										/>
 										<button
 											type="button"
 											onClick={() => setPasswordData({ ...passwordData, showNew: !passwordData.showNew })}
-											className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-secondary hover:text-dark-primary-text"
+											className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isLight ? 'text-gray-500 hover:text-gray-700' : 'text-dark-secondary hover:text-dark-primary-text'}`}
 										>
 											{passwordData.showNew ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
 										</button>
@@ -427,18 +427,18 @@ export default function SettingsPage() {
 								</div>
 
 								<div className="relative">
-									<Label className="text-dark-primary-text mb-2 block text-sm">Confirmar Nova Senha</Label>
+									<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm`}>Confirmar Nova Senha</Label>
 									<div className="relative">
 										<Input
 											type={passwordData.showConfirm ? "text" : "password"}
 											value={passwordData.confirm}
 											onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
-											className="h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary pr-12 text-sm sm:text-base"
+											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} pr-12 text-sm sm:text-base`}
 										/>
 										<button
 											type="button"
 											onClick={() => setPasswordData({ ...passwordData, showConfirm: !passwordData.showConfirm })}
-											className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-secondary hover:text-dark-primary-text"
+											className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isLight ? 'text-gray-500 hover:text-gray-700' : 'text-dark-secondary hover:text-dark-primary-text'}`}
 										>
 											{passwordData.showConfirm ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
 										</button>
@@ -458,16 +458,16 @@ export default function SettingsPage() {
 
 					{/* General Settings */}
 					<div className="relative">
-						<div className="absolute inset-0 bg-dark-card backdrop-blur-2xl rounded-2xl sm:rounded-3xl"></div>
-						<div className="relative glass-card bg-dark-card rounded-2xl sm:rounded-3xl border border-dark-color overflow-hidden shadow-2xl p-4 sm:p-6">
+						<div className={`absolute inset-0 ${isLight ? 'bg-white/80 backdrop-blur-sm' : 'bg-dark-card backdrop-blur-2xl'} rounded-2xl sm:rounded-3xl`}></div>
+						<div className={`relative glass-card ${isLight ? 'bg-white/90 border-gray-200' : 'bg-dark-card border-dark-color'} rounded-2xl sm:rounded-3xl border overflow-hidden shadow-2xl p-4 sm:p-6`}>
 							<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
 								<div className="flex items-center space-x-3 sm:space-x-4">
-									<div className="p-2 bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-xl">
-										<Settings className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
+									<div className={`p-2 ${isLight ? 'bg-gradient-to-br from-green-100 to-blue-100' : 'bg-gradient-to-br from-green-600/20 to-blue-600/20'} rounded-xl`}>
+										<Settings className={`w-4 h-4 sm:w-5 sm:h-5 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
 									</div>
 									<div>
-										<h3 className="text-base sm:text-lg font-bold text-dark-primary-text">{t('settings.generalSettings')}</h3>
-										<p className="text-green-200 text-xs sm:text-sm">Configurações globais do sistema</p>
+										<h3 className={`text-base sm:text-lg font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>{t('settings.generalSettings')}</h3>
+										<p className={`${isLight ? 'text-green-600' : 'text-green-200'} text-xs sm:text-sm`}>Configurações globais do sistema</p>
 									</div>
 								</div>
 								{isAdmin && (
@@ -483,71 +483,71 @@ export default function SettingsPage() {
 
 							<div className="space-y-3 sm:space-y-4">
 								<div>
-									<Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.systemName')}</Label>
+									<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm`}>{t('settings.systemName')}</Label>
 									<Input
 										value={generalSettings.systemName}
 										onChange={(e) => setGeneralSettings({ ...generalSettings, systemName: e.target.value })}
 										disabled={!isAdmin}
-										className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+										className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
 									/>
 								</div>
 
 								<div>
-									<Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.language')}</Label>
+									<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm`}>{t('settings.language')}</Label>
 									<Select
 										value={generalSettings.language}
 										onValueChange={(value) => setGeneralSettings({ ...generalSettings, language: value })}
 										disabled={!isAdmin}
 									>
-										<SelectTrigger className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}>
+										<SelectTrigger className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800' : 'bg-dark-card border-dark-color text-dark-primary-text'} text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}>
 											<SelectValue />
 										</SelectTrigger>
-										<SelectContent className="bg-dark-card border-dark-color">
-											<SelectItem value="pt-PT" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Português (Portugal)</SelectItem>
-											<SelectItem value="pt-BR" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Português (Brasil)</SelectItem>
-											<SelectItem value="en-US" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">English (US)</SelectItem>
-											<SelectItem value="en-GB" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">English (UK)</SelectItem>
-											<SelectItem value="es-ES" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Español</SelectItem>
-											<SelectItem value="fr-FR" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Français</SelectItem>
+										<SelectContent className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-card border-dark-color'}`}>
+											<SelectItem value="pt-PT" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Português (Portugal)</SelectItem>
+											<SelectItem value="pt-BR" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Português (Brasil)</SelectItem>
+											<SelectItem value="en-US" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>English (US)</SelectItem>
+											<SelectItem value="en-GB" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>English (UK)</SelectItem>
+											<SelectItem value="es-ES" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Español</SelectItem>
+											<SelectItem value="fr-FR" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Français</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
 
 								<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.timezone')}</Label>
+										<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm`}>{t('settings.timezone')}</Label>
 										<Select
 											value={generalSettings.timezone}
 											onValueChange={(value) => setGeneralSettings({ ...generalSettings, timezone: value })}
 											disabled={!isAdmin}
 										>
-											<SelectTrigger className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}>
+											<SelectTrigger className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800' : 'bg-dark-card border-dark-color text-dark-primary-text'} text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}>
 												<SelectValue />
 											</SelectTrigger>
-											<SelectContent className="bg-dark-card border-dark-color">
-												<SelectItem value="Europe/Lisbon" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Lisboa</SelectItem>
-												<SelectItem value="Europe/Madrid" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Madrid</SelectItem>
-												<SelectItem value="Europe/London" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Londres</SelectItem>
-												<SelectItem value="Europe/Paris" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Paris</SelectItem>
+											<SelectContent className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-card border-dark-color'}`}>
+												<SelectItem value="Europe/Lisbon" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Lisboa</SelectItem>
+												<SelectItem value="Europe/Madrid" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Madrid</SelectItem>
+												<SelectItem value="Europe/London" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Londres</SelectItem>
+												<SelectItem value="Europe/Paris" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Paris</SelectItem>
 											</SelectContent>
 										</Select>
 									</div>
 									<div>
-										<Label className="text-dark-primary-text mb-2 block text-sm">{t('settings.currency')}</Label>
+										<Label className={`${isLight ? 'text-gray-700' : 'text-dark-primary-text'} mb-2 block text-sm`}>{t('settings.currency')}</Label>
 										<Select
 											value={generalSettings.currency}
 											onValueChange={(value) => setGeneralSettings({ ...generalSettings, currency: value })}
 											disabled={!isAdmin}
 										>
-											<SelectTrigger className={`h-9 sm:h-10 bg-dark-card border-dark-color text-dark-primary-text text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}>
+											<SelectTrigger className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800' : 'bg-dark-card border-dark-color text-dark-primary-text'} text-sm sm:text-base ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}>
 												<SelectValue />
 											</SelectTrigger>
-											<SelectContent className="bg-dark-card border-dark-color">
-												<SelectItem value="EUR" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Euro (€)</SelectItem>
-												<SelectItem value="USD" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Dólar Americano ($)</SelectItem>
-												<SelectItem value="GBP" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Libra Esterlina (£)</SelectItem>
-												<SelectItem value="BRL" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Real Brasileiro (R$)</SelectItem>
-												<SelectItem value="JPY" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Iene Japonês (¥)</SelectItem>
+											<SelectContent className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-card border-dark-color'}`}>
+												<SelectItem value="EUR" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Euro (€)</SelectItem>
+												<SelectItem value="USD" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Dólar Americano ($)</SelectItem>
+												<SelectItem value="GBP" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Libra Esterlina (£)</SelectItem>
+												<SelectItem value="BRL" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Real Brasileiro (R$)</SelectItem>
+												<SelectItem value="JPY" className={`${isLight ? 'text-gray-800 hover:bg-gray-100' : 'text-dark-primary-text hover:bg-dark-hover'} text-sm sm:text-base`}>Iene Japonês (¥)</SelectItem>
 												<SelectItem value="CHF" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Franco Suíço (CHF)</SelectItem>
 												<SelectItem value="CAD" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Dólar Canadense (C$)</SelectItem>
 												<SelectItem value="AOA" className="text-dark-primary-text hover:bg-dark-hover text-sm sm:text-base">Kwanza Angolano (Kz)</SelectItem>

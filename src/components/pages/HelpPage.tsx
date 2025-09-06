@@ -24,6 +24,7 @@ interface HelpPageProps {
   user?: User | null;
   isOnboarding?: boolean;
   onOnboardingComplete?: () => void;
+  isLight?: boolean;
 }
 
 export const HelpPage: React.FC<HelpPageProps> = ({ 
@@ -31,7 +32,8 @@ export const HelpPage: React.FC<HelpPageProps> = ({
   onNavigateToQuotes,
   user,
   isOnboarding = false,
-  onOnboardingComplete
+  onOnboardingComplete,
+  isLight = false
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   
@@ -248,7 +250,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({
 
 
 return (
-  <div className="min-h-screen w-full bg-dark-bg flex flex-col">
+  <div className={`min-h-screen w-full flex flex-col ${isLight ? 'bg-gray-50' : 'bg-dark-bg'}`}>
     {/* Aviso de onboarding obrigatório */}
     {(isOnboarding || isFirstTime) && (
       <div className="w-full bg-yellow-600/20 border-b border-yellow-500/30 px-4 py-2 text-center">
@@ -259,18 +261,26 @@ return (
     )}
     
     {/* Header compacto */}
-    <div className="w-full py-3 px-4 bg-gradient-to-r from-blue-900/40 to-purple-900/40 border-b border-white/10 shadow-lg">
+    <div className={`w-full py-3 px-4 border-b shadow-lg ${
+      isLight 
+        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-200' 
+        : 'bg-gradient-to-r from-blue-900/40 to-purple-900/40 border-white/10'
+    }`}>
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/20 rounded-full border border-blue-500/30">
+            <div className={`p-2 rounded-full border ${
+              isLight 
+                ? 'bg-blue-100 border-blue-300' 
+                : 'bg-blue-500/20 border-blue-500/30'
+            }`}>
               <HelpCircle className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-lg md:text-xl font-bold text-white">
+              <h1 className={`text-lg md:text-xl font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>
                 {isOnboarding || isFirstTime ? 'Bem-vindo ao SmartQuote!' : 'Guia do Sistema SmartQuote'}
               </h1>
-              <p className="text-xs text-blue-200/80 hidden sm:block">
+              <p className={`text-xs hidden sm:block ${isLight ? 'text-blue-700' : 'text-blue-200/80'}`}>
                 {isOnboarding || isFirstTime ? 'Tutorial obrigatório - Complete para continuar' : 'Tutorial interativo'}
               </p>
             </div>
@@ -278,19 +288,23 @@ return (
           
           {/* Indicador de progresso compacto */}
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/20">
-              <span className="text-white font-medium text-sm">
+            <div className={`backdrop-blur-sm rounded-lg px-3 py-1.5 border ${
+              isLight 
+                ? 'bg-white/80 border-gray-300' 
+                : 'bg-white/10 border-white/20'
+            }`}>
+              <span className={`font-medium text-sm ${isLight ? 'text-gray-800' : 'text-white'}`}>
                 {currentSlide + 1} / {onboardingSlides.length}
               </span>
             </div>
             <div className="hidden md:block text-right">
-              <p className="text-xs text-blue-200 font-medium truncate max-w-32">{currentSlideData.title}</p>
+              <p className={`text-xs font-medium truncate max-w-32 ${isLight ? 'text-blue-700' : 'text-blue-200'}`}>{currentSlideData.title}</p>
             </div>
           </div>
         </div>
         
         {/* Barra de progresso mais fina */}
-        <div className="mt-2 w-full bg-white/10 rounded-full h-1 overflow-hidden">
+        <div className={`mt-2 w-full rounded-full h-1 overflow-hidden ${isLight ? 'bg-gray-200' : 'bg-white/10'}`}>
           <div 
             className="bg-gradient-to-r from-blue-400 to-purple-400 h-full transition-all duration-500 ease-out"
             style={{ width: `${((currentSlide + 1) / onboardingSlides.length) * 100}%` }}
@@ -305,7 +319,9 @@ return (
         
         {/* Imagem principal do carrossel - Maximizada */}
         <div className="relative">
-          <div className="relative group bg-slate-800/20 rounded-xl overflow-hidden h-[84vh]">
+          <div className={`relative group rounded-xl overflow-hidden h-[84vh] ${
+            isLight ? 'bg-white shadow-lg' : 'bg-slate-800/20'
+          }`}>
             <img
               src={currentSlideData.imageUrl}
               alt={currentSlideData.alt}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import {
   BarChart3,
@@ -15,10 +14,11 @@ import {
   Bell,
   Plus,
   Send,
-  RefreshCw,
   Check,
   Mail,
-  Eye
+  Eye,
+  RotateCcw,
+  List
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -255,34 +255,6 @@ export function AdminDashboard({
     }
   }, [activePage, allowedPages, defaultPage]);
   
-  // Histórico de cotações criadas
-  const [quoteHistory, setQuoteHistory] = useState<Array<{
-    id: string;
-    message: string;
-    timestamp: string;
-    quote: any;
-  }>>([]);
-  
-  // Carregar histórico do localStorage ao montar o componente
-  useEffect(() => {
-    const savedHistory = localStorage.getItem('adminQuoteHistory');
-    if (savedHistory) {
-      try {
-        const parsed = JSON.parse(savedHistory);
-        if (Array.isArray(parsed)) {
-          setQuoteHistory(parsed);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar histórico do localStorage:', error);
-      }
-    }
-  }, []);
-
-  // Salvar histórico no localStorage sempre que mudar
-  useEffect(() => {
-    localStorage.setItem('adminQuoteHistory', JSON.stringify(quoteHistory));
-  }, [quoteHistory]);
-
   const [quoteMessage, setQuoteMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -884,7 +856,7 @@ export function AdminDashboard({
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                       <button
                         onClick={async () => {
                           if (newQuotePrompt.trim()) {
@@ -917,15 +889,6 @@ export function AdminDashboard({
 
                               addQuote(newQuote);
                               
-                              // Adicionar ao histórico
-                              const historyEntry = {
-                                id: newQuote.id,
-                                message: `Cotação ${newQuote.produto} criada com sucesso (Admin)`,
-                                timestamp: new Date().toLocaleString('pt-PT'),
-                                quote: newQuote
-                              };
-                              setQuoteHistory(prev => [historyEntry, ...prev]);
-                              
                               setQuoteMessage({
                                 type: 'success',
                                 text: 'Cotação criada com sucesso!',
@@ -950,32 +913,51 @@ export function AdminDashboard({
                           }
                         }}
                         disabled={!newQuotePrompt.trim() || isCreatingQuote}
-                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 flex-1 sm:flex-none text-xs sm:text-sm"
+                        className="group relative bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 flex-1 sm:flex-none text-xs sm:text-sm md:text-base shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 disabled:hover:scale-100 overflow-hidden min-h-[48px] sm:min-h-[52px] md:min-h-[56px]"
                       >
+                        {/* Efeito de brilho no hover */}
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                        
                         {isCreatingQuote ? (
                           <>
-                            <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>{t('newQuote.creating')}</span>
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span className="font-semibold hidden xs:inline sm:inline">Processando IA...</span>
+                            <span className="font-semibold xs:hidden">AI...</span>
                           </>
                         ) : (
                           <>
-                            <Send className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>{t('newQuote.generate')}</span>
+                            <Send className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform duration-300" />
+                            <span className="font-semibold hidden xs:inline">Gerar Cotação</span>
+                            <span className="font-semibold xs:hidden">Gerar</span>
                           </>
                         )}
                       </button>
+                      
                       <button
                         onClick={() => setNewQuotePrompt("")}
-                        className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm"
+                        disabled={isCreatingQuote}
+                        className="group relative bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 border border-slate-500/50 hover:border-slate-400/50 text-slate-300 hover:text-white px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 rounded-xl font-semibold transition-all duration-300 text-xs sm:text-sm md:text-base shadow-lg shadow-slate-500/20 hover:shadow-xl hover:shadow-slate-500/25 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden min-h-[48px] sm:min-h-[52px] md:min-h-[56px]"
                       >
-                        {t('newQuote.clear')}
+                        {/* Efeito de brilho no hover */}
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                        
+                        <div className="flex items-center justify-center space-x-2">
+                          <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:rotate-180 transition-transform duration-500" />
+                          <span className="font-semibold hidden sm:inline">Limpar</span>
+                        </div>
                       </button>
+                      
                       <button
                         onClick={() => setActivePage("quotes")}
-                        className="bg-green-600/50 hover:bg-green-700/50 border border-green-600/50 text-green-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium flex items-center space-x-2 transition-all duration-300 text-xs sm:text-sm"
+                        disabled={isCreatingQuote}
+                        className="group relative bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 border border-emerald-500/50 hover:border-emerald-400/50 text-emerald-100 hover:text-white px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 text-xs sm:text-sm md:text-base shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden min-h-[48px] sm:min-h-[52px] md:min-h-[56px]"
                       >
-                        <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>Ver Todas</span>
+                        {/* Efeito de brilho no hover */}
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                        
+                        <List className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:scale-110 transition-transform duration-300" />
+                        <span className="font-semibold hidden xs:inline">Ver Todas</span>
+                        <span className="font-semibold xs:hidden">Ver</span>
                       </button>
                     </div>
 
@@ -1024,88 +1006,6 @@ export function AdminDashboard({
                   </div>
                 </div>
               </div>
-        
-              {/* Lista de Cotações Criadas - Histórico Real */}
-              <div className="mb-8">
-                <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-900/50 to-slate-800/50 border-slate-500/20'} rounded-xl border backdrop-blur-sm p-4 sm:p-6`}>
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 ${isLight ? 'bg-gray-100' : 'bg-slate-500/20'} rounded-lg`}>
-                        <FileText className={`w-4 h-4 sm:w-5 sm:h-5 ${isLight ? 'text-gray-600' : 'text-slate-400'}`} />
-                      </div>
-                      <div>
-                        <h2 className={`text-base sm:text-lg font-bold ${themeClasses?.textPrimary || (isLight ? 'text-gray-800' : 'text-white')}`}>Histórico de Cotações Admin</h2>
-                        <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-slate-200'}`}>Últimas cotações criadas pelo admin</p>
-                      </div>
-                    </div>
-                    <div className={`${isLight ? 'bg-gray-100' : 'bg-slate-500/20'} px-3 py-1 rounded-lg`}>
-                      <span className={`${isLight ? 'text-gray-700' : 'text-slate-300'} text-xs font-medium`}>{quoteHistory.length} cotações</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {quoteHistory.length > 0 ? (
-                      <>
-                        {quoteHistory.slice(0, 10).map((entry) => (
-                          <div key={entry.id} className={`${isLight ? 'bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-sm' : 'bg-slate-700/30 border-slate-600/20 hover:border-slate-500/40'} rounded-lg p-4 border transition-all duration-200`}>
-                            <div className="flex items-center justify-between mb-2">
-                              <div>
-                                <p className={`text-green-400 font-mono text-xs`}>{entry.id}</p>
-                                <p className={`${isLight ? 'text-gray-600' : 'text-slate-400'} text-xs`}>{entry.timestamp}</p>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <div className={`${isLight ? 'bg-green-100' : 'bg-green-500/20'} px-2 py-1 rounded`}>
-                                  <span className={`${isLight ? 'text-green-700' : 'text-green-400'} text-xs font-medium`}>Aprovada</span>
-                                </div>
-                                <button
-                                  onClick={() => setActivePage("quotes")}
-                                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700' : 'bg-green-600/30 hover:bg-green-600/50 border-green-500/40 text-green-300'} border px-3 py-1.5 rounded text-xs transition-all duration-200 flex items-center space-x-1`}
-                                >
-                                  <Eye className="w-3 h-3" />
-                                  <span>Ver Detalhes</span>
-                                </button>
-                              </div>
-                            </div>
-                            <p className={`${themeClasses?.textPrimary || (isLight ? 'text-gray-800' : 'text-white')} text-sm`}>{entry.message}</p>
-                            {entry.quote && (
-                              <div className={`mt-2 pt-2 border-t ${isLight ? 'border-gray-200' : 'border-slate-600/30'}`}>
-                                <div className="grid grid-cols-2 gap-3 text-xs">
-                                  <div>
-                                    <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>Produto:</span>
-                                    <span className={`${themeClasses?.textPrimary || (isLight ? 'text-gray-800' : 'text-white')} ml-2`}>{entry.quote.produto}</span>
-                                  </div>
-                                  <div>
-                                    <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>Valor:</span>
-                                    <span className="text-green-400 ml-2 font-bold">{entry.quote.valor}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </>
-                    ) : (
-                      <div className={`text-center ${isLight ? 'text-gray-600' : 'text-slate-400'} text-sm py-8`}>
-                        <FileText className={`w-8 h-8 mx-auto mb-3 opacity-50 ${isLight ? 'text-gray-400' : 'text-slate-500'}`} />
-                        <p>Nenhuma cotação criada ainda.</p>
-                        <p className="text-xs mt-1">Use o prompt acima para criar sua primeira cotação.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {quoteHistory.length > 10 && (
-                    <div className={`mt-4 pt-4 border-t ${isLight ? 'border-gray-200' : 'border-slate-700/50'} text-center`}>
-                      <button
-                        onClick={() => setActivePage("quotes")}
-                        className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700' : 'bg-slate-700/50 hover:bg-slate-600/50 border-slate-600/50 text-slate-300'} border px-4 py-2 rounded-lg font-medium transition-all duration-300 text-sm flex items-center space-x-2 mx-auto`}
-                      >
-                        <FileText className="w-4 h-4" />
-                        <span>Ver todas as {quoteHistory.length} cotações</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
 
             </main>
           </div>
@@ -1113,47 +1013,47 @@ export function AdminDashboard({
       case "new-product":
         return (
           <div className="flex flex-col h-full w-full">
-            <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
+            <header className={`${themeClasses?.bg || 'bg-dark-bg'} border-b ${themeClasses?.border || 'border-dark-color'} px-3 sm:px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                 <div className="min-w-0">
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-dark-primary truncate flex items-center gap-3">
-                    <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+                  <h1 className={`text-lg sm:text-xl lg:text-2xl font-bold ${themeClasses?.textPrimary || 'text-dark-primary'} truncate flex items-center gap-3`}>
+                    <Plus className={`w-5 h-5 sm:w-6 sm:h-6 ${isLight ? 'text-blue-500' : 'text-blue-400'}`} />
                     Novo Produto - Admin
                   </h1>
-                  <p className="text-xs sm:text-sm text-dark-secondary mt-1">Adicionar novos produtos ao catálogo</p>
+                  <p className={`text-xs sm:text-sm ${themeClasses?.textSecondary || 'text-dark-secondary'} mt-1`}>Adicionar novos produtos ao catálogo</p>
                 </div>
                 <div className="flex items-center gap-4">
                   
                 </div>
               </div>
             </header>
-            <main className="flex-1 dashboard-main p-3 sm:p-4 lg:p-8 bg-dark-bg overflow-y-auto">
+            <main className={`flex-1 dashboard-main p-3 sm:p-4 lg:p-8 ${themeClasses?.bg || 'bg-dark-bg'} overflow-y-auto`}>
               {/* Formulário de Novo Produto */}
               <div className="mb-8">
-                <div className="glass-card bg-gradient-to-br from-green-900/30 to-blue-900/30 rounded-xl border border-green-500/20 p-4 sm:p-6">
+                <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-green-900/30 to-blue-900/30 border-green-500/20'} rounded-xl border p-4 sm:p-6 backdrop-blur-sm`}>
                   <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-2 bg-green-500/20 rounded-lg">
-                      <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
+                    <div className={`p-2 ${isLight ? 'bg-green-100' : 'bg-green-500/20'} rounded-lg`}>
+                      <Plus className={`w-4 h-4 sm:w-5 sm:h-5 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
                     </div>
                     <div>
-                      <h2 className="text-base sm:text-lg font-bold text-white">Adicionar Novo Produto</h2>
-                      <p className="text-xs sm:text-sm text-green-200">Preencha os dados do novo produto para o catálogo</p>
-                      <p className="text-xs text-yellow-300 mt-1">* Campos obrigatórios</p>
+                      <h2 className={`text-base sm:text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Adicionar Novo Produto</h2>
+                      <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-green-200'}`}>Preencha os dados do novo produto para o catálogo</p>
+                      <p className={`text-xs ${isLight ? 'text-yellow-600' : 'text-yellow-300'} mt-1`}>* Campos obrigatórios</p>
                     </div>
                   </div>
                   <form onSubmit={handleSaveProduct} className="space-y-6">
                     {/* Grupo: Dados Básicos */}
                     <div>
-                      <h3 className="text-sm font-semibold text-green-300 mb-4">Dados Básicos</h3>
+                      <h3 className={`text-sm font-semibold ${isLight ? 'text-green-700' : 'text-green-300'} mb-4`}>Dados Básicos</h3>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Fornecedor e Código */}
                         <div className="space-y-4">
                           <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor *</label>
+                            <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Fornecedor *</label>
                             <select
                               value={newProduct.fornecedorId || '1'}
                               onChange={e => setNewProduct(prev => ({ ...prev, fornecedorId: e.target.value }))}
-                              className="w-full bg-slate-700 border border-slate-500 rounded-lg p-3 text-slate-400 cursor-not-allowed"
+                              className={`w-full ${isLight ? 'bg-gray-100 border-gray-300 text-gray-700' : 'bg-slate-700 border-slate-500 text-slate-400'} border rounded-lg p-3 cursor-not-allowed`}
                               required
                               disabled={true}
                               title="Fornecedor fixo: RCS"
@@ -1171,12 +1071,12 @@ export function AdminDashboard({
                             </select>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Código (SKU)</label>
+                            <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Código (SKU)</label>
                             <input 
                               type="text" 
                               value={newProduct.codigo || ''} 
                               onChange={e => setNewProduct(prev => ({ ...prev, codigo: e.target.value }))} 
-                              className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors" 
+                              className={`w-full ${isLight ? 'bg-white border-gray-300 text-gray-900 focus:border-green-500' : 'bg-slate-800 border-slate-600 text-white focus:border-green-500'} border rounded-lg p-3 focus:ring-1 focus:ring-green-500 transition-colors`} 
                               placeholder="Ex: RCS-001" 
                               disabled={isCreatingProduct} 
                             />
@@ -1186,23 +1086,23 @@ export function AdminDashboard({
                         {/* Nome e Categoria */}
                         <div className="space-y-4">
                           <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Nome do Produto *</label>
+                            <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Nome do Produto *</label>
                             <input 
                               type="text" 
                               value={newProduct.nome} 
                               onChange={e => setNewProduct(prev => ({ ...prev, nome: e.target.value }))} 
-                              className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors" 
+                              className={`w-full ${isLight ? 'bg-white border-gray-300 text-gray-900 focus:border-green-500' : 'bg-slate-800 border-slate-600 text-white focus:border-green-500'} border rounded-lg p-3 focus:ring-1 focus:ring-green-500 transition-colors`} 
                               placeholder="Ex: Servidor Dell PowerEdge" 
                               required 
                               disabled={isCreatingProduct} 
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Categoria *</label>
+                            <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Categoria *</label>
                             <select
                               value={newProduct.categoria || ''}
                               onChange={e => setNewProduct(prev => ({ ...prev, categoria: e.target.value }))}
-                              className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors"
+                              className={`w-full ${isLight ? 'bg-white border-gray-300 text-gray-900 focus:border-green-500' : 'bg-slate-800 border-slate-600 text-white focus:border-green-500'} border rounded-lg p-3 focus:ring-1 focus:ring-green-500 transition-colors`}
                               required
                               disabled={isCreatingProduct}
                             >
@@ -1229,18 +1129,18 @@ export function AdminDashboard({
                       </div>
                     </div>
 
-                    <hr className="border-green-700/30" />
+                    <hr className={`${isLight ? 'border-gray-300' : 'border-green-700/30'}`} />
 
                     {/* Grupo: Descrição */}
                     <div>
-                      <h3 className="text-sm font-semibold text-green-300 mb-4">Descrição</h3>
+                      <h3 className={`text-sm font-semibold ${isLight ? 'text-green-700' : 'text-green-300'} mb-4`}>Descrição</h3>
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Descrição Detalhada *</label>
+                        <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Descrição Detalhada *</label>
                         <textarea 
                           rows={3} 
                           value={newProduct.descricao} 
                           onChange={e => setNewProduct(prev => ({ ...prev, descricao: e.target.value }))} 
-                          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors resize-none" 
+                          className={`w-full ${isLight ? 'bg-white border-gray-300 text-gray-900 focus:border-green-500' : 'bg-slate-800 border-slate-600 text-white focus:border-green-500'} border rounded-lg p-3 focus:ring-1 focus:ring-green-500 transition-colors resize-none`} 
                           placeholder="Descreva as características, especificações e funcionalidades do produto..." 
                           required 
                           disabled={isCreatingProduct} 
@@ -1248,23 +1148,23 @@ export function AdminDashboard({
                       </div>
                     </div>
 
-                    <hr className="border-green-700/30" />
+                    <hr className={`${isLight ? 'border-gray-300' : 'border-green-700/30'}`} />
 
                     {/* Grupo: Preço, Estoque e Origem */}
                     <div>
-                      <h3 className="text-sm font-semibold text-green-300 mb-4">Informações Comerciais</h3>
+                      <h3 className={`text-sm font-semibold ${isLight ? 'text-green-700' : 'text-green-300'} mb-4`}>Informações Comerciais</h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Preço ({currency.symbol}) *</label>
+                          <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Preço ({currency.symbol}) *</label>
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">{currency.symbol}</span>
+                            <span className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{currency.symbol}</span>
                             <input 
                               type="number" 
                               step="0.01" 
                               min="0" 
                               value={newProduct.preco} 
                               onChange={e => setNewProduct(prev => ({ ...prev, preco: parseFloat(e.target.value) || 0 }))} 
-                              className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 pl-8 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors" 
+                              className={`w-full ${isLight ? 'bg-white border-gray-300 text-gray-900 focus:border-green-500' : 'bg-slate-800 border-slate-600 text-white focus:border-green-500'} border rounded-lg p-3 pl-8 focus:ring-1 focus:ring-green-500 transition-colors`} 
                               placeholder="0.00" 
                               required 
                               disabled={isCreatingProduct} 
@@ -1272,24 +1172,24 @@ export function AdminDashboard({
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Estoque Inicial *</label>
+                          <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Estoque Inicial *</label>
                           <input 
                             type="number" 
                             min="0" 
                             value={newProduct.estoque || 0} 
                             onChange={e => setNewProduct(prev => ({ ...prev, estoque: parseInt(e.target.value) || 0 }))} 
-                            className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors" 
+                            className={`w-full ${isLight ? 'bg-white border-gray-300 text-gray-900 focus:border-green-500' : 'bg-slate-800 border-slate-600 text-white focus:border-green-500'} border rounded-lg p-3 focus:ring-1 focus:ring-green-500 transition-colors`} 
                             placeholder="0" 
                             required 
                             disabled={isCreatingProduct} 
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">Origem</label>
+                          <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Origem</label>
                           <input 
                             type="text" 
                             value="Local" 
-                            className="w-full bg-slate-700 border border-slate-500 rounded-lg p-3 text-slate-400 cursor-not-allowed" 
+                            className={`w-full ${isLight ? 'bg-gray-100 border-gray-300 text-gray-700' : 'bg-slate-700 border-slate-500 text-slate-400'} border rounded-lg p-3 cursor-not-allowed`} 
                             disabled={true} 
                             title="Origem fixa: Local" 
                           />
@@ -1297,24 +1197,30 @@ export function AdminDashboard({
                       </div>
                     </div>
 
-                    <hr className="border-green-700/30" />
+                    <hr className={`${isLight ? 'border-gray-300' : 'border-green-700/30'}`} />
 
                     {/* Botões de Ação */}
-                    <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <div className="flex flex-col xs:flex-row sm:flex-row gap-3 sm:gap-4 pt-2">
                       <button
                         type="submit"
                         disabled={isCreatingProduct}
-                        className="flex-1 sm:flex-none bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 text-sm"
+                        className={`group flex-1 sm:flex-none px-4 sm:px-6 md:px-8 py-3 sm:py-4 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 text-xs sm:text-sm md:text-base min-h-[48px] sm:min-h-[52px] ${
+                          isLight 
+                            ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-green-500/25' 
+                            : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                        } disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:shadow-none hover:scale-105 hover:shadow-lg backdrop-blur-sm`}
                       >
                         {isCreatingProduct ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Adicionando...</span>
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span className="hidden xs:inline">Adicionando...</span>
+                            <span className="xs:hidden">...</span>
                           </>
                         ) : (
                           <>
-                            <Plus className="w-4 h-4" />
-                            <span>Adicionar Produto</span>
+                            <Plus className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform duration-300" />
+                            <span className="hidden xs:inline">Adicionar Produto</span>
+                            <span className="xs:hidden">Adicionar</span>
                           </>
                         )}
                       </button>
@@ -1331,18 +1237,28 @@ export function AdminDashboard({
                           origem: 'local',
                         })}
                         disabled={isCreatingProduct}
-                        className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`group px-4 sm:px-6 md:px-8 py-3 sm:py-4 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 min-h-[48px] sm:min-h-[52px] ${
+                          isLight 
+                            ? 'bg-gray-200 hover:bg-gray-300 border border-gray-300 text-gray-700 hover:text-gray-800 shadow-md hover:shadow-lg'
+                            : 'bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300'
+                        }`}
                       >
-                        Limpar Formulário
+                        <span className="hidden xs:inline">Limpar Formulário</span>
+                        <span className="xs:hidden">Limpar</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setActivePage("product-search")}
                         disabled={isCreatingProduct}
-                        className="bg-blue-600/50 hover:bg-blue-700/50 border border-blue-600/50 text-blue-300 px-6 py-3 rounded-lg font-medium transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        className={`group px-4 sm:px-6 md:px-8 py-3 sm:py-4 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 hover:scale-105 min-h-[48px] sm:min-h-[52px] ${
+                          isLight 
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-blue-500/25'
+                            : 'bg-blue-600/50 hover:bg-blue-700/50 border border-blue-600/50 text-blue-300'
+                        }`}
                       >
-                        <Search className="w-4 h-4" />
-                        <span>Ver Produtos</span>
+                        <Search className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform duration-300" />
+                        <span className="hidden xs:inline">Ver Produtos</span>
+                        <span className="xs:hidden">Ver</span>
                       </button>
                     </div>
                   </form>
@@ -1592,23 +1508,24 @@ export function AdminDashboard({
       case "suppliers":
         return <SuppliersPage user={user} isLight={isLight} />;
       case "notifications":
-        return <NotificationsPage />;
+        return <NotificationsPage isLight={isLight} />;
       case "emails":
-        return <EmailsPage />;
+        return <EmailsPage isLight={isLight} />;
       case "logs":
-        return <LogsPage />;
+        return <LogsPage isLight={isLight} />;
       case "login-logs":
-        return <LoginLogsPage />;
+        return <LoginLogsPage isLight={isLight} />;
       case "reports":
-        return <ReportsPage />;
+        return <ReportsPage isLight={isLight} />;
       case "settings":
-        return <SettingsPage />;
+        return <SettingsPage isLight={isLight} />;
       case "user-management":
-        return <UserManagementPage />;
+        return <UserManagementPage isLight={isLight} />;
       case "help":
         return (
           <HelpPage 
             user={user}
+            isLight={isLight}
             isOnboarding={isOnboardingMode}
             onNavigateToDashboard={() => {
               setIsOnboardingMode(false);
@@ -1624,7 +1541,7 @@ export function AdminDashboard({
           />
         );
       default:
-        return <DashboardPage />;
+        return <DashboardPage isLight={isLight} />;
     }
   }
 
@@ -1649,26 +1566,26 @@ export function AdminDashboard({
           className={`
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           fixed lg:relative z-50 lg:z-auto
-          w-56 sm:w-64 h-full ${themeClasses.sidebarBg} border-r
+          w-64 sm:w-72 md:w-80 lg:w-64 xl:w-72 h-full ${themeClasses.sidebarBg} border-r ${themeClasses.border}
           flex flex-col transition-transform duration-300 ease-in-out
         `}
         >
         {/* Logo */}
-        <div className={`p-3 sm:p-4 lg:p-6 border-b ${themeClasses.border} flex-shrink-0`}>
+        <div className={`p-3 sm:p-4 lg:p-6 xl:p-8 border-b ${themeClasses.border} flex-shrink-0`}>
           <div className="flex items-center justify-between">
             <button
               onClick={() => setActivePage('dashboard')}
               className="flex items-center space-x-2 sm:space-x-3 min-w-0 hover:opacity-80 transition-opacity duration-200 group"
             >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gray-800 rounded-2xl flex items-center justify-center shadow-lg relative overflow-hidden flex-shrink-0 p-1 group-hover:scale-105 transition-transform duration-200">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 ${isLight ? 'bg-white border-2 border-gray-200 shadow-md' : 'bg-gray-800 shadow-lg'} rounded-2xl flex items-center justify-center relative overflow-hidden flex-shrink-0 p-1 group-hover:scale-105 transition-all duration-200 ${isLight ? 'group-hover:border-blue-300 group-hover:shadow-lg' : ''}`}>
                 <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain relative z-10" />
               </div>
 
-              <div className="min-w-0">
-                <h1 className={`text-sm sm:text-lg lg:text-xl font-bold ${themeClasses.textPrimary} truncate group-hover:text-blue-400 transition-colors duration-200`}>
+              <div className="min-w-0 flex-1">
+                <h1 className={`text-sm sm:text-base lg:text-lg xl:text-xl font-bold ${themeClasses.textPrimary} truncate group-hover:text-blue-400 transition-colors duration-200`}>
                   {systemName || 'SMARTQUOTE'}
                 </h1>
-                <p className={`text-xs ${themeClasses.textSecondary} font-medium truncate`}>
+                <p className={`text-xs sm:text-sm ${themeClasses.textSecondary} font-medium truncate`}>
                   Painel Administrativo
                 </p>
               </div>
@@ -1684,7 +1601,7 @@ export function AdminDashboard({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 sm:p-4 lg:p-4 space-y-4 sm:space-y-5 scrollable-content">
+        <nav className="flex-1 p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-5 lg:space-y-6 scrollable-content overflow-y-auto">
           {/* Main Navigation */}
           <div className="space-y-2">
             {filteredMainNavItems.map((item) =>
@@ -1692,7 +1609,7 @@ export function AdminDashboard({
             )}
           </div>
 
-          <Separator style={{ backgroundColor: isLight ? "#d1d5db" : "#374151" }} />
+          <Separator className={`${isLight ? 'bg-gray-300' : 'bg-slate-600'}`} />
 
           {/* System Group */}
           <div className="space-y-2">
@@ -1708,7 +1625,7 @@ export function AdminDashboard({
             </div>
           </div>
 
-          <Separator style={{ backgroundColor: isLight ? "#d1d5db" : "#374151" }} />
+          <Separator className={`${isLight ? 'bg-gray-300' : 'bg-slate-600'}`} />
 
           {/* Admin Group */}
           <div className="space-y-2">
@@ -1726,17 +1643,17 @@ export function AdminDashboard({
         </nav>
 
         {/* System Status & User */}
-        <div className={`p-2 sm:p-3 lg:p-4 border-t ${themeClasses.border} space-y-2 sm:space-y-3 flex-shrink-0`}>
+        <div className={`p-2 sm:p-3 lg:p-4 xl:p-6 border-t ${themeClasses.border} space-y-2 sm:space-y-3 flex-shrink-0`}>
           {/* User Info */}
-          <div className={`flex items-center space-x-3 p-3 rounded-xl ${themeClasses.userCard} transition-all duration-300 hover:shadow-lg`}>
-            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-red-500 hover:to-red-400 hover:shadow-lg hover:shadow-red-500/25">
-              <Shield className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
+          <div className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 lg:p-4 rounded-xl ${themeClasses.userCard} transition-all duration-300 hover:shadow-lg`}>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 xl:w-12 xl:h-12 bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 hover:from-red-500 hover:to-red-400 hover:shadow-lg hover:shadow-red-500/25">
+              <Shield className="w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-xs sm:text-sm font-medium ${themeClasses.textPrimary} truncate transition-colors duration-300 hover:text-red-400`}>
+              <p className={`text-xs sm:text-sm lg:text-base font-medium ${themeClasses.textPrimary} truncate transition-colors duration-300 hover:text-red-400`}>
                 {user?.name || "Administrador"}
               </p>
-              <p className={`text-xs ${themeClasses.textSecondary} truncate`}>
+              <p className={`text-xs sm:text-xs lg:text-sm ${themeClasses.textSecondary} truncate`}>
                 {userPosition === "admin"
                   ? "Administrador do Sistema"
                   : userPosition === "manager"
@@ -1746,10 +1663,10 @@ export function AdminDashboard({
             </div>
             <button
               onClick={onLogout}
-              className={`p-2 rounded-lg ${themeClasses.hover} ${themeClasses.textSecondary} hover:text-red-400 transition-all duration-300 flex-shrink-0 hover:scale-110 hover:shadow-lg`}
+              className={`p-1.5 sm:p-2 lg:p-2.5 rounded-lg ${themeClasses.hover} ${themeClasses.textSecondary} hover:text-red-400 transition-all duration-300 flex-shrink-0 hover:scale-110 hover:shadow-lg`}
               title="Sair"
             >
-              <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+              <LogOut className="w-3 h-3 sm:w-4 sm:h-4 lg:w-4 lg:h-4" />
             </button>
           </div>
         </div>
@@ -1760,25 +1677,25 @@ export function AdminDashboard({
       <div className={`flex-1 flex flex-col overflow-hidden ${isOnboardingMode ? 'w-full' : ''}`}>
         {/* Mobile Header - Oculto durante onboarding */}
         {!isOnboardingMode && (
-          <div className={`lg:hidden ${themeClasses.bg} border-b ${themeClasses.border} p-3 sm:p-4 flex items-center justify-between flex-shrink-0`}>
+          <div className={`lg:hidden ${themeClasses.bg} border-b ${themeClasses.border} p-3 sm:p-4 md:p-5 flex items-center justify-between flex-shrink-0`}>
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className={`p-2 rounded-lg ${themeClasses.hover} ${themeClasses.textSecondary}`}
             >
-              <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
             </button>
             <button
               onClick={() => setActivePage('dashboard')}
-              className="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200 group"
+              className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity duration-200 group"
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-800 rounded-lg flex items-center justify-center p-1 group-hover:scale-105 transition-transform duration-200">
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 ${isLight ? 'bg-white border-2 border-gray-200 shadow-md' : 'bg-gray-800 shadow-lg'} rounded-lg flex items-center justify-center p-1 group-hover:scale-105 transition-all duration-200 ${isLight ? 'group-hover:border-blue-300 group-hover:shadow-lg' : ''}`}>
                 <img src="/RCS.png" alt="RCS Logo" className="w-full h-full object-contain" />
               </div>
-              <span className={`font-bold ${themeClasses.textPrimary} text-sm sm:text-base group-hover:text-blue-400 transition-colors duration-200`}>
+              <span className={`font-bold ${themeClasses.textPrimary} text-sm sm:text-base md:text-lg group-hover:text-blue-400 transition-colors duration-200`}>
                 {systemName || 'SmartQuote-RCS'}
               </span>
             </button>
-            <div className="w-9 sm:w-10"></div>
+            <div className="w-9 sm:w-10 md:w-12"></div>
           </div>
         )}
 
@@ -1790,11 +1707,11 @@ export function AdminDashboard({
       </div>
 
       {/* Toast Notifications Container */}
-      <div className="fixed top-4 right-4 z-[9999] space-y-3 max-w-sm pointer-events-none">
+      <div className="fixed top-4 right-4 z-[9999] space-y-3 max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl pointer-events-none">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`transform transition-all duration-500 ease-in-out animate-in slide-in-from-right glass-card backdrop-blur-xl border-2 rounded-2xl p-5 shadow-2xl hover:scale-105 pointer-events-auto ${toast.type === "success"
+            className={`transform transition-all duration-500 ease-in-out animate-in slide-in-from-right glass-card backdrop-blur-xl border-2 rounded-2xl p-4 sm:p-5 md:p-6 shadow-2xl hover:scale-105 pointer-events-auto ${toast.type === "success"
               ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-50 shadow-emerald-500/20"
               : toast.type === "error"
                 ? "bg-red-500/15 border-red-400/40 text-red-50 shadow-red-500/20"
@@ -1802,20 +1719,20 @@ export function AdminDashboard({
               }`}
           >
             <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${toast.type === "success"
+              <div className="flex items-start space-x-2 sm:space-x-3">
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${toast.type === "success"
                   ? "bg-emerald-500/80 ring-2 ring-emerald-400/30"
                   : toast.type === "error"
                     ? "bg-red-500/80 ring-2 ring-red-400/30"
                     : "bg-cyan-500/80 ring-2 ring-cyan-400/30"
                   }`}>
-                  {toast.type === "success" && <Check className="w-5 h-5 text-white" />}
-                  {toast.type === "error" && <X className="w-5 h-5 text-white" />}
-                  {toast.type === "info" && <Activity className="w-5 h-5 text-white" />}
+                  {toast.type === "success" && <Check className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
+                  {toast.type === "error" && <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
+                  {toast.type === "info" && <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-sm leading-tight mb-1">{toast.title}</h4>
-                  <p className="text-xs opacity-90 leading-relaxed">{toast.message}</p>
+                  <h4 className="font-bold text-sm sm:text-base leading-tight mb-1">{toast.title}</h4>
+                  <p className="text-xs sm:text-sm opacity-90 leading-relaxed">{toast.message}</p>
                 </div>
               </div>
               <button
@@ -1823,11 +1740,11 @@ export function AdminDashboard({
                 className="ml-2 p-1.5 rounded-full hover:bg-white/15 transition-all duration-200 flex-shrink-0 hover:scale-110"
                 title="Fechar notificação"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             </div>
             {/* Progress bar para mostrar tempo restante */}
-            <div className={`mt-4 h-1.5 rounded-full overflow-hidden ${toast.type === "success"
+            <div className={`mt-3 sm:mt-4 h-1.5 sm:h-2 rounded-full overflow-hidden ${toast.type === "success"
               ? "bg-emerald-500/20"
               : toast.type === "error"
                 ? "bg-red-500/20"

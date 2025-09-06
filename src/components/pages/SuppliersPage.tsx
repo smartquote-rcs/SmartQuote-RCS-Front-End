@@ -267,27 +267,27 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
   };
 
   const FornecedorCard = ({ fornecedor }: { fornecedor: any }) => (
-    <div className="group relative bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/10 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 cursor-pointer transform hover:-translate-y-1">
+    <div className={`group relative ${isLight ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 hover:border-blue-400/60' : 'bg-gradient-to-br from-slate-800/60 to-slate-900/80 border-white/10 hover:border-blue-400/50'} backdrop-blur-md rounded-2xl p-4 sm:p-6 border hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:-translate-y-1`}>
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 space-y-3 sm:space-y-0">
         <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
           <div className="relative flex-shrink-0">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-500/30 to-cyan-500/30 flex items-center justify-center backdrop-blur-sm border border-blue-400/20 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-blue-500/20">
-              <Building className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400 group-hover:text-cyan-300 transition-colors duration-300" />
+            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${isLight ? 'bg-gradient-to-br from-blue-100 to-blue-200 border-blue-300' : 'bg-gradient-to-br from-blue-500/30 to-cyan-500/30 border-blue-400/20'} flex items-center justify-center backdrop-blur-sm border transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg`}>
+              <Building className={`w-6 h-6 sm:w-7 sm:h-7 ${isLight ? 'text-blue-600 group-hover:text-blue-700' : 'text-blue-400 group-hover:text-cyan-300'} transition-colors duration-300`} />
             </div>
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-lg text-white truncate">{fornecedor.nome}</span>
+              <span className={`font-bold text-lg ${isLight ? 'text-gray-800' : 'text-white'} truncate`}>{fornecedor.nome}</span>
               {getStatusBadge(fornecedor.status)}
             </div>
-            <div className="text-xs text-slate-400 truncate">ID: {fornecedor.id}</div>
+            <div className={`text-xs ${isLight ? 'text-gray-500' : 'text-slate-400'} truncate`}>ID: {fornecedor.id}</div>
           </div>
         </div>
       </div>
       {/* Performance/Avaliação tipo barra */}
       <div className="flex items-center gap-2 mt-2">
-        <span className="text-xs text-slate-400">{t('suppliers.performanceLabel')}</span>
+        <span className={`text-xs ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{t('suppliers.performanceLabel')}</span>
         <div className="flex gap-1">
           {[1,2,3,4,5].map(level => (
             <button
@@ -301,39 +301,39 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
                     : level === 3
                       ? 'bg-yellow-400 border-yellow-500'
                       : 'bg-orange-400 border-orange-500'
-                  : 'bg-slate-600 border-slate-500'
+                  : isLight ? 'bg-gray-300 border-gray-400' : 'bg-slate-600 border-slate-500'
               }`}
               title={`${t('suppliers.performanceLevel')} ${level}`}
             />
           ))}
         </div>
-        <span className="text-xs text-slate-400 ml-2">{fornecedor.rating}/5</span>
+        <span className={`text-xs ${isLight ? 'text-gray-500' : 'text-slate-400'} ml-2`}>{fornecedor.rating}/5</span>
       </div>
 
       {/* Contact Information */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-300">
-          <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0" />
+        <div className={`flex items-center space-x-2 text-xs sm:text-sm ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>
+          <Phone className={`w-3 h-3 sm:w-4 sm:h-4 ${isLight ? 'text-gray-500' : 'text-slate-400'} flex-shrink-0`} />
           <span className="truncate">{fornecedor.telefone}</span>
         </div>
-        <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-300">
-          <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0" />
+        <div className={`flex items-center space-x-2 text-xs sm:text-sm ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>
+          <Mail className={`w-3 h-3 sm:w-4 sm:h-4 ${isLight ? 'text-gray-500' : 'text-slate-400'} flex-shrink-0`} />
           <span className="truncate">{fornecedor.email}</span>
         </div>
-        <div className="flex items-center space-x-2 text-xs sm:text-sm text-slate-300 sm:col-span-2">
+        <div className={`flex items-center space-x-2 text-xs sm:text-sm ${isLight ? 'text-gray-700' : 'text-slate-300'} sm:col-span-2`}>
           <span className="truncate">{fornecedor.website}</span>
         </div>
       </div>
 
       {/* Informações Básicas */}
-      <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/50">
-        <h4 className="text-xs sm:text-sm font-semibold text-slate-300 mb-3">{t('suppliers.informationTitle')}</h4>
+      <div className={`${isLight ? 'bg-gray-100/50 border-gray-300/50' : 'bg-slate-800/50 border-slate-700/50'} rounded-xl p-3 sm:p-4 border`}>
+        <h4 className={`text-xs sm:text-sm font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-3`}>{t('suppliers.informationTitle')}</h4>
         <div className="grid grid-cols-1 gap-3 sm:gap-4">
           <div className="text-center">
-            <div className="text-xs sm:text-sm font-medium text-slate-300 mb-1">
+            <div className={`text-xs sm:text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-1`}>
               {new Date(fornecedor.ultimaAtividade).toLocaleDateString('pt-PT')}
             </div>
-            <div className="text-xs text-slate-400">{t('suppliers.lastActivity')}</div>
+            <div className={`text-xs ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{t('suppliers.lastActivity')}</div>
           </div>
         </div>
       </div>
@@ -405,25 +405,25 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header - Compacto no mobile */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0">
+      <header className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-bg border-dark-color'} border-b px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0`}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-1 md:space-y-4 lg:space-y-0">
           <div className="hidden md:block">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-3`}>
               <Building className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               {t('suppliers.title')}
             </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">
+            <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
               {t('suppliers.subtitle')}
             </p>
           </div>
           
           {/* Header mobile compacto */}
           <div className="md:hidden flex items-center justify-between">
-            <h1 className="text-lg font-bold text-dark-primary flex items-center gap-2">
+            <h1 className={`text-lg font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-2`}>
               <Building className="w-5 h-5 text-blue-400" />
               {t('suppliers.title')}
             </h1>
-            <span className="text-blue-300 font-bold text-sm">
+            <span className={`${isLight ? 'text-blue-600' : 'text-blue-300'} font-bold text-sm`}>
               {paginatedFornecedores.length} {t('suppliers.of')} {filteredFornecedores.length}
             </span>
           </div>
@@ -431,14 +431,14 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
             {/* Linha centralizada com contador e botões do mesmo tamanho */}
             <div className="hidden md:flex items-center gap-3 w-full justify-center">
-              <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[160px] h-[44px]">
+              <div className={`glass-card ${isLight ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white/5 border-blue-500/30 text-blue-300'} px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm min-w-[160px] h-[44px]`}>
                 <span className="font-bold text-lg">{paginatedFornecedores.length}</span>
-                <span className="ml-2 text-blue-200">{t('suppliers.of')} {filteredFornecedores.length}</span>
+                <span className={`ml-2 ${isLight ? 'text-blue-600' : 'text-blue-200'}`}>{t('suppliers.of')} {filteredFornecedores.length}</span>
               </div>
               <button 
                 onClick={handleRefreshSuppliers}
                 disabled={isLoadingSuppliers}
-                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm min-w-[160px] h-[44px]"
+                className={`${isLight ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700' : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700'} text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg backdrop-blur-sm text-sm md:text-base min-w-[160px] h-[44px]`}
                 title={t('suppliers.refreshTooltip')}
               >
                 <RefreshCw className={`w-4 h-4 ${isLoadingSuppliers ? 'animate-spin' : ''}`} />
@@ -447,7 +447,7 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
               {user?.role === 'admin' && (
                 <button 
                   onClick={() => setIsCreateModalOpen(true)}
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 text-sm md:text-base min-w-[160px] h-[44px]"
+                  className={`${isLight ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'} text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg backdrop-blur-sm text-sm md:text-base min-w-[160px] h-[44px]`}
                 >
                   <Plus className="w-4 h-4" />
                   <span>{t('suppliers.newSupplier')}</span>
@@ -462,6 +462,7 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
         onSave={handleSaveSupplier}
         onDelete={handleDeleteSupplier}
         userId={(user as any)?.id}
+        isLight={isLight}
       />
 
       {/* Modal de criação de fornecedor */}
@@ -479,25 +480,26 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
           }
         }}
         userId={(user as any)?.id}
+        isLight={isLight}
       />
           </div>
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-3 md:p-4 lg:p-8 bg-dark-bg">
+      <main className={`flex-1 dashboard-main p-3 md:p-4 lg:p-8 ${isLight ? 'bg-gray-50' : 'bg-dark-bg'}`}>
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
           <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 xl:space-y-0 flex-shrink-0">
             {/* Tabs - ocultas no mobile */}
-            <TabsList className="hidden md:flex bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-xl p-1 overflow-x-auto">
+            <TabsList className={`hidden md:flex ${isLight ? 'bg-gray-200 border-gray-300' : 'bg-slate-800/50 border-slate-700/50'} backdrop-blur-sm rounded-xl p-1 overflow-x-auto`}>
               <TabsTrigger 
                 value="all" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
+                className={`data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 ${isLight ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-300' : 'text-slate-300 hover:text-white hover:bg-slate-700/50'} text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 whitespace-nowrap`}
               >
                 {t('suppliers.allSuppliers')} ({filteredFornecedores.length})
               </TabsTrigger>
               <TabsTrigger 
                 value="active" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-green-500/20 text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap"
+                className={`data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-green-500/20 ${isLight ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-300' : 'text-slate-300 hover:text-white hover:bg-slate-700/50'} text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 rounded-lg transition-all duration-300 whitespace-nowrap`}
               >
                 {t('suppliers.activeSuppliers')} ({filteredActiveFornecedores.length})
               </TabsTrigger>
@@ -508,13 +510,13 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
               {/* Pesquisa - sempre visível */}
               <div className="flex flex-col space-y-1 md:space-y-4 w-full lg:w-auto">
                 <div className="relative group flex-1 min-w-0">
-                  <SearchCheck className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
+                  <SearchCheck className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isLight ? 'text-gray-500 group-hover:text-blue-500' : 'text-white/70 group-hover:text-blue-400'} transition-colors duration-200 z-10 pointer-events-none`} />
                   <input
                     type="text"
                     placeholder={t('suppliers.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
+                    className={`pl-11 w-full ${isLight ? 'bg-white border-gray-300 text-gray-800 placeholder:text-gray-500 focus:ring-blue-500/50 focus:border-blue-500/50' : 'bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:ring-blue-500/50 focus:border-blue-500/50'} h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 border`}
                   />
                 </div>
               </div>
@@ -523,17 +525,17 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
               <div className="flex items-center gap-2 ml-auto justify-end mt-2 md:mt-0">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                  className={`px-3 py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700 border border-gray-300' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 border border-slate-600/50'} font-semibold text-sm disabled:opacity-50 transition-all duration-200 backdrop-blur-sm`}
                   disabled={currentPage === 1}
                 >
                   {t('suppliers.previous')}
                 </button>
-                <span className="text-slate-300 font-medium text-sm">
+                <span className={`${isLight ? 'text-gray-800' : 'text-slate-300'} font-medium text-sm`}>
                   {t('suppliers.page')} {currentPage} {t('suppliers.of')} {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                  className={`px-3 py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700 border border-gray-300' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 border border-slate-600/50'} font-semibold text-sm disabled:opacity-50 transition-all duration-200 backdrop-blur-sm`}
                   disabled={currentPage === totalPages}
                 >
                   {t('suppliers.next')}
@@ -548,8 +550,8 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
                 <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 animate-spin">
                   <RefreshCw className="w-full h-full text-blue-400" />
                 </div>
-                <h3 className="text-base sm:text-lg font-medium text-white mb-2">{t('suppliers.loadingSuppliers')}</h3>
-                <p className="text-sm sm:text-base text-slate-400 px-4">{t('suppliers.loadingApiData')}</p>
+                <h3 className={`text-base sm:text-lg font-medium ${isLight ? 'text-gray-800' : 'text-white'} mb-2`}>{t('suppliers.loadingSuppliers')}</h3>
+                <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-slate-400'} px-4`}>{t('suppliers.loadingApiData')}</p>
               </div>
             ) : (
               <>
@@ -577,9 +579,9 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
 
                 {!isLoadingSuppliers && filteredFornecedores.length === 0 && (
                   <div className="text-center py-8 lg:py-12">
-                    <Building className="w-10 h-10 sm:w-12 sm:h-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-base sm:text-lg font-medium text-white mb-2">{t('suppliers.noSuppliersFound')}</h3>
-                    <p className="text-sm sm:text-base text-slate-400 px-4">{t('suppliers.adjustFilters')}</p>
+                    <Building className={`w-10 h-10 sm:w-12 sm:h-12 ${isLight ? 'text-gray-400' : 'text-slate-400'} mx-auto mb-4`} />
+                    <h3 className={`text-base sm:text-lg font-medium ${isLight ? 'text-gray-800' : 'text-white'} mb-2`}>{t('suppliers.noSuppliersFound')}</h3>
+                    <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-slate-400'} px-4`}>{t('suppliers.adjustFilters')}</p>
                   </div>
                 )}
               </>

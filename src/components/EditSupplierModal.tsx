@@ -9,9 +9,10 @@ interface EditSupplierModalProps {
   onSave: (updatedSupplier: Supplier, isNew: boolean) => Promise<void>;
   onDelete?: (id: number) => Promise<void>; // nova callback para exclusão
   userId?: number | string; // passar id já resolvido do usuário logado
+  isLight?: boolean;
 }
 
-export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete, userId }: EditSupplierModalProps) {
+export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete, userId, isLight = false }: EditSupplierModalProps) {
   let currentUserId: number = 0;
   if (typeof userId === 'number') currentUserId = userId;
   else if (typeof userId === 'string' && userId.trim() !== '' && !isNaN(Number(userId))) currentUserId = Number(userId);
@@ -159,13 +160,13 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete,
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className={`${isLight ? 'bg-white border-gray-200' : 'bg-slate-900 border-slate-700'} rounded-2xl border w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl`}>
         {/* Header */}
-        <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h2 className="text-xl font-bold text-white">Editar Fornecedor</h2>
+        <div className={`sticky top-0 ${isLight ? 'bg-white/95 border-b border-gray-200' : 'bg-slate-900/95 border-b border-slate-700'} backdrop-blur-sm px-6 py-4 flex items-center justify-between rounded-t-2xl`}>
+          <h2 className={`text-xl font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Editar Fornecedor</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+            className={`w-8 h-8 rounded-full ${isLight ? 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white'} flex items-center justify-center transition-colors`}
           >
             <X className="w-4 h-4" />
           </button>
@@ -175,58 +176,58 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete,
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Informações Básicas */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">
+            <h3 className={`text-lg font-semibold ${isLight ? 'text-gray-900 border-b border-gray-200' : 'text-white border-b border-slate-700'} pb-2`}>
               Informações do Fornecedor
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>
                   Nome *
                 </label>
                 <input
                   type="text"
                   value={formData.nome}
                   onChange={(e) => handleInputChange('nome', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className={`w-full px-3 py-2 ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>
                   Site
                 </label>
                 <input
                   type="text"
                   value={formData.site}
                   onChange={(e) => handleInputChange('site', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className={`w-full px-3 py-2 ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>
                   Email de Contato *
                 </label>
                 <input
                   type="email"
                   value={formData.contato_email}
                   onChange={(e) => handleInputChange('contato_email', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className={`w-full px-3 py-2 ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>
                   Telefone de Contato
                 </label>
                 <input
                   type="tel"
                   value={formData.contato_telefone}
                   onChange={(e) => handleInputChange('contato_telefone', e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                  className={`w-full px-3 py-2 ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                 />
               </div>
               <div className="flex items-center space-x-2">
@@ -235,29 +236,29 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete,
                   id="ativo"
                   checked={formData.ativo}
                   onChange={(e) => handleInputChange('ativo', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500"
+                  className={`w-4 h-4 text-blue-600 ${isLight ? 'bg-gray-50 border-gray-300' : 'bg-slate-800 border-slate-600'} rounded focus:ring-blue-500`}
                 />
-                <label htmlFor="ativo" className="text-sm text-slate-300">
+                <label htmlFor="ativo" className={`text-sm ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>
                   Fornecedor ativo
                 </label>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>
                 Observações
               </label>
               <textarea
                 value={formData.observacoes}
                 onChange={(e) => handleInputChange('observacoes', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                className={`w-full px-3 py-2 ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400/20 transition-colors`}
               />
             </div>
           </div>
 
           {/* Campos de auditoria (apenas leitura) */}
-          <div className="space-y-2 text-xs text-slate-400">
+          <div className={`space-y-2 text-xs ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>
             <div>Cadastrado em: {formData.cadastrado_em ? new Date(formData.cadastrado_em).toLocaleString() : '-'}</div>
             <div>Cadastrado por: {formData.cadastrado_por}</div>
             <div>Atualizado em: {formData.atualizado_em ? new Date(formData.atualizado_em).toLocaleString() : '-'}</div>
@@ -265,13 +266,13 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete,
           </div>
 
           {/* Botões */}
-          <div className="flex justify-between space-x-3 pt-4 border-t border-slate-700">
+          <div className={`flex justify-between space-x-3 pt-4 ${isLight ? 'border-t border-gray-200' : 'border-t border-slate-700'}`}>
             <div>
               {supplier?.id ? (
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="px-4 py-2 bg-red-600/90 hover:bg-red-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
                   disabled={isSaving || isDeleting}
                 >
                   {isDeleting ? 'Eliminando...' : 'Eliminar'}
@@ -281,7 +282,7 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete,
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+              className={`px-6 py-2 ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'} rounded-lg transition-colors`}
               disabled={isSaving || isDeleting}
             >
               Cancelar

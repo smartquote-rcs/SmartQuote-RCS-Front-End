@@ -21,48 +21,47 @@ interface LogEntry {
   cliente?: string;
 }
 
-const getLevelIcon = (nivel: string) => {
+const getLevelIcon = (nivel: string, isLight = false) => {
   switch (nivel) {
     case "error":
-      return <AlertCircle className="w-4 h-4 text-red-200" />;
+      return <AlertCircle className={`w-4 h-4 ${isLight ? 'text-red-600' : 'text-red-200'}`} />;
     case "warning":
-      return <AlertCircle className="w-4 h-4 text-amber-200" />;
+      return <AlertCircle className={`w-4 h-4 ${isLight ? 'text-amber-600' : 'text-amber-200'}`} />;
     case "success":
-      return <CheckCircle className="w-4 h-4 text-emerald-200" />;
+      return <CheckCircle className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-200'}`} />;
     case "info":
-      return <Info className="w-4 h-4 text-cyan-200" />;
+      return <Info className={`w-4 h-4 ${isLight ? 'text-cyan-600' : 'text-cyan-200'}`} />;
     default:
-      return <Activity className="w-4 h-4 text-slate-300" />;
+      return <Activity className={`w-4 h-4 ${isLight ? 'text-gray-600' : 'text-slate-300'}`} />;
   }
 };
 
-const getActionIcon = (type: string) => {
+const getActionIcon = (type: string, isLight = false) => {
   switch (type) {
     case "cotacao_approved":
-      return <Award className="w-4 h-4 text-emerald-300" />;
+      return <Award className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-300'}`} />;
     case "cotacao_rejected":
-      return <Ban className="w-4 h-4 text-red-300" />;
+      return <Ban className={`w-4 h-4 ${isLight ? 'text-red-600' : 'text-red-300'}`} />;
     default:
       return null;
   }
 };
 
-const LogCard = ({ log }: { log: LogEntry }) => {
-  const getBorderColor = (nivel: string) => {
+const LogCard = ({ log, isLight = false }: { log: LogEntry; isLight?: boolean }) => {
+  const getBorderColor = (nivel: string, isLight = false) => {
     switch (nivel) {
-      case "error": return "border-l-red-400";
-      case "warning": return "border-l-amber-400";
-      case "success": return "border-l-emerald-400";
-      case "info": return "border-l-cyan-400";
-      default: return "border-l-slate-400";
+      case "error": return isLight ? "border-l-red-500" : "border-l-red-400";
+      case "warning": return isLight ? "border-l-amber-500" : "border-l-amber-400";
+      case "success": return isLight ? "border-l-emerald-500" : "border-l-emerald-400";
+      case "info": return isLight ? "border-l-cyan-500" : "border-l-cyan-400";
+      default: return isLight ? "border-l-gray-500" : "border-l-slate-400";
     }
   };
 
   const isQuoteLog = log.type?.includes('cotacao_');
 
   return (
-    <div className={`glass-card bg-dark-card border border-dark-color rounded-xl border-l-4 ${getBorderColor(log.nivel)} 
-                     hover:border-cyan-400/40 transition-all duration-300 group shadow-lg hover:shadow-xl`}>
+    <div className={`glass-card ${isLight ? 'bg-white/80 border-gray-200 hover:border-blue-400/60' : 'bg-dark-card border border-dark-color hover:border-cyan-400/40'} rounded-xl border-l-4 ${getBorderColor(log.nivel, isLight)} transition-all duration-300 group shadow-lg hover:shadow-xl backdrop-blur-sm`}>
       
       <div className="p-3 sm:p-4 lg:p-4">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-3 lg:space-y-0 lg:space-x-4">
@@ -72,8 +71,8 @@ const LogCard = ({ log }: { log: LogEntry }) => {
             
             {/* Icon */}
             <div className="flex-shrink-0">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-500/40 flex items-center justify-center shadow-md backdrop-blur-sm">
-                {getLevelIcon(log.nivel)}
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${isLight ? 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300' : 'bg-gradient-to-br from-slate-800/70 to-slate-900/70 border-slate-500/40'} border flex items-center justify-center shadow-md backdrop-blur-sm`}>
+                {getLevelIcon(log.nivel, isLight)}
               </div>
             </div>
             
@@ -83,8 +82,8 @@ const LogCard = ({ log }: { log: LogEntry }) => {
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <Clock className="w-3 h-3 text-dark-secondary flex-shrink-0" />
-                  <span className="font-mono text-xs sm:text-xs text-dark-secondary font-medium truncate">
+                  <Clock className={`w-3 h-3 ${isLight ? 'text-gray-600' : 'text-dark-secondary'} flex-shrink-0`} />
+                  <span className={`font-mono text-xs sm:text-xs ${isLight ? 'text-gray-600' : 'text-dark-secondary'} font-medium truncate`}>
                     {log.timestamp || 'Data não disponível'}
                   </span>
                 </div>
@@ -94,17 +93,17 @@ const LogCard = ({ log }: { log: LogEntry }) => {
               
               {/* Action and details */}
               <div className="mb-3">
-                <h4 className="text-sm sm:text-sm font-semibold text-dark-primary-text mb-1 flex items-center space-x-2">
-                  <User className="w-3 h-3 text-cyan-300 flex-shrink-0" />
+                <h4 className={`text-sm sm:text-sm font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} mb-1 flex items-center space-x-2`}>
+                  <User className={`w-3 h-3 ${isLight ? 'text-cyan-600' : 'text-cyan-300'} flex-shrink-0`} />
                   <span className="truncate">
                     {isQuoteLog 
                       ? (log.type === 'cotacao_approved' ? 'Cotação Aprovada' : 'Cotação Rejeitada')
                       : (log.acao || 'Ação não definida')
                     }
                   </span>
-                  {isQuoteLog && getActionIcon(log.type || '')}
+                  {isQuoteLog && getActionIcon(log.type || '', isLight)}
                 </h4>
-                <p className="text-dark-secondary leading-relaxed text-xs sm:text-xs line-clamp-2 sm:line-clamp-none">
+                <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} leading-relaxed text-xs sm:text-xs line-clamp-2 sm:line-clamp-none`}>
                   {isQuoteLog 
                     ? (log.motivo || 'Motivo não informado')
                     : (log.detalhes || 'Detalhes não disponíveis')
@@ -114,9 +113,9 @@ const LogCard = ({ log }: { log: LogEntry }) => {
               
               {/* Metadata */}
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <div className="flex items-center space-x-1 bg-gradient-to-r from-slate-800/50 to-slate-900/50 px-2 py-1 rounded-md border border-slate-500/50 shadow-sm">
-                  <User className="w-3 h-3 text-cyan-200" />
-                  <span className="text-slate-100 font-medium text-xs truncate max-w-24 sm:max-w-none">
+                <div className={`${isLight ? 'bg-gray-100 border-gray-300' : 'bg-gradient-to-r from-slate-800/50 to-slate-900/50 border-slate-500/50'} px-2 py-1 rounded-md border shadow-sm`}>
+                  <User className={`w-3 h-3 ${isLight ? 'text-cyan-600' : 'text-cyan-200'}`} />
+                  <span className={`${isLight ? 'text-gray-800' : 'text-slate-100'} font-medium text-xs truncate max-w-24 sm:max-w-none`}>
                     {isQuoteLog 
                       ? `Status: ${log.type === 'cotacao_approved' ? 'true' : 'false'}`
                       : (log.usuario || 'N/A')
@@ -126,16 +125,16 @@ const LogCard = ({ log }: { log: LogEntry }) => {
                 
                 {/* Mostrar usuário responsável */}
                 {!isQuoteLog && (
-                  <div className="flex items-center space-x-1 bg-gradient-to-r from-blue-700/30 to-cyan-700/30 px-2 py-1 rounded-md border border-blue-500/40 shadow-sm">
-                    <span className="text-blue-200">👤</span>
-                    <span className="text-blue-100 font-medium text-xs truncate max-w-20 sm:max-w-none">{log.usuario}</span>
+                  <div className={`flex items-center space-x-1 ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-gradient-to-r from-blue-700/30 to-cyan-700/30 border-blue-500/40'} px-2 py-1 rounded-md border shadow-sm`}>
+                    <span className={isLight ? 'text-blue-600' : 'text-blue-200'}>👤</span>
+                    <span className={`${isLight ? 'text-blue-800' : 'text-blue-100'} font-medium text-xs truncate max-w-20 sm:max-w-none`}>{log.usuario}</span>
                   </div>
                 )}
                 
                 {isQuoteLog && log.cliente && (
-                  <div className="flex items-center space-x-1 bg-gradient-to-r from-blue-700/30 to-cyan-700/30 px-2 py-1 rounded-md border border-blue-500/40 shadow-sm">
-                    <span className="text-blue-200">👤</span>
-                    <span className="text-blue-100 font-medium text-xs truncate max-w-20 sm:max-w-none">{log.cliente}</span>
+                  <div className={`flex items-center space-x-1 ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-gradient-to-r from-blue-700/30 to-cyan-700/30 border-blue-500/40'} px-2 py-1 rounded-md border shadow-sm`}>
+                    <span className={isLight ? 'text-blue-600' : 'text-blue-200'}>👤</span>
+                    <span className={`${isLight ? 'text-blue-800' : 'text-blue-100'} font-medium text-xs truncate max-w-20 sm:max-w-none`}>{log.cliente}</span>
                   </div>
                 )}
               </div>
@@ -144,8 +143,8 @@ const LogCard = ({ log }: { log: LogEntry }) => {
           
           {/* Action button - better mobile positioning */}
           <div className="flex items-center justify-end lg:justify-start space-x-2 flex-shrink-0 lg:mt-0">
-            <button className="opacity-70 lg:opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-800/50 rounded-lg border border-transparent hover:border-cyan-400/40">
-              <Eye className="w-3 h-3 sm:w-3 sm:h-3 text-slate-400 hover:text-cyan-300 transition-colors" />
+            <button className={`opacity-70 lg:opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 ${isLight ? 'hover:bg-gray-100 hover:border-blue-400/40' : 'hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-800/50 hover:border-cyan-400/40'} rounded-lg border border-transparent`}>
+              <Eye className={`w-3 h-3 sm:w-3 sm:h-3 ${isLight ? 'text-gray-600 hover:text-blue-600' : 'text-slate-400 hover:text-cyan-300'} transition-colors`} />
             </button>
           </div>
         </div>
@@ -154,7 +153,7 @@ const LogCard = ({ log }: { log: LogEntry }) => {
   );
 };
 
-export function LogsPage() {
+export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -246,20 +245,20 @@ export function LogsPage() {
   const paginatedLogs = filteredLogs.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col overflow-hidden">
+    <div className={`min-h-screen ${isLight ? 'bg-gray-50' : 'bg-dark-bg'} flex flex-col overflow-hidden`}>
       {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-5 xl:py-6 flex-shrink-0">
+      <header className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-bg border-dark-color'} border-b px-3 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-5 xl:py-6 flex-shrink-0`}>
         {/* Uma única linha - Título, subtítulo, busca e paginação */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 lg:gap-4">
           <div className="flex items-center space-x-3 sm:space-x-4">
-            <div className="p-2 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl">
-              <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+            <div className={`p-2 ${isLight ? 'bg-gradient-to-br from-blue-50 to-purple-50' : 'bg-gradient-to-br from-blue-600/20 to-purple-600/20'} rounded-xl`}>
+              <Activity className={`w-5 h-5 sm:w-6 sm:h-6 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-dark-primary-text">
+              <h1 className={`text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>
                 {t('logs.title')}
               </h1>
-              <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">
+              <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>
                 {t('logs.subtitle')}
               </p>
             </div>
@@ -269,13 +268,13 @@ export function LogsPage() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full lg:w-auto">
             {/* Pesquisa */}
             <div className="relative group w-full sm:flex-1 sm:min-w-0 sm:max-w-xs lg:max-w-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/70 group-hover:text-cyan-400 transition-colors duration-200 z-10 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" strokeWidth="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 ${isLight ? 'text-gray-500 group-hover:text-blue-600' : 'text-white/70 group-hover:text-cyan-400'} transition-colors duration-200 z-10 pointer-events-none`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" strokeWidth="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2"/></svg>
               <input
                 type="text"
                 placeholder="Buscar logs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 sm:pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 text-sm sm:text-base"
+                className={`pl-10 sm:pl-11 w-full ${isLight ? 'bg-white border-gray-300 text-gray-800 placeholder:text-gray-500 focus:ring-blue-500/50 focus:border-blue-500/50' : 'bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:ring-cyan-500/50 focus:border-cyan-500/50'} h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 text-sm sm:text-base border backdrop-blur-sm`}
               />
             </div>
             
@@ -283,18 +282,18 @@ export function LogsPage() {
             <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-3">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-xs sm:text-sm disabled:opacity-50"
+                className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300'} font-semibold text-xs sm:text-sm disabled:opacity-50 transition-all duration-200`}
                 disabled={page === 1}
               >
                 <span className="hidden sm:inline">Anterior</span>
                 <span className="sm:hidden">‹</span>
               </button>
-              <span className="text-slate-300 font-medium text-xs sm:text-sm whitespace-nowrap">
+              <span className={`${isLight ? 'text-gray-700' : 'text-slate-300'} font-medium text-xs sm:text-sm whitespace-nowrap`}>
                 <span className="hidden sm:inline">Página </span>{page} de {totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-xs sm:text-sm disabled:opacity-50"
+                className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300'} font-semibold text-xs sm:text-sm disabled:opacity-50 transition-all duration-200`}
                 disabled={page === totalPages}
               >
                 <span className="hidden sm:inline">Próxima</span>
@@ -306,15 +305,15 @@ export function LogsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto scrollable-content dashboard-main p-3 sm:p-4 lg:p-6 xl:p-8 bg-dark-bg max-h-[calc(100vh-120px)] sm:max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)] lg:max-h-[calc(100vh-180px)] xl:max-h-[calc(100vh-200px)]">
+      <main className={`flex-1 overflow-y-auto scrollable-content dashboard-main p-3 sm:p-4 lg:p-6 xl:p-8 ${isLight ? 'bg-gray-50' : 'bg-dark-bg'} max-h-[calc(100vh-120px)] sm:max-h-[calc(100vh-140px)] md:max-h-[calc(100vh-160px)] lg:max-h-[calc(100vh-180px)] xl:max-h-[calc(100vh-200px)]`}>
         {/* Error display */}
         {error && (
-          <div className="glass-card bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
+          <div className={`glass-card ${isLight ? 'bg-red-50 border-red-200' : 'bg-red-500/10 border-red-500/20'} rounded-xl p-4 mb-6 backdrop-blur-sm`}>
             <div className="flex items-center space-x-3">
-              <AlertCircle className="w-5 h-5 text-red-400" />
+              <AlertCircle className={`w-5 h-5 ${isLight ? 'text-red-600' : 'text-red-400'}`} />
               <div>
-                <h3 className="text-red-300 font-semibold">Erro detectado</h3>
-                <p className="text-red-200 text-sm">{error}</p>
+                <h3 className={`${isLight ? 'text-red-800' : 'text-red-300'} font-semibold`}>Erro detectado</h3>
+                <p className={`${isLight ? 'text-red-700' : 'text-red-200'} text-sm`}>{error}</p>
               </div>
             </div>
           </div>
@@ -323,8 +322,8 @@ export function LogsPage() {
         {/* Loading state */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-8 sm:py-12">
-            <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-dark-secondary text-sm sm:text-base">Carregando logs do sistema...</p>
+            <div className={`w-6 h-6 sm:w-8 sm:h-8 border-2 ${isLight ? 'border-blue-600 border-t-transparent' : 'border-blue-400 border-t-transparent'} rounded-full animate-spin mb-4`}></div>
+            <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-sm sm:text-base`}>Carregando logs do sistema...</p>
           </div>
         )}
 
@@ -333,7 +332,7 @@ export function LogsPage() {
           <>
             <div className="space-y-3 sm:space-y-4">
               {paginatedLogs.map((log, index) => (
-                <LogCard key={log.id || index} log={log} />
+                <LogCard key={log.id || index} log={log} isLight={isLight} />
               ))}
             </div>
           </>
@@ -342,11 +341,11 @@ export function LogsPage() {
         {/* Empty state */}
         {!loading && filteredLogs.length === 0 && !error && (
           <div className="text-center py-8 sm:py-12">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-dark-card rounded-full flex items-center justify-center mx-auto mb-4">
-              <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-dark-secondary" />
+            <div className={`w-12 h-12 sm:w-16 sm:h-16 ${isLight ? 'bg-gray-100' : 'bg-dark-card'} rounded-full flex items-center justify-center mx-auto mb-4`}>
+              <Activity className={`w-6 h-6 sm:w-8 sm:h-8 ${isLight ? 'text-gray-500' : 'text-dark-secondary'}`} />
             </div>
-            <h3 className="text-base sm:text-lg font-semibold text-dark-primary-text mb-2">Nenhum log encontrado</h3>
-            <p className="text-dark-secondary max-w-md mx-auto text-sm sm:text-base px-4">
+            <h3 className={`text-base sm:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} mb-2`}>Nenhum log encontrado</h3>
+            <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} max-w-md mx-auto text-sm sm:text-base px-4`}>
               Não há registros que correspondam aos seus critérios de pesquisa.
             </p>
           </div>

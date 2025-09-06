@@ -42,16 +42,16 @@ interface Notification {
   rawType?: string;
 }
 
-const getNotificationIcon = (type: string) => {
+const getNotificationIcon = (type: string, isLight = false) => {
   switch (type) {
     case 'success':
-      return <CheckCircle className="w-5 h-5 text-green-400" />;
+      return <CheckCircle className={`w-5 h-5 ${isLight ? 'text-green-600' : 'text-green-400'}`} />;
     case 'warning':
-      return <AlertTriangle className="w-5 h-5 text-yellow-400" />;
+      return <AlertTriangle className={`w-5 h-5 ${isLight ? 'text-yellow-600' : 'text-yellow-400'}`} />;
     case 'error':
-      return <AlertTriangle className="w-5 h-5 text-red-400" />;
+      return <AlertTriangle className={`w-5 h-5 ${isLight ? 'text-red-600' : 'text-red-400'}`} />;
     default:
-      return <Info className="w-5 h-5 text-blue-400" />;
+      return <Info className={`w-5 h-5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />;
   }
 };
 
@@ -87,7 +87,7 @@ const formatTimestamp = (timestamp: string) => {
   }
 };
 
-export function NotificationsPage() {
+export function NotificationsPage({ isLight = false }: { isLight?: boolean } = {}) {
   // Toast notification type
   interface ToastNotification {
     id: string;
@@ -478,17 +478,17 @@ export function NotificationsPage() {
         ))}
       </div>
       {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
+      <header className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-bg border-dark-color'} border-b px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0`}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
-              <Bell className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
+            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-3`}>
+              <Bell className={`w-6 h-6 sm:w-7 sm:h-7 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
               Notificações
               {unreadCount > 0 && (
                 <Badge className="bg-red-600 text-white ml-2">{unreadCount}</Badge>
               )}
             </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">
+            <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
               Gerencie e acompanhe todas as notificações do sistema
             </p>
           </div>
@@ -512,42 +512,46 @@ export function NotificationsPage() {
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
+      <main className={`flex-1 dashboard-main p-4 lg:p-8 ${isLight ? 'bg-gray-50' : 'bg-dark-bg'}`}>
         {/* Barra de pesquisa única */}
         <div className="mb-3 flex items-center gap-3">
           <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-dark-secondary" />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-500' : 'text-dark-secondary'}`} />
             <Input
               placeholder="Pesquisar notificações..."
               value={searchTerm}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              className="pl-10 glass-card border-white/20 text-white placeholder:text-dark-secondary w-full h-10 text-sm"
+              className={`pl-10 w-full h-10 text-sm ${
+                isLight 
+                  ? 'bg-white border-gray-300 text-gray-800 placeholder:text-gray-500' 
+                  : 'glass-card border-white/20 text-white placeholder:text-dark-secondary backdrop-blur-sm'
+              }`}
             />
           </div>
           <Button
             onClick={manualRefresh}
             disabled={isRefreshing}
             variant="outline"
-            className="border-white/20 text-white hover:bg-white/10 px-3 py-2"
+            className={`${isLight ? 'border-gray-300 text-gray-700 hover:bg-gray-100' : 'border-white/20 text-white hover:bg-white/10'} px-3 py-2`}
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
-          <Badge className="ml-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 font-semibold px-3 py-2 text-sm whitespace-nowrap">
+          <Badge className={`ml-2 ${isLight ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-blue-500/20 border border-blue-500/30 text-blue-300'} font-semibold px-3 py-2 text-sm whitespace-nowrap`}>
             Total: {notifications.length}
           </Badge>
         </div>
 
         {/* Controles de seleção em massa */}
         {filteredNotifications.length > 0 && (
-          <div className="mb-4 flex items-center justify-between p-3 glass-card bg-white/5 border-white/20 rounded-lg">
+          <div className={`mb-4 flex items-center justify-between p-3 glass-card ${isLight ? 'bg-white/80 border-gray-200' : 'bg-white/5 border-white/20'} rounded-lg backdrop-blur-sm`}>
             <div className="flex items-center space-x-3">
               <input
                 type="checkbox"
                 checked={selectedNotifications.length === filteredNotifications.length && filteredNotifications.length > 0}
                 onChange={toggleSelectAll}
-                className="w-4 h-4 text-blue-600 bg-transparent border-white/20 rounded focus:ring-blue-500"
+                className={`w-4 h-4 text-blue-600 ${isLight ? 'bg-white border-gray-300' : 'bg-transparent border-white/20'} rounded focus:ring-blue-500`}
               />
-              <span className="text-sm text-dark-primary">
+              <span className={`text-sm ${isLight ? 'text-gray-800' : 'text-dark-primary'}`}>
                 {selectedNotifications.length > 0 
                   ? `${selectedNotifications.length} selecionada(s)`
                   : 'Selecionar todas'
@@ -560,7 +564,7 @@ export function NotificationsPage() {
                 <Button
                   onClick={markSelectedAsRead}
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5"
+                  className={`text-xs px-3 py-1.5 ${isLight ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                 >
                   <Check className="w-3 h-3 mr-1" />
                   Marcar como Lidas
@@ -568,7 +572,7 @@ export function NotificationsPage() {
                 <Button
                   onClick={handleBulkDeleteClick}
                   size="sm"
-                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5"
+                  className={`text-xs px-3 py-1.5 ${isLight ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}`}
                 >
                   <Trash2 className="w-3 h-3 mr-1" />
                   Eliminar
@@ -581,13 +585,13 @@ export function NotificationsPage() {
         {/* Notifications List */}
         <div className="space-y-4">
           {filteredNotifications.length === 0 ? (
-            <Card className="glass-card bg-white/5 border-white/20 text-center py-12">
+            <Card className={`glass-card ${isLight ? 'bg-white/80 border-gray-200' : 'bg-white/5 border-white/20'} text-center py-12 backdrop-blur-sm`}>
               <CardContent>
-                <Bell className="w-12 h-12 text-dark-secondary mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-dark-primary mb-2">
+                <Bell className={`w-12 h-12 ${isLight ? 'text-gray-500' : 'text-dark-secondary'} mx-auto mb-4`} />
+                <h3 className={`text-lg font-medium ${isLight ? 'text-gray-800' : 'text-dark-primary'} mb-2`}>
                   Nenhuma notificação encontrada
                 </h3>
-                <p className="text-dark-secondary">
+                <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'}`}>
                   {searchTerm
                     ? 'Nenhuma notificação encontrada para sua busca.'
                     : 'Você está em dia com todas as notificações!'}
@@ -598,8 +602,8 @@ export function NotificationsPage() {
             filteredNotifications.map((notification: Notification) => (
               <Card 
                 key={notification.id} 
-                className={`glass-card border-white/20 transition-all duration-300 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/25 ${
-                  notification.read ? 'bg-white/5' : 'bg-blue-500/10 border-blue-500/30'
+                className={`glass-card ${isLight ? 'border-gray-200 hover:border-blue-400/60' : 'border-white/20 hover:border-cyan-400/50 hover:shadow-cyan-500/25'} transition-all duration-300 hover:shadow-lg backdrop-blur-sm ${
+                  notification.read ? (isLight ? 'bg-white/80' : 'bg-white/5') : (isLight ? 'bg-blue-50/80 border-blue-200' : 'bg-blue-500/10 border-blue-500/30')
                 }`}
               >
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
@@ -608,39 +612,39 @@ export function NotificationsPage() {
                       type="checkbox"
                       checked={selectedNotifications.includes(notification.id)}
                       onChange={() => toggleSelectNotification(notification.id)}
-                      className="w-4 h-4 text-blue-600 bg-transparent border-white/20 rounded focus:ring-blue-500 mt-1"
+                      className={`w-4 h-4 text-blue-600 ${isLight ? 'bg-white border-gray-300' : 'bg-transparent border-white/20'} rounded focus:ring-blue-500 mt-1`}
                     />
-                    {getNotificationIcon(notification.type)}
+                    {getNotificationIcon(notification.type, isLight)}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <h3 className={`font-semibold text-base ${
-                          notification.read ? 'text-dark-primary' : 'text-white'
+                          notification.read ? (isLight ? 'text-gray-800' : 'text-dark-primary') : (isLight ? 'text-gray-900' : 'text-white')
                         } line-clamp-1`}>
                           {notification.title}
                         </h3>
                         <div className="flex items-center space-x-2 ml-2">
                           {getNotificationBadge(notification.type)}
                           {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                            <div className={`w-2 h-2 ${isLight ? 'bg-blue-600' : 'bg-blue-400'} rounded-full`}></div>
                           )}
                         </div>
                       </div>
-                      <p className="text-sm text-dark-secondary mt-1 line-clamp-2">
+                      <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-1 line-clamp-2`}>
                         {notification.message}
                         {notification.subject && notification.message !== notification.subject && (
-                          <span className="block text-xs text-blue-300 mt-1">{notification.subject}</span>
+                          <span className={`block text-xs ${isLight ? 'text-blue-600' : 'text-blue-300'} mt-1`}>{notification.subject}</span>
                         )}
                       </p>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-3 space-y-2 sm:space-y-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-xs text-dark-secondary">
+                        <div className={`flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-xs ${isLight ? 'text-gray-600' : 'text-dark-secondary'}`}>
                           <div className="flex items-center space-x-1">
                             <Clock className="w-3 h-3" />
                             <span>{formatTimestamp(notification.timestamp)}</span>
                           </div>
-                          <Badge variant="outline" className="border-white/20 text-white text-xs w-fit">
+                          <Badge variant="outline" className={`${isLight ? 'border-gray-300 text-gray-700' : 'border-white/20 text-white'} text-xs w-fit`}>
                             {notification.category}
                             {notification.rawType && notification.rawType !== notification.category && (
-                              <span className="ml-1 text-blue-400">({notification.rawType})</span>
+                              <span className={`ml-1 ${isLight ? 'text-blue-600' : 'text-blue-400'}`}>({notification.rawType})</span>
                             )}
                           </Badge>
                         </div>

@@ -144,10 +144,10 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
     <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-white/10'} rounded-xl p-4 border backdrop-blur-sm`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
-          <Mail className="w-4 h-4 text-cyan-400" />
-          <h3 className={`${themeClasses?.textPrimary || 'text-white'} font-bold text-sm`}>
+          <Mail className={`w-4 h-4 ${isLight ? 'text-blue-600' : 'text-cyan-400'}`} />
+          <h3 className={`${isLight ? 'text-gray-800' : themeClasses?.textPrimary || 'text-white'} font-bold text-sm`}>
             {t('dashboard.emailQuotes')}
-            <span className="ml-2 bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full text-xs font-medium align-middle">
+            <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium align-middle ${isLight ? 'bg-blue-100 text-blue-700' : 'bg-cyan-500/20 text-cyan-400'}`}>
               {totalCount}
             </span>
           </h3>
@@ -159,7 +159,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
               onClick={onNavigateToQuotes}
               variant="outline"
               size="sm"
-              className="h-7 px-2 text-xs bg-blue-600/20 border-blue-500/30 text-blue-400 hover:bg-blue-600/30"
+              className={`h-7 px-2 text-xs ${isLight ? 'bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-200' : 'bg-blue-600/20 border-blue-500/30 text-blue-400 hover:bg-blue-600/30'}`}
             >
               <FileText className="w-3 h-3 mr-1" />
               {t('dashboard.viewAll')}
@@ -168,9 +168,9 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              className={`p-1 rounded-lg transition-colors ${isLight ? 'hover:bg-gray-200' : 'hover:bg-white/10'}`}
             >
-              <X className="w-4 h-4 text-slate-400 hover:text-white" />
+              <X className={`w-4 h-4 ${isLight ? 'text-gray-500 hover:text-gray-800' : 'text-slate-400 hover:text-white'}`} />
             </button>
           )}
         </div>
@@ -204,9 +204,9 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
               <div className="flex-1 min-w-0 pr-2">
                 <div className="flex items-center space-x-2 mb-1">
                   {notification.read ? (
-                    <CheckCircle className="w-3 h-3 text-green-400 flex-shrink-0" />
+                    <CheckCircle className={`w-3 h-3 flex-shrink-0 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
                   ) : (
-                    <Clock className="w-3 h-3 text-cyan-400 flex-shrink-0" />
+                    <Clock className={`w-3 h-3 flex-shrink-0 ${isLight ? 'text-blue-600' : 'text-cyan-400'}`} />
                   )}
                   <h4 className={`${isLight ? 'text-gray-800' : 'text-white'} text-xs font-medium truncate`}>{notification.title}</h4>
                 </div>
@@ -222,7 +222,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
                       e.stopPropagation();
                       markAsRead(notification.id);
                     }}
-                    className="bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-400 p-1 rounded text-xs transition-colors duration-200 flex items-center gap-1"
+                    className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700' : 'bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-400'} p-1 rounded text-xs transition-colors duration-200 flex items-center gap-1`}
                     title={t('dashboard.markAsRead')}
                   >
                     <Check className="w-3 h-3" />
@@ -233,7 +233,7 @@ export function EmailNotifications({ onClose, onNavigateToQuotes, onNavigateToEm
                     e.stopPropagation();
                     openEmail(notification);
                   }}
-                  className="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 p-1 rounded text-xs transition-colors duration-200 flex items-center gap-1"
+                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700' : 'bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400'} p-1 rounded text-xs transition-colors duration-200 flex items-center gap-1`}
                   title={t('dashboard.viewDetails')}
                 >
                   <Eye className="w-3 h-3" />

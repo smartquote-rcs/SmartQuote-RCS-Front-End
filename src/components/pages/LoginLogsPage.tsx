@@ -23,7 +23,7 @@ function getRelativeTime(dateString: string) {
 }
 
 
-export function LoginLogsPage() {
+export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
   const [loginLogs, setLoginLogs] = useState<Array<any>>([]);
   const [deleting, setDeleting] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -59,14 +59,18 @@ export function LoginLogsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full p-0 sm:p-0 lg:p-0 bg-dark-bg overflow-y-auto">
-      <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-none h-full w-full p-2 sm:p-4 border border-white/10 backdrop-blur-sm">
+    <div className={`flex flex-col h-full w-full p-0 sm:p-0 lg:p-0 overflow-y-auto ${isLight ? 'bg-gray-50' : 'bg-dark-bg'}`}>
+      <div className={`glass-card rounded-none h-full w-full p-2 sm:p-4 border backdrop-blur-sm ${
+        isLight 
+          ? 'bg-gradient-to-br from-white/90 to-gray-50/90 border-gray-200' 
+          : 'bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-white/10'
+      }`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 flex items-center gap-2">
+            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-1 flex items-center gap-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
               <LogIn className="w-6 h-6 text-blue-400" /> Logs de Login
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300">Visualize todos os acessos recentes ao sistema nesta instância.</p>
+            <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>Visualize todos os acessos recentes ao sistema nesta instância.</p>
           </div>
           <div className="flex-shrink-0 flex items-center mt-2 sm:mt-0">
             <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -80,18 +84,24 @@ export function LoginLogsPage() {
                   {deleting ? 'Eliminando...' : 'Eliminar logs'}
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="glass-card border-white/20 bg-slate-800/95 backdrop-blur-sm">
+              <AlertDialogContent className={`glass-card backdrop-blur-sm ${
+                isLight ? 'bg-white border-gray-300' : 'bg-slate-800/95 border-white/20'
+              }`}>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-white flex items-center gap-2">
+                  <AlertDialogTitle className={`flex items-center gap-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
                     <Trash2 className="w-5 h-5 text-red-400" />
                     Confirmar Eliminação
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-slate-300">
+                  <AlertDialogDescription className={isLight ? 'text-gray-600' : 'text-slate-300'}>
                     Tem certeza que deseja eliminar <b>todos os logs de login</b>? Esta ação não pode ser desfeita.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="gap-3">
-                  <AlertDialogCancel className="bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-600/50 px-6 py-2 rounded-xl">
+                  <AlertDialogCancel className={`px-6 py-2 rounded-xl ${
+                    isLight 
+                      ? 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200' 
+                      : 'bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-600/50'
+                  }`}>
                     Cancelar
                   </AlertDialogCancel>
                   <AlertDialogAction
@@ -106,24 +116,32 @@ export function LoginLogsPage() {
           </div>
         </div>
         {loginLogs.length === 0 ? (
-          <div className="text-slate-400 text-center py-12">Nenhum log de login encontrado.</div>
+          <div className={`text-center py-12 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>Nenhum log de login encontrado.</div>
         ) : (
           <div className="overflow-x-auto max-h-[60vh]">
-            <table className="min-w-full w-full text-sm bg-slate-800/80	rounded-none border border-slate-700 shadow-lg table-fixed">
+            <table className={`min-w-full w-full text-sm rounded-none border shadow-lg table-fixed ${
+              isLight 
+                ? 'bg-white border-gray-200' 
+                : 'bg-slate-800/80 border-slate-700'
+            }`}>
               <thead>
-                <tr className="bg-slate-900/60">
-                  <th className="px-4 py-3 text-left text-slate-300 font-semibold">Usuário</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-semibold">Email</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-semibold">Cargo</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-semibold">Data/Hora</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-semibold">Tempo</th>
+                <tr className={isLight ? 'bg-gray-50' : 'bg-slate-900/60'}>
+                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Usuário</th>
+                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Email</th>
+                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Cargo</th>
+                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Data/Hora</th>
+                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Tempo</th>
                 </tr>
               </thead>
               <tbody>
                 {loginLogs.map((log, idx) => (
-                  <tr key={idx} className="border-t border-slate-700 hover:bg-blue-900/20 transition-colors">
-                    <td className="px-4 py-2 text-white font-medium">{log.userName || '-'}</td>
-                    <td className="px-4 py-2 text-slate-200">{log.userEmail || '-'}</td>
+                  <tr key={idx} className={`border-t transition-colors ${
+                    isLight 
+                      ? 'border-gray-200 hover:bg-blue-50' 
+                      : 'border-slate-700 hover:bg-blue-900/20'
+                  }`}>
+                    <td className={`px-4 py-2 font-medium ${isLight ? 'text-gray-900' : 'text-white'}`}>{log.userName || '-'}</td>
+                    <td className={`px-4 py-2 ${isLight ? 'text-gray-700' : 'text-slate-200'}`}>{log.userEmail || '-'}</td>
                     <td className="px-4 py-2">
                       <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
                         log.details?.role === 'admin' ? 'bg-red-500/20 text-red-400' :
@@ -133,8 +151,8 @@ export function LoginLogsPage() {
                         {log.details?.role || '-'}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-slate-300">{log.timestamp ? new Date(log.timestamp).toLocaleString() : '-'}</td>
-                    <td className="px-4 py-2 text-slate-400">{log.timestamp ? getRelativeTime(log.timestamp) : '-'}</td>
+                    <td className={`px-4 py-2 ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>{log.timestamp ? new Date(log.timestamp).toLocaleString() : '-'}</td>
+                    <td className={`px-4 py-2 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{log.timestamp ? getRelativeTime(log.timestamp) : '-'}</td>
                   </tr>
                 ))}
               </tbody>

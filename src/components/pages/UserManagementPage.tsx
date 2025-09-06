@@ -127,7 +127,7 @@ const getRoleIcon = (role: string) => {
   }
 };
 
-export default function UserManagementPage() {
+export default function UserManagementPage({ isLight = false }: { isLight?: boolean } = {}) {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -798,7 +798,11 @@ export default function UserManagementPage() {
   };
 
   const UserCard = ({ user }: { user: UserData }) => (
-    <div className="glass-card p-4 hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 bg-white/5 rounded-xl border border-white/20">
+    <div className={`glass-card p-4 transition-all duration-300 hover:-translate-y-1 rounded-xl border ${
+      isLight 
+        ? 'bg-white hover:border-blue-400/60 border-gray-200 hover:shadow-lg' 
+        : 'bg-white/5 hover:border-cyan-400/50 border-white/20'
+    }`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0 sm:space-x-6">
         {/* Left Side - User Info */}
         <div className="flex items-center space-x-4 flex-1 min-w-0">
@@ -810,7 +814,7 @@ export default function UserManagementPage() {
           {/* User Details */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3">
-              <h3 className="font-bold text-dark-primary text-base sm:text-lg truncate">
+              <h3 className={`font-bold text-base sm:text-lg truncate ${isLight ? 'text-gray-900' : 'text-dark-primary'}`}>
                 {user.name}
               </h3>
               <div className="flex items-center space-x-2 mt-1 sm:mt-0">
@@ -820,7 +824,7 @@ export default function UserManagementPage() {
             </div>
             
             {/* User Info Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 text-sm text-dark-secondary">
+            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 text-sm ${isLight ? 'text-gray-600' : 'text-dark-secondary'}`}>
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <span className="truncate">{user.email}</span>
@@ -909,28 +913,32 @@ export default function UserManagementPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0">
+      <header className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-bg border-dark-color'} border-b px-4 lg:px-8 py-4 lg:py-6 flex-shrink-0`}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-3`}>
               <Users className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               Gestão de Usuários
             </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">
+            <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
               Administre contas de usuário e permissões do sistema
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            <div className="glass-card px-4 py-2 text-center sm:text-left bg-blue-500/20 border-blue-500/30">
-              <span className="text-blue-300 font-bold text-lg">
+            <div className={`glass-card px-4 py-2 text-center sm:text-left ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/20 border-blue-500/30'}`}>
+              <span className={`${isLight ? 'text-blue-600' : 'text-blue-300'} font-bold text-lg`}>
                 {filteredUsers.length}
               </span>
-              <span className="text-blue-200 ml-2">usuários</span>
+              <span className={`${isLight ? 'text-blue-500' : 'text-blue-200'} ml-2`}>usuários</span>
             </div>
             <Button
               onClick={loadUsers}
               disabled={loading}
-              className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-4 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg"
+              className={`glass-card px-4 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg ${
+                isLight 
+                  ? 'bg-gray-100 hover:bg-blue-50 hover:border-blue-300 text-gray-700 hover:text-blue-700' 
+                  : 'bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white'
+              }`}
             >
               <RefreshCw
                 className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
@@ -939,7 +947,11 @@ export default function UserManagementPage() {
             </Button>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25">
+                <Button className={`px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                  isLight 
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white hover:shadow-blue-500/25' 
+                    : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white hover:shadow-blue-500/25'
+                }`}>
                   <Plus className="w-5 h-5" />
                   <span>Adicionar Usuário</span>
                 </Button>
@@ -1163,38 +1175,52 @@ export default function UserManagementPage() {
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-4 lg:p-8 bg-dark-bg">
+      <main className={`flex-1 dashboard-main p-4 lg:p-8 ${isLight ? 'bg-gray-50' : 'bg-dark-bg'}`}>
         {/* Filters */}
         <div className="mb-6 lg:mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-            {/* Search Bar - sempre visível */}
-            <div className="relative flex-1 max-w-md group">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-cyan-400 transition-colors duration-300" />
-              <Input
-                placeholder="Pesquisar usuários..."
+            {/* Search Bar - estilo ProductSearchPage */}
+            <div className="relative group flex-1 min-w-0 max-w-md">
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isLight ? 'text-gray-600 group-hover:text-blue-500' : 'text-white/70 group-hover:text-blue-400'} transition-colors duration-200 z-10 pointer-events-none`} />
+              <input
+                type="text"
+                placeholder="Pesquisar usuários por nome, email ou departamento..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:border-cyan-400/50 focus:ring-cyan-400/20 rounded-xl backdrop-blur-sm transition-all duration-300 hover:bg-slate-700/50"
+                className={`pl-11 w-full ${isLight ? 'bg-white border-gray-300 text-gray-800 placeholder:text-gray-500 focus:ring-blue-500 focus:border-blue-500' : 'bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:ring-blue-500/50 focus:border-blue-500/50'} h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 border transition-all duration-200 backdrop-blur-sm`}
               />
             </div>
 
             {/* Filter Controls - ocultos no mobile */}
             <div className="hidden sm:flex flex-col sm:flex-row gap-3">
               <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="w-full sm:w-40 h-12 bg-slate-800/50 border-slate-600/50 text-white rounded-xl backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Shield className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                <SelectTrigger className={`group relative w-full sm:w-40 h-12 rounded-xl backdrop-blur-sm transition-all duration-300 overflow-hidden ${
+                  isLight 
+                    ? 'bg-white/80 border-gray-300 text-gray-900 hover:bg-white hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/10' 
+                    : 'bg-slate-800/60 border-slate-600/50 text-white hover:bg-slate-700/60 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/20'
+                }`}>
+                  {/* Efeito de brilho no hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <div className="flex items-center gap-2 min-w-0 relative z-10">
+                    <Shield className="w-4 h-4 text-purple-400 flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
                     <span className="truncate">
                       <SelectValue placeholder="Função" />
                     </span>
                   </div>
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800/95 border-slate-600/50 backdrop-blur-sm rounded-xl">
+                <SelectContent className={`backdrop-blur-sm rounded-xl shadow-xl ${
+                  isLight ? 'bg-white/95 border-gray-300' : 'bg-slate-800/95 border-slate-600/50'
+                }`}>
                   {roles.map((role) => (
                     <SelectItem
                       key={role}
                       value={role}
-                      className="text-white hover:bg-slate-700/50 focus:bg-slate-700/50 rounded-lg m-1"
+                      className={`rounded-lg m-1 transition-all duration-200 ${
+                        isLight 
+                          ? 'text-gray-900 hover:bg-purple-50 hover:text-purple-700 focus:bg-purple-100' 
+                          : 'text-white hover:bg-purple-500/20 hover:text-purple-300 focus:bg-purple-500/30'
+                      }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         {role === "user" && (
@@ -1225,30 +1251,43 @@ export default function UserManagementPage() {
               </Select>
 
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-full sm:w-36 h-12 bg-slate-800/50 border-slate-600/50 text-white rounded-xl backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Activity className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                <SelectTrigger className={`group relative w-full sm:w-36 h-12 rounded-xl backdrop-blur-sm transition-all duration-300 overflow-hidden ${
+                  isLight 
+                    ? 'bg-white/80 border-gray-300 text-gray-900 hover:bg-white hover:border-orange-400 hover:shadow-lg hover:shadow-orange-500/10' 
+                    : 'bg-slate-800/60 border-slate-600/50 text-white hover:bg-slate-700/60 hover:border-orange-400/50 hover:shadow-lg hover:shadow-orange-500/20'
+                }`}>
+                  {/* Efeito de brilho no hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <div className="flex items-center gap-2 min-w-0 relative z-10">
+                    <Activity className="w-4 h-4 text-orange-400 flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
                     <span className="truncate">
                       <SelectValue placeholder="Status" />
                     </span>
                   </div>
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800/95 border-slate-600/50 backdrop-blur-sm rounded-xl">
+                <SelectContent className={`backdrop-blur-sm rounded-xl shadow-xl ${
+                  isLight ? 'bg-white/95 border-gray-300' : 'bg-slate-800/95 border-slate-600/50'
+                }`}>
                   {statuses.map((status) => (
                     <SelectItem
                       key={status}
                       value={status}
-                      className="text-white hover:bg-slate-700/50 focus:bg-slate-700/50 rounded-lg m-1"
+                      className={`rounded-lg m-1 transition-all duration-200 ${
+                        isLight 
+                          ? 'text-gray-900 hover:bg-orange-50 hover:text-orange-700 focus:bg-orange-100' 
+                          : 'text-white hover:bg-orange-500/20 hover:text-orange-300 focus:bg-orange-500/30'
+                      }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         {status === "active" && (
-                          <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
+                          <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 animate-pulse"></div>
                         )}
                         {status === "inactive" && (
                           <div className="w-2 h-2 rounded-full bg-gray-500 flex-shrink-0"></div>
                         )}
                         {status === "suspended" && (
-                          <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
+                          <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0 animate-pulse"></div>
                         )}
                         {status === "Todos" && (
                           <div className="w-2 h-2 rounded-full bg-slate-400 flex-shrink-0"></div>
@@ -1272,20 +1311,33 @@ export default function UserManagementPage() {
                 value={selectedDepartment}
                 onValueChange={setSelectedDepartment}
               >
-                <SelectTrigger className="w-full sm:w-48 h-12 bg-slate-800/50 border-slate-600/50 text-white rounded-xl backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Building className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                <SelectTrigger className={`group relative w-full sm:w-48 h-12 rounded-xl backdrop-blur-sm transition-all duration-300 overflow-hidden ${
+                  isLight 
+                    ? 'bg-white/80 border-gray-300 text-gray-900 hover:bg-white hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-500/10' 
+                    : 'bg-slate-800/60 border-slate-600/50 text-white hover:bg-slate-700/60 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/20'
+                }`}>
+                  {/* Efeito de brilho no hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <div className="flex items-center gap-2 min-w-0 relative z-10">
+                    <Building className="w-4 h-4 text-cyan-400 flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
                     <span className="truncate">
                       <SelectValue placeholder="Departamento" />
                     </span>
                   </div>
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800/95 border-slate-600/50 backdrop-blur-sm rounded-xl">
+                <SelectContent className={`backdrop-blur-sm rounded-xl shadow-xl ${
+                  isLight ? 'bg-white/95 border-gray-300' : 'bg-slate-800/95 border-slate-600/50'
+                }`}>
                   {departments.map((dept) => (
                     <SelectItem
                       key={dept}
                       value={dept}
-                      className="text-white hover:bg-slate-700/50 focus:bg-slate-700/50 rounded-lg m-1"
+                      className={`rounded-lg m-1 transition-all duration-200 ${
+                        isLight 
+                          ? 'text-gray-900 hover:bg-cyan-50 hover:text-cyan-700 focus:bg-cyan-100' 
+                          : 'text-white hover:bg-cyan-500/20 hover:text-cyan-300 focus:bg-cyan-500/30'
+                      }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <Building className="w-4 h-4 text-cyan-400 flex-shrink-0" />
@@ -1295,6 +1347,30 @@ export default function UserManagementPage() {
                   ))}
                 </SelectContent>
               </Select>
+              
+              {/* Botão Limpar Filtros */}
+              {(selectedRole !== "Todos" || selectedStatus !== "Todos" || selectedDepartment !== "Todos" || searchTerm) && (
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedRole("Todos");
+                    setSelectedStatus("Todos");
+                    setSelectedDepartment("Todos");
+                  }}
+                  className={`group relative h-12 px-4 rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden hover:scale-105 ${
+                    isLight 
+                      ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:shadow-red-500/25' 
+                      : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:shadow-red-500/25'
+                  }`}
+                  title="Limpar todos os filtros"
+                >
+                  {/* Efeito de brilho no hover */}
+                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300 relative z-10" />
+                  <span className="text-sm font-semibold whitespace-nowrap relative z-10">Limpar</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -1303,18 +1379,20 @@ export default function UserManagementPage() {
             selectedRole !== "Todos" ||
             selectedStatus !== "Todos" ||
             selectedDepartment !== "Todos") && (
-            <div className="mt-4 p-4 bg-slate-800/30 border border-slate-600/30 rounded-xl backdrop-blur-sm">
+            <div className={`mt-4 p-4 border rounded-xl backdrop-blur-sm ${
+              isLight ? 'bg-blue-50/50 border-blue-200/50' : 'bg-slate-800/30 border-slate-600/30'
+            }`}>
               <div className="flex flex-col lg:flex-row lg:items-center gap-3">
                 {/* Results Counter */}
-                <div className="flex items-center gap-2 text-slate-300 min-w-fit">
+                <div className={`flex items-center gap-2 min-w-fit ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>
                   <Users className="w-4 h-4 text-blue-400 flex-shrink-0" />
                   <span className="text-sm whitespace-nowrap">
                     Exibindo{" "}
-                    <span className="font-bold text-white">
+                    <span className={`font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>
                       {filteredUsers.length}
                     </span>{" "}
                     de{" "}
-                    <span className="font-bold text-white">{users.length}</span>{" "}
+                    <span className={`font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>{users.length}</span>{" "}
                     usuários
                   </span>
                 </div>
@@ -1322,14 +1400,18 @@ export default function UserManagementPage() {
                 {/* Active Filters */}
                 <div className="flex flex-wrap gap-2 flex-1">
                   {searchTerm && (
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-cyan-300 text-xs min-w-fit">
+                    <div className={`flex items-center gap-1 px-3 py-1.5 border rounded-full text-xs min-w-fit ${
+                      isLight 
+                        ? 'bg-blue-100 border-blue-300 text-blue-700' 
+                        : 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300'
+                    }`}>
                       <Search className="w-3 h-3 flex-shrink-0" />
                       <span className="max-w-[120px] truncate">
                         "{searchTerm}"
                       </span>
                       <button
                         onClick={() => setSearchTerm("")}
-                        className="ml-1 hover:text-cyan-100 flex-shrink-0"
+                        className={`ml-1 flex-shrink-0 ${isLight ? 'hover:text-blue-800' : 'hover:text-cyan-100'}`}
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -1337,7 +1419,11 @@ export default function UserManagementPage() {
                   )}
 
                   {selectedRole !== "Todos" && (
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-full text-purple-300 text-xs min-w-fit">
+                    <div className={`flex items-center gap-1 px-3 py-1.5 border rounded-full text-xs min-w-fit ${
+                      isLight 
+                        ? 'bg-purple-100 border-purple-300 text-purple-700' 
+                        : 'bg-purple-500/20 border-purple-500/30 text-purple-300'
+                    }`}>
                       <Shield className="w-3 h-3 flex-shrink-0" />
                       <span className="whitespace-nowrap">
                         {selectedRole === "user"
@@ -1348,7 +1434,7 @@ export default function UserManagementPage() {
                       </span>
                       <button
                         onClick={() => setSelectedRole("Todos")}
-                        className="ml-1 hover:text-purple-100 flex-shrink-0"
+                        className={`ml-1 flex-shrink-0 ${isLight ? 'hover:text-purple-800' : 'hover:text-purple-100'}`}
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -1356,7 +1442,11 @@ export default function UserManagementPage() {
                   )}
 
                   {selectedStatus !== "Todos" && (
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-orange-500/20 border border-orange-500/30 rounded-full text-orange-300 text-xs min-w-fit">
+                    <div className={`flex items-center gap-1 px-3 py-1.5 border rounded-full text-xs min-w-fit ${
+                      isLight 
+                        ? 'bg-orange-100 border-orange-300 text-orange-700' 
+                        : 'bg-orange-500/20 border-orange-500/30 text-orange-300'
+                    }`}>
                       <Activity className="w-3 h-3 flex-shrink-0" />
                       <span className="whitespace-nowrap">
                         {selectedStatus === "active"
@@ -1367,7 +1457,7 @@ export default function UserManagementPage() {
                       </span>
                       <button
                         onClick={() => setSelectedStatus("Todos")}
-                        className="ml-1 hover:text-orange-100 flex-shrink-0"
+                        className={`ml-1 flex-shrink-0 ${isLight ? 'hover:text-orange-800' : 'hover:text-orange-100'}`}
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -1375,14 +1465,18 @@ export default function UserManagementPage() {
                   )}
 
                   {selectedDepartment !== "Todos" && (
-                    <div className="flex items-center gap-1 px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/30 rounded-full text-cyan-300 text-xs min-w-fit">
+                    <div className={`flex items-center gap-1 px-3 py-1.5 border rounded-full text-xs min-w-fit ${
+                      isLight 
+                        ? 'bg-green-100 border-green-300 text-green-700' 
+                        : 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300'
+                    }`}>
                       <Building className="w-3 h-3 flex-shrink-0" />
                       <span className="max-w-[100px] truncate">
                         {selectedDepartment}
                       </span>
                       <button
                         onClick={() => setSelectedDepartment("Todos")}
-                        className="ml-1 hover:text-cyan-100 flex-shrink-0"
+                        className={`ml-1 flex-shrink-0 ${isLight ? 'hover:text-green-800' : 'hover:text-cyan-100'}`}
                       >
                         <X className="w-3 h-3" />
                       </button>

@@ -100,7 +100,6 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
     setLoadingSugeridos(true);
     setReplaceError("");
     try {
-      const api = (await import('../../api/client')).default;
       const [localRes, webRes] = await Promise.all([
         api.get(`/cotacoes-itens/sugeridos/local/${item.id}`).then(r => r.data),
         api.get(`/cotacoes-itens/sugeridos/web/${item.id}`).then(r => r.data)
@@ -123,32 +122,56 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
   );
 
   return (
-  <div className={`border rounded-xl p-3 sm:p-4 md:p-6 flex flex-col gap-3 sm:gap-4 shadow-lg text-sm sm:text-base md:text-lg w-full overflow-hidden ${item.status === false ? 'bg-red-900/60 border-red-500/60 text-red-200' : 'bg-slate-800/60 border-cyan-900/30 text-white'}`}>
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between">
+  <div className={`border-2 rounded-2xl p-4 md:p-6 flex flex-col gap-4 shadow-lg transition-all duration-300 hover:scale-[1.005] hover:shadow-xl w-full overflow-hidden ${
+    item.status === false 
+      ? isLight 
+        ? 'bg-red-50 border-red-300 text-red-900 hover:border-red-400' 
+        : 'bg-red-900/60 border-red-500/60 text-red-200 hover:border-red-400/80'
+      : isLight 
+        ? 'bg-white border-gray-300 text-gray-900 hover:border-blue-400' 
+        : 'bg-slate-800/60 border-cyan-900/30 text-white hover:border-cyan-400/60'
+  }`}>
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex-1 min-w-0">
-          <div className="text-white font-semibold text-sm sm:text-base break-words">
+          <div className={`font-semibold text-lg ${
+            isLight ? 'text-gray-900' : 'text-white'
+          }`}>
             {item.item_nome && item.item_nome.length > 50
               ? item.item_nome.slice(0, 50) + '...'
               : item.item_nome}
           </div>
-          <div className="text-slate-400 text-xs mt-1 break-words">
-            {t("quoteRequests.supplierLabel")}: <span className="text-cyan-300">{item.provider || item.fornecedor || '-'}</span>
+          <div className={`text-sm mt-2 break-words ${
+            isLight ? 'text-gray-600' : 'text-slate-400'
+          }`}>
+            {t("quoteRequests.supplierLabel")}: <span className={`font-medium ${
+              isLight ? 'text-blue-600' : 'text-cyan-300'
+            }`}>{item.provider || item.fornecedor || '-'}</span>
           </div>
-          <div className="text-slate-400 text-xs break-words">
-            {t("quoteRequests.originLabel")}: <span className="text-cyan-300">{item.origem || '-'}</span>
+          <div className={`text-sm break-words ${
+            isLight ? 'text-gray-600' : 'text-slate-400'
+          }`}>
+            {t("quoteRequests.originLabel")}: <span className={`font-medium ${
+              isLight ? 'text-blue-600' : 'text-cyan-300'
+            }`}>{item.origem || '-'}</span>
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           {/* Informações de preço responsivas */}
           <div className="flex flex-col sm:text-right order-2 sm:order-1">
-            <div className="text-slate-300 text-xs sm:text-sm">
+            <div className={`text-sm ${
+              isLight ? 'text-gray-700' : 'text-slate-300'
+            }`}>
               {t("quoteRequests.quantityLabel")}: <b>{item.quantidade}</b>
             </div>
-            <div className="text-slate-300 text-xs sm:text-sm break-words">
+            <div className={`text-sm break-words ${
+              isLight ? 'text-gray-700' : 'text-slate-300'
+            }`}>
               {t("quoteRequests.priceLabel")}: <b>{item.item_preco} {item.item_moeda}</b>
             </div>
-            <div className="text-slate-300 text-xs sm:text-sm break-words">
+            <div className={`text-sm break-words ${
+              isLight ? 'text-green-700' : 'text-green-400'
+            } font-bold`}>
               {t("quoteRequests.subtotalLabel")}: <b>{formatCurrency(item.quantidade * item.item_preco)}</b>
             </div>
           </div>
@@ -157,14 +180,22 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
           <div className="flex flex-row sm:flex-col gap-2 order-1 sm:order-2">
             <button 
               onClick={() => setOpen(true)} 
-              className="flex-1 sm:flex-none bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border border-cyan-700/40 px-2 sm:px-3 py-1 sm:py-1 rounded text-xs font-semibold transition-all min-h-[32px] sm:min-h-auto"
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.02] border-2 ${
+                isLight 
+                  ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300 hover:border-blue-400' 
+                  : 'bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border-cyan-700/40 hover:border-cyan-400/60'
+              }`}
             >
               {t("quoteRequests.itemDetails")}
             </button>
             {item.status === true && (
               <button 
                 onClick={() => { setShowReplace(v => { if (!v) fetchSugeridos(); return !v; }); }} 
-                className="flex-1 sm:flex-none bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border border-blue-700/40 px-2 sm:px-3 py-1 sm:py-1 rounded text-xs font-semibold transition-all min-h-[32px] sm:min-h-auto"
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.02] border-2 ${
+                  isLight 
+                    ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 hover:border-purple-400' 
+                    : 'bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border-blue-700/40 hover:border-blue-400/60'
+                }`}
               >
                 {t("quoteRequests.replaceItem")}
               </button>
@@ -172,7 +203,11 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
             {item.status === false && (
               <button 
                 onClick={() => { setShowReplace(v => { if (!v) fetchSugeridos(); return !v; }); }} 
-                className="flex-1 sm:flex-none bg-green-900/30 hover:bg-green-700/40 text-green-300 border border-green-700/40 px-2 sm:px-3 py-1 sm:py-1 rounded text-xs font-semibold transition-all min-h-[32px] sm:min-h-auto"
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.02] border-2 ${
+                  isLight 
+                    ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-300 hover:border-green-400' 
+                    : 'bg-green-900/30 hover:bg-green-700/40 text-green-300 border-green-700/40 hover:border-green-400/60'
+                }`}
               >
                 Adicionar Item
               </button>
@@ -182,62 +217,96 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
       </div>
       
       {/* Descrição responsiva */}
-      <div className="text-slate-300 text-xs mt-2 break-words">
+      <div className={`text-sm ${
+        isLight ? 'text-gray-600' : 'text-slate-300'
+      }`}>
         {item.item_descricao && item.item_descricao.length > 50
           ? item.item_descricao.slice(0, 50) + '...'
           : item.item_descricao}
       </div>
       {showReplace && (
-        <div className="mt-3 sm:mt-4 p-6 sm:p-8 bg-slate-900/90 border border-cyan-700/30 rounded-2xl w-full overflow-hidden min-h-[400px] max-h-[80vh]">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4">
+        <div className={`mt-4 p-6 rounded-2xl w-full overflow-hidden min-h-[400px] max-h-[80vh] border-2 ${
+          isLight 
+            ? 'bg-gray-50 border-gray-300' 
+            : 'bg-slate-900/90 border-cyan-700/30'
+        }`}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
             <input
               type="text"
-              className="flex-1 px-4 py-3 rounded-xl bg-slate-800 text-white border border-cyan-700/30 focus:border-cyan-400 outline-none text-base min-w-0"
+              className={`flex-1 px-4 py-3 rounded-xl border-2 focus:outline-none text-base min-w-0 transition-all duration-300 ${
+                isLight 
+                  ? 'bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200' 
+                  : 'bg-slate-800 text-white border-cyan-700/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20'
+              }`}
               placeholder={t("quoteRequests.searchProduct")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               disabled={loadingSugeridos}
             />
-            <Search className="w-5 h-5 text-cyan-400" />
+            <Search className={`w-5 h-5 ${isLight ? 'text-blue-500' : 'text-cyan-400'}`} />
           </div>
-          {replaceError && <div className="text-red-400 text-base mb-3 break-words">{replaceError}</div>}
-          {replaceSuccess && <div className="text-green-400 text-base mb-3 animate-pulse break-words">{replaceSuccess}</div>}
+          {replaceError && <div className="text-red-500 text-base mb-3 break-words p-3 bg-red-50 border border-red-200 rounded-lg">{replaceError}</div>}
+          {replaceSuccess && <div className="text-green-500 text-base mb-3 animate-pulse break-words p-3 bg-green-50 border border-green-200 rounded-lg">{replaceSuccess}</div>}
           <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-800 flex flex-col gap-6">
             {/* SUGESTÕES LOCAIS */}
             <div>
-              <h3 className="text-cyan-300 text-lg font-bold mb-2">Sugestões Locais</h3>
+              <h3 className={`text-lg font-bold mb-4 ${
+                isLight ? 'text-blue-600' : 'text-cyan-300'
+              }`}>Sugestões Locais</h3>
               {loadingSugeridos ? (
-                <div className="text-slate-400 text-base p-4 text-center">{t("quoteRequests.loadingProducts")}</div>
+                <div className={`text-base p-4 text-center ${
+                  isLight ? 'text-gray-600' : 'text-slate-400'
+                }`}>{t("quoteRequests.loadingProducts")}</div>
               ) : sugeridosLocalFiltrados.length === 0 ? (
-                <div className="text-slate-400 text-base p-4 text-center">Nenhum produto local encontrado.</div>
+                <div className={`text-base p-4 text-center ${
+                  isLight ? 'text-gray-600' : 'text-slate-400'
+                }`}>Nenhum produto local encontrado.</div>
               ) : sugeridosLocalFiltrados.map(prod => (
                 <button
                   key={prod.id}
-                  className="w-full text-left px-4 py-3 hover:bg-cyan-800/30 rounded text-cyan-200 text-base flex items-center gap-2 transition-all break-words min-h-[44px]"
+                  className={`w-full text-left px-4 py-3 rounded-lg text-base flex items-center gap-3 transition-all duration-300 hover:scale-[1.02] break-words min-h-[48px] border-2 ${
+                    isLight 
+                      ? 'hover:bg-blue-50 text-blue-700 border-blue-200 hover:border-blue-400' 
+                      : 'hover:bg-cyan-800/30 text-cyan-200 border-cyan-700/30 hover:border-cyan-400/60'
+                  }`}
                   onClick={() => handleReplaceUniversal(prod, item, setReplaceLoading, setReplaceError, setReplaceSuccess, onItemReplaced, t)}
                   disabled={replaceLoading}
                 >
-                  <Search className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                  <span className="break-words">{prod.nome}</span>
+                  <Search className={`w-5 h-5 flex-shrink-0 ${
+                    isLight ? 'text-blue-500' : 'text-cyan-400'
+                  }`} />
+                  <span className="break-words font-medium">{prod.nome}</span>
                 </button>
               ))}
             </div>
             {/* SUGESTÕES WEB */}
             <div>
-              <h3 className="text-blue-300 text-lg font-bold mb-2">Sugestões Web</h3>
+              <h3 className={`text-lg font-bold mb-4 ${
+                isLight ? 'text-purple-600' : 'text-blue-300'
+              }`}>Sugestões Web</h3>
               {loadingSugeridos ? (
-                <div className="text-slate-400 text-base p-4 text-center">{t("quoteRequests.loadingProducts")}</div>
+                <div className={`text-base p-4 text-center ${
+                  isLight ? 'text-gray-600' : 'text-slate-400'
+                }`}>{t("quoteRequests.loadingProducts")}</div>
               ) : sugeridosWebFiltrados.length === 0 ? (
-                <div className="text-slate-400 text-base p-4 text-center">Nenhum produto web encontrado.</div>
+                <div className={`text-base p-4 text-center ${
+                  isLight ? 'text-gray-600' : 'text-slate-400'
+                }`}>Nenhum produto web encontrado.</div>
               ) : sugeridosWebFiltrados.map((prod, idx) => (
                 <button
                   key={prod.url || prod.id || idx}
-                  className="w-full text-left px-4 py-3 hover:bg-blue-800/30 rounded text-blue-200 text-base flex items-center gap-2 transition-all break-words min-h-[44px]"
+                  className={`w-full text-left px-4 py-3 rounded-lg text-base flex items-center gap-3 transition-all duration-300 hover:scale-[1.02] break-words min-h-[48px] border-2 ${
+                    isLight 
+                      ? 'hover:bg-purple-50 text-purple-700 border-purple-200 hover:border-purple-400' 
+                      : 'hover:bg-blue-800/30 text-blue-200 border-blue-700/30 hover:border-blue-400/60'
+                  }`}
                   onClick={() => handleReplaceUniversal(prod, item, setReplaceLoading, setReplaceError, setReplaceSuccess, onItemReplaced, t)}
                   disabled={replaceLoading}
                 >
-                  <Search className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                  <span className="break-words">{prod.nome}</span>
+                  <Search className={`w-5 h-5 flex-shrink-0 ${
+                    isLight ? 'text-purple-500' : 'text-blue-400'
+                  }`} />
+                  <span className="break-words font-medium">{prod.nome}</span>
                 </button>
               ))}
             </div>
@@ -246,82 +315,150 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
       )}
       {/* Submodal para detalhes completos - Layout de Fatura 100% Responsivo */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl max-h-[95vh] overflow-y-auto bg-slate-900/95 border border-cyan-400/30 p-3 sm:p-4 md:p-6 rounded-xl sm:rounded-2xl m-2 sm:m-4">
-          <DialogHeader className="pb-3 sm:pb-4">
-            <DialogTitle className="text-cyan-300 text-lg sm:text-xl md:text-2xl flex items-center gap-2 flex-wrap">
-              <FileText className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+        <DialogContent className={`w-[95vw] max-w-[95vw] sm:w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl max-h-[95vh] overflow-y-auto p-4 md:p-6 rounded-2xl m-2 sm:m-4 ${
+          isLight 
+            ? 'bg-white border-gray-300' 
+            : 'bg-slate-900/95 border-cyan-400/30'
+        }`}>
+          <DialogHeader className={`pb-4 ${
+            isLight ? 'border-gray-200' : 'border-slate-700/50'
+          } border-b`}>
+            <DialogTitle className={`text-xl md:text-2xl flex items-center gap-2 flex-wrap font-bold ${
+              isLight ? 'text-gray-900' : 'text-cyan-300'
+            }`}>
+              <FileText className="w-6 h-6 flex-shrink-0" />
               <span className="break-words">{t("quoteRequests.invoiceTitle", "Fatura do Item")}</span>
             </DialogTitle>
           </DialogHeader>
           
           {/* Layout de Fatura Responsivo */}
-          <div className="bg-white/5 border border-slate-600/30 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 mt-3 sm:mt-4">
+          <div className={`rounded-2xl p-4 md:p-6 mt-4 border-2 ${
+            isLight 
+              ? 'bg-gray-50 border-gray-200' 
+              : 'bg-white/5 border-slate-600/30'
+          }`}>
             {/* Cabeçalho da Fatura Responsivo */}
-            <div className="border-b border-slate-600/30 pb-3 sm:pb-4 mb-4 sm:mb-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
+            <div className={`pb-4 mb-6 border-b ${
+              isLight ? 'border-gray-200' : 'border-slate-600/30'
+            }`}>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-cyan-300 mb-1 sm:mb-2 break-words">FATURA DE ITEM</h3>
-                  <p className="text-slate-400 text-xs sm:text-sm">Detalhes da cotação solicitada</p>
+                  <h3 className={`text-xl md:text-2xl font-bold mb-2 break-words ${
+                    isLight ? 'text-blue-600' : 'text-cyan-300'
+                  }`}>FATURA DE ITEM</h3>
+                  <p className={`text-sm ${
+                    isLight ? 'text-gray-600' : 'text-slate-400'
+                  }`}>Detalhes da cotação solicitada</p>
                 </div>
                 <div className="text-left sm:text-right flex-shrink-0">
-                  <p className="text-slate-400 text-xs sm:text-sm">Data: {new Date().toLocaleDateString('pt-PT')}</p>
-                  <p className="text-slate-400 text-xs sm:text-sm break-all">ID: #{item.id || 'N/A'}</p>
+                  <p className={`text-sm ${
+                    isLight ? 'text-gray-600' : 'text-slate-400'
+                  }`}>Data: {new Date().toLocaleDateString('pt-PT')}</p>
+                  <p className={`text-sm break-all ${
+                    isLight ? 'text-gray-600' : 'text-slate-400'
+                  }`}>ID: #{item.id || 'N/A'}</p>
                 </div>
               </div>
             </div>
 
             {/* Informações do Item - Grid Responsivo */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Informações do Produto */}
-              <div className="space-y-3">
-                <h4 className="text-base sm:text-lg font-semibold text-cyan-300 border-b border-slate-600/30 pb-2">Informações do Produto</h4>
-                <div className="space-y-2 sm:space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
-                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Nome:</span> 
-                    <span className="text-white font-medium text-sm break-words">{item.item_nome}</span>
+              <div className="space-y-4">
+                <h4 className={`text-lg font-semibold pb-2 border-b ${
+                  isLight 
+                    ? 'text-blue-600 border-gray-200' 
+                    : 'text-cyan-300 border-slate-600/30'
+                }`}>Informações do Produto</h4>
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                    <span className={`text-sm font-medium flex-shrink-0 ${
+                      isLight ? 'text-gray-600' : 'text-slate-400'
+                    }`}>Nome:</span> 
+                    <span className={`font-medium text-sm ${
+                      isLight ? 'text-gray-900' : 'text-white'
+                    }`}>{item.item_nome}</span>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
-                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Descrição:</span> 
-                    <span className="text-white text-sm break-words">{item.item_descricao || '-'}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                    <span className={`text-sm font-medium flex-shrink-0 ${
+                      isLight ? 'text-gray-600' : 'text-slate-400'
+                    }`}>Descrição:</span> 
+                    <span className={`text-sm ${
+                      isLight ? 'text-gray-900' : 'text-white'
+                    }`}>{item.item_descricao || '-'}</span>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
-                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Fornecedor:</span> 
-                    <span className="text-cyan-300 font-medium text-sm break-words">{item.provider || item.fornecedor || '-'}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                    <span className={`text-sm font-medium flex-shrink-0 ${
+                      isLight ? 'text-gray-600' : 'text-slate-400'
+                    }`}>Fornecedor:</span> 
+                    <span className={`font-medium text-sm break-words ${
+                      isLight ? 'text-blue-600' : 'text-cyan-300'
+                    }`}>{item.provider || item.fornecedor || '-'}</span>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
-                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Origem:</span> 
-                    <span className="text-white text-sm break-words">{item.origem || '-'}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                    <span className={`text-sm font-medium flex-shrink-0 ${
+                      isLight ? 'text-gray-600' : 'text-slate-400'
+                    }`}>Origem:</span> 
+                    <span className={`text-sm break-words ${
+                      isLight ? 'text-gray-900' : 'text-white'
+                    }`}>{item.origem || '-'}</span>
                   </div>
                 </div>
               </div>
               
               {/* Detalhes Financeiros */}
-              <div className="space-y-3">
-                <h4 className="text-base sm:text-lg font-semibold text-cyan-300 border-b border-slate-600/30 pb-2">Detalhes Financeiros</h4>
-                <div className="space-y-2 sm:space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
-                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Preço Unitário:</span> 
-                    <span className="text-green-400 font-bold text-sm break-words">{item.item_preco} {item.item_moeda}</span>
+              <div className="space-y-4">
+                <h4 className={`text-lg font-semibold pb-2 border-b ${
+                  isLight 
+                    ? 'text-green-600 border-gray-200' 
+                    : 'text-cyan-300 border-slate-600/30'
+                }`}>Detalhes Financeiros</h4>
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                    <span className={`text-sm font-medium flex-shrink-0 ${
+                      isLight ? 'text-gray-600' : 'text-slate-400'
+                    }`}>Preço Unitário:</span> 
+                    <span className={`font-bold text-sm break-words ${
+                      isLight ? 'text-green-600' : 'text-green-400'
+                    }`}>{item.item_preco} {item.item_moeda}</span>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
-                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Quantidade:</span> 
-                    <span className="text-white font-medium text-sm">{item.quantidade}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                    <span className={`text-sm font-medium flex-shrink-0 ${
+                      isLight ? 'text-gray-600' : 'text-slate-400'
+                    }`}>Quantidade:</span> 
+                    <span className={`font-medium text-sm ${
+                      isLight ? 'text-gray-900' : 'text-white'
+                    }`}>{item.quantidade}</span>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
-                    <span className="text-slate-400 text-sm font-medium flex-shrink-0">Moeda:</span> 
-                    <span className="text-white text-sm">{item.item_moeda}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                    <span className={`text-sm font-medium flex-shrink-0 ${
+                      isLight ? 'text-gray-600' : 'text-slate-400'
+                    }`}>Moeda:</span> 
+                    <span className={`text-sm ${
+                      isLight ? 'text-gray-900' : 'text-white'
+                    }`}>{item.item_moeda}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Total da Fatura - Responsivo */}
-            <div className="border-t border-slate-600/30 pt-3 sm:pt-4">
+            <div className={`pt-4 border-t ${
+              isLight ? 'border-gray-200' : 'border-slate-600/30'
+            }`}>
               <div className="flex justify-center sm:justify-end">
-                <div className="bg-slate-800/50 rounded-lg p-3 sm:p-4 w-full sm:w-auto sm:min-w-64 max-w-sm">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-                    <span className="text-base sm:text-lg font-semibold text-slate-300 text-center sm:text-left">Total:</span>
-                    <span className="text-xl sm:text-2xl font-bold text-green-400 text-center sm:text-right break-all">{formatCurrency(item.quantidade * item.item_preco)}</span>
+                <div className={`rounded-2xl p-4 w-full sm:w-auto sm:min-w-64 max-w-sm border-2 ${
+                  isLight 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-slate-800/50 border-green-500/30'
+                }`}>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                    <span className={`text-lg font-semibold text-center sm:text-left ${
+                      isLight ? 'text-green-700' : 'text-slate-300'
+                    }`}>Total:</span>
+                    <span className={`text-2xl font-bold text-center sm:text-right break-all ${
+                      isLight ? 'text-green-700' : 'text-green-400'
+                    }`}>{formatCurrency(item.quantidade * item.item_preco)}</span>
                   </div>
                 </div>
               </div>
@@ -329,10 +466,14 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
           </div>
           
           {/* Botões Responsivos */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6 w-full">
+          <div className="flex flex-col sm:flex-row gap-4 mt-6 w-full">
             <button 
               onClick={() => setOpen(false)} 
-              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-base sm:text-lg rounded-md bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border border-cyan-600/60 font-semibold transition-all duration-200 min-h-[44px]"
+              className={`w-full sm:w-auto px-6 py-3 text-lg rounded-lg font-semibold transition-all duration-300 hover:scale-[1.02] border-2 ${
+                isLight 
+                  ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 hover:border-gray-400' 
+                  : 'bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border-cyan-600/60 hover:border-cyan-400/80'
+              }`}
             >
               {t("quoteRequests.close")}
             </button>
@@ -700,19 +841,23 @@ export function QuoteRequestsPage({
     onDownload: (cotacao: any) => void;
     isLight?: boolean;
   }) => (
-  <div className={`glass-card ${isLight ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 hover:border-blue-400/60' : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-white/10 hover:border-cyan-400/30'} rounded-xl p-3 sm:p-4 backdrop-blur-sm transition-all duration-300 group relative w-full max-w-screen overflow-x-auto`}>
-      {/* Borda lateral de status */}
+  <div className={`glass-card border-2 ${
+    isLight 
+      ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 hover:shadow-xl' 
+      : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-600/70 hover:border-cyan-400/60 hover:shadow-2xl hover:shadow-cyan-400/20'
+  } rounded-xl p-3 sm:p-4 backdrop-blur-sm transition-all duration-300 group relative w-full max-w-screen overflow-x-auto hover:scale-[1.005]`}>
+      {/* Borda lateral de status mais visível */}
       <div
-        className={`absolute left-0 top-0 w-1 h-full rounded-l-xl ${
+        className={`absolute left-0 top-0 w-2 h-full rounded-l-xl transition-all duration-300 group-hover:w-3 ${
           cotacao.status === "pending_approval"
-            ? "bg-orange-500"
+            ? "bg-orange-500 group-hover:bg-orange-400"
             : cotacao.status === "processing"
-            ? "bg-blue-500"
+            ? "bg-blue-500 group-hover:bg-blue-400"
             : cotacao.status === "processed" || cotacao.status === "approved"
-            ? "bg-green-500"
+            ? "bg-green-500 group-hover:bg-green-400"
             : cotacao.status === "rejected"
-            ? "bg-red-500"
-            : "bg-purple-500"
+            ? "bg-red-500 group-hover:bg-red-400"
+            : "bg-purple-500 group-hover:bg-purple-400"
         }`}
       ></div>
 
@@ -817,7 +962,7 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => openApproval(String(cotacao.id),'approve')}
                   aria-label="Aprovar cotação"
-                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700 hover:text-green-800 focus:ring-green-500' : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 text-green-400 hover:text-green-300 focus:ring-green-400'} hover:border-green-400/60 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`}
+                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700 hover:text-green-800 focus:ring-green-500 hover:border-green-400' : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 text-green-400 hover:text-green-300 focus:ring-green-400 hover:border-green-400/60'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Check className="w-3 h-3" />
                   <span>Aprovar</span>
@@ -825,7 +970,7 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
                   aria-label="Ver detalhes da cotação"
-                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 text-blue-400 hover:text-blue-300 focus:ring-blue-400'} hover:border-blue-400/60 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`}
+                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 text-blue-400 hover:text-blue-300 focus:ring-blue-400 hover:border-blue-400/60'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Info className="w-3 h-3" />
                   <span>Ver Detalhes</span>
@@ -837,14 +982,14 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
                   aria-label="Visualizar cotação"
-                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 text-blue-400 hover:text-blue-300 focus:ring-blue-400'} hover:border-blue-400/60 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`}
+                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 text-blue-400 hover:text-blue-300 focus:ring-blue-400 hover:border-blue-400/60'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Eye className="w-3 h-3" />
                   <span>Visualizar</span>
                 </button>
                 <button 
                   onClick={() => onDownload(cotacao)}
-                  className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 hover:text-purple-700 focus:ring-purple-500' : 'bg-slate-700/50 hover:bg-slate-600/70 border-slate-600/50 text-slate-300 hover:text-purple-300 focus:ring-purple-400'} hover:border-purple-500/30 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`} 
+                  className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 hover:text-purple-700 focus:ring-purple-500 hover:border-purple-400' : 'bg-slate-700/50 hover:bg-slate-600/70 border-slate-600/50 text-slate-300 hover:text-purple-300 focus:ring-purple-400 hover:border-purple-500/50'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`} 
                   aria-label="Download"
                 >
                   <Download className="w-3 h-3" />
@@ -853,7 +998,7 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => openApproval(String(cotacao.id),'set_pending')}
                   aria-label="Colocar como pendente"
-                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 text-orange-400 hover:text-orange-300 focus:ring-orange-400'} hover:border-orange-400/60 border px-3 py-2 text-xs rounded-lg transition-all duration-200 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-105 focus:outline-none focus:ring-2`}
+                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 text-orange-400 hover:text-orange-300 focus:ring-orange-400 hover:border-orange-400/60'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Clock className="w-3 h-3" />
                   <span>Pendente</span>
@@ -1007,22 +1152,38 @@ export function QuoteRequestsPage({
   <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
             {/* Tabs - ocultas no mobile */}
-            <TabsList className={`hidden md:flex ${isLight ? 'bg-gray-200 border-gray-300' : 'bg-slate-800/50 border-slate-700/50'} backdrop-blur-sm rounded-xl p-1 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent`}>
+            <TabsList className={`hidden md:flex backdrop-blur-sm rounded-xl p-1 overflow-x-auto scrollbar-thin border-2 ${
+              isLight 
+                ? 'bg-gray-100 border-gray-300 scrollbar-thumb-gray-400 scrollbar-track-transparent' 
+                : 'bg-slate-800/50 border-slate-700/50 scrollbar-thumb-slate-600 scrollbar-track-transparent'
+            }`}>
               <TabsTrigger
                 value="all"
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
+                className={`transition-all duration-200 whitespace-nowrap px-3 py-2 sm:px-4 min-w-max text-xs sm:text-sm rounded-lg ${
+                  isLight 
+                    ? 'data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:bg-blue-100 hover:text-blue-700' 
+                    : 'data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 hover:bg-blue-500/20 hover:text-blue-300'
+                }`}
               >
                 {t("quoteRequests.allTab")} ({filteredCotacoes.length})
               </TabsTrigger>
               <TabsTrigger
                 value="pending"
-                className="data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-orange-500/20 hover:text-orange-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
+                className={`transition-all duration-200 whitespace-nowrap px-3 py-2 sm:px-4 min-w-max text-xs sm:text-sm rounded-lg ${
+                  isLight 
+                    ? 'data-[state=active]:bg-orange-600 data-[state=active]:text-white text-gray-600 hover:bg-orange-100 hover:text-orange-700' 
+                    : 'data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-300 hover:bg-orange-500/20 hover:text-orange-300'
+                }`}
               >
                 {t("quoteRequests.pendingTab")} ({filteredCotacoes.filter(getTabFilter('pending')).length})
               </TabsTrigger>
               <TabsTrigger
                 value="approved"
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-300 text-xs sm:text-sm hover:bg-green-500/20 hover:text-green-300 transition-all duration-200 whitespace-nowrap px-2 py-2 sm:px-4 min-w-max"
+                className={`transition-all duration-200 whitespace-nowrap px-3 py-2 sm:px-4 min-w-max text-xs sm:text-sm rounded-lg ${
+                  isLight 
+                    ? 'data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-600 hover:bg-green-100 hover:text-green-700' 
+                    : 'data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-300 hover:bg-green-500/20 hover:text-green-300'
+                }`}
               >
                 {t("quoteRequests.approvedTab")} ({filteredCotacoes.filter(getTabFilter('approved')).length})
               </TabsTrigger>
@@ -1034,12 +1195,20 @@ export function QuoteRequestsPage({
               <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-1 md:space-y-3 lg:space-y-0 lg:space-x-4">
                 {/* Pesquisa - sempre visível */}
                 <div className="relative group flex-1 min-w-0">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
+                  <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
+                    isLight 
+                      ? 'text-gray-400 group-hover:text-blue-500' 
+                      : 'text-slate-400 group-hover:text-cyan-400'
+                  } transition-colors duration-200 z-10 pointer-events-none`} />
                   <Input
                     placeholder={t("quoteRequests.searchByClient")}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 md:h-auto"
+                    className={`pl-11 w-full h-10 md:h-auto transition-all duration-200 ${
+                      isLight 
+                        ? 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 hover:border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200' 
+                        : 'bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 hover:border-cyan-400/50 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20'
+                    }`}
                   />
                 </div>
 
@@ -1047,17 +1216,25 @@ export function QuoteRequestsPage({
                 <div className="flex items-center gap-2 ml-auto justify-end mt-2 md:mt-0">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                    className={`px-3 py-2 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 hover:scale-105 ${
+                      isLight 
+                        ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 hover:border-gray-300' 
+                        : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 border border-slate-600/50 hover:border-slate-500/70'
+                    }`}
                     disabled={currentPage === 1}
                   >
                     {t("quoteRequests.previous")}
                   </button>
-                  <span className="text-slate-300 font-medium text-sm">
+                  <span className={`font-medium text-sm ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>
                     {t("quoteRequests.page")} {currentPage} {t("quoteRequests.of")} {getTotalPages()}
                   </span>
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(getTotalPages(), p + 1))}
-                    className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                    className={`px-3 py-2 rounded-lg font-semibold text-sm transition-all duration-200 disabled:opacity-50 hover:scale-105 ${
+                      isLight 
+                        ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 hover:border-gray-300' 
+                        : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 border border-slate-600/50 hover:border-slate-500/70'
+                    }`}
                     disabled={currentPage === getTotalPages()}
                   >
                     {t("quoteRequests.next")}
@@ -1067,7 +1244,11 @@ export function QuoteRequestsPage({
 
               {/* Filtros Avançados (Expansíveis) - ocultos no mobile */}
               {showAdvancedFilters && (
-                <div className="hidden md:block glass-card bg-slate-800/30 rounded-lg p-3 sm:p-4 border border-slate-700/50 space-y-4">
+                <div className={`hidden md:block rounded-2xl p-4 border-2 space-y-4 ${
+                  isLight 
+                    ? 'bg-gray-50 border-gray-300' 
+                    : 'bg-slate-800/30 border-slate-700/50'
+                }`}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {/* Filtro por Fornecedor */}
                     <div>
@@ -1246,21 +1427,33 @@ export function QuoteRequestsPage({
                   </div>
 
                   {/* Ações dos Filtros */}
-                  <div className="flex flex-col sm:flex-row justify-between items-center pt-3 border-t border-slate-700/50 space-y-2 sm:space-y-0">
-                    <div className="text-slate-400 text-xs">
+                  <div className={`flex flex-col sm:flex-row justify-between items-center pt-3 space-y-2 sm:space-y-0 border-t ${
+                    isLight ? 'border-gray-300' : 'border-slate-700/50'
+                  }`}>
+                    <div className={`text-xs ${
+                      isLight ? 'text-gray-600' : 'text-slate-400'
+                    }`}>
                       {filteredCotacoes.length} de {cotacoesList.length}{" "}
                       cotações encontradas
                     </div>
                     <div className="flex space-x-2">
                       <button
                         onClick={clearAllFilters}
-                        className="bg-slate-700/50 hover:bg-slate-600/70 hover:border-red-500/30 border border-slate-600/50 text-slate-300 hover:text-red-300 px-3 py-1 text-xs rounded-lg transition-all duration-200"
+                        className={`px-3 py-1 text-xs rounded-lg transition-all duration-200 border ${
+                          isLight 
+                            ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 hover:text-red-600 hover:border-red-300' 
+                            : 'bg-slate-700/50 hover:bg-slate-600/70 hover:border-red-500/30 border-slate-600/50 text-slate-300 hover:text-red-300'
+                        }`}
                       >
                         Limpar Filtros
                       </button>
                       <button
                         onClick={() => setShowAdvancedFilters(false)}
-                        className="bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 hover:border-blue-400/50 text-blue-400 hover:text-blue-300 px-3 py-1 text-xs rounded-lg transition-all duration-200"
+                        className={`px-3 py-1 text-xs rounded-lg transition-all duration-200 border ${
+                          isLight 
+                            ? 'bg-blue-50 hover:bg-blue-100 border-blue-200 hover:border-blue-300 text-blue-600 hover:text-blue-700' 
+                            : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 hover:border-blue-400/50 text-blue-400 hover:text-blue-300'
+                        }`}
                       >
                         Aplicar
                       </button>
@@ -1422,7 +1615,7 @@ export function QuoteRequestsPage({
   <DialogContent className={`w-full max-w-4xl max-h-[90vh] overflow-y-auto ${isLight ? 'bg-white border-gray-300' : 'bg-gradient-to-br from-slate-900/95 to-slate-800/95 border-cyan-400/30'} backdrop-blur-xl p-8 rounded-2xl`}>
           <DialogHeader className={`${isLight ? 'border-gray-200' : 'border-slate-700/50'} border-b pb-2`}>
             <DialogTitle className={`text-lg font-bold ${isLight ? 'text-gray-800' : 'text-white'} flex items-center gap-2`}>
-              <FileText className="h-5 w-5 text-cyan-400" />
+              <FileText className={`h-5 w-5 ${isLight ? 'text-blue-600' : 'text-cyan-400'}`} />
               {t("quoteRequests.quotationDetails")} {selectedCotacao?.id}
             </DialogTitle>
           </DialogHeader>
@@ -1430,8 +1623,10 @@ export function QuoteRequestsPage({
           {/* Exibir itens da cotação com todos os campos fundamentais */}
           {cotacaoItens.length > 0 ? (
             <div className="mt-6">
-              <h3 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
-                <Info className="h-4 w-4 text-cyan-400" />
+              <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${
+                isLight ? 'text-gray-800' : 'text-white'
+              }`}>
+                <Info className={`h-5 w-5 ${isLight ? 'text-blue-500' : 'text-cyan-400'}`} />
                 {t("quoteRequests.quotationItems")}
               </h3>
               <div className="space-y-4">
@@ -1441,13 +1636,25 @@ export function QuoteRequestsPage({
               </div>
             </div>
           ) : (
-            <div className="mt-6 text-slate-400 text-sm">{t("quoteRequests.noItemsFound")}</div>
+            <div className={`mt-6 text-sm p-4 rounded-lg border-2 border-dashed ${
+              isLight 
+                ? 'text-gray-600 border-gray-300 bg-gray-50' 
+                : 'text-slate-400 border-slate-600 bg-slate-800/30'
+            }`}>{t("quoteRequests.noItemsFound")}</div>
           )}
-          <div className="glass-card bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-xl p-2 sm:p-4 border border-white/10 mt-6">
+          <div className={`rounded-2xl p-4 border-2 mt-6 ${
+            isLight 
+              ? 'bg-gray-50 border-gray-300' 
+              : 'bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-600/30'
+          }`}>
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full">
-              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                 <button
-                  className="w-full sm:w-auto bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-400 border border-blue-500/50 hover:border-blue-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm"
+                  className={`w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
+                    isLight 
+                      ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300 hover:border-blue-400 hover:shadow-lg' 
+                      : 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-400 border-blue-500/50 hover:border-blue-400/70 hover:shadow-cyan-400/20'
+                  }`}
                   onClick={handleOpenDownloadModal}
                   aria-label="Download da cotação"
                 >
@@ -1477,7 +1684,11 @@ export function QuoteRequestsPage({
           </div>
         </DialogContent>
       </Dialog>
-              <button className="w-full sm:w-auto bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border border-purple-500/50 hover:border-purple-400/70 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all hover:scale-105 text-sm">
+              <button className={`w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
+                isLight 
+                  ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 hover:border-purple-400 hover:shadow-lg' 
+                  : 'bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border-purple-500/50 hover:border-purple-400/70 hover:shadow-purple-400/20'
+              }`}>
                 <Mail className="h-4 w-4" />
                 {t("quoteRequests.sendEmail")}
               </button>
@@ -1488,13 +1699,23 @@ export function QuoteRequestsPage({
 
       {/* Modal de Escolha de Formato de Download */}
       <Dialog open={isDownloadModalOpen} onOpenChange={setIsDownloadModalOpen}>
-        <DialogContent className="w-full max-w-md bg-slate-900/95 border border-cyan-400/30 p-6 rounded-2xl">
+        <DialogContent className={`w-full max-w-md p-6 rounded-2xl ${
+          isLight 
+            ? 'bg-white border border-slate-200' 
+            : 'bg-slate-900/95 border border-cyan-400/30'
+        }`}>
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-              <Download className="h-5 w-5 text-cyan-400" />
+            <DialogTitle className={`text-lg font-bold flex items-center gap-2 ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}>
+              <Download className={`h-5 w-5 ${
+                isLight ? 'text-blue-600' : 'text-cyan-400'
+              }`} />
               Escolha o formato de download
             </DialogTitle>
-            <DialogDescription className="text-slate-300 text-sm">
+            <DialogDescription className={`text-sm ${
+              isLight ? 'text-slate-600' : 'text-slate-300'
+            }`}>
               Selecione o formato em que deseja baixar esta cotação:
             </DialogDescription>
           </DialogHeader>
@@ -1502,7 +1723,11 @@ export function QuoteRequestsPage({
           <div className="space-y-3 mt-4">
             <button
               onClick={() => handleDownloadWithFormat('pdf')}
-              className="w-full bg-red-600/20 hover:bg-red-600/40 hover:border-red-400/60 border border-red-500/30 text-red-400 hover:text-red-300 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium hover:scale-105"
+              className={`w-full border-2 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium hover:scale-105 ${
+                isLight
+                  ? 'bg-red-50 hover:bg-red-100 border-red-200 hover:border-red-300 text-red-700 hover:text-red-800'
+                  : 'bg-red-600/20 hover:bg-red-600/40 border-red-500/30 hover:border-red-400/60 text-red-400 hover:text-red-300'
+              }`}
             >
               <FileText className="w-5 h-5" />
               <span>Baixar como PDF</span>
@@ -1510,7 +1735,11 @@ export function QuoteRequestsPage({
             
             <button
               onClick={() => handleDownloadWithFormat('xlsx')}
-              className="w-full bg-green-600/20 hover:bg-green-600/40 hover:border-green-400/60 border border-green-500/30 text-green-400 hover:text-green-300 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium hover:scale-105"
+              className={`w-full border-2 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium hover:scale-105 ${
+                isLight
+                  ? 'bg-green-50 hover:bg-green-100 border-green-200 hover:border-green-300 text-green-700 hover:text-green-800'
+                  : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 hover:border-green-400/60 text-green-400 hover:text-green-300'
+              }`}
             >
               <FileText className="w-5 h-5" />
               <span>Baixar como Excel</span>
@@ -1518,7 +1747,11 @@ export function QuoteRequestsPage({
             
             <button
               onClick={() => handleDownloadWithFormat('csv')}
-              className="w-full bg-blue-600/20 hover:bg-blue-600/40 hover:border-blue-400/60 border border-blue-500/30 text-blue-400 hover:text-blue-300 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium hover:scale-105"
+              className={`w-full border-2 px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium hover:scale-105 ${
+                isLight
+                  ? 'bg-blue-50 hover:bg-blue-100 border-blue-200 hover:border-blue-300 text-blue-700 hover:text-blue-800'
+                  : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 hover:border-blue-400/60 text-blue-400 hover:text-blue-300'
+              }`}
             >
               <FileText className="w-5 h-5" />
               <span>Baixar como CSV</span>
@@ -1526,7 +1759,11 @@ export function QuoteRequestsPage({
             
             <button
               onClick={() => setIsDownloadModalOpen(false)}
-              className="w-full bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 px-4 py-2 rounded-lg transition-all duration-200 font-medium border border-slate-600/60"
+              className={`w-full border-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium hover:scale-[1.02] ${
+                isLight
+                  ? 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-gray-300 text-gray-700 hover:text-gray-800'
+                  : 'bg-slate-700/60 hover:bg-slate-600/70 border-slate-600/60 hover:border-slate-500/70 text-slate-200 hover:text-slate-100'
+              }`}
             >
               Cancelar
             </button>

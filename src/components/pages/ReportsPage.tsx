@@ -22,7 +22,7 @@ interface ReportData {
   mediaValorCotacao: number;
 }
 
-export function ReportsPage() {
+export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
   const { t } = useTranslation();
   const { formatCurrency, currency } = useCurrency();
   const [loading, setLoading] = useState(true);
@@ -243,30 +243,31 @@ export function ReportsPage() {
     }
   };
 
-  const StatCard = ({ icon: Icon, title, value, subtitle, color = "blue" }: {
+  const StatCard = ({ icon: Icon, title, value, subtitle, color = "blue", isLight = false }: {
     icon: any;
     title: string;
     value: string | number;
     subtitle?: string;
     color?: "blue" | "green" | "orange" | "purple" | "red";
+    isLight?: boolean;
   }) => {
     const colorClasses = {
-      blue: "from-blue-600/20 to-cyan-600/20 text-blue-400",
-      green: "from-green-600/20 to-emerald-600/20 text-green-400",
-      orange: "from-orange-600/20 to-amber-600/20 text-orange-400",
-      purple: "from-purple-600/20 to-pink-600/20 text-purple-400",
-      red: "from-red-600/20 to-rose-600/20 text-red-400"
+      blue: isLight ? "from-blue-100 to-cyan-100 text-blue-600" : "from-blue-600/20 to-cyan-600/20 text-blue-400",
+      green: isLight ? "from-green-100 to-emerald-100 text-green-600" : "from-green-600/20 to-emerald-600/20 text-green-400",
+      orange: isLight ? "from-orange-100 to-amber-100 text-orange-600" : "from-orange-600/20 to-amber-600/20 text-orange-400",
+      purple: isLight ? "from-purple-100 to-pink-100 text-purple-600" : "from-purple-600/20 to-pink-600/20 text-purple-400",
+      red: isLight ? "from-red-100 to-rose-100 text-red-600" : "from-red-600/20 to-rose-600/20 text-red-400"
     };
 
     return (
-      <Card className="glass-card bg-dark-card border border-dark-color hover:border-cyan-400/40 transition-all duration-300">
+      <Card className={`glass-card ${isLight ? 'bg-white/80 border-gray-200 hover:border-blue-400/60' : 'bg-dark-card border border-dark-color hover:border-cyan-400/40'} transition-all duration-300 backdrop-blur-sm`}>
         <CardContent className="p-3 sm:p-4 lg:p-6">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0 pr-2 sm:pr-3">
-              <p className="text-dark-secondary text-xs sm:text-sm font-medium truncate">{title}</p>
-              <p className="text-dark-primary-text text-lg sm:text-xl lg:text-2xl font-bold mt-0.5 sm:mt-1 truncate">{value}</p>
+              <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm font-medium truncate`}>{title}</p>
+              <p className={`${isLight ? 'text-gray-800' : 'text-dark-primary-text'} text-lg sm:text-xl lg:text-2xl font-bold mt-0.5 sm:mt-1 truncate`}>{value}</p>
               {subtitle && (
-                <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-0.5 sm:mt-1 break-words line-clamp-2">{subtitle}</p>
+                <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-0.5 sm:mt-1 break-words line-clamp-2`}>{subtitle}</p>
               )}
             </div>
             <div className={`p-2 sm:p-3 bg-gradient-to-br ${colorClasses[color]} rounded-xl flex-shrink-0`}>
@@ -279,20 +280,20 @@ export function ReportsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col overflow-hidden">
+    <div className={`min-h-screen ${isLight ? 'bg-gray-50' : 'bg-dark-bg'} flex flex-col overflow-hidden`}>
       {/* Header */}
-      <header className="bg-dark-bg border-b border-dark-color px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 py-2 sm:py-3 md:py-4 lg:py-5 xl:py-6 flex-shrink-0">
+      <header className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-bg border-dark-color'} border-b px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 py-2 sm:py-3 md:py-4 lg:py-5 xl:py-6 flex-shrink-0`}>
         {/* Uma única linha - Título, subtítulo e filtros */}
         <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 xl:gap-4">
           <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0 flex-1">
-            <div className="p-1.5 sm:p-2 bg-gradient-to-br from-green-600/20 to-emerald-600/20 rounded-xl flex-shrink-0">
-              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-green-400" />
+            <div className={`p-1.5 sm:p-2 ${isLight ? 'bg-gradient-to-br from-green-50 to-emerald-50' : 'bg-gradient-to-br from-green-600/20 to-emerald-600/20'} rounded-xl flex-shrink-0`}>
+              <BarChart3 className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-dark-primary-text truncate">
+              <h1 className={`text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>
                 {t('reports.title')}
               </h1>
-              <p className="text-dark-secondary text-xs sm:text-sm md:text-sm lg:text-base mt-0.5 sm:mt-1 truncate">
+              <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm md:text-sm lg:text-base mt-0.5 sm:mt-1 truncate`}>
                 {t('reports.subtitle')}
               </p>
             </div>
@@ -301,11 +302,11 @@ export function ReportsPage() {
           {/* Filtros - lado direito */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full xl:w-auto xl:flex-shrink-0">
             <div className="flex items-center space-x-1.5 sm:space-x-2">
-              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-dark-secondary flex-shrink-0" />
-              <span className="text-dark-secondary text-xs sm:text-sm whitespace-nowrap">Período:</span>
+              <Calendar className={`w-3 h-3 sm:w-4 sm:h-4 ${isLight ? 'text-gray-600' : 'text-dark-secondary'} flex-shrink-0`} />
+              <span className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm whitespace-nowrap`}>Período:</span>
             </div>
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-full sm:w-40 md:w-48 bg-dark-card border-dark-color text-dark-primary-text text-xs sm:text-sm">
+              <SelectTrigger className={`w-full sm:w-40 md:w-48 ${isLight ? 'bg-white border-gray-300 text-gray-800' : 'bg-dark-card border-dark-color text-dark-primary-text'} text-xs sm:text-sm`}>
                 <SelectValue placeholder="Selecionar período" />
               </SelectTrigger>
               <SelectContent>
@@ -320,15 +321,15 @@ export function ReportsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto scrollable-content dashboard-main p-2 sm:p-3 md:p-4 lg:p-6 xl:p-8 bg-dark-bg max-h-[calc(100vh-100px)] sm:max-h-[calc(100vh-120px)] md:max-h-[calc(100vh-140px)] lg:max-h-[calc(100vh-160px)] xl:max-h-[calc(100vh-180px)]">
+      <main className={`flex-1 overflow-y-auto scrollable-content dashboard-main p-2 sm:p-3 md:p-4 lg:p-6 xl:p-8 ${isLight ? 'bg-gray-50' : 'bg-dark-bg'} max-h-[calc(100vh-100px)] sm:max-h-[calc(100vh-120px)] md:max-h-[calc(100vh-140px)] lg:max-h-[calc(100vh-160px)] xl:max-h-[calc(100vh-180px)]`}>
         {/* Error display */}
         {error && (
-          <div className="glass-card bg-red-500/10 border border-red-500/20 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+          <div className={`glass-card ${isLight ? 'bg-red-50 border-red-200' : 'bg-red-500/10 border-red-500/20'} rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 backdrop-blur-sm`}>
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <Target className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0" />
+              <Target className={`w-4 h-4 sm:w-5 sm:h-5 ${isLight ? 'text-red-600' : 'text-red-400'} flex-shrink-0`} />
               <div className="min-w-0">
-                <h3 className="text-red-300 font-semibold text-sm sm:text-base">Erro detectado</h3>
-                <p className="text-red-200 text-xs sm:text-sm break-words">{error}</p>
+                <h3 className={`${isLight ? 'text-red-800' : 'text-red-300'} font-semibold text-sm sm:text-base`}>Erro detectado</h3>
+                <p className={`${isLight ? 'text-red-700' : 'text-red-200'} text-xs sm:text-sm break-words`}>{error}</p>
               </div>
             </div>
           </div>
@@ -337,8 +338,8 @@ export function ReportsPage() {
         {/* Loading state */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-6 sm:py-8 md:py-12">
-            <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 border-2 border-green-400 border-t-transparent rounded-full animate-spin mb-3 sm:mb-4"></div>
-            <p className="text-dark-secondary text-xs sm:text-sm md:text-base">Carregando dados dos relatórios...</p>
+            <div className={`w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 border-2 ${isLight ? 'border-green-600 border-t-transparent' : 'border-green-400 border-t-transparent'} rounded-full animate-spin mb-3 sm:mb-4`}></div>
+            <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm md:text-base`}>Carregando dados dos relatórios...</p>
           </div>
         )}
 
@@ -352,6 +353,7 @@ export function ReportsPage() {
                 title="Total de Cotações"
                 value={reportData.totalCotacoes}
                 color="blue"
+                isLight={isLight}
               />
               <StatCard
                 icon={Target}
@@ -359,12 +361,14 @@ export function ReportsPage() {
                 value={reportData.cotacoesAprovadas}
                 subtitle={`${reportData.totalCotacoes > 0 ? ((reportData.cotacoesAprovadas / reportData.totalCotacoes) * 100).toFixed(1) : 0}% do total`}
                 color="green"
+                isLight={isLight}
               />
               <StatCard
                 icon={Users}
                 title="Total de Fornecedores"
                 value={reportData.totalFornecedores}
                 color="purple"
+                isLight={isLight}
               />
               <StatCard
                 icon={TrendingUp}
@@ -372,6 +376,7 @@ export function ReportsPage() {
                 value={formatCurrency(reportData.valorTotalCotacoes)}
                 subtitle={`Média: ${formatCurrency(reportData.mediaValorCotacao)}`}
                 color="orange"
+                isLight={isLight}
               />
             </div>
 
@@ -383,6 +388,7 @@ export function ReportsPage() {
                 value={reportData.cotacoesPendentes}
                 subtitle="Aguardando aprovação"
                 color="orange"
+                isLight={isLight}
               />
               <StatCard
                 icon={Target}
@@ -390,6 +396,7 @@ export function ReportsPage() {
                 value={reportData.cotacoesRejeitadas}
                 subtitle="Não aprovadas"
                 color="red"
+                isLight={isLight}
               />
               <StatCard
                 icon={ShoppingCart}
@@ -397,22 +404,23 @@ export function ReportsPage() {
                 value={reportData.totalProdutos}
                 subtitle="Cadastrados no sistema"
                 color="blue"
+                isLight={isLight}
               />
             </div>
 
             {/* Cards de Download PDF */}
             <div className="space-y-4 sm:space-y-6">
               {/* Total de Cotações */}
-              <div className="glass-card bg-dark-card border border-dark-color rounded-xl p-3 sm:p-4 lg:p-6 hover:border-cyan-400/40 transition-all duration-300 w-full">
+              <div className={`glass-card ${isLight ? 'bg-white/80 border-gray-200 hover:border-blue-400/60' : 'bg-dark-card border border-dark-color hover:border-cyan-400/40'} rounded-xl p-3 sm:p-4 lg:p-6 transition-all duration-300 w-full backdrop-blur-sm`}>
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
                   <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                    <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 rounded-xl flex-shrink-0">
-                      <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-blue-400" />
+                    <div className={`p-2 sm:p-3 ${isLight ? 'bg-gradient-to-br from-blue-50 to-cyan-50' : 'bg-gradient-to-br from-blue-600/20 to-cyan-600/20'} rounded-xl flex-shrink-0`}>
+                      <ShoppingCart className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-dark-primary-text truncate">Relatório Completo de Cotações</h3>
-                      <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">{reportData.totalCotacoes} cotações registradas</p>
-                      <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-1 break-words">Todas as cotações + resumo por status no final</p>
+                      <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>Relatório Completo de Cotações</h3>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalCotacoes} cotações registradas</p>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1 break-words`}>Todas as cotações + resumo por status no final</p>
                     </div>
                   </div>
                   <button 
@@ -428,16 +436,16 @@ export function ReportsPage() {
               </div>
 
               {/* Total de Produtos */}
-              <div className="glass-card bg-dark-card border border-dark-color rounded-xl p-3 sm:p-4 lg:p-6 hover:border-cyan-400/40 transition-all duration-300 w-full">
+              <div className={`glass-card ${isLight ? 'bg-white/80 border-gray-200 hover:border-green-400/60' : 'bg-dark-card border border-dark-color hover:border-cyan-400/40'} rounded-xl p-3 sm:p-4 lg:p-6 transition-all duration-300 w-full backdrop-blur-sm`}>
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
                   <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                    <div className="p-2 sm:p-3 bg-gradient-to-br from-green-600/20 to-emerald-600/20 rounded-xl flex-shrink-0">
-                      <Target className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-green-400" />
+                    <div className={`p-2 sm:p-3 ${isLight ? 'bg-gradient-to-br from-green-50 to-emerald-50' : 'bg-gradient-to-br from-green-600/20 to-emerald-600/20'} rounded-xl flex-shrink-0`}>
+                      <Target className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-dark-primary-text truncate">Total de Produtos</h3>
-                      <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">{reportData.totalProdutos} produtos cadastrados</p>
-                      <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-1">Disponíveis para cotação no sistema</p>
+                      <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>Total de Produtos</h3>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalProdutos} produtos cadastrados</p>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1`}>Disponíveis para cotação no sistema</p>
                     </div>
                   </div>
                   <button 
@@ -453,16 +461,16 @@ export function ReportsPage() {
               </div>
 
               {/* Total de Fornecedores */}
-              <div className="glass-card bg-dark-card border border-dark-color rounded-xl p-3 sm:p-4 lg:p-6 hover:border-cyan-400/40 transition-all duration-300 w-full">
+              <div className={`glass-card ${isLight ? 'bg-white/80 border-gray-200 hover:border-purple-400/60' : 'bg-dark-card border border-dark-color hover:border-cyan-400/40'} rounded-xl p-3 sm:p-4 lg:p-6 transition-all duration-300 w-full backdrop-blur-sm`}>
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
                   <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                    <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-xl flex-shrink-0">
-                      <Users className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-purple-400" />
+                    <div className={`p-2 sm:p-3 ${isLight ? 'bg-gradient-to-br from-purple-50 to-pink-50' : 'bg-gradient-to-br from-purple-600/20 to-pink-600/20'} rounded-xl flex-shrink-0`}>
+                      <Users className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 ${isLight ? 'text-purple-600' : 'text-purple-400'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-dark-primary-text truncate">Total de Fornecedores</h3>
-                      <p className="text-dark-secondary text-xs sm:text-sm lg:text-base mt-1">{reportData.totalFornecedores} fornecedores ativos</p>
-                      <p className="text-dark-secondary text-xs sm:text-xs lg:text-sm mt-1">Parceiros cadastrados no sistema</p>
+                      <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>Total de Fornecedores</h3>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalFornecedores} fornecedores ativos</p>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1`}>Parceiros cadastrados no sistema</p>
                     </div>
                   </div>
                   <button 

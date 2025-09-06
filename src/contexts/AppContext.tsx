@@ -170,15 +170,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   ]);
   
-  const [userSettings, setUserSettings] = useState<UserSettings>({
-    notifications: {
-      email: true,
-      browser: true,
-      quotes: true,
-      suppliers: false
-    },
-    language: "pt-PT",
-    theme: "light"
+  const [userSettings, setUserSettings] = useState<UserSettings>(() => {
+    // Recuperar tema do localStorage ou usar "dark" como padrão
+    const savedTheme = localStorage.getItem('theme');
+    return {
+      notifications: {
+        email: true,
+        browser: true,
+        quotes: true,
+        suppliers: false
+      },
+      language: "pt-PT",
+      theme: (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : "dark"
+    };
   });
 
   const toggleFavorite = (productId: string) => {
@@ -734,14 +738,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateSettings = (newSettings: Partial<UserSettings>) => {
-    setUserSettings(prev => ({
-      ...prev,
-      ...newSettings,
-      notifications: {
-        ...prev.notifications,
-        ...(newSettings.notifications || {})
+    setUserSettings(prev => {
+      const updated = {
+        ...prev,
+        ...newSettings,
+        notifications: {
+          ...prev.notifications,
+          ...(newSettings.notifications || {})
+        }
+      };
+      
+      // Salvar tema no localStorage quando alterado
+      if (newSettings.theme) {
+        localStorage.setItem('theme', newSettings.theme);
       }
-    }));
+      
+      return updated;
+    });
   };
 
   const value: AppContextType = {

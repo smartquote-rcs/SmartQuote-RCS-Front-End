@@ -27,10 +27,10 @@ export const useTheme = () => {
     border: isLight ? 'border-gray-300' : 'border-dark-color',
     borderHover: isLight ? 'hover:border-blue-400' : 'hover:border-blue-400/30',
     
-    // Text colors - mais profissionais para modo light
-    textPrimary: isLight ? 'text-gray-800' : 'text-white',
-    textSecondary: isLight ? 'text-gray-700' : 'text-gray-300',
-    textMuted: isLight ? 'text-gray-600' : 'text-gray-400',
+    // Text colors - mais suaves no dark mode
+    textPrimary: isLight ? 'text-gray-800' : 'text-gray-100',
+    textSecondary: isLight ? 'text-gray-700' : 'text-gray-400',
+    textMuted: isLight ? 'text-gray-600' : 'text-gray-500',
     
     // Hover states
     hover: isLight ? 'hover:bg-gray-100' : 'hover:bg-dark-hover',
@@ -53,10 +53,10 @@ export const useTheme = () => {
     // Sidebar styles
     sidebarBg: isLight ? 'bg-white' : 'bg-dark-bg',
     
-    // Navigation styles
+    // Navigation styles - cores mais suaves no dark mode
     navItem: isLight 
       ? 'text-gray-800 hover:text-blue-700 hover:bg-blue-50' 
-      : 'text-dark-secondary hover:text-blue-300 hover:bg-white/5',
+      : 'text-gray-400 hover:text-blue-300 hover:bg-white/5',
     
     navItemActive: isLight 
       ? 'bg-blue-100 text-blue-800 border-blue-400' 
@@ -75,9 +75,9 @@ export const useTheme = () => {
       ? 'bg-white border-gray-300 hover:border-blue-400 shadow-sm' 
       : 'glass-card border-white/20 hover:border-red-500/50 bg-white/5',
     
-    // Icons
-    iconPrimary: isLight ? 'text-gray-800' : 'text-white',
-    iconSecondary: isLight ? 'text-gray-600' : 'text-gray-300',
+    // Icons - mais suaves no dark mode
+    iconPrimary: isLight ? 'text-gray-800' : 'text-gray-200',
+    iconSecondary: isLight ? 'text-gray-600' : 'text-gray-400',
     iconAccent: isLight ? 'text-blue-700' : 'text-blue-400',
   };
 

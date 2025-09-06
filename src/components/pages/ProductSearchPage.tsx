@@ -126,7 +126,7 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
   );
 
   const ProductCard = ({ produto }: { produto: Product }) => (
-    <div className={`glass-card bg-white/5 rounded-xl border border-white/20 transition-all duration-300 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] w-full overflow-hidden group relative ${
+    <div className={`${isLight ? 'bg-white/90 backdrop-blur-sm border-white/20 shadow-lg hover:shadow-xl' : 'bg-white/5 backdrop-blur-sm border-white/10 shadow-lg hover:shadow-xl'} rounded-xl border transition-all duration-300 hover:border-cyan-400/50 hover:scale-[1.02] w-full overflow-hidden group relative ${
       viewMode === "list" ? "flex flex-col lg:flex-row lg:items-center space-y-3 lg:space-y-0 lg:space-x-4 p-3 lg:p-4" : "p-3 sm:p-4 flex flex-col h-full min-h-[320px]"
     }`}>
       {/* Image */}
@@ -149,20 +149,20 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
       <div className={`${viewMode === "list" ? "flex-1" : "flex-1 flex flex-col"}`}>
         <div className="mb-3 flex-grow">
           <div className="flex flex-col space-y-2 mb-3">
-            <h3 className={`font-bold text-dark-primary hover:text-cyan-400 transition-colors duration-300 ${viewMode === "list" ? "text-base" : "text-sm"} leading-tight line-clamp-2 min-h-[2.5rem]`}>
+            <h3 className={`font-bold ${isLight ? 'text-gray-800 hover:text-blue-600' : 'text-dark-primary hover:text-cyan-400'} transition-colors duration-300 ${viewMode === "list" ? "text-base" : "text-sm"} leading-tight line-clamp-2 min-h-[2.5rem]`}>
               {produto.nome}
             </h3>
             <div className="flex items-center justify-between">
               {getDisponibilidadeBadge(produto.estoque || 0)}
-              <span className="text-xs text-dark-secondary bg-dark-tag px-2 py-1 rounded-full truncate max-w-[80px]">ID: {produto.fornecedorId || "N/A"}</span>
+              <span className={`text-xs ${isLight ? 'text-gray-600 bg-gray-200' : 'text-dark-secondary bg-dark-tag'} px-2 py-1 rounded-full truncate max-w-[80px]`}>ID: {produto.fornecedorId || "N/A"}</span>
             </div>
           </div>
           <div className="mb-3">
-            <p className="text-xs text-blue-300 font-medium truncate">{produto.modelo || t('productSearch.noCategory')}</p>
+            <p className={`text-xs ${isLight ? 'text-blue-600' : 'text-blue-300'} font-medium truncate`}>{produto.modelo || t('productSearch.noCategory')}</p>
           </div>
           
           {viewMode === "list" && (
-            <p className="text-xs text-dark-secondary mb-2 line-clamp-2">
+            <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mb-2 line-clamp-2`}>
               {produto.descricao}
             </p>
           )}
@@ -172,10 +172,10 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
           <div className="flex flex-col space-y-2 mb-3">
             <div>
               <div className="flex items-center space-x-1 flex-wrap">
-                <span className={`${viewMode === "list" ? "text-lg" : "text-base"} font-bold text-green-400`}>{formatCurrency(produto.preco || 0)}</span>
+                <span className={`${viewMode === "list" ? "text-lg" : "text-base"} font-bold ${isLight ? 'text-green-600' : 'text-green-400'}`}>{formatCurrency(produto.preco || 0)}</span>
               </div>
-              <p className="text-xs text-dark-secondary mt-1 flex items-center">
-                <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 flex-shrink-0"></span>
+              <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-1 flex items-center`}>
+                <span className={`w-1.5 h-1.5 ${isLight ? 'bg-green-600' : 'bg-green-400'} rounded-full mr-1.5 flex-shrink-0`}></span>
                 <span className="truncate">3-5 {t('productSearch.deliveryTime')}</span>
               </p>
             </div>
@@ -188,27 +188,27 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
                 href={produto.produto_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="glass-card p-2 rounded-lg hover:bg-green-500/20 hover:border-green-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+                className={`${isLight ? 'bg-white/90 border-gray-300 hover:bg-green-50 hover:border-green-400' : 'glass-card hover:bg-green-500/20 hover:border-green-400/50'} p-2 rounded-lg transition-all duration-300 hover:scale-110 group flex-shrink-0`}
                 title={t('productSearch.visitSite')}
               >
-                <ExternalLink className="w-4 h-4 text-dark-secondary group-hover:text-green-400 transition-colors" />
+                <ExternalLink className={`w-4 h-4 ${isLight ? 'text-gray-600 group-hover:text-green-600' : 'text-dark-secondary group-hover:text-green-400'} transition-colors`} />
               </a>
             )}
             <button 
               onClick={() => produto.id !== undefined && handleEditProduct(produto.id)}
-              className="glass-card p-2 rounded-lg hover:bg-blue-500/20 hover:border-blue-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+              className={`${isLight ? 'bg-white/90 border-gray-300 hover:bg-blue-50 hover:border-blue-400' : 'glass-card hover:bg-blue-500/20 hover:border-blue-400/50'} p-2 rounded-lg transition-all duration-300 hover:scale-110 group flex-shrink-0`}
               title={t('productSearch.edit')}
               disabled={produto.id === undefined}
             >
-              <Edit2 className="w-4 h-4 text-dark-secondary group-hover:text-blue-400 transition-colors" />
+              <Edit2 className={`w-4 h-4 ${isLight ? 'text-gray-600 group-hover:text-blue-600' : 'text-dark-secondary group-hover:text-blue-400'} transition-colors`} />
             </button>
             <button 
               onClick={() => produto.id !== undefined && handleDeleteProduct(produto.id)}
-              className="glass-card p-2 rounded-lg hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-300 hover:scale-110 group flex-shrink-0"
+              className={`${isLight ? 'bg-white/90 border-gray-300 hover:bg-red-50 hover:border-red-400' : 'glass-card hover:bg-red-500/20 hover:border-red-400/50'} p-2 rounded-lg transition-all duration-300 hover:scale-110 group flex-shrink-0`}
               title={t('productSearch.delete')}
               disabled={produto.id === undefined}
             >
-              <Trash2 className="w-4 h-4 text-dark-secondary group-hover:text-red-400 transition-colors" />
+              <Trash2 className={`w-4 h-4 ${isLight ? 'text-gray-600 group-hover:text-red-600' : 'text-dark-secondary group-hover:text-red-400'} transition-colors`} />
             </button>
           </div>
         </div>
@@ -262,23 +262,23 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
   return (
     <div className="flex flex-col h-full">
       {/* Header - Compacto no mobile */}
-      <header className="bg-dark-bg border-b border-dark-color px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0">
+      <header className={`${isLight ? 'bg-white border-gray-200' : 'bg-dark-bg border-dark-color'} border-b px-4 lg:px-8 py-1 md:py-4 lg:py-6 flex-shrink-0`}>
           <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-2 md:space-y-4 lg:space-y-0 w-full">
           <div className="hidden md:block">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-dark-primary flex items-center gap-3">
+            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-3`}>
               <Search className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               {t('productSearch.title')}
             </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-2">{t('productSearch.subtitle')}</p>
+            <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>{t('productSearch.subtitle')}</p>
           </div>
           
           {/* Header mobile compacto */}
           <div className="md:hidden flex items-center justify-between">
-            <h1 className="text-lg font-bold text-dark-primary flex items-center gap-2">
+            <h1 className={`text-lg font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-2`}>
               <Search className="w-5 h-5 text-blue-400" />
               Produtos
             </h1>
-            <span className="text-blue-300 font-bold text-sm">
+            <span className={`${isLight ? 'text-blue-600' : 'text-blue-300'} font-bold text-sm`}>
               {displayProducts.length}
             </span>
           </div>
@@ -286,21 +286,21 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 md:space-y-3 sm:space-y-0 sm:space-x-3 w-full">
             {/* Ações: alinhadas à direita em telas grandes, centralizadas no mobile */}
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto md:justify-end md:ml-auto">
-              <div className="glass-card bg-white/5 border-blue-500/30 px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-blue-300 text-sm min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto">
+              <div className={`glass-card ${isLight ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white/5 border-blue-500/30 text-blue-300'} px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto`}>
                 <span className="font-bold text-base md:text-lg">{displayProducts.length}</span>
                 <span className="ml-2 text-blue-200">produtos</span>
               </div>
               <button
                 onClick={handleRefreshProducts}
                 disabled={isLoadingProducts}
-                className="glass-card bg-white/5 hover:bg-cyan-500/20 hover:border-cyan-400/50 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 shadow-lg text-sm min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto"
+                className={`${isLight ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700' : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700'} text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg backdrop-blur-sm text-sm md:text-base min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto`}
               >
                 <RefreshCw className={`w-4 h-4 ${isLoadingProducts ? 'animate-spin' : ''}`} />
-                <span>{isLoadingProducts ? t('productSearch.loading') : t('productSearch.refresh')}</span>
+                <span>Atualizar</span>
               </button>
               <button
                 onClick={() => onNavigateToNewProduct?.()}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm md:text-base min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto"
+                className={`${isLight ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700'} text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg backdrop-blur-sm text-sm md:text-base min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto`}
               >
                 <Plus className="w-4 h-4" />
                 <span>Novo Produto</span>
@@ -310,7 +310,7 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
         </div>
       </header>
 
-      <main className="flex-1 dashboard-main p-3 md:p-4 lg:p-8 bg-dark-bg">
+      <main className={`flex-1 dashboard-main p-3 md:p-4 lg:p-8 ${isLight ? 'bg-gray-50' : 'bg-dark-bg'}`}>
         {isLoadingProducts ? (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
@@ -319,15 +319,15 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
         ) : (
         <Tabs defaultValue="all" className="w-full h-full flex flex-col">
           {isEditingInline && editingProduct && (
-            <div id="edit-product-form" className="mb-6 glass-card bg-gradient-to-br from-blue-900/30 to-cyan-900/30 rounded-xl border border-blue-500/30 p-4 md:p-6 animate-in">
+            <div id="edit-product-form" className={`mb-6 glass-card ${isLight ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200' : 'bg-gradient-to-br from-blue-900/30 to-cyan-900/30 border-blue-500/30'} rounded-xl border p-4 md:p-6 animate-in`}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-500/20 rounded-lg">
-                    <Edit2 className="w-5 h-5 text-blue-400" />
+                  <div className={`p-2 ${isLight ? 'bg-blue-100' : 'bg-blue-500/20'} rounded-lg`}>
+                    <Edit2 className={`w-5 h-5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">Editar Produto</h2>
-                    <p className="text-xs text-blue-200">Atualize as informações e salve para aplicar mudanças</p>
+                    <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Editar Produto</h2>
+                    <p className={`text-xs ${isLight ? 'text-blue-600' : 'text-blue-200'}`}>Atualize as informações e salve para aplicar mudanças</p>
                   </div>
                 </div>
                 <button
@@ -360,59 +360,59 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Fornecedor</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Fornecedor</label>
                     <input
                       type="number"
                       value={editingProduct.fornecedorId || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, fornecedorId: parseInt(e.target.value) || undefined } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder={t('productSearch.supplierIdPlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Código</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Código</label>
                     <input
                       type="text"
                       value={editingProduct.codigo || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, codigo: e.target.value } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder={t('productSearch.codePlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Nome *</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Nome *</label>
                     <input
                       required
                       type="text"
                       value={editingProduct.nome}
                       onChange={e => setEditingProduct(p => p ? { ...p, nome: e.target.value } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder={t('productSearch.namePlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Modelo</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Modelo</label>
                     <input
                       type="text"
                       value={editingProduct.modelo || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, modelo: e.target.value } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder={t('productSearch.modelPlaceholder')}
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Descrição *</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Descrição *</label>
                     <textarea
                       required
                       rows={2}
                       value={editingProduct.descricao}
                       onChange={e => setEditingProduct(p => p ? { ...p, descricao: e.target.value } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder={t('productSearch.descriptionPlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Preço *</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Preço *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -420,48 +420,48 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
                       required
                       value={editingProduct.preco}
                       onChange={e => setEditingProduct(p => p ? { ...p, preco: parseFloat(e.target.value) || 0 } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder={t('productSearch.pricePlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Unidade</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Unidade</label>
                     <input
                       type="text"
                       value={editingProduct.unidade || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, unidade: e.target.value } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder={t('productSearch.unitPlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Estoque</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Estoque</label>
                     <input
                       type="number"
                       min="0"
                       value={editingProduct.estoque}
                       onChange={e => setEditingProduct(p => p ? { ...p, estoque: parseInt(e.target.value) || 0 } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder={t('productSearch.stockPlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Origem</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Origem</label>
                     <input
                       type="text"
                       value={editingProduct.origem || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, origem: e.target.value } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder={t('productSearch.originPlaceholder')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">URL do Produto</label>
+                    <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>URL do Produto</label>
                     <input
                       type="url"
                       value={editingProduct.produto_url || ''}
                       onChange={e => setEditingProduct(p => p ? { ...p, produto_url: e.target.value } : p)}
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white"
+                      className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`}
                       placeholder="https://exemplo.com/produto"
                     />
                   </div>
@@ -469,12 +469,12 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <button
                     type="submit"
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-4 py-2 rounded-lg font-medium transition-all"
+                    className={`flex-1 ${isLight ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700' : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700'} text-white px-4 py-2 rounded-lg font-medium transition-all`}
                   >{t('productSearch.saveChanges')}</button>
                   <button
                     type="button"
                     onClick={() => { setIsEditingInline(false); setEditingProduct(null); }}
-                    className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-all"
+                    className={`flex-1 ${isLight ? 'bg-gray-300 hover:bg-gray-400 text-gray-700' : 'bg-slate-700 hover:bg-slate-600 text-white'} px-4 py-2 rounded-lg font-medium transition-all`}
                   >{t('productSearch.cancel')}</button>
                 </div>
               </form>
@@ -484,8 +484,8 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
           {!isEditingInline && (
             <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 md:mb-6 space-y-3 md:space-y-4 lg:space-y-0 flex-shrink-0">
               {/* Tabs - ocultas no mobile */}
-              <TabsList className="hidden md:flex glass-card bg-white/5 border border-white/20 rounded-xl p-1">
-                <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary text-sm rounded-lg px-4 py-2 transition-all duration-300">
+              <TabsList className={`hidden md:flex glass-card ${isLight ? 'bg-gray-200 border-gray-300' : 'bg-white/5 border border-white/20'} rounded-xl p-1`}>
+                <TabsTrigger value="all" className={`${isLight ? 'data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-gray-700' : 'data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white text-dark-secondary'} text-sm rounded-lg px-4 py-2 transition-all duration-300`}>
                   {t('productSearch.allProducts')} ({filteredProducts.length})
                 </TabsTrigger>
               </TabsList>
@@ -494,29 +494,29 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
               <div className="flex items-center gap-4 ml-auto justify-end mt-2 md:mt-0">
                 {/* Pesquisa movida para cá */}
                 <div className="relative group flex-1 min-w-0 max-w-xs">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 group-hover:text-blue-400 transition-colors duration-200 z-10 pointer-events-none" />
+                  <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isLight ? 'text-gray-500 group-hover:text-blue-500' : 'text-white/70 group-hover:text-blue-400'} transition-colors duration-200 z-10 pointer-events-none`} />
                   <input
                     type="text"
                     placeholder={t('productSearch.searchProducts')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-11 w-full bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
+                    className={`pl-11 w-full ${isLight ? 'bg-white border-gray-300 text-gray-800 placeholder:text-gray-500 focus:ring-blue-500 focus:border-blue-500' : 'bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:ring-blue-500/50 focus:border-blue-500/50'} h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 border transition-all duration-200 backdrop-blur-sm`}
                   />
                 </div>
 
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                  className={`px-3 py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700 border border-gray-300' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 border border-slate-600/50'} font-semibold text-sm disabled:opacity-50 transition-all duration-200 backdrop-blur-sm`}
                   disabled={currentPage === 1}
                 >
                   Anterior
                 </button>
-                <span className="text-slate-300 font-medium text-sm">
+                <span className={`${isLight ? 'text-gray-800' : 'text-slate-300'} font-medium text-sm`}>
                   Página {currentPage} de {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 font-semibold text-sm disabled:opacity-50"
+                  className={`px-3 py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700 border border-gray-300' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 border border-slate-600/50'} font-semibold text-sm disabled:opacity-50 transition-all duration-200 backdrop-blur-sm`}
                   disabled={currentPage === totalPages}
                 >
                   Próxima

@@ -341,8 +341,8 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                       3
                     </span>
                   </button>
-                  <button className="glass-card bg-white/5 hover:bg-green-500/20 hover:border-green-400/50 text-white px-4 py-2 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg">
-                    <RefreshCw className="w-4 h-4 flex-shrink-0" />
+                  <button className="group bg-gradient-to-r from-blue-600/20 to-cyan-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 border border-blue-500/30 hover:border-blue-400/50 text-blue-400 hover:text-blue-300 px-4 py-2.5 rounded-xl font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 text-sm shadow-lg hover:shadow-xl">
+                    <RefreshCw className="w-4 h-4 flex-shrink-0 transition-transform group-hover:rotate-180" />
                     <span>Atualizar</span>
                   </button>
                 </div>
