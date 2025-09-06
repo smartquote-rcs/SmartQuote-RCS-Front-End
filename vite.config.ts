@@ -11,6 +11,10 @@ export default defineConfig({
   define: {
     global: 'globalThis',
   },
+  optimizeDeps: {
+    include: ['recharts', 'react', 'react-dom'],
+    exclude: []
+  },
   build: {
     rollupOptions: {
       output: {
@@ -20,7 +24,7 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-dom')) {
               return 'vendor-react';
             }
-            if (id.includes('recharts')) {
+            if (id.includes('recharts') || id.includes('d3-')) {
               return 'vendor-charts';
             }
             if (id.includes('lucide-react')) {
@@ -41,6 +45,9 @@ export default defineConfig({
           }
           if (id.includes('src/services')) {
             return 'services';
+          }
+          if (id.includes('src/components/ui/chart')) {
+            return 'ui-charts';
           }
         }
       }

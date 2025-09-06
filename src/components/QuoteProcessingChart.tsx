@@ -1,4 +1,5 @@
 
+import React from "react";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { Search } from "lucide-react";
 import { useState, useMemo } from "react";
