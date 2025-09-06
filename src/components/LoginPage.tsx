@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Eye, EyeOff, Lock, Mail, CheckCircle, AlertCircle, TrendingUp, Shield, Cpu, Key, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, Mail, CheckCircle, TrendingUp, Shield, RefreshCw, X } from "lucide-react";
 import { authService } from "../api/services.ts";
 
 interface LoginPageProps {
@@ -754,7 +754,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             <div className="flex items-center justify-center gap-1 mb-1">
               <Shield className="w-2 h-2 sm:w-3 sm:h-3 text-cyan-400" />
               <span className="text-xs">Plataforma Segura</span>
-              <Cpu className="w-2 h-2 sm:w-3 sm:h-3 text-cyan-400" />
+              <TrendingUp className="w-2 h-2 sm:w-3 sm:h-3 text-cyan-400" />
             </div>
             <span className="text-xs">Processamento inteligente com IA</span>
           </motion.div>
@@ -805,7 +805,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         animate={{ scale: 1, rotate: 0 }}
                         className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center shadow-lg"
                       >
-                        <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                        <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -877,11 +877,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           htmlFor="resetToken"
                           className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
                         >
-                          <Key className="w-3 h-3 text-green-400" />
+                          <Shield className="w-3 h-3 text-green-400" />
                           Código de Verificação
                         </Label>
                         <div className="relative group">
-                          <Key className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-400 z-10 transition-colors group-focus-within:text-emerald-400" />
+                          <Shield className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-400 z-10 transition-colors group-focus-within:text-emerald-400" />
                           <Input
                             id="resetToken"
                             type="text"
@@ -901,11 +901,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           htmlFor="newPassword"
                           className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
                         >
-                          <Lock className="w-3 h-3 text-green-400" />
+                          <Shield className="w-3 h-3 text-green-400" />
                           Nova Senha
                         </Label>
                         <div className="relative group">
-                          <Lock className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-400 z-10 transition-colors group-focus-within:text-emerald-400" />
+                          <Shield className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-400 z-10 transition-colors group-focus-within:text-emerald-400" />
                           <Input
                             id="newPassword"
                             type={showNewPassword ? "text" : "password"}
@@ -936,11 +936,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           htmlFor="confirmPassword"
                           className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
                         >
-                          <Lock className="w-3 h-3 text-green-400" />
+                          <Shield className="w-3 h-3 text-green-400" />
                           Confirmar Nova Senha
                         </Label>
                         <div className="relative group">
-                          <Lock className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-400 z-10 transition-colors group-focus-within:text-emerald-400" />
+                          <Shield className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-400 z-10 transition-colors group-focus-within:text-emerald-400" />
                           <Input
                             id="confirmPassword"
                             type={showConfirmPassword ? "text" : "password"}
@@ -975,11 +975,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         htmlFor="password"
                         className="text-white text-xs sm:text-sm font-medium flex items-center gap-1"
                       >
-                        <Lock className="w-3 h-3 text-blue-400" />
+                        <Shield className="w-3 h-3 text-blue-400" />
                         Senha de Acesso
                       </Label>
                       <div className="relative group">
-                        <Lock className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400 z-10 transition-colors group-focus-within:text-cyan-400" />
+                        <Shield className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400 z-10 transition-colors group-focus-within:text-cyan-400" />
                         <Input
                           id="password"
                           type={showPassword ? "text" : "password"}
@@ -1096,7 +1096,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         {feedback.type === 'success' ? (
                           <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
                         ) : (
-                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 flex-shrink-0" />
+                          <X className="w-3 h-3 sm:w-4 sm:h-4 text-red-400 flex-shrink-0" />
                         )}
                       </motion.div>
                       <span className="text-xs font-medium leading-relaxed">{feedback.message}</span>
@@ -1122,7 +1122,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                       >
                         {showForgotPassword ? (
                           <>
-                            <Lock className="w-3 h-3" />
+                            <Shield className="w-3 h-3" />
                             <span className="text-xs">
                               <span className="text-cyan-300 font-semibold">Lembrou?</span> Voltar
                             </span>
@@ -1148,7 +1148,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                       transition={{ delay: 0.3 }}
                     >
                       <div className="flex items-center justify-center gap-2 text-emerald-100/80 text-xs mb-3 bg-emerald-500/10 border border-emerald-400/20 rounded-lg px-3 py-2 backdrop-blur-sm">
-                        <Key className="w-3 h-3 text-emerald-400" />
+                        <Shield className="w-3 h-3 text-emerald-400" />
                         <span>Página acessada via link do email</span>
                       </div>
                     </motion.div>
@@ -1199,7 +1199,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               transition={{ delay: 2.7, duration: 0.6 }}
             >
               <div className="flex items-center gap-2">
-                <Cpu className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
                 <span className="hidden sm:inline">Powered by AI Technology</span>
                 <span className="sm:hidden">AI Tech</span>
               </div>
