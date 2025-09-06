@@ -65,6 +65,7 @@
     "@eslint/js": "^9.17.0",
     "@types/imap-simple": "^4.2.10",
     "@types/mailparser": "^3.4.6",
+    "@types/node": "^24.3.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/react-router-dom": "^5.3.3",

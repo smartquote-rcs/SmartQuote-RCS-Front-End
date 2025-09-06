@@ -909,15 +909,7 @@ export function QuoteRequestsPage({
               </div>
             </div>
 
-            <div className="mt-2 grid grid-cols-2 lg:grid-cols-3 gap-1 sm:gap-2 text-xs">
-              <div className={`${isLight ? 'bg-gray-100 border-gray-200' : 'bg-slate-800/30 border-slate-700/50'} rounded-lg p-2 border`}>
-                <span className={`${isLight ? 'text-gray-500' : 'text-slate-400'} text-xs block mb-1`}>
-                  Fornecedor:
-                </span>
-                <span className={`${isLight ? 'text-gray-800' : 'text-white'} font-medium`}>
-                  {cotacao.fornecedor && cotacao.fornecedor !== '' ? cotacao.fornecedor : '-'}
-                </span>
-              </div>
+            <div className="mt-2 grid grid-cols-2 gap-1 sm:gap-2 text-xs">
               <div className={`${isLight ? 'bg-gray-100 border-gray-200' : 'bg-slate-800/30 border-slate-700/50'} rounded-lg p-2 border`}>
                 <span className={`${isLight ? 'text-gray-500' : 'text-slate-400'} text-xs block mb-1`}>
                   {t("quoteRequests.received")}:
@@ -926,7 +918,7 @@ export function QuoteRequestsPage({
                   {new Date(cotacao.dataRecebido).toLocaleDateString("pt-PT")}
                 </span>
               </div>
-              <div className={`${isLight ? 'bg-gray-100 border-gray-200' : 'bg-slate-800/30 border-slate-700/50'} rounded-lg p-2 border col-span-2 lg:col-span-1`}>
+              <div className={`${isLight ? 'bg-gray-100 border-gray-200' : 'bg-slate-800/30 border-slate-700/50'} rounded-lg p-2 border`}>
                 <span className={`${isLight ? 'text-gray-500' : 'text-slate-400'} text-xs block mb-1`}>
                   {t("approvals.deadline")}:
                 </span>

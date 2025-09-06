@@ -1571,7 +1571,7 @@ export function AdminDashboard({
         `}
         >
         {/* Logo */}
-        <div className={`p-3 sm:p-4 lg:p-6 xl:p-8 border-b ${themeClasses.border} flex-shrink-0`}>
+        <div className={`p-3 sm:p-4 lg:p-4 xl:p-5 border-b ${themeClasses.border} flex-shrink-0`}>
           <div className="flex items-center justify-between">
             <button
               onClick={() => setActivePage('dashboard')}
@@ -1601,7 +1601,8 @@ export function AdminDashboard({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-5 lg:space-y-6 scrollable-content overflow-y-auto">
+        {/* Navigation */}
+        <nav className="flex-1 p-3 sm:p-4 lg:p-4 xl:p-5 space-y-3 sm:space-y-4 lg:space-y-4 scrollable-content overflow-y-auto">
           {/* Main Navigation */}
           <div className="space-y-2">
             {filteredMainNavItems.map((item) =>
