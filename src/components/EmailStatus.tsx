@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '../api/client';
 import { useState, useEffect } from 'react';
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface EmailStatusProps {
@@ -145,7 +145,7 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+            <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -186,9 +186,9 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
     if (status.status === 'ativo') {
       return <CheckCircle className="w-4 h-4 text-green-400" />;
     } else if (status.status === 'parado') {
-      return <AlertCircle className="w-4 h-4 text-red-400" />;
+      return <AlertTriangle className="w-4 h-4 text-red-400" />;
     }
-    return <AlertCircle className="w-4 h-4 text-gray-400" />;
+    return <AlertTriangle className="w-4 h-4 text-gray-400" />;
   };
 
   const getStatusText = () => {
@@ -221,7 +221,7 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
         </div>
         
         <div className="flex items-center space-x-2">
-          {isLoading && <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />}
+          {isLoading && <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />}
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"

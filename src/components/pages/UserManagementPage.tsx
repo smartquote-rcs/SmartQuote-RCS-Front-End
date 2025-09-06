@@ -1601,7 +1601,7 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
                             <User className="w-4 h-4 text-gray-400" />
                             Usuário
                           </div>
-                        </SelectItem>Bartolomeu Cassoma
+                        </SelectItem>
                         <SelectItem value="manager">
                           <div className="flex items-center gap-2">
                             <UserCheck className="w-4 h-4 text-blue-400" />
@@ -1645,7 +1645,7 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
                             Inativo
                           </div>
                         </SelectItem>
-                        <SelectItem value="suspended">Bartolomeu Cassoma
+                        <SelectItem value="suspended">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-red-500"></div>
                             Suspenso

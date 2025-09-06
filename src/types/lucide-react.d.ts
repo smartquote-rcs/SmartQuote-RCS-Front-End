@@ -56,4 +56,28 @@ declare module 'lucide-react' {
   export const Heart: Icon;
   export const Edit2: Icon;
   export const ExternalLink: Icon;
+  
+  // Icons needed for fixes
+  export const MessageSquare: Icon;
+  export const Star: Icon;
+  export const Package: Icon;
+  export const CreditCard: Icon;
+  export const Filter: Icon;
+  export const ChevronLeft: Icon;
+  export const ChevronRight: Icon;
+  export const AlertCircle: Icon;
+  export const Award: Icon;
+  export const Ban: Icon;
+  export const ArrowLeft: Icon;
+  export const XCircle: Icon;
+  export const Timer: Icon;
+  export const MoreHorizontal: Icon;
+  export const Lock: Icon;
+  export const UserCheck: Icon;
+  export const XIcon: Icon;
+  export const CheckIcon: Icon;
+  export const ChevronDownIcon: Icon;
+  export const ChevronUpIcon: Icon;
+  export const ChevronDown: Icon;
+  export const ChevronUp: Icon;
 }

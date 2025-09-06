@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Save, Loader2 } from "lucide-react";
+import { X, Save, RefreshCw } from "lucide-react";
 import { Supplier } from "../types";
 
 interface CreateSupplierModalProps {
@@ -172,7 +172,7 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId, isLight =
             >
               {isSaving ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-4 h-4 animate-spin" />
                   <span>Salvando...</span>
                 </>
               ) : (
