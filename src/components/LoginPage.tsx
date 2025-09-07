@@ -287,8 +287,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   // Detectar token de reset na URL ao carregar a página
   useEffect(() => {
+    // Primeiro verificar no hash da URL (formato: #access_token=...)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    
+    // Depois verificar nos query parameters (formato: ?token=...)
     const urlParams = new URLSearchParams(window.location.search);
-    const tokenFromUrl = urlParams.get('token') || urlParams.get('resetToken');
+    const tokenFromQuery = urlParams.get('token') || urlParams.get('resetToken');
+    
+    const tokenFromUrl = accessToken || tokenFromQuery;
     
     if (tokenFromUrl) {
       console.log('🔑 Token de reset detectado na URL:', tokenFromUrl.substring(0, 10) + '...');

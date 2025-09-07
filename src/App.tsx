@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "./components/LoginPage";
 import { AdminDashboard } from "./components/AdminDashboard";
+import { ResetPasswordPage } from "./components/pages/ResetPasswordPage";
 import { AppProvider } from "./contexts/AppContext";
 import { userService } from './api/services';
 import { emailService } from "./services/emailService";
@@ -207,14 +209,27 @@ export default function App() {
   }
 
   if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />;
+    return (
+      <Router>
+        <Routes>
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="*" element={<LoginPage onLogin={handleLogin} />} />
+        </Routes>
+      </Router>
+    );
   }
 
   return (
-    <AppProvider>
-      <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
-        {renderDashboard()}
-      </div>
-    </AppProvider>
+    <Router>
+      <AppProvider>
+        <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
+          <Routes>
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/" element={renderDashboard()} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </AppProvider>
+    </Router>
   );
 }
