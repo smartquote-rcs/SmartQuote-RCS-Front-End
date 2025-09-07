@@ -285,11 +285,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Detectar token de reset na URL ao carregar a página
+  // Detectar tokens na URL ao carregar a página (reset, confirmação, etc.)
   useEffect(() => {
     // Primeiro verificar no hash da URL (formato: #access_token=...)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get('access_token');
+    const tokenType = hashParams.get('type'); // 'recovery', 'signup', 'email_confirmation', etc.
     
     // Depois verificar nos query parameters (formato: ?token=...)
     const urlParams = new URLSearchParams(window.location.search);
@@ -298,10 +299,30 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     const tokenFromUrl = accessToken || tokenFromQuery;
     
     if (tokenFromUrl) {
-      console.log('🔑 Token de reset detectado na URL:', tokenFromUrl.substring(0, 10) + '...');
-      setResetToken(tokenFromUrl);
-      setShowResetPassword(true);
-      setShowForgotPassword(false);
+      console.log('🔑 Token detectado na URL:', tokenFromUrl.substring(0, 10) + '...');
+      console.log('📋 Tipo de token:', tokenType);
+      
+      // Verificar o tipo de token para decidir a ação
+      if (tokenType === 'recovery' || !tokenType) {
+        // Token de recuperação de senha
+        console.log('🔄 Modo: Reset de senha');
+        setResetToken(tokenFromUrl);
+        setShowResetPassword(true);
+        setShowForgotPassword(false);
+      } else if (tokenType === 'signup' || tokenType === 'email_confirmation') {
+        // Token de confirmação de cadastro
+        console.log('✅ Modo: Confirmação de cadastro');
+        setFeedback({
+          type: 'success',
+          message: 'Conta confirmada com sucesso! Você já pode fazer login.'
+        });
+      } else {
+        // Outros tipos de token - tratar como reset por padrão
+        console.log('❓ Tipo desconhecido, tratando como reset');
+        setResetToken(tokenFromUrl);
+        setShowResetPassword(true);
+        setShowForgotPassword(false);
+      }
       
       // Limpar a URL para não expor o token
       const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
