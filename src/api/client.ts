@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-// Configuração da API do seu colega (agora em produção)
-export const API_BASE_URL = 'http://localhost:2000/api';
+// Detectar ambiente e configurar URL da API
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+export const API_BASE_URL = isDevelopment 
+  ? 'http://localhost:2000/api'  // Desenvolvimento
+  : 'http://localhost:2000/api'; // TODO: Atualizar para URL do backend em produção
 
 const api = axios.create({
   baseURL: API_BASE_URL,
