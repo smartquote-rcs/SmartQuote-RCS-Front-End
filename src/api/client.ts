@@ -99,7 +99,7 @@ export const loginUser = async (credentials: {
     throw error;
   }
 };
-https://testsmart-24vt.onrender.com/api/
+//https://testsmart-24vt.onrender.com/api/
 // Função para testar um cadastro rápido (dados de exemplo)
 export const createTestUser = async () => {
   const testUser = {
