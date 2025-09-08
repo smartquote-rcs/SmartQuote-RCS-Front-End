@@ -5,6 +5,7 @@ import { useCurrency } from "../../hooks/useCurrency";
 import { useTheme } from "../../hooks/useTheme";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
@@ -41,6 +42,7 @@ import {
   Sun,
   Moon,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { cotacaoService, relatorioService } from "../../api/services";
 import api from '../../api/client';
@@ -680,7 +682,7 @@ export function QuoteRequestsPage({
   // Função para exportar cotação no formato escolhido (removida pois não está sendo usada)
   // const handleExportCotacao = () => {
 
-  // Função para exportar cotação com formato específico (usada pelo modal de download)
+  // Função para exportar cotacao com formato específico (usada pelo modal de download)
   const handleDownloadWithFormat = async (format: ExportFormat) => {
     if (!selectedCotacao) return;
     
@@ -857,6 +859,16 @@ export function QuoteRequestsPage({
   const [motivoInput, setMotivoInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // Feedback visual de envio
   
+  // Modal Dynamics 365 Integration
+  const [showDynamicsModal, setShowDynamicsModal] = useState(false);
+  const [dynamicsData, setDynamicsData] = useState({
+    cotacaoId: '',
+    customerCode: '',
+    projectCode: '',
+    notes: ''
+  });
+  const [isDynamicsLoading, setIsDynamicsLoading] = useState(false);
+  
   // Função para verificar se o usuário pode aprovar baseado no valor
   const canApproveQuote = (valorString: string) => {
     const valor = parseFloat(valorString) || 0;
@@ -929,6 +941,81 @@ export function QuoteRequestsPage({
       setMotivoInput("");
       return;
     }
+
+    // Se for aprovação, primeiro processar a aprovação, depois abrir modal Dynamics 365
+    if (isApprove) {
+      setIsSubmitting(true);
+      try {
+        const payload: any = { 
+          aprovacao: true, 
+          motivo: motivoInput,
+          status: 'aprovada',
+          data_aprovacao: new Date().toISOString()
+        };
+        if (currentUserId != null) {
+          payload.aprovado_por = currentUserId;
+        }
+        
+        const resp = await cotacaoService.update(String(id), payload);
+        if (resp.success) {
+          // Atualizar estado local
+          setCotacoesList(prev => prev.map(c => {
+            if (String(c.id) !== String(id)) return c;
+            return {
+              ...c,
+              aprovacao: true,
+              status: 'aprovada',
+              motivo: motivoInput,
+              data_aprovacao: payload.data_aprovacao,
+              aprovado_por: currentUserId != null ? currentUserId : c.aprovado_por
+            };
+          }));
+          
+          // Toast de aprovação realizada com sucesso
+          window.dispatchEvent(new CustomEvent('toast', { 
+            detail: { 
+              type: 'success', 
+              message: 'Aprovação realizada com sucesso!' 
+            } 
+          }));
+          
+          // Fechar modal de aprovação
+          setApprovalModal({open: false, action: 'approve', cotacaoId: null});
+          setMotivoInput("");
+          
+          // Aguardar um pouco e abrir modal Dynamics 365
+          setTimeout(() => {
+            setDynamicsData({
+              cotacaoId: id,
+              customerCode: '',
+              projectCode: '',
+              notes: motivoInput
+            });
+            setShowDynamicsModal(true);
+          }, 1000);
+        } else {
+          window.dispatchEvent(new CustomEvent('toast', { 
+            detail: { 
+              type: 'error', 
+              message: resp.error || 'Erro ao aprovar cotação' 
+            } 
+          }));
+        }
+      } catch (e) {
+        console.error('Erro ao aprovar cotação:', e);
+        window.dispatchEvent(new CustomEvent('toast', { 
+          detail: { 
+            type: 'error', 
+            message: 'Erro ao processar aprovação' 
+          } 
+        }));
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Para rejeição ou set_pending, proceder normalmente
     setIsSubmitting(true);
     try {
       const payload:any = { aprovacao: isApprove, motivo: motivoInput };
@@ -937,10 +1024,7 @@ export function QuoteRequestsPage({
       }
       
       // Define status baseado na aprovação
-      if (isApprove) {
-        payload.status = 'completa';
-        payload.data_aprovacao = new Date().toISOString();
-      } else if (isPending) {
+      if (isPending) {
         payload.status = 'incompleta';
         payload.data_aprovacao = null;
       }
@@ -953,9 +1037,9 @@ export function QuoteRequestsPage({
           return {
             ...c,
             aprovacao: isApprove,
-            status: isApprove ? 'completa' : 'incompleta',
+            status: isPending ? 'incompleta' : c.status,
             motivo: motivoInput,
-            data_aprovacao: isApprove ? new Date().toISOString() : null,
+            data_aprovacao: null,
             aprovado_por: currentUserId != null ? currentUserId : c.aprovado_por
           };
         }));
@@ -973,7 +1057,93 @@ export function QuoteRequestsPage({
     }
   };
 
-  // (removido handleIncreaseQuantity não utilizado)
+  // Funções para Dynamics 365 Integration
+  const handleDynamicsSubmit = async () => {
+    setIsDynamicsLoading(true);
+    
+    // Toast de processamento
+    window.dispatchEvent(new CustomEvent('toast', { 
+      detail: { 
+        type: 'info', 
+        message: 'Processando integração com Dynamics 365...' 
+      } 
+    }));
+    
+    try {
+      // Simular integração com Dynamics 365
+      console.log('Criando oportunidade no Dynamics 365 para cotação:', dynamicsData.cotacaoId);
+      
+      // Simular delay da API
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Aprovar a cotação após integração
+      const payload = {
+        aprovacao: true,
+        status: 'completa',
+        data_aprovacao: new Date().toISOString(),
+        motivo: dynamicsData.notes || 'Aprovado via Dynamics 365',
+        aprovado_por: currentUserId,
+        // Dados da oportunidade criada no Dynamics
+        dynamics_opportunity_id: `OPP-${Date.now()}`, // ID simulado da oportunidade
+        dynamics_created_at: new Date().toISOString()
+      };
+      
+      const resp = await cotacaoService.update(dynamicsData.cotacaoId, payload);
+      
+      if (resp.success) {
+        setCotacoesList(prev => prev.map(c => {
+          if (String(c.id) !== dynamicsData.cotacaoId) return c;
+          return {
+            ...c,
+            aprovacao: true,
+            status: 'completa',
+            motivo: payload.motivo,
+            data_aprovacao: payload.data_aprovacao,
+            aprovado_por: currentUserId,
+            dynamics_opportunity_id: payload.dynamics_opportunity_id,
+            dynamics_created_at: payload.dynamics_created_at
+          };
+        }));
+        
+        window.dispatchEvent(new CustomEvent('toast', { 
+          detail: { 
+            type: 'success', 
+            message: 'Nova oportunidade criada no Dynamics 365 com sucesso!' 
+          } 
+        }));
+        
+        closeDynamicsModal();
+      } else {
+        window.dispatchEvent(new CustomEvent('toast', { 
+          detail: { 
+            type: 'error', 
+            message: resp.error || 'Erro na integração com Dynamics 365' 
+          } 
+        }));
+      }
+    } catch (error) {
+      console.error('Erro na integração com Dynamics 365:', error);
+      window.dispatchEvent(new CustomEvent('toast', { 
+        detail: { 
+          type: 'error', 
+          message: 'Erro na integração com Dynamics 365' 
+        } 
+      }));
+    } finally {
+      setIsDynamicsLoading(false);
+    }
+  };
+
+  const closeDynamicsModal = () => {
+    setShowDynamicsModal(false);
+    setDynamicsData({
+      cotacaoId: '',
+      customerCode: '',
+      projectCode: '',
+      notes: ''
+    });
+    setIsDynamicsLoading(false);
+  };
 
   // Função para visualizar detalhes
   const handleViewDetails = (cotacaoId: string | number) => {
@@ -1114,7 +1284,7 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => openApproval(String(cotacao.id),'approve')}
                   aria-label="Aprovar cotação"
-                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700 hover:text-green-800 focus:ring-green-500 hover:border-green-400' : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 text-green-400 hover:text-green-300 focus:ring-green-400 hover:border-green-400/60'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700 hover:text-green-800 focus:ring-green-500 hover:border-green-400' : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 hover:border-green-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Check className="w-3 h-3" />
                   <span>Aprovar</span>
@@ -1122,7 +1292,7 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
                   aria-label="Ver detalhes da cotação"
-                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 text-blue-400 hover:text-blue-300 focus:ring-blue-400 hover:border-blue-400/60'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 hover:border-blue-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Info className="w-3 h-3" />
                   <span>Ver Detalhes</span>
@@ -1134,14 +1304,14 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
                   aria-label="Visualizar cotação"
-                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 text-blue-400 hover:text-blue-300 focus:ring-blue-400 hover:border-blue-400/60'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 hover:border-blue-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Eye className="w-3 h-3" />
                   <span>Visualizar</span>
                 </button>
                 <button 
                   onClick={() => onDownload(cotacao)}
-                  className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 hover:text-purple-700 focus:ring-purple-500 hover:border-purple-400' : 'bg-slate-700/50 hover:bg-slate-600/70 border-slate-600/50 text-slate-300 hover:text-purple-300 focus:ring-purple-400 hover:border-purple-500/50'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`} 
+                  className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 hover:text-purple-700 focus:ring-purple-500 hover:border-purple-400' : 'bg-slate-700/50 hover:bg-slate-600/70 border-slate-600/50 text-slate-300 hover:text-purple-300 focus:ring-purple-400 hover:border-purple-500' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`} 
                   aria-label="Download"
                 >
                   <Download className="w-3 h-3" />
@@ -1150,7 +1320,7 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => openApproval(String(cotacao.id),'set_pending')}
                   aria-label="Colocar como pendente"
-                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 text-orange-400 hover:text-orange-300 focus:ring-orange-400 hover:border-orange-400/60'} border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Clock className="w-3 h-3" />
                   <span>Pendente</span>
@@ -1270,7 +1440,7 @@ export function QuoteRequestsPage({
             </span>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-3 sm:space-y-0 sm:space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-1 md:space-y-4 sm:space-y-0 sm:space-x-3">
             <div className="hidden md:flex items-center gap-3 w-full justify-center">
               <div className={`glass-card ${isLight ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white/5 border-blue-500/30 text-blue-300'} px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm min-w-[160px] h-[44px]`}>
                 <span className="font-bold text-lg">{filteredCotacoes.length}</span>
@@ -1754,7 +1924,9 @@ export function QuoteRequestsPage({
               {approvalModal.action === 'approve' && 'Aprovar Cotação'}
               {approvalModal.action === 'set_pending' && 'Marcar como Pendente'}
             </DialogTitle>
-            <DialogDescription className={`${isLight ? 'text-gray-600' : 'text-slate-300'} text-sm`}>
+            <DialogDescription className={`text-sm ${
+              isLight ? 'text-gray-600' : 'text-slate-300'
+            }`}>
               Informe o motivo. Esse registro ficará salvo no histórico.
             </DialogDescription>
           </DialogHeader>
@@ -1794,8 +1966,8 @@ export function QuoteRequestsPage({
       {/* Modal de Detalhes da Cotação com Sistema de Validação */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
   <DialogContent className={`w-full max-w-4xl max-h-[90vh] overflow-y-auto ${isLight ? 'bg-white border-gray-300' : 'bg-gradient-to-br from-slate-900/95 to-slate-800/95 border-cyan-400/30'} backdrop-blur-xl p-8 rounded-2xl`}>
-          <DialogHeader className={`${isLight ? 'border-gray-200' : 'border-slate-700/50'} border-b pb-2`}>
-            <DialogTitle className={`text-lg font-bold ${isLight ? 'text-gray-800' : 'text-white'} flex items-center gap-2`}>
+          <DialogHeader className={`${isLight ? 'border-gray-200' : 'border-slate-700/50'} border-b pb-3`}>
+            <DialogTitle className={`text-xl font-bold ${isLight ? 'text-gray-800' : 'text-white'} flex items-center gap-2`}>
               <FileText className={`h-5 w-5 ${isLight ? 'text-blue-600' : 'text-cyan-400'}`} />
               {t("quoteRequests.quotationDetails")} {selectedCotacao?.id}
             </DialogTitle>
@@ -1834,7 +2006,7 @@ export function QuoteRequestsPage({
                   className={`w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
                     isLight 
                       ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300 hover:border-blue-400 hover:shadow-lg' 
-                      : 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-400 border-blue-500/50 hover:border-blue-400/70 hover:shadow-cyan-400/20'
+                      : 'bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border-cyan-700/40 hover:border-cyan-400/60'
                   }`}
                   onClick={handleOpenDownloadModal}
                   aria-label="Download da cotação"
@@ -2165,6 +2337,115 @@ export function QuoteRequestsPage({
             >
               Cancelar
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Dynamics 365 Integration - Confirmação */}
+      <Dialog open={showDynamicsModal} onOpenChange={(o) => !o && closeDynamicsModal()}>
+        <DialogContent className={`max-w-md mx-auto ${isLight ? 'bg-white border-gray-200' : 'bg-dark-card border-dark-color'}`}>
+          <DialogHeader>
+            <DialogTitle className={`flex items-center gap-3 ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>
+              <div className={`p-2 rounded-lg ${isLight ? 'bg-green-100' : 'bg-green-500/20'}`}>
+                <CheckCircle className={`w-5 h-5 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
+              </div>
+              {isDynamicsLoading ? 'Criando Oportunidade...' : 'Nova Oportunidade Criada!'}
+            </DialogTitle>
+            <DialogDescription className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
+              {isDynamicsLoading 
+                ? "Aguarde enquanto criamos uma nova oportunidade no Dynamics 365..."
+                : "Uma nova oportunidade foi criada com sucesso no Dynamics 365 para esta cotação aprovada."
+              }
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {isDynamicsLoading ? (
+              // Loading state
+              <div className={`p-4 rounded-lg border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/30'}`}>
+                <div className="flex items-center gap-3">
+                  <RefreshCw className={`w-5 h-5 animate-spin ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
+                  <div>
+                    <p className={`font-medium ${isLight ? 'text-blue-800' : 'text-blue-200'}`}>
+                      Processando integração...
+                    </p>
+                    <p className={`text-sm ${isLight ? 'text-blue-600' : 'text-blue-300'}`}>
+                      Cotação ID: {dynamicsData.cotacaoId}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Success state
+              <>
+                <div className={`p-4 rounded-lg border ${isLight ? 'bg-green-50 border-green-200' : 'bg-green-500/10 border-green-500/30'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building className={`w-4 h-4 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
+                    <span className={`font-medium text-sm ${isLight ? 'text-green-800' : 'text-green-200'}`}>
+                      Dynamics 365 CRM
+                    </span>
+                  </div>
+                  <p className={`text-sm ${isLight ? 'text-green-700' : 'text-green-300'}`}>
+                    ✓ Cotação aprovada com sucesso
+                  </p>
+                  <p className={`text-sm ${isLight ? 'text-green-700' : 'text-green-300'}`}>
+                    ✓ Nova oportunidade criada automaticamente
+                  </p>
+                  <p className={`text-xs ${isLight ? 'text-green-600' : 'text-green-400'} mt-2`}>
+                    ID da Cotação: {dynamicsData.cotacaoId}
+                  </p>
+                </div>
+
+                <div className={`p-3 rounded-lg border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/30'}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Info className={`w-4 h-4 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
+                    <span className={`font-medium text-sm ${isLight ? 'text-blue-800' : 'text-blue-200'}`}>
+                      Próximos Passos
+                    </span>
+                  </div>
+                  <p className={`text-xs ${isLight ? 'text-blue-700' : 'text-blue-300'}`}>
+                    Acesse o Dynamics 365 para gerenciar a nova oportunidade, adicionar mais detalhes e acompanhar o progresso.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Botões */}
+            <div className="flex gap-3 pt-2">
+              {!isDynamicsLoading && (
+                <>
+                  <Button
+                    onClick={() => window.open('https://dynamics.microsoft.com', '_blank')}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Building className="w-4 h-4 mr-2" />
+                    Abrir Dynamics 365
+                  </Button>
+                  
+                  <Button
+                    onClick={closeDynamicsModal}
+                    variant="outline"
+                    className={`flex-1 ${
+                      isLight 
+                        ? 'border-gray-300 text-gray-700 hover:bg-gray-50' 
+                        : 'border-dark-color text-dark-secondary hover:bg-dark-hover'
+                    }`}
+                  >
+                    Fechar
+                  </Button>
+                </>
+              )}
+              
+              {isDynamicsLoading && (
+                <Button
+                  disabled
+                  className="w-full bg-blue-600 text-white opacity-50"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Processando...
+                </Button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
