@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Limites de Aprovação</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .user-type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .user-common { background-color: #e3f2fd; color: #1976d2; }
+        .user-manager { background-color: #fff3e0; color: #f57c00; }
+        .user-admin { background-color: #e8f5e8; color: #388e3c; }
+        .value { font-size: 18px; font-weight: bold; color: #2e7d32; }
+        .limit-exceeded { color: #d32f2f; }
+        .limit-ok { color: #388e3c; }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #555; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste - Sistema de Limites de Aprovação</h1>
+    
+    <h2>👤 Usuário Comum (user)</h2>
+    <div class="card">
+        <div class="user-type user-common">USER</div>
+        <p><strong>Limite:</strong> €2.000.000</p>
+        
+        <h4>Cotações de Teste:</h4>
+        <div style="margin: 10px 0;">
+            <span class="value limit-ok">€1.500.000</span> - ✅ Pode aprovar
+        </div>
+        <div style="margin: 10px 0;">
+            <span class="value limit-exceeded">€2.500.000</span> - ❌ Deve entrar em contato com gestor ou CEO
+        </div>
+        <div style="margin: 10px 0;">
+            <span class="value limit-exceeded">€5.000.000</span> - ❌ Deve entrar em contato com gestor ou CEO
+        </div>
+    </div>
+
+    <h2>👨‍💼 Gestor (manager)</h2>
+    <div class="card">
+        <div class="user-type user-manager">MANAGER</div>
+        <p><strong>Limite:</strong> €10.000.000</p>
+        
+        <h4>Cotações de Teste:</h4>
+        <div style="margin: 10px 0;">
+            <span class="value limit-ok">€2.500.000</span> - ✅ Pode aprovar (acima do limite do user)
+        </div>
+        <div style="margin: 10px 0;">
+            <span class="value limit-ok">€8.000.000</span> - ✅ Pode aprovar
+        </div>
+        <div style="margin: 10px 0;">
+            <span class="value limit-exceeded">€12.000.000</span> - ❌ Deve entrar em contato com CEO
+        </div>
+        <div style="margin: 10px 0;">
+            <span class="value limit-exceeded">€20.000.000</span> - ❌ Deve entrar em contato com CEO
+        </div>
+    </div>
+
+    <h2>👨‍💻 Administrador/CEO (admin)</h2>
+    <div class="card">
+        <div class="user-type user-admin">ADMIN/CEO</div>
+        <p><strong>Limite:</strong> Ilimitado</p>
+        
+        <h4>Cotações de Teste:</h4>
+        <div style="margin: 10px 0;">
+            <span class="value limit-ok">€5.000.000</span> - ✅ Pode aprovar
+        </div>
+        <div style="margin: 10px 0;">
+            <span class="value limit-ok">€15.000.000</span> - ✅ Pode aprovar
+        </div>
+        <div style="margin: 10px 0;">
+            <span class="value limit-ok">€50.000.000</span> - ✅ Pode aprovar
+        </div>
+        <div style="margin: 10px 0;">
+            <span class="value limit-ok">€100.000.000</span> - ✅ Pode aprovar (sem limite)
+        </div>
+    </div>
+
+    <h2>📋 Resumo das Regras</h2>
+    <div class="card">
+        <ul>
+            <li><strong>Usuário Comum:</strong> Até €2.000.000 ✅ | Acima: Contatar gestor ou CEO ❌</li>
+            <li><strong>Gestor:</strong> Até €10.000.000 ✅ | Acima: Contatar CEO ❌</li>
+            <li><strong>Admin/CEO:</strong> Sem limite ✅</li>
+        </ul>
+        
+        <h4>Mensagens de Erro:</h4>
+        <p><strong>Para usuários:</strong> "Valor excede seu limite de aprovação (€2.000.000). Entre em contato com o gestor ou CEO para aprovar esta cotação."</p>
+        <p><strong>Para gestores:</strong> "Valor excede seu limite de aprovação (€10.000.000). Entre em contato com o CEO para aprovar esta cotação."</p>
+    </div>
+
+    <script>
+        console.log('🧪 Teste carregado!');
+        console.log('✅ Sistema implementado com sucesso no QuoteRequestsPage.tsx');
+    </script>
+</body>
+</html>

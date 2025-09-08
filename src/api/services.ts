@@ -1324,6 +1324,32 @@ export const supplierService = {
 
 // Serviço de Jobs de Cotação
 export const jobService = {
+  async getAllJobs() {
+    try {
+      const response = await api.get('/busca-automatica/jobs');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('Erro ao buscar jobs:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar jobs'
+      };
+    }
+  },
+
+  async getActiveJobs() {
+    try {
+      const response = await api.get('/busca-automatica/jobs/active');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('Erro ao buscar jobs ativos:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar jobs ativos'
+      };
+    }
+  },
+
   async deleteJobById(jobId: string) {
     try {
       const response = await api.delete(`/busca-automatica/job/${jobId}`);

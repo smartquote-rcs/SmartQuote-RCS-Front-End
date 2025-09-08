@@ -36,7 +36,7 @@ import { EmailsPage } from "./pages/EmailsPage";
 import { ProcessesPage } from "./pages/ProcessesPage";
 import { HelpPage } from "./pages/HelpPage";
 import { useApp } from "../contexts/AppContext";
-import { produtoService, supplierService, dashboardService } from "../api/services";
+import { produtoService, supplierService, dashboardService, jobService } from "../api/services";
 import { buscaGeralService } from "../services/buscaGeralService";
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
@@ -148,8 +148,31 @@ export function AdminDashboard({
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
 
+  // Estado para contador de processos ativos
+  const [activeProcessesCount, setActiveProcessesCount] = useState(0);
+
+  // Função para buscar processos ativos
+  const fetchActiveProcesses = async () => {
+    try {
+      const response = await jobService.getActiveJobs();
+      if (response.success && response.data) {
+        setActiveProcessesCount(response.data.length);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar processos ativos:', error);
+    }
+  };
+
   // Estado para lista de fornecedores
   const [fornecedores, setFornecedores] = useState<any[]>([]);
+  
+  // Buscar processos ativos periodicamente
+  useEffect(() => {
+    fetchActiveProcesses();
+    const interval = setInterval(fetchActiveProcesses, 30000); // A cada 30 segundos
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     async function fetchFornecedores() {
       const res = await supplierService.getAll();
@@ -768,6 +791,8 @@ export function AdminDashboard({
 
   const renderNavItem = (item: any, isActive: boolean) => {
     const Icon = item.icon;
+    const showCounter = item.key === 'processes' && activeProcessesCount > 0;
+    
     return (
       <button
         key={item.key}
@@ -775,17 +800,24 @@ export function AdminDashboard({
           setActivePage(item.key);
           setIsMobileMenuOpen(false);
         }}
-        className={`flex items-center space-x-2 p-2 rounded-md w-full text-left transition-all duration-300 ${isActive
+        className={`flex items-center justify-between space-x-2 p-2 rounded-md w-full text-left transition-all duration-300 ${isActive
           ? `${themeClasses.navItemActive} backdrop-blur-md border`
           : `${themeClasses.navItem} ${themeClasses.hoverStrong} border border-transparent ${themeClasses.borderHover}`
           }`}
       >
-        <Icon
-          className={`w-4 h-4 flex-shrink-0 ${isActive ? themeClasses.iconAccent : themeClasses.iconSecondary}`}
-        />
-        <span className={`text-xs sm:text-sm truncate ${isActive ? themeClasses.iconAccent : themeClasses.textSecondary}`}>
-          {t(item.label)}
-        </span>
+        <div className="flex items-center space-x-2">
+          <Icon
+            className={`w-4 h-4 flex-shrink-0 ${isActive ? themeClasses.iconAccent : themeClasses.iconSecondary}`}
+          />
+          <span className={`text-xs sm:text-sm truncate ${isActive ? themeClasses.iconAccent : themeClasses.textSecondary}`}>
+            {t(item.label)}
+          </span>
+        </div>
+        {showCounter && (
+          <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+            {activeProcessesCount}
+          </span>
+        )}
       </button>
     );
   };
@@ -809,7 +841,7 @@ export function AdminDashboard({
           />
         );
       case "quotes":
-        return <QuoteRequestsPage onNavigateToNewQuote={navigateToNewQuote} isLight={isLight} />;
+        return <QuoteRequestsPage onNavigateToNewQuote={navigateToNewQuote} user={user || undefined} />;
       case "processes":
         return <ProcessesPage isLight={isLight} />;
       case "new-quote":

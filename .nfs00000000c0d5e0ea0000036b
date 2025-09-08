@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Limites de Aprovação</title>
+</head>
+<body>
+    <h1>Teste de Limites de Aprovação</h1>
+    <p>Abra o console do navegador para ver os logs.</p>
+    
+    <script>
+        // Simulação da função canApproveQuote
+        function canApproveQuote(valorString, userRole = 'user') {
+            const valor = parseFloat(valorString) || 0;
+            console.log(`Verificando aprovação: Valor=${valor}, Role=${userRole}`);
+            
+            // Para usuários comuns: não pode aprovar acima de 2.000.000
+            if (userRole === 'user' && valor > 2000000) {
+                return {
+                    canApprove: false,
+                    message: `Valor excede seu limite de aprovação (2.000.000). Entre em contato com o gestor ou CEO para aprovar esta cotação.`
+                };
+            }
+            
+            // Para gestores: não pode aprovar acima de 10.000.000
+            if (userRole === 'manager' && valor > 10000000) {
+                return {
+                    canApprove: false,
+                    message: `Valor excede seu limite de aprovação (10.000.000). Entre em contato com o CEO para aprovar esta cotação.`
+                };
+            }
+            
+            // Administradores e CEOs podem aprovar qualquer valor
+            return { canApprove: true, message: '' };
+        }
+    </script>
+</body>
+</html>

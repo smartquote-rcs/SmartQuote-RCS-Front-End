@@ -505,7 +505,9 @@ const ptTranslations = {
     noApprovals: "Nenhuma aprovação pendente",
     high: "Alta",
     medium: "Média",
-    low: "Baixa"
+    low: "Baixa",
+    limitExceededUser: "Valor excede seu limite de aprovação (€{{limit}}). Entre em contato com o {{role}} para aprovar esta cotação.",
+    limitExceededManager: "Valor excede seu limite de aprovação (€{{limit}}). Entre em contato com o {{role}} para aprovar esta cotação."
   },
   reports: {
     title: "Relatórios e Analytics",
@@ -1234,7 +1236,9 @@ const enTranslations = {
     noApprovals: "No pending approvals",
     high: "High",
     medium: "Medium",
-    low: "Low"
+    low: "Low",
+    limitExceededUser: "Value exceeds your approval limit (€{{limit}}). Contact your {{role}} to approve this quote.",
+    limitExceededManager: "Value exceeds your approval limit (€{{limit}}). Contact the {{role}} to approve this quote."
   },
   reports: {
     title: "Reports and Analytics",
