@@ -812,6 +812,63 @@ export const authService = {
         error: errorMessage
       };
     }
+  },
+
+  // Alterar senha do usuário atual
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      console.log('🔌 Fazendo requisição para alterar senha:', '/auth/change-password');
+      
+      const response = await api.post('/auth/change-password', {
+        currentPassword: currentPassword,
+        newPassword: newPassword
+      });
+      
+      console.log('📨 Resposta recebida:', response.data);
+      return { 
+        success: true, 
+        message: response.data.message || 'Senha alterada com sucesso!'
+      };
+    } catch (error: any) {
+      console.error('💥 Erro ao alterar senha:', error);
+      console.error('📊 Status do erro:', error.response?.status);
+      console.error('📄 Dados do erro:', error.response?.data);
+      
+      let errorMessage = 'Erro ao alterar senha';
+      
+      // Tratamento específico por código de status HTTP
+      switch (error.response?.status) {
+        case 400:
+          errorMessage = 'Dados inválidos. Verifique as senhas informadas.';
+          break;
+        case 401:
+          errorMessage = 'Senha atual incorreta. Verifique e tente novamente.';
+          break;
+        case 422:
+          errorMessage = 'Nova senha não atende aos critérios de segurança (mínimo 8 caracteres).';
+          break;
+        case 429:
+          errorMessage = 'Muitas tentativas. Aguarde alguns minutos.';
+          break;
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          errorMessage = 'Erro no servidor. Tente novamente em alguns minutos.';
+          break;
+        default:
+          if (!error.response) {
+            errorMessage = 'Erro de conexão. Verifique sua internet.';
+          } else {
+            errorMessage = error.response?.data?.error || error.response?.data?.message || 'Erro desconhecido ao alterar senha.';
+          }
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage
+      };
+    }
   }
 };
 
@@ -1352,6 +1409,19 @@ export const jobService = {
       return {
         success: false,
         error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar jobs ativos'
+      };
+    }
+  },
+
+  async getJobById(jobId: string) {
+    try {
+      const response = await api.get(`/busca-automatica/job/${jobId}`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('Erro ao buscar detalhes do job:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar detalhes do job'
       };
     }
   },

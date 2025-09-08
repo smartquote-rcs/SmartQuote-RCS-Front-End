@@ -18,7 +18,8 @@ import {
   Mail,
   Eye,
   RotateCcw,
-  List
+  List,
+  Edit
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -154,9 +155,12 @@ export function AdminDashboard({
   // Função para buscar processos ativos
   const fetchActiveProcesses = async () => {
     try {
-      const response = await jobService.getActiveJobs();
+      const response = await jobService.getAllJobs();
       if (response.success && response.data) {
-        setActiveProcessesCount(response.data.length);
+        // A API retorna { success: true, message: "X jobs encontrados", jobs: [...] }
+        const jobs = response.data.jobs || response.data;
+        const activeJobs = jobs.filter((job: any) => job.status === 'EXECUTANDO');
+        setActiveProcessesCount(activeJobs.length);
       }
     } catch (error) {
       console.error('Erro ao buscar processos ativos:', error);
@@ -169,7 +173,7 @@ export function AdminDashboard({
   // Buscar processos ativos periodicamente
   useEffect(() => {
     fetchActiveProcesses();
-    const interval = setInterval(fetchActiveProcesses, 30000); // A cada 30 segundos
+    const interval = setInterval(fetchActiveProcesses, 5000); // A cada 5 segundos
     return () => clearInterval(interval);
   }, []);
 
@@ -806,17 +810,26 @@ export function AdminDashboard({
           }`}
       >
         <div className="flex items-center space-x-2">
-          <Icon
-            className={`w-4 h-4 flex-shrink-0 ${isActive ? themeClasses.iconAccent : themeClasses.iconSecondary}`}
-          />
+          <div className="relative">
+            <Icon
+              className={`w-4 h-4 flex-shrink-0 ${isActive ? themeClasses.iconAccent : themeClasses.iconSecondary}`}
+            />
+            {showCounter && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center animate-pulse">
+                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+              </div>
+            )}
+          </div>
           <span className={`text-xs sm:text-sm truncate ${isActive ? themeClasses.iconAccent : themeClasses.textSecondary}`}>
             {t(item.label)}
           </span>
         </div>
         {showCounter && (
-          <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-            {activeProcessesCount}
-          </span>
+          <div className="flex items-center">
+            <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-semibold rounded-full px-2 py-1 min-w-[20px] text-center shadow-lg shadow-red-500/30 animate-pulse">
+              {activeProcessesCount}
+            </span>
+          </div>
         )}
       </button>
     );
@@ -888,7 +901,7 @@ export function AdminDashboard({
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <button
                         onClick={async () => {
                           if (newQuotePrompt.trim()) {
@@ -945,22 +958,17 @@ export function AdminDashboard({
                           }
                         }}
                         disabled={!newQuotePrompt.trim() || isCreatingQuote}
-                        className="group relative bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 flex-1 sm:flex-none text-xs sm:text-sm md:text-base shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 disabled:hover:scale-100 overflow-hidden min-h-[48px] sm:min-h-[52px] md:min-h-[56px]"
+                        className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 flex-1 sm:flex-none text-sm shadow-md hover:shadow-lg hover:scale-[1.02] disabled:hover:scale-100"
                       >
-                        {/* Efeito de brilho no hover */}
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                        
                         {isCreatingQuote ? (
                           <>
-                            <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span className="font-semibold hidden xs:inline sm:inline">Processando IA...</span>
-                            <span className="font-semibold xs:hidden">AI...</span>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Processando IA...</span>
                           </>
                         ) : (
                           <>
-                            <Send className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform duration-300" />
-                            <span className="font-semibold hidden xs:inline">Gerar Cotação</span>
-                            <span className="font-semibold xs:hidden">Gerar</span>
+                            <Send className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+                            <span>Gerar Cotação</span>
                           </>
                         )}
                       </button>
@@ -968,28 +976,21 @@ export function AdminDashboard({
                       <button
                         onClick={() => setNewQuotePrompt("")}
                         disabled={isCreatingQuote}
-                        className="group relative bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 border border-slate-500/50 hover:border-slate-400/50 text-slate-300 hover:text-white px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 rounded-xl font-semibold transition-all duration-300 text-xs sm:text-sm md:text-base shadow-lg shadow-slate-500/20 hover:shadow-xl hover:shadow-slate-500/25 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden min-h-[48px] sm:min-h-[52px] md:min-h-[56px]"
+                        className="group bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 border border-slate-500/50 hover:border-slate-400/50 text-slate-200 hover:text-white px-4 py-2.5 rounded-lg font-medium transition-all duration-300 text-sm shadow-md hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                       >
-                        {/* Efeito de brilho no hover */}
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                        
                         <div className="flex items-center justify-center space-x-2">
-                          <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:rotate-180 transition-transform duration-500" />
-                          <span className="font-semibold hidden sm:inline">Limpar</span>
+                          <RotateCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
+                          <span>Limpar</span>
                         </div>
                       </button>
                       
                       <button
                         onClick={() => setActivePage("quotes")}
                         disabled={isCreatingQuote}
-                        className="group relative bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 border border-emerald-500/50 hover:border-emerald-400/50 text-emerald-100 hover:text-white px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 text-xs sm:text-sm md:text-base shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden min-h-[48px] sm:min-h-[52px] md:min-h-[56px]"
+                        className="group bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 border border-emerald-500/50 hover:border-emerald-400/50 text-emerald-100 hover:text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 text-sm shadow-md hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                       >
-                        {/* Efeito de brilho no hover */}
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                        
-                        <List className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:scale-110 transition-transform duration-300" />
-                        <span className="font-semibold hidden xs:inline">Ver Todas</span>
-                        <span className="font-semibold xs:hidden">Ver</span>
+                        <List className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
+                        <span>Ver Todas</span>
                       </button>
                     </div>
 
@@ -1037,6 +1038,112 @@ export function AdminDashboard({
                     {/* Apenas mensagem de sucesso/erro aqui */}
                   </div>
                 </div>
+              </div>
+
+              {/* Histórico de Cotações Criadas pelo Admin */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className={`text-xl font-bold ${themeClasses?.textPrimary || 'text-dark-primary'}`}>
+                    Cotações Criadas Recentemente
+                  </h2>
+                  <span className={`text-sm px-3 py-1 rounded-full ${isLight ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/20 text-blue-300'}`}>
+                    {allQuotes.filter(quote => quote.fornecedor === "Admin SmartQuote" || quote.produto.includes("Admin:")).length} cotaç{allQuotes.filter(quote => quote.fornecedor === "Admin SmartQuote" || quote.produto.includes("Admin:")).length !== 1 ? 'ões' : 'ão'}
+                  </span>
+                </div>
+
+                {allQuotes.filter(quote => quote.fornecedor === "Admin SmartQuote" || quote.produto.includes("Admin:")).length === 0 ? (
+                  <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-900/30 to-gray-900/30 border-slate-500/20'} rounded-xl border p-8 backdrop-blur-sm text-center`}>
+                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${isLight ? 'bg-gray-100' : 'bg-slate-700/50'} mb-4`}>
+                      <FileText className={`w-8 h-8 ${isLight ? 'text-gray-400' : 'text-slate-400'}`} />
+                    </div>
+                    <h3 className={`text-lg font-semibold mb-2 ${themeClasses?.textPrimary || 'text-dark-primary'}`}>
+                      Nenhuma cotação criada ainda
+                    </h3>
+                    <p className={`${themeClasses?.textSecondary || 'text-dark-secondary'} mb-4`}>
+                      Use o formulário acima para criar sua primeira cotação admin com IA
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-6">
+                    {allQuotes
+                      .filter(quote => quote.fornecedor === "Admin SmartQuote" || quote.produto.includes("Admin:"))
+                      .slice(0, 5)
+                      .map((quote: any) => (
+                      <div
+                        key={quote.id}
+                        className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200 hover:shadow-xl' : 'bg-gradient-to-br from-slate-900/30 to-gray-900/30 border-slate-500/20 hover:border-slate-400/30'} rounded-xl border p-6 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] group cursor-pointer`}
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className={`p-2 rounded-lg ${isLight ? 'bg-blue-100' : 'bg-blue-500/20'}`}>
+                              <FileText className="w-5 h-5 text-blue-400" />
+                            </div>
+                            <div>
+                              <h3 className={`font-semibold ${themeClasses?.textPrimary || 'text-dark-primary'} group-hover:text-blue-400 transition-colors`}>
+                                {quote.id}
+                              </h3>
+                              <p className={`text-sm ${themeClasses?.textSecondary || 'text-dark-secondary'}`}>
+                                {quote.submittedAt}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              quote.status === 'approved' 
+                                ? isLight 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-green-500/20 text-green-300'
+                                : quote.status === 'pending'
+                                  ? isLight
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-yellow-500/20 text-yellow-300'
+                                  : isLight
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-red-500/20 text-red-300'
+                            }`}>
+                              {quote.status === 'approved' ? 'Aprovada' : 
+                               quote.status === 'pending' ? 'Pendente' : 'Rejeitada'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div>
+                            <p className={`text-xs font-medium ${themeClasses?.textSecondary || 'text-dark-secondary'} mb-1`}>Produto</p>
+                            <p className={`text-sm ${themeClasses?.textPrimary || 'text-dark-primary'} truncate`}>
+                              {quote.produto}
+                            </p>
+                          </div>
+                          <div>
+                            <p className={`text-xs font-medium ${themeClasses?.textSecondary || 'text-dark-secondary'} mb-1`}>Fornecedor</p>
+                            <p className={`text-sm ${themeClasses?.textPrimary || 'text-dark-primary'} truncate`}>
+                              {quote.fornecedor}
+                            </p>
+                          </div>
+                          <div>
+                            <p className={`text-xs font-medium ${themeClasses?.textSecondary || 'text-dark-secondary'} mb-1`}>Valor</p>
+                            <p className={`text-sm font-semibold text-blue-400`}>
+                              {quote.valor}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-600/30">
+                          <p className={`text-xs ${themeClasses?.textSecondary || 'text-dark-secondary'}`}>
+                            Data: {quote.data}
+                          </p>
+                          <button
+                            onClick={() => setActivePage("quotes")}
+                            className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] flex items-center space-x-2"
+                          >
+                            <Edit className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+                            <span>Ver Detalhes</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
             </main>

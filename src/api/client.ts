@@ -48,9 +48,22 @@ api.interceptors.response.use(
     });
     
     if (error.response?.status === 401) {
+      // Token expirado ou inválido - fazer logout completo
       localStorage.removeItem('auth_token');
-      // Não recarregar a página automaticamente durante login
-      // window.location.reload();
+      localStorage.removeItem('smartquote_auth');
+      
+      // Evitar redirecionamento infinito durante login
+      if (!window.location.pathname.includes('/login') && window.location.pathname !== '/') {
+        console.log('🔑 Token expirado - redirecionando para login...');
+        
+        // Emitir evento personalizado para notificar componentes sobre logout
+        window.dispatchEvent(new CustomEvent('tokenExpired'));
+        
+        // Recarregar a página para voltar ao login
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+      }
     }
     return Promise.reject(error);
   }

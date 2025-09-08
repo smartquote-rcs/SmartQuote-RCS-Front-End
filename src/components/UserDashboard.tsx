@@ -25,7 +25,8 @@ import {
   Plus,
   Send,
   Heart,
-  Check
+  Check,
+  Edit
 } from "lucide-react";
 import { ProductSearchPage } from "./pages/ProductSearchPage";
 import { UserSettingsPage } from "./pages/UserSettingsPage";
@@ -603,17 +604,6 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                                 status: "pending" as const,
                                 data: new Date().toLocaleDateString('pt-PT'),
                                 submittedAt: new Date().toLocaleString('pt-PT'),
-                                cliente: user?.name || "Cliente",
-                                quantidade: result.data?.quantidade || "1 unidade",
-                                prioridade: result.data?.prioridade || "medium",
-                                dataRecebido: new Date().toISOString().split('T')[0],
-                                prazoResposta: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                responsavel: "Sistema IA",
-                                descricao: result.data?.descricao || newQuotePrompt,
-                                observacoes: result.data?.observacoes || '',
-                                categoria: result.data?.categoria || '',
-                                especificacoes: result.data?.especificacoes || '',
-                                prazoEntrega: result.data?.prazoEntrega || ''
                               };
                               
                               addQuote(newQuote);
@@ -651,25 +641,28 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                           }
                         }}
                         disabled={!newQuotePrompt.trim() || isCreatingQuote}
-                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 flex-1 sm:flex-none text-xs sm:text-sm"
+                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none border border-blue-500/30 hover:border-blue-400/50 disabled:border-slate-600/30 flex-1 sm:flex-none min-h-[48px]"
                       >
                         {isCreatingQuote ? (
                           <>
-                            <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             <span>{t('newQuote.creating')}</span>
                           </>
                         ) : (
                           <>
-                            <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Send className="w-4 h-4" />
                             <span>{t('newQuote.generate')}</span>
                           </>
                         )}
                       </button>
+                      
                       <button
                         onClick={() => setNewQuotePrompt("")}
-                        className="bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 text-slate-300 px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-xs sm:text-sm"
+                        disabled={!newQuotePrompt.trim()}
+                        className="bg-slate-700/50 hover:bg-slate-600/50 disabled:bg-slate-800/30 border border-slate-600/50 hover:border-slate-500/50 disabled:border-slate-700/30 text-slate-300 hover:text-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed px-4 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100 flex items-center justify-center space-x-2 min-h-[48px]"
                       >
-                        {t('newQuote.clear')}
+                        <X className="w-4 h-4" />
+                        <span>{t('newQuote.clear')}</span>
                       </button>
                     </div>
                     
@@ -717,19 +710,124 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
                 </div>
               </div>
 
-              {/* Lista de Cotações Existentes - Histórico Real */}
-              <div className="flex-1 flex flex-col justify-center items-center">
-                <div className="text-center">
-                  <FileText className="w-16 h-16 text-dark-secondary mx-auto mb-6" />
-                  <h3 className="text-xl font-medium text-dark-primary mb-3">Nenhuma cotação encontrada</h3>
-                  <p className="text-base text-dark-secondary mb-6 px-4 max-w-md">Você ainda não criou nenhuma solicitação de cotação. Use o formulário acima para criar sua primeira cotação.</p>
-                  <button 
-                    onClick={() => setActivePage("product-search")}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-all duration-300 hover:scale-105 font-medium"
-                  >
-                    Explorar Produtos
-                  </button>
+              {/* Histórico de Cotações Criadas */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h2 className="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
+                    <FileText className="w-5 h-5 text-cyan-400" />
+                    <span>Cotações Criadas</span>
+                  </h2>
+                  {myQuotes.length > 0 && (
+                    <div className="glass-card bg-cyan-500/20 border-cyan-500/30 px-3 py-1.5 rounded-lg">
+                      <span className="text-cyan-300 font-semibold text-sm">{myQuotes.length} cotações</span>
+                    </div>
+                  )}
                 </div>
+
+                {myQuotes.length > 0 ? (
+                  <div className="flex-1 space-y-3 sm:space-y-4 overflow-y-auto">
+                    {myQuotes.map((quote) => (
+                      <div key={quote.id} className="glass-card bg-white/5 rounded-xl border border-white/20 hover:border-cyan-400/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/25 p-4 sm:p-5">
+                        <div className="flex flex-col lg:flex-row lg:items-start justify-between space-y-4 lg:space-y-0 lg:space-x-4">
+                          {/* Informações da Cotação */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+                              <div className="flex items-center space-x-3 mb-2 sm:mb-0">
+                                <span className="font-mono text-sm font-bold text-cyan-400 bg-cyan-500/20 px-2 py-1 rounded">
+                                  {quote.id}
+                                </span>
+                                {getStatusBadge(quote.status)}
+                              </div>
+                              <div className="text-right">
+                                <div className="text-lg sm:text-xl font-bold text-green-400">{quote.valor}</div>
+                                <div className="text-xs text-slate-400">Valor estimado</div>
+                              </div>
+                            </div>
+                            
+                            <h3 className="font-bold text-white text-base sm:text-lg mb-2 line-clamp-2 hover:text-cyan-400 transition-colors">
+                              {quote.produto}
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-300 mb-3">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></div>
+                                <span className="truncate"><strong>Fornecedor:</strong> {quote.fornecedor}</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                <span className="whitespace-nowrap"><strong>Criado em:</strong> {quote.data}</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <User className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                <span className="truncate"><strong>Status:</strong> {quote.status}</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <FileText className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                <span className="truncate"><strong>ID:</strong> {quote.id}</span>
+                              </div>
+                            </div>
+
+                            {/* Informações adicionais */}
+                            {quote.submittedAt && (
+                              <div className="bg-slate-800/30 rounded-lg p-3 mb-3">
+                                <div className="text-xs text-slate-400 mb-1">Submetido em:</div>
+                                <div className="text-sm text-slate-200">{quote.submittedAt}</div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Ações */}
+                          <div className="flex flex-row lg:flex-col items-center space-x-2 lg:space-x-0 lg:space-y-2 flex-shrink-0">
+                            <button 
+                              onClick={() => {
+                                // Implementar visualização detalhada
+                                console.log('Ver detalhes da cotação:', quote.id);
+                              }}
+                              className="flex-1 lg:flex-none lg:w-full bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 hover:border-cyan-400/50 text-cyan-400 hover:text-cyan-300 px-4 py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-[1.02] text-sm group"
+                            >
+                              <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                              <span>Ver Detalhes</span>
+                            </button>
+                            
+                            <button 
+                              onClick={() => {
+                                // Implementar edição da cotação
+                                console.log('Editar cotação:', quote.id);
+                              }}
+                              className="flex-1 lg:flex-none lg:w-full bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 hover:border-blue-400/50 text-blue-400 hover:text-blue-300 px-4 py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-[1.02] text-sm group"
+                            >
+                              <Edit className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                              <span>Editar</span>
+                            </button>
+                            
+                            <button 
+                              onClick={() => setActivePage("my-quotes")}
+                              className="flex-1 lg:flex-none lg:w-full bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 hover:border-green-400/50 text-green-400 hover:text-green-300 px-4 py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-[1.02] text-sm group"
+                            >
+                              <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                              <span>Ver Todas</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col justify-center items-center text-center py-8">
+                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-8 border border-slate-700/50 max-w-md">
+                      <FileText className="w-16 h-16 text-slate-400 mx-auto mb-6" />
+                      <h3 className="text-xl font-medium text-white mb-3">Nenhuma cotação criada</h3>
+                      <p className="text-slate-300 mb-6 text-sm leading-relaxed">Use o formulário acima para criar sua primeira cotação personalizada com IA.</p>
+                      <button 
+                        onClick={() => setActivePage("product-search")}
+                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105 font-medium flex items-center space-x-2 mx-auto"
+                      >
+                        <Search className="w-4 h-4" />
+                        <span>Explorar Produtos</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </main>
           </div>

@@ -39,6 +39,15 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Listener para evento de token expirado
+    const handleTokenExpired = () => {
+      console.log('🔑 Token expirado detectado - fazendo logout...');
+      handleLogout();
+    };
+
+    // Adicionar listener para token expirado
+    window.addEventListener('tokenExpired', handleTokenExpired);
+
     // Verificar se o usuário já está logado (localStorage)
     const savedAuth = localStorage.getItem("smartquote_auth");
     const savedToken = localStorage.getItem("auth_token");
@@ -96,6 +105,11 @@ export default function App() {
     emailService.loadSavedConfig();
 
     setIsLoading(false);
+
+    // Cleanup do listener
+    return () => {
+      window.removeEventListener('tokenExpired', handleTokenExpired);
+    };
   }, []);
 
   const handleLogin = (credentials: { email: string; password: string; role?: 'user' | 'admin' | 'manager'; position?: string }) => {

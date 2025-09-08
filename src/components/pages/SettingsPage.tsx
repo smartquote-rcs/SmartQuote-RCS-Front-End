@@ -4,6 +4,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../hooks/useLanguage';
 import { AppContext } from '../../contexts/AppContext';
@@ -13,7 +14,10 @@ import {
 	Save,
 	Eye,
 	EyeOff,
-	Lock
+	Lock,
+	RefreshCw,
+	CheckCircle,
+	AlertCircle
 } from 'lucide-react';
 
 interface AdminProfile {
@@ -110,6 +114,11 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 	});
 
 	const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+
+	// Estados para o modal de redefinição de senha
+	const [showResetModal, setShowResetModal] = useState(false);
+	const [isResetting, setIsResetting] = useState(false);
+	const [newGeneratedPassword, setNewGeneratedPassword] = useState('');
 
 	// Função para buscar configurações do sistema da API
 	const fetchSettings = async () => {
@@ -218,7 +227,7 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 		}
 	};
 
-	const handleChangePassword = () => {
+	const handleChangePassword = async () => {
 		if (passwordData.new !== passwordData.confirm) {
 			alert(t('settings.passwordsDoNotMatch'));
 			return;
@@ -229,16 +238,146 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 			return;
 		}
 
-		console.log('Alterando senha do admin');
-		setPasswordData({
-			current: '',
-			new: '',
-			confirm: '',
-			showCurrent: false,
-			showNew: false,
-			showConfirm: false
-		});
-		setSaveSuccess(t('settings.passwordChanged'));
+		if (!passwordData.current) {
+			alert(t('settings.currentPasswordRequired'));
+			return;
+		}
+
+		try {
+			console.log('🔄 Alterando senha do usuário...');
+			
+			// Importar o serviço de autenticação e fazer a alteração real
+			const { authService } = await import('../../api/services');
+			const result = await authService.changePassword(passwordData.current, passwordData.new);
+			
+			if (result.success) {
+				console.log('✅ Senha alterada com sucesso');
+				
+				// Limpar os campos de senha
+				setPasswordData({
+					current: '',
+					new: '',
+					confirm: '',
+					showCurrent: false,
+					showNew: false,
+					showConfirm: false
+				});
+				
+				// Mostrar sucesso
+				setSaveSuccess(result.message || t('settings.passwordChanged'));
+				
+				// Atualizar a senha atual no localStorage se necessário
+				try {
+					const auth = localStorage.getItem('smartquote_auth');
+					if (auth) {
+						const parsed = JSON.parse(auth);
+						if (parsed.user) {
+							parsed.user.password = passwordData.new;
+							localStorage.setItem('smartquote_auth', JSON.stringify(parsed));
+						}
+					}
+				} catch (e) {
+					console.warn('Não foi possível atualizar senha no localStorage:', e);
+				}
+				
+			} else {
+				console.error('❌ Erro ao alterar senha:', result.error);
+				alert(result.error || 'Erro ao alterar senha. Tente novamente.');
+			}
+			
+		} catch (error) {
+			console.error('💥 Erro inesperado ao alterar senha:', error);
+			alert('Erro inesperado ao alterar senha. Tente novamente.');
+		}
+	};
+
+	const handleResetPassword = () => {
+		setShowResetModal(true);
+	};
+
+	// Função para gerar senha aleatória
+	const generateRandomPassword = () => {
+		const length = 12;
+		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+		let password = "";
+		for (let i = 0; i < length; i++) {
+			password += charset.charAt(Math.floor(Math.random() * charset.length));
+		}
+		return password;
+	};
+
+	// Função para confirmar a redefinição da senha
+	const confirmPasswordReset = async () => {
+		setIsResetting(true);
+		
+		try {
+			// Gerar nova senha aleatória
+			const newPassword = generateRandomPassword();
+			
+			// Fazer a alteração real da senha usando a senha atual
+			const { authService } = await import('../../api/services');
+			const result = await authService.changePassword(passwordData.current, newPassword);
+			
+			if (result.success) {
+				console.log('✅ Senha redefinida com sucesso');
+				
+				setNewGeneratedPassword(newPassword);
+				
+				// Atualizar a senha atual no estado local
+				setPasswordData(prev => ({
+					...prev,
+					current: newPassword,
+					new: '',
+					confirm: ''
+				}));
+
+				// Atualizar no localStorage
+				try {
+					const auth = localStorage.getItem('smartquote_auth');
+					if (auth) {
+						const parsed = JSON.parse(auth);
+						if (parsed.user) {
+							parsed.user.password = newPassword;
+							localStorage.setItem('smartquote_auth', JSON.stringify(parsed));
+						}
+					}
+				} catch (e) {
+					console.warn('Não foi possível atualizar senha no localStorage:', e);
+				}
+
+				setSaveSuccess(t('settings.resetPasswordSuccess'));
+				setTimeout(() => setSaveSuccess(''), 3000);
+			} else {
+				console.error('❌ Erro ao redefinir senha:', result.error);
+				setSaveSuccess(result.error || t('settings.resetPasswordError'));
+				setTimeout(() => setSaveSuccess(''), 3000);
+			}
+			
+		} catch (error) {
+			console.error('💥 Erro inesperado ao redefinir senha:', error);
+			setSaveSuccess(t('settings.resetPasswordError'));
+			setTimeout(() => setSaveSuccess(''), 3000);
+		} finally {
+			setIsResetting(false);
+		}
+	};
+
+	// Função para copiar senha para a área de transferência
+	const copyPasswordToClipboard = async () => {
+		try {
+			await navigator.clipboard.writeText(newGeneratedPassword);
+			setSaveSuccess(t('settings.passwordCopied'));
+			setTimeout(() => setSaveSuccess(''), 2000);
+		} catch (error) {
+			console.error('Erro ao copiar senha:', error);
+		}
+	};
+
+	// Função para fechar o modal
+	const closeResetModal = () => {
+		setShowResetModal(false);
+		setNewGeneratedPassword('');
+		setIsResetting(false);
 	};
 
 	return (
@@ -393,14 +532,13 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 											type={passwordData.showCurrent ? "text" : "password"}
 											value={passwordData.current}
 											onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
-											disabled
-											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} pr-12 text-sm sm:text-base opacity-60 cursor-not-allowed`}
+											placeholder="Digite sua senha atual"
+											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} pr-12 text-sm sm:text-base`}
 										/>
 										<button
 											type="button"
 											onClick={() => setPasswordData({ ...passwordData, showCurrent: !passwordData.showCurrent })}
 											className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isLight ? 'text-gray-500 hover:text-gray-700' : 'text-dark-secondary hover:text-dark-primary-text'}`}
-											disabled
 										>
 											{passwordData.showCurrent ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
 										</button>
@@ -414,6 +552,7 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 											type={passwordData.showNew ? "text" : "password"}
 											value={passwordData.new}
 											onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
+											placeholder="Digite sua nova senha (mínimo 8 caracteres)"
 											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} pr-12 text-sm sm:text-base`}
 										/>
 										<button
@@ -433,6 +572,7 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 											type={passwordData.showConfirm ? "text" : "password"}
 											value={passwordData.confirm}
 											onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
+											placeholder="Digite novamente sua nova senha"
 											className={`h-9 sm:h-10 ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500' : 'bg-dark-card border-dark-color text-dark-primary-text placeholder-dark-secondary'} pr-12 text-sm sm:text-base`}
 										/>
 										<button
@@ -445,13 +585,27 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 									</div>
 								</div>
 
-								<Button
-									onClick={handleChangePassword}
-									className="w-full h-9 sm:h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base"
-								>
-									<Lock className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-									Alterar Senha
-								</Button>
+								<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+									<Button
+										onClick={handleChangePassword}
+										className="flex-1 h-9 sm:h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base"
+									>
+										<Lock className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+										{t('settings.changePassword')}
+									</Button>
+									<Button
+										onClick={handleResetPassword}
+										variant="outline"
+										className={`flex-1 h-9 sm:h-10 text-sm sm:text-base ${
+											isLight 
+												? 'border-orange-300 text-orange-700 hover:bg-orange-50 hover:border-orange-400' 
+												: 'border-orange-500/50 text-orange-400 hover:bg-orange-500/10 hover:border-orange-400'
+										}`}
+									>
+										<RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+										{t('settings.resetPassword')}
+									</Button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -586,6 +740,130 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 					</div>
 				</div>
 			</main>
+
+			{/* Modal de Redefinição de Senha */}
+			<Dialog open={showResetModal} onOpenChange={setShowResetModal}>
+				<DialogContent className={`max-w-md mx-auto ${isLight ? 'bg-white border-gray-200' : 'bg-dark-card border-dark-color'}`}>
+					<DialogHeader>
+						<DialogTitle className={`flex items-center gap-3 ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>
+							<div className={`p-2 rounded-lg ${isLight ? 'bg-orange-100' : 'bg-orange-500/20'}`}>
+								<RefreshCw className={`w-5 h-5 ${isLight ? 'text-orange-600' : 'text-orange-400'}`} />
+							</div>
+							{t('settings.resetPasswordModal')}
+						</DialogTitle>
+						<DialogDescription className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
+							{!newGeneratedPassword 
+								? "Uma nova senha será gerada automaticamente para sua conta."
+								: "Nova senha gerada com sucesso! Certifique-se de salvá-la em um local seguro."
+							}
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-4 mt-4">
+						{!newGeneratedPassword ? (
+							// Antes da redefinição
+							<div className={`p-4 rounded-lg border ${isLight ? 'bg-yellow-50 border-yellow-200' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
+								<div className="flex items-center gap-2 mb-2">
+									<AlertCircle className={`w-4 h-4 ${isLight ? 'text-yellow-600' : 'text-yellow-400'}`} />
+									<span className={`font-medium text-sm ${isLight ? 'text-yellow-800' : 'text-yellow-200'}`}>
+										Atenção
+									</span>
+								</div>
+								<p className={`text-sm ${isLight ? 'text-yellow-700' : 'text-yellow-300'}`}>
+									Esta ação irá gerar uma nova senha aleatória e substituir sua senha atual.
+									Você precisará usar a nova senha em seus próximos acessos.
+								</p>
+							</div>
+						) : (
+							// Após a redefinição - exibir nova senha
+							<div className={`p-4 rounded-lg border ${isLight ? 'bg-green-50 border-green-200' : 'bg-green-500/10 border-green-500/30'}`}>
+								<div className="flex items-center gap-2 mb-3">
+									<CheckCircle className={`w-4 h-4 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
+									<span className={`font-medium text-sm ${isLight ? 'text-green-800' : 'text-green-200'}`}>
+										Nova Senha Gerada
+									</span>
+								</div>
+								
+								<div className="space-y-3">
+									<div>
+										<Label className={`${isLight ? 'text-green-700' : 'text-green-300'} mb-2 block text-sm font-medium`}>
+											Sua nova senha:
+										</Label>
+										<div className="flex items-center gap-2">
+											<div className={`flex-1 p-3 rounded-lg font-mono text-sm border ${
+												isLight ? 'bg-white border-green-300 text-gray-800' : 'bg-dark-bg border-green-500/50 text-dark-primary-text'
+											} select-all`}>
+												{newGeneratedPassword}
+											</div>
+											<Button
+												onClick={copyPasswordToClipboard}
+												variant="outline"
+												size="sm"
+												className={`p-2 ${
+													isLight 
+														? 'border-green-300 hover:bg-green-50 text-green-700' 
+														: 'border-green-500/50 hover:bg-green-500/10 text-green-400'
+												}`}
+												title="Copiar senha"
+											>
+												<RefreshCw className="w-4 h-4" />
+											</Button>
+										</div>
+									</div>
+									<p className={`text-xs ${isLight ? 'text-green-600' : 'text-green-400'}`}>
+										💡 Clique na senha para selecioná-la, ou use o botão para copiar
+									</p>
+								</div>
+							</div>
+						)}
+
+						{/* Botões de ação */}
+						<div className="flex gap-3 pt-2">
+							{!newGeneratedPassword ? (
+								<>
+									<Button
+										onClick={closeResetModal}
+										variant="outline"
+										className={`flex-1 ${
+											isLight 
+												? 'border-gray-300 text-gray-700 hover:bg-gray-50' 
+												: 'border-dark-color text-dark-secondary hover:bg-dark-hover'
+										}`}
+										disabled={isResetting}
+									>
+										Cancelar
+									</Button>
+									<Button
+										onClick={confirmPasswordReset}
+										className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+										disabled={isResetting}
+									>
+										{isResetting ? (
+											<>
+												<RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+												Gerando...
+											</>
+										) : (
+											<>
+												<RefreshCw className="w-4 h-4 mr-2" />
+												Confirmar
+											</>
+										)}
+									</Button>
+								</>
+							) : (
+								<Button
+									onClick={closeResetModal}
+									className="w-full bg-green-600 hover:bg-green-700 text-white"
+								>
+									<CheckCircle className="w-4 h-4 mr-2" />
+									Fechar
+								</Button>
+							)}
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
