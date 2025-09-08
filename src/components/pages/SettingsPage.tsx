@@ -115,10 +115,24 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 
 	const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
-	// Estados para o modal de redefinição de senha
-	const [showResetModal, setShowResetModal] = useState(false);
-	const [isResetting, setIsResetting] = useState(false);
-	const [newGeneratedPassword, setNewGeneratedPassword] = useState('');
+	// Estados para o modal de redefinição de senha (método igual ao esqueci senha)
+	const [showTokenModal, setShowTokenModal] = useState(false);
+	const [isRequestingToken, setIsRequestingToken] = useState(false);
+	const [isResetLoading, setIsResetLoading] = useState(false);
+	const [resetToken, setResetToken] = useState('');
+	const [newResetPassword, setNewResetPassword] = useState('');
+	const [confirmResetPassword, setConfirmResetPassword] = useState('');
+	const [showNewResetPassword, setShowNewResetPassword] = useState(false);
+	const [showConfirmResetPassword, setShowConfirmResetPassword] = useState(false);
+	const [tokenSent, setTokenSent] = useState(false);
+	const [resetError, setResetError] = useState('');
+	
+	// Estados para validação de senha em tempo real
+	const [hasMinLength, setHasMinLength] = useState(false);
+	const [hasUppercase, setHasUppercase] = useState(false);
+	const [hasLowercase, setHasLowercase] = useState(false);
+	const [hasNumber, setHasNumber] = useState(false);
+	const [hasSpecialChar, setHasSpecialChar] = useState(false);
 
 	// Função para buscar configurações do sistema da API
 	const fetchSettings = async () => {

@@ -1279,7 +1279,6 @@ export const dashboardService = {
     }
   }
 };
-
 // Serviço de Fornecedores
 export const supplierService = {
   async create(supplierData: {
@@ -1309,6 +1308,7 @@ export const supplierService = {
       };
     }
   },
+
   async getAll(): Promise<AuthResponse> {
     try {
       console.log('📤 Fazendo requisição para buscar fornecedores (GET /fornecedores)...');
@@ -1338,6 +1338,7 @@ export const supplierService = {
       };
     }
   },
+
   async update(id: string, supplierData: Partial<{
     nome: string;
     contato_email: string;
@@ -1352,8 +1353,8 @@ export const supplierService = {
     rate?: number;
   }>): Promise<AuthResponse> {
     try {
-  console.log(`📤 Fazendo requisição para atualizar fornecedor (PATCH /fornecedores/${id}):`, supplierData);
-  const response = await api.patch(`/fornecedores/${id}`, supplierData);
+      console.log(`📤 Fazendo requisição para atualizar fornecedor (PATCH /fornecedores/${id}):`, supplierData);
+      const response = await api.patch(`/fornecedores/${id}`, supplierData);
       if (response.status === 200) {
         return { success: true, data: response.data };
       }
@@ -1448,7 +1449,6 @@ export const relatorioService = {
         responseType: 'blob'
       });
       
-      // Criar um link para download do arquivo
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1475,7 +1475,6 @@ export const relatorioService = {
         responseType: 'blob'
       });
       
-      // Criar um link para download do arquivo
       const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1502,7 +1501,6 @@ export const relatorioService = {
         responseType: 'blob'
       });
       
-      // Criar um link para download do arquivo
       const blob = new Blob([response.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1521,5 +1519,59 @@ export const relatorioService = {
         error: error.response?.data?.error || error.response?.data?.message || 'Erro ao gerar relatório CSV'
       };
     }
+  },
+
+  async getPropostaEmail(cotacaoId: number | string): Promise<AuthResponse> {
+    try {
+      const response = await api.get(`/relatorios/proposta-email/${cotacaoId}`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('Erro ao obter proposta de e-mail:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao obter proposta de e-mail'
+      };
+    }
+  },
+
+  async updatePropostaEmail(cotacaoId: number | string, propostaEmail: string): Promise<AuthResponse> {
+    try {
+      const response = await api.put(`/relatorios/proposta-email/${cotacaoId}`, { propostaEmail });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('Erro ao atualizar proposta de e-mail:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao atualizar proposta de e-mail'
+      };
+    }
+  },
+
+  async gerarPropostaEmailIA(cotacaoId: number | string, emailOriginal: string, promptModificacao: string): Promise<AuthResponse> {
+    try {
+      const response = await api.post(`/relatorios/proposta-email-ia/${cotacaoId}`, {
+        emailOriginal,
+        promptModificacao,
+      }, { timeout: 60000 });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('Erro ao gerar proposta de e-mail via IA:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao gerar proposta de e-mail via IA'
+      };
+    }
+  },
+
+  downloadTextAsFile(filename: string, text: string) {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   }
 };

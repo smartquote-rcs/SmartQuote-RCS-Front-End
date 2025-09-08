@@ -398,6 +398,39 @@ html {
     color: var(--color-dark-cta);
     border: 1px solid var(--color-dark-cta);
   }
+
+  /* Scroll on hover utility: mostra a barra apenas quando o usuário passa o mouse sobre o container */
+  .scroll-on-hover {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* smoother scrolling on iOS */
+    scrollbar-width: none; /* Firefox: hide by default */
+  }
+
+  .scroll-on-hover::-webkit-scrollbar {
+    width: 0px; /* Chrome/Safari: hide by default */
+    background: transparent;
+  }
+
+  /* Ao passar o mouse, revelar barra fina e estilizada */
+  .scroll-on-hover:hover {
+    scrollbar-width: thin; /* Firefox */
+  }
+
+  .scroll-on-hover:hover::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+  }
+
+  .scroll-on-hover:hover::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scroll-on-hover:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.6); /* cor neutra que funciona com light/dark */
+    border-radius: 8px;
+    border: 2px solid transparent; /* evita que o thumb fique colado nas bordas */
+    background-clip: padding-box;
+  }
   
   .dark-button-secondary:hover {
     background-color: rgba(59, 130, 246, 0.1);
