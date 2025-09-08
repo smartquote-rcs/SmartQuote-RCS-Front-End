@@ -4,7 +4,7 @@ import axios from 'axios';
 const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 export const API_BASE_URL = isDevelopment 
   ? 'https://testsmart-24vt.onrender.com/api/'  // Desenvolvimento
-  : 'https://testsmart-24vt.onrender.com/api/'; // TODO: Atualizar para URL do backend em produção
+  : 'http://localhost:2000/api'; // TODO: Atualizar para URL do backend em produção
 
 const api = axios.create({
   baseURL: API_BASE_URL,
