@@ -41,75 +41,48 @@ import {
 import { cotacaoService, relatorioService } from "../../api/services";
 import api from '../../api/client';
 
-// Função universal para substituir item por produto local ou web
+// Função universal para substituir item por produto local (ID) ou web (URL)
 async function handleReplaceUniversal(produto: any, item: any, setReplaceLoading: any, setReplaceError: any, setReplaceSuccess: any, onItemReplaced: any, t: any) {
   setReplaceLoading(true);
   setReplaceError("");
-  setReplaceSuccess("");
   try {
-    let productId = produto.id;
-    // Se produto web já tem id, trata como local
-    if (!productId) {
-      // Se não tem id, aí sim cria produto web
-      let precoNum = 0;
-      if (typeof produto.preco === 'number') {
-        precoNum = produto.preco;
-      } else if (typeof produto.preco === 'string') {
-        precoNum = parseFloat(produto.preco.replace(/[^\d.,]/g, '').replace(/\./g, '').replace(/,/g, '.')) || 0;
-      }
-      const productData = {
-        fornecedor_id: produto.fornecedor_id || 1,
-        codigo: produto.codigo && produto.codigo.trim() ? produto.codigo : "web-" + Date.now(),
-        nome: produto.nome && produto.nome.trim() ? produto.nome : "Produto Web",
-        modelo: produto.modelo && produto.modelo.trim() ? produto.modelo : "N/A",
-        descricao: produto.descricao && produto.descricao.trim() ? produto.descricao : produto.nome || "Produto importado da web",
-        preco: precoNum || 0,
-        unidade: produto.unidade || "un",
-        estoque: produto.estoque || 200,
-        origem: "externo" as "externo",
-        image_url: produto.image_url && produto.image_url.trim() ? produto.image_url : "https://example.com/produto-web-image.png",
-        produto_url: produto.url && produto.url.trim() ? produto.url : "https://example.com/produto-web",
-        categoria: produto.categoria || null,
-        tags: produto.tags || [],
-        disponibilidade: produto.disponibilidade || "imediata",
-        especificacoes_tecnicas: produto.especificacoes_tecnicas || {},
-        cadastrado_por: 1,
-        cadastrado_em: new Date().toISOString(),
-        atualizado_por: 1,
-        atualizado_em: new Date().toISOString(),
-      };
-      const { create } = await import('../../api/services').then(m => m.produtoService);
-      const createRes = await create(productData);
-      console.log('Resposta da API ao criar produto web:', createRes);
-      console.log('DEBUG createRes:', createRes);
-      console.log('DEBUG createRes.data:', createRes.data);
-      const newId = createRes.data?.data?.id;
-      if (createRes.success && newId) {
-        productId = newId;
-      } else {
-        let errMsg = '';
-        if (typeof createRes.error === 'object') {
-          errMsg = JSON.stringify(createRes.error);
-        } else {
-          errMsg = String(createRes.error || 'Erro desconhecido.');
-        }
-        setReplaceError('Erro ao criar produto web: ' + errMsg);
-        setReplaceLoading(false);
-        return;
-      }
+    const hasLocalId = produto && (typeof produto.id === 'number' || (typeof produto.id === 'string' && produto.id.trim() !== ''));
+    const hasUrl = produto && typeof produto.url === 'string' && produto.url.trim().length > 0;
+
+    // Mensagem inicial para indicar que o processamento pode demorar um pouco (apenas para URLs)
+    if (!hasLocalId && hasUrl) {
+      setReplaceSuccess('Processando substituição... isso pode demorar um pouco.');
     }
-    // Chama o replace
+
+    const payload: { cotacaoItemId: number; newProductId?: number; url?: string; nomeProduto?: string } = {
+      cotacaoItemId: item.id,
+    };
+
+    if (hasLocalId) {
+      payload.newProductId = Number(produto.id);
+    } else if (hasUrl) {
+      payload.url = produto.url.trim();
+      if (typeof produto.nome === 'string' && produto.nome.trim().length > 0) {
+        payload.nomeProduto = produto.nome.trim();
+      }
+    } else {
+      setReplaceError('Produto inválido: informe um ID de produto ou uma URL.');
+      setReplaceLoading(false);
+      return;
+    }
+
+    // Chama o replace com o payload suportado pelo backend
     const { replaceProduct } = await import('../../api/services').then(m => m.produtoService);
-    const res = await replaceProduct(item.id, productId);
+    const res = await replaceProduct(payload);
     if (res.success) {
-      setReplaceSuccess(`${t("quoteRequests.itemReplacedSuccess")} (ID usado: ${productId})`);
-      // Se o item tinha status false, atualiza para true
+      const used = payload.newProductId ? `ID: ${payload.newProductId}` : `URL: ${payload.url}`;
+      setReplaceSuccess(`${t("quoteRequests.itemReplacedSuccess")} (${used})`);
       if (item.status === false) {
         item.status = true;
       }
       if (onItemReplaced) onItemReplaced();
     } else {
-      setReplaceError(`${res.error || t("quoteRequests.errorReplacingItem")}. (ID usado: ${productId})`);
+      setReplaceError(res.error || t("quoteRequests.errorReplacingItem"));
     }
   } catch (e) {
     setReplaceError(t("quoteRequests.errorReplacingItem"));
