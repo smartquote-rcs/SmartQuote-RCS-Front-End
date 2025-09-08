@@ -3,8 +3,8 @@ import axios from 'axios';
 // Detectar ambiente e configurar URL da API
 const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 export const API_BASE_URL = isDevelopment 
-  ? 'http://localhost:2000/api'  // Desenvolvimento
-  : 'http://localhost:2000/api'; // TODO: Atualizar para URL do backend em produção
+  ? 'https://testsmart-24vt.onrender.com/api'  // Desenvolvimento
+  : 'https://testsmart-24vt.onrender.com/api'; // TODO: Atualizar para URL do backend em produção
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -99,7 +99,7 @@ export const loginUser = async (credentials: {
     throw error;
   }
 };
-
+//https://testsmart-24vt.onrender.com/api/
 // Função para testar um cadastro rápido (dados de exemplo)
 export const createTestUser = async () => {
   const testUser = {

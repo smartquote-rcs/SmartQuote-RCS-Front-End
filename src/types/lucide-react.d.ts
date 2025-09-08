@@ -80,4 +80,6 @@ declare module 'lucide-react' {
   export const ChevronUpIcon: Icon;
   export const ChevronDown: Icon;
   export const ChevronUp: Icon;
+  export const Sun: Icon;
+  export const Moon: Icon;
 }

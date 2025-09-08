@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useCurrency } from "../hooks/useCurrency";
 import { processImageUrl, handleImageError } from "../utils/imageProxy";
+import { API_BASE_URL } from "../api/client";
 import { 
   Search, 
   ShoppingCart, 
@@ -32,6 +33,7 @@ import { Badge } from "./ui/badge";
 import { useApp } from "../contexts/AppContext";
 import { useTranslation } from 'react-i18next';
 import { buscaGeralService } from "../services/buscaGeralService";
+import { jobService } from "../api/services";
 
 interface User {
   email: string;
@@ -89,6 +91,7 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newQuotePrompt, setNewQuotePrompt] = useState("");
   const [isCreatingQuote, setIsCreatingQuote] = useState(false);
+  const [activeProcessesCount, setActiveProcessesCount] = useState(0);
   // Histórico de cotações criadas
   const [quoteHistory, setQuoteHistory] = useState<Array<{
     id: string;
@@ -177,8 +180,30 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
     }
   };
 
+  // Função para carregar e contar processos ativos
+  const loadActiveProcesses = async () => {
+    try {
+      const response = await jobService.getActiveJobs();
+      if (response.success && response.data) {
+        setActiveProcessesCount(response.data.length);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar processos ativos:', error);
+      setActiveProcessesCount(0);
+    }
+  };
+
+  // Carregar processos ativos ao montar o componente e a cada 30 segundos
+  useEffect(() => {
+    loadActiveProcesses();
+    const interval = setInterval(loadActiveProcesses, 30000); // Atualizar a cada 30 segundos
+    return () => clearInterval(interval);
+  }, []);
+
   const renderNavItem = (item: any, isActive: boolean) => {
     const Icon = item.icon;
+    const showNotification = item.key === 'my-quotes' && activeProcessesCount > 0;
+    
     return (
       <button
         key={item.key}
@@ -186,14 +211,24 @@ export function UserDashboard({ user, onLogout }: UserDashboardProps) {
           setActivePage(item.key);
           setIsMobileMenuOpen(false);
         }}
-        className={`flex items-center space-x-3 p-3 rounded-md w-full text-left transition-all duration-300 ${
+        className={`flex items-center justify-between space-x-3 p-3 rounded-md w-full text-left transition-all duration-300 ${
           isActive 
             ? "bg-white/10 backdrop-blur-md border border-blue-400 text-blue-400" 
             : "hover:bg-white/5 hover:backdrop-blur-md border border-transparent hover:border-blue-400/30 text-dark-secondary hover:text-blue-300"
         }`}
       >
-        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`} />
-        <span className={`text-xs sm:text-sm truncate ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>{t(item.label)}</span>
+        <div className="flex items-center space-x-3">
+          <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-blue-400" : "text-dark-secondary"}`} />
+          <span className={`text-xs sm:text-sm truncate ${isActive ? "text-blue-400" : "text-dark-secondary"}`}>{t(item.label)}</span>
+        </div>
+        {showNotification && (
+          <div className="flex items-center space-x-1">
+            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center">
+              {activeProcessesCount}
+            </span>
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          </div>
+        )}
       </button>
     );
   };

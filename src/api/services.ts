@@ -1222,7 +1222,6 @@ export const dashboardService = {
     }
   }
 };
-
 // Serviço de Fornecedores
 export const supplierService = {
   async create(supplierData: {
@@ -1252,6 +1251,7 @@ export const supplierService = {
       };
     }
   },
+
   async getAll(): Promise<AuthResponse> {
     try {
       console.log('📤 Fazendo requisição para buscar fornecedores (GET /fornecedores)...');
@@ -1281,6 +1281,7 @@ export const supplierService = {
       };
     }
   },
+
   async update(id: string, supplierData: Partial<{
     nome: string;
     contato_email: string;
@@ -1295,8 +1296,8 @@ export const supplierService = {
     rate?: number;
   }>): Promise<AuthResponse> {
     try {
-  console.log(`📤 Fazendo requisição para atualizar fornecedor (PATCH /fornecedores/${id}):`, supplierData);
-  const response = await api.patch(`/fornecedores/${id}`, supplierData);
+      console.log(`📤 Fazendo requisição para atualizar fornecedor (PATCH /fornecedores/${id}):`, supplierData);
+      const response = await api.patch(`/fornecedores/${id}`, supplierData);
       if (response.status === 200) {
         return { success: true, data: response.data };
       }
@@ -1330,6 +1331,32 @@ export const supplierService = {
 
 // Serviço de Jobs de Cotação
 export const jobService = {
+  async getAllJobs() {
+    try {
+      const response = await api.get('/busca-automatica/jobs');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('Erro ao buscar jobs:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar jobs'
+      };
+    }
+  },
+
+  async getActiveJobs() {
+    try {
+      const response = await api.get('/busca-automatica/jobs/active');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('Erro ao buscar jobs ativos:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar jobs ativos'
+      };
+    }
+  },
+
   async deleteJobById(jobId: string) {
     try {
       const response = await api.delete(`/busca-automatica/job/${jobId}`);
@@ -1352,7 +1379,6 @@ export const relatorioService = {
         responseType: 'blob'
       });
       
-      // Criar um link para download do arquivo
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1379,7 +1405,6 @@ export const relatorioService = {
         responseType: 'blob'
       });
       
-      // Criar um link para download do arquivo
       const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1406,7 +1431,6 @@ export const relatorioService = {
         responseType: 'blob'
       });
       
-      // Criar um link para download do arquivo
       const blob = new Blob([response.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');

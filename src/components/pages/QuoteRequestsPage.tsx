@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ExportFormat } from "../../utils/exportCotacaoPdf";
 import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../hooks/useCurrency";
+import { useTheme } from "../../hooks/useTheme";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import {
@@ -37,6 +38,9 @@ import {
   SortAsc,
   SortDesc,
   Plus,
+  Sun,
+  Moon,
+  X,
 } from "lucide-react";
 import { cotacaoService, relatorioService } from "../../api/services";
 import api from '../../api/client';
@@ -498,7 +502,11 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
 
 interface QuoteRequestsPageProps {
   onNavigateToNewQuote?: () => void;
-  isLight?: boolean;
+  user?: {
+    id?: number;
+    role?: string;
+    position?: string;
+  };
 }
 
 const getStatusFromAprovacao = (cotacao: any) => {
@@ -531,10 +539,11 @@ const getStatusIcon = (cotacao: any) => {
 
 export function QuoteRequestsPage({
   onNavigateToNewQuote,
-  isLight = false,
+  user,
 }: QuoteRequestsPageProps = {}) {
   const { t } = useTranslation();
   const { formatCurrency, currency } = useCurrency();
+  const { isLight, toggleTheme } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [priorityFilter, setPriorityFilter] = useState("Todas");
@@ -622,6 +631,48 @@ export function QuoteRequestsPage({
   const [emailGenerating, setEmailGenerating] = useState(false);
   const [emailSaved, setEmailSaved] = useState(false);
   const [emailEditPulse, setEmailEditPulse] = useState(false);
+  
+  // Sistema de Toast
+  const [toasts, setToasts] = useState<Array<{
+    id: string;
+    type: 'success' | 'error' | 'info';
+    message: string;
+    timestamp: number;
+  }>>([]);
+
+  // Função para adicionar toast
+  const addToast = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const toast = {
+      id,
+      type,
+      message,
+      timestamp: Date.now()
+    };
+    
+    setToasts(prev => [...prev, toast]);
+    
+    // Remover toast após 5 segundos
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 5000);
+  };
+
+  // Remover toast manualmente
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Escutar eventos de toast personalizados
+  useEffect(() => {
+    const handleToast = (event: any) => {
+      const { type, message } = event.detail;
+      addToast(type, message);
+    };
+
+    window.addEventListener('toast', handleToast);
+    return () => window.removeEventListener('toast', handleToast);
+  }, []);
   
   // Estado para formato de exportação (removido pois não está sendo usado)
   // const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
@@ -805,7 +856,57 @@ export function QuoteRequestsPage({
   const [approvalModal, setApprovalModal] = useState<{open:boolean; action:'approve'|'set_pending'|'reject'; cotacaoId:string|null}>({open:false, action:'approve', cotacaoId:null});
   const [motivoInput, setMotivoInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // Feedback visual de envio
+  
+  // Função para verificar se o usuário pode aprovar baseado no valor
+  const canApproveQuote = (valorString: string) => {
+    const valor = parseFloat(valorString) || 0;
+    const userRole = user?.position || user?.role || 'user';
+    
+    // Para usuários comuns: não pode aprovar acima de 2.000.000
+    if (userRole === 'user' && valor > 2000000) {
+      return {
+        canApprove: false,
+        message: t('approvals.limitExceededUser', { limit: '2.000.000', role: 'gestor ou CEO' })
+      };
+    }
+    
+    // Para gestores: não pode aprovar acima de 10.000.000
+    if (userRole === 'manager' && valor > 10000000) {
+      return {
+        canApprove: false,
+        message: t('approvals.limitExceededManager', { limit: '10.000.000', role: 'CEO' })
+      };
+    }
+    
+    // Admin é o CEO e pode aprovar qualquer valor sem limite
+    return { canApprove: true, message: '' };
+  };
+
   const openApproval = (id:string, action:'approve'|'set_pending'|'reject') => {
+    console.log('openApproval chamado:', { id, action, user });
+    
+    // Se é uma aprovação ou mudança de status, verificar se o usuário tem permissão baseada no valor
+    if (action === 'approve' || action === 'set_pending') {
+      const cotacao = cotacoesList.find(c => String(c.id) === String(id));
+      console.log('Cotacao encontrada:', cotacao);
+      
+      if (cotacao) {
+        const valor = cotacao.orcamento_geral || '0';
+        console.log('Valor da cotação:', valor);
+        
+        const approvalCheck = canApproveQuote(valor);
+        console.log('Resultado da verificação:', approvalCheck);
+        
+        if (!approvalCheck.canApprove) {
+          // Mostrar mensagem de erro e não abrir o modal
+          const errorMessage = approvalCheck.message || 'Valor excede seu limite de aprovação. Entre em contato com seu gestor ou CEO.';
+          // Usar a função addToast diretamente
+          addToast('error', errorMessage);
+          return;
+        }
+      }
+    }
+    
     setMotivoInput('');
     setIsSubmitting(false);
     setApprovalModal({open:true, action, cotacaoId:id});
@@ -1124,6 +1225,13 @@ export function QuoteRequestsPage({
     valueFilter !== "Todos"
   ].filter(Boolean).length;
 
+  // Verificar se deve mostrar controles para usuários comuns (botão de tema)
+  // Admin e manager têm esses controles no dashboard, usuários comuns precisam aqui
+  const shouldShowUserControls = () => {
+    const userRole = user?.position || user?.role || 'user';
+    return userRole === 'user'; // Apenas usuários comuns veem o botão de tema
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Header - Compacto no mobile */}
@@ -1174,25 +1282,47 @@ export function QuoteRequestsPage({
                 )}
               </div>
               {onNavigateToNewQuote ? (
-                <Button
-                  onClick={onNavigateToNewQuote}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 text-sm md:text-base min-w-[160px] h-[44px]"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>{t("quoteRequests.newQuote")}</span>
-                </Button>
-              ) : (
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm md:text-base min-w-[160px] h-[44px]">
-                      <Plus className="w-4 h-4" />
-                      <span>{t("quoteRequests.newQuote")}</span>
+                <div className="flex items-center gap-3">
+                  {shouldShowUserControls() && (
+                    <Button
+                      onClick={toggleTheme}
+                      className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-slate-700 hover:bg-slate-600 text-white'} px-3 py-2 md:px-4 md:py-3 rounded-xl flex items-center justify-center transition-all duration-300 h-[44px] w-[44px]`}
+                      title={isLight ? "Ativar modo escuro" : "Ativar modo claro"}
+                    >
+                      {isLight ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-dark-card border-dark-color">
-                    {/* ...existing code for dialog content... */}
-                  </DialogContent>
-                </Dialog>
+                  )}
+                  <Button
+                    onClick={onNavigateToNewQuote}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 text-sm md:text-base min-w-[160px] h-[44px]"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{t("quoteRequests.newQuote")}</span>
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  {shouldShowUserControls() && (
+                    <Button
+                      onClick={toggleTheme}
+                      className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-slate-700 hover:bg-slate-600 text-white'} px-3 py-2 md:px-4 md:py-3 rounded-xl flex items-center justify-center transition-all duration-300 h-[44px] w-[44px]`}
+                      title={isLight ? "Ativar modo escuro" : "Ativar modo claro"}
+                    >
+                      {isLight ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                    </Button>
+                  )}
+                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm md:text-base min-w-[160px] h-[44px]">
+                        <Plus className="w-4 h-4" />
+                        <span>{t("quoteRequests.newQuote")}</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-dark-card border-dark-color">
+                      {/* ...existing code for dialog content... */}
+                    </DialogContent>
+                  </Dialog>
+                </div>
               )}
             </div>
           </div>
@@ -1921,6 +2051,49 @@ export function QuoteRequestsPage({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`flex items-center justify-between min-w-[300px] max-w-[400px] p-4 rounded-lg shadow-lg border-l-4 transform transition-all duration-300 animate-in slide-in-from-right-5 ${
+              toast.type === 'error'
+                ? isLight
+                  ? 'bg-red-50 border-red-500 text-red-800'
+                  : 'bg-red-900/90 border-red-500 text-red-100'
+                : toast.type === 'success'
+                ? isLight
+                  ? 'bg-green-50 border-green-500 text-green-800'
+                  : 'bg-green-900/90 border-green-500 text-green-100'
+                : isLight
+                ? 'bg-blue-50 border-blue-500 text-blue-800'
+                : 'bg-blue-900/90 border-blue-500 text-blue-100'
+            } backdrop-blur-sm`}
+          >
+            <div className="flex items-center space-x-2">
+              {toast.type === 'error' && (
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+              )}
+              {toast.type === 'success' && (
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              )}
+              {toast.type === 'info' && (
+                <Info className="w-5 h-5 text-blue-500" />
+              )}
+              <span className="font-medium text-sm">{toast.message}</span>
+            </div>
+            <button
+              onClick={() => removeToast(toast.id)}
+              className={`ml-4 p-1 rounded-full hover:bg-black/10 transition-colors ${
+                isLight ? 'text-gray-500 hover:text-gray-700' : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
 
       {/* Modal de Escolha de Formato de Download */}
       <Dialog open={isDownloadModalOpen} onOpenChange={setIsDownloadModalOpen}>
