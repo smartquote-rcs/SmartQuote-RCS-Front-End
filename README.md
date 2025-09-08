@@ -254,7 +254,7 @@ A **RCS** é uma empresa líder em soluções tecnológicas em Angola, oferecend
 ---
 
 <div align="center">
-  <strong>Desenvildo por Devs da 42 Luanda</strong>
+  <strong>Desenvolvido por Devs da 42 Luanda</strong>
   <br />
   <small>© 2025 RCS Angola. Todos os direitos reservados.</small>
 </div>
