@@ -1091,12 +1091,18 @@ export const produtoService = {
     }
   },
 
-  async replaceProduct(cotacaoItemId: number, newProductId: number): Promise<AuthResponse> {
+  async replaceProduct(payload: { cotacaoItemId: number; newProductId?: number; url?: string; nomeProduto?: string }): Promise<AuthResponse> {
     try {
-      const response = await api.put('/cotacoes-itens/replace-product', {
-        cotacaoItemId,
-        newProductId,
-      });
+      // Encaminha diretamente para a rota do backend que aceita substituição por ID ou URL
+      let response;
+      if (payload.url) {
+        //timeout 2min
+        response = await api.put('/cotacoes-itens/replace-product', payload, { timeout: 120000 });  
+      }
+      else {
+        response = await api.put('/cotacoes-itens/replace-product', payload);
+      }
+      
       if (response.status === 200) {
         return { success: true, data: response.data };
       }
