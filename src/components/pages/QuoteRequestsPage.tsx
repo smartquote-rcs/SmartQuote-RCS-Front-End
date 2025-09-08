@@ -106,7 +106,7 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
   const [replaceError, setReplaceError] = React.useState("");
   const [replaceSuccess, setReplaceSuccess] = React.useState("");
 
-  // Buscar sugestões locais e web ao abrir modal
+  // Buscar Opções Locais e web ao abrir modal
   const fetchSugeridos = async () => {
     console.log('fetchSugeridos chamado para item.id:', item.id);
     setLoadingSugeridos(true);
@@ -260,11 +260,11 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
           {replaceError && <div className="text-red-500 text-base mb-3 break-words p-3 bg-red-50 border border-red-200 rounded-lg">{replaceError}</div>}
           {replaceSuccess && <div className="text-green-500 text-base mb-3 animate-pulse break-words p-3 bg-green-50 border border-green-200 rounded-lg">{replaceSuccess}</div>}
           <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-800 flex flex-col gap-6">
-            {/* SUGESTÕES LOCAIS */}
+            {/* Opções Locais */}
             <div>
               <h3 className={`text-lg font-bold mb-4 ${
                 isLight ? 'text-blue-600' : 'text-cyan-300'
-              }`}>Sugestões Locais</h3>
+              }`}>Opções Locais</h3>
               {loadingSugeridos ? (
                 <div className={`text-base p-4 text-center ${
                   isLight ? 'text-gray-600' : 'text-slate-400'
@@ -291,11 +291,11 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
                 </button>
               ))}
             </div>
-            {/* SUGESTÕES WEB */}
+            {/* Opções de fornecedores */}
             <div>
               <h3 className={`text-lg font-bold mb-4 ${
                 isLight ? 'text-purple-600' : 'text-blue-300'
-              }`}>Sugestões Web</h3>
+              }`}>Opções de fornecedores</h3>
               {loadingSugeridos ? (
                 <div className={`text-base p-4 text-center ${
                   isLight ? 'text-gray-600' : 'text-slate-400'
@@ -612,6 +612,17 @@ export function QuoteRequestsPage({
   // Modal de escolha de formato de download
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   
+  // Modal de Proposta de E-mail
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailText, setEmailText] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [emailEditable, setEmailEditable] = useState(false);
+  const [emailPrompt, setEmailPrompt] = useState("");
+  const [emailGenerating, setEmailGenerating] = useState(false);
+  const [emailSaved, setEmailSaved] = useState(false);
+  const [emailEditPulse, setEmailEditPulse] = useState(false);
+  
   // Estado para formato de exportação (removido pois não está sendo usado)
   // const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
 
@@ -678,6 +689,82 @@ export function QuoteRequestsPage({
   const handleDownload = (cotacao: any) => {
     setSelectedCotacao(cotacao);
     setIsDownloadModalOpen(true);
+  };
+
+  // ===============================
+  // Proposta de E-mail: Handlers
+  // ===============================
+  const openEmailModal = async () => {
+    if (!selectedCotacao) return;
+    setIsEmailModalOpen(true);
+    setEmailLoading(true);
+    setEmailError("");
+    setEmailEditable(false);
+    setEmailSaved(false);
+    setEmailPrompt("");
+    try {
+      const resp = await relatorioService.getPropostaEmail(selectedCotacao.id);
+      setEmailLoading(false);
+      if (resp.success) {
+        const txt = resp.data?.data?.propostaEmail || resp.data?.propostaEmail || "";
+        setEmailText(txt);
+      } else {
+        setEmailError(resp.error || 'Erro ao obter proposta de e-mail');
+      }
+    } catch (e:any) {
+      setEmailLoading(false);
+      setEmailError('Erro ao obter proposta de e-mail');
+    }
+  };
+
+  const handleDownloadEmailTxt = () => {
+    const id = selectedCotacao?.id ?? 'cotacao';
+    relatorioService.downloadTextAsFile(`proposta_email_${id}.txt`, emailText || "");
+  };
+
+  const handleGenerateIA = async () => {
+    if (!selectedCotacao || !emailPrompt.trim()) return;
+    setEmailGenerating(true);
+    setEmailError("");
+    try {
+      const iaRes = await relatorioService.gerarPropostaEmailIA(selectedCotacao.id, emailText || "", emailPrompt);
+      setEmailGenerating(false);
+      if (iaRes.success) {
+        const newText = iaRes.data?.data?.reformulatedEmail || iaRes.data?.reformulatedEmail || "";
+        if (newText) {
+          // Substitui o conteúdo em edição pelo gerado pela IA
+          setEmailText(newText);
+          setEmailEditable(true);
+          setEmailSaved(false);
+        } else {
+          setEmailError('Resposta da IA inválida.');
+        }
+      } else {
+        setEmailError(iaRes.error || 'Erro ao gerar proposta via IA');
+      }
+    } catch (e:any) {
+      setEmailGenerating(false);
+      setEmailError('Erro ao gerar proposta via IA');
+    }
+  };
+
+  const handleSaveEmail = async () => {
+    if (!selectedCotacao) return;
+    setEmailLoading(true);
+    setEmailError("");
+    try {
+      const res = await relatorioService.updatePropostaEmail(selectedCotacao.id, emailText || "");
+      setEmailLoading(false);
+      if (res.success) {
+        setEmailSaved(true);
+        setEmailEditable(false);
+      } else {
+        setEmailError(res.error || 'Erro ao salvar proposta de e-mail');
+      }
+    } catch (e:any) {
+      setEmailLoading(false);
+      setEmailError('Erro ao salvar proposta de e-mail');
+    }
   };
 
   // Função para buscar itens da cotação (usada também como callback de atualização)
@@ -1648,15 +1735,189 @@ export function QuoteRequestsPage({
           </div>
         </DialogContent>
       </Dialog>
-              <button className={`w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
+              <button onClick={openEmailModal} className={`w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
                 isLight 
                   ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 hover:border-purple-400 hover:shadow-lg' 
                   : 'bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border-purple-500/50 hover:border-purple-400/70 hover:shadow-purple-400/20'
               }`}>
                 <Mail className="h-4 w-4" />
-                {t("quoteRequests.sendEmail")}
+                {t("quoteRequests.seeEmail")}
               </button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Proposta de E-mail */}
+      <Dialog open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen}>
+        <DialogContent className={`w-full max-w-3xl ${
+          isLight
+            ? 'bg-white border border-slate-200'
+            : 'bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-indigo-900/90 border border-indigo-500/30'
+        } rounded-2xl overflow-hidden`}
+        >
+          <DialogHeader className={`${isLight ? 'border-gray-200' : 'border-indigo-500/20'} border-b pb-3`}>
+            <DialogTitle className={`text-xl font-extrabold tracking-tight flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-indigo-100'}`}>
+              <Mail className={`h-5 w-5 ${isLight ? 'text-purple-600' : 'text-indigo-400'}`} />
+              Proposta de E-mail da Cotação {selectedCotacao?.id}
+            </DialogTitle>
+            <DialogDescription className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>
+              Visualize, edite e gere uma versão assistida por IA. O processamento pode demorar alguns segundos.
+            </DialogDescription>
+          </DialogHeader>
+
+          {emailError && (
+            <div className={`mt-3 px-4 py-3 rounded-lg border ${isLight ? 'bg-red-50 border-red-200 text-red-700' : 'bg-red-900/30 border-red-700/40 text-red-200'}`}>
+              {emailError}
+            </div>
+          )}
+
+          <div className="mt-4 space-y-4">
+            <div className={`rounded-xl border-2 ${
+              isLight
+                ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200'
+                : 'bg-gradient-to-br from-indigo-900/30 via-slate-800/30 to-purple-900/30 border-indigo-700/30'
+            } p-4`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-indigo-200'}`}>email_proposta</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setEmailEditable(v => !v)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors ${
+                      emailEditPulse 
+                        ? 'animate-pulse bg-amber-100 text-amber-900 border-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.7)]' 
+                        : ''
+                    } ${
+                      emailEditable
+                        ? (isLight ? 'bg-yellow-100 text-yellow-800 border-yellow-300' : 'bg-yellow-600/30 text-yellow-200 border-yellow-400/40')
+                        : (isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-slate-700/60 text-slate-200 border-slate-600/50')
+                    }`}
+                  >
+                    {emailEditable ? 'Bloquear edição' : 'Editar'}
+                  </button>
+                  <button
+                    onClick={handleDownloadEmailTxt}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors ${
+                      isLight ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-blue-600/30 text-blue-200 border-blue-400/40'
+                    }`}
+                  >
+                    Baixar .txt
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative">
+                {emailLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                    <div className="animate-pulse text-xs px-3 py-1.5 rounded-md bg-indigo-600/30 text-indigo-100 border border-indigo-400/30">Carregando...</div>
+                  </div>
+                )}
+                <textarea
+                  value={emailText}
+                  onChange={(e)=> setEmailText(e.target.value)}
+                  readOnly={!emailEditable}
+                  className={`w-full min-h-[260px] rounded-lg p-4 text-sm outline-none resize-vertical border ${
+                    isLight 
+                      ? 'bg-white text-slate-900 border-purple-200 focus:border-purple-400'
+                      : 'bg-slate-900/40 text-slate-100 border-indigo-700/30 focus:border-indigo-400/60'
+                  }`}
+                  placeholder="Sem conteúdo."
+                />
+                {emailGenerating && (
+                  <>
+                    <div className="absolute inset-0 rounded-lg backdrop-blur-[2px]" />
+                    <div className="absolute inset-0 rounded-lg pointer-events-none">
+                      <div className="h-2 w-1/3 bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent rounded-full mt-2 ml-2 animate-pulse" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-400/10 to-transparent animate-pulse" />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+          {/* Área de prompt IA */}
+<div className={`relative rounded-xl p-3 border ${
+  isLight
+    ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
+    : 'bg-gradient-to-r from-indigo-900/30 to-cyan-900/20 border-cyan-700/30'
+} ${emailEditable ? '' : 'opacity-60'}`}>
+
+  {!emailEditable && (
+    <div
+      className="absolute inset-0 z-10 cursor-not-allowed"
+      onClick={() => { setEmailEditPulse(true); setTimeout(()=>setEmailEditPulse(false), 1500); }}
+      title="Clique em Editar para habilitar a edição e o uso de IA"
+    />
+  )}
+
+  <div className="relative">
+    {/* Título acima do input */}
+    <div className={`text-xs font-semibold mb-2 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+      Editar com IA
+    </div>
+
+    {/* Container do input + botão */}
+    <div className="relative">
+      <input
+        type="text"
+        value={emailPrompt}
+        onChange={(e)=> setEmailPrompt(e.target.value)}
+        placeholder="Descreva o que a IA deve alterar (ex.: 'tornar mais formal', 'resumir em 3 parágrafos', 'ajustar para tom técnico')"
+        className={`w-full pr-28 pl-3 py-3 rounded-lg text-sm border outline-none ${
+              isLight 
+                ? 'bg-white text-slate-900 placeholder-slate-400 border-blue-200 focus:border-blue-400' 
+                : 'bg-slate-900/40 border-cyan-700/40 focus:border-cyan-400/60 text-slate-100 placeholder-slate-400'
+            }`}
+          />
+
+          {/* Botão alinhado ao centro do input */}
+          <button
+            onClick={handleGenerateIA}
+            disabled={emailGenerating || !emailPrompt.trim()}
+            className={`absolute right-1 top-1/2 -translate-y-1/2 px-4 py-2 rounded-md text-xs font-semibold border transition-colors ${
+              emailGenerating
+                ? (isLight ? 'bg-purple-200 text-purple-800 border-purple-300' : 'bg-purple-600/40 text-purple-100 border-purple-400/40')
+                : (isLight ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200' : 'bg-purple-600/30 text-purple-100 border-purple-400/40 hover:bg-purple-600/40')
+            }`}
+            title="Gerar com IA"
+          >
+            {emailGenerating ? 'Processando...' : 'Gerar'}
+          </button>
+        </div>
+      </div>
+
+      {emailGenerating && (
+        <div className="mt-2 text-xs animate-pulse text-purple-300">
+          A IA está processando seu pedido...
+        </div>
+      )}
+      </div>
+
+
+          </div>
+
+          <div className="mt-5 flex flex-col sm:flex-row gap-2 justify-end">
+            <button
+              onClick={handleSaveEmail}
+              disabled={emailLoading}
+              className={`w-full sm:w-auto px-4 py-2 rounded-lg font-semibold border transition-all ${
+                isLight
+                  ? 'bg-green-100 hover:bg-green-200 text-green-700 border-green-300'
+                  : 'bg-gradient-to-r from-emerald-600/30 to-teal-600/30 hover:from-emerald-600/40 hover:to-teal-600/40 text-emerald-200 border-emerald-400/40'
+              }`}
+            >
+              {emailLoading ? 'Salvando...' : 'Concluído'}
+            </button>
+            <button
+              onClick={handleDownloadEmailTxt}
+              className={`w-full sm:w-auto px-4 py-2 rounded-lg font-semibold border transition-all ${
+                isLight
+                  ? 'bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300'
+                  : 'bg-gradient-to-r from-blue-600/30 to-indigo-600/30 hover:from-blue-600/40 hover:to-indigo-600/40 text-blue-200 border-blue-400/40'
+              }`}
+            >
+              Baixar .txt
+            </button>
           </div>
         </DialogContent>
       </Dialog>
