@@ -484,8 +484,8 @@ export function ProcessDetailsPage({ jobId, onBack, onDelete, isLight = false }:
             variant="outline"
             className={`${
               isLight 
-                ? 'border-gray-300 text-gray-600 hover:bg-gray-100' 
-                : 'border-slate-600 text-slate-300 hover:bg-slate-700'
+                ? 'border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400' 
+                : 'border-cyan-400 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-300'
             }`}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -495,7 +495,11 @@ export function ProcessDetailsPage({ jobId, onBack, onDelete, isLight = false }:
           {onDelete && (
             <Button
               onClick={() => onDelete(jobId)}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className={`${
+                isLight
+                  ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600'
+                  : 'bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700'
+              } transition-all duration-200`}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Deletar Processo
