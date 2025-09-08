@@ -305,93 +305,129 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 		}
 	};
 
-	const handleResetPassword = () => {
-		setShowResetModal(true);
+	// Função para validar senha em tempo real (igual ao ResetPasswordPage)
+	const validatePassword = (password: string) => {
+		setHasMinLength(password.length >= 8);
+		setHasUppercase(/[A-Z]/.test(password));
+		setHasLowercase(/[a-z]/.test(password));
+		setHasNumber(/\d/.test(password));
+		setHasSpecialChar(/[!@#$%^&*(),.?":{}|<>]/.test(password));
 	};
 
-	// Função para gerar senha aleatória
-	const generateRandomPassword = () => {
-		const length = 12;
-		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-		let password = "";
-		for (let i = 0; i < length; i++) {
-			password += charset.charAt(Math.floor(Math.random() * charset.length));
-		}
-		return password;
-	};
+	// Função para solicitar token de reset (primeiro passo)
+	const handleResetPassword = async () => {
+		setIsRequestingToken(true);
+		setResetError('');
 
-	// Função para confirmar a redefinição da senha
-	const confirmPasswordReset = async () => {
-		setIsResetting(true);
-		
 		try {
-			// Gerar nova senha aleatória
-			const newPassword = generateRandomPassword();
-			
-			// Fazer a alteração real da senha usando a senha atual
+			// Obter email do usuário atual
+			const userEmail = adminProfile.email;
+			if (!userEmail) {
+				setResetError('Email do usuário não encontrado.');
+				setIsRequestingToken(false);
+				return;
+			}
+
+			// Solicitar token via email usando o mesmo método da página esqueci senha
 			const { authService } = await import('../../api/services');
-			const result = await authService.changePassword(passwordData.current, newPassword);
+			const result = await authService.recoverPassword(userEmail);
 			
 			if (result.success) {
-				console.log('✅ Senha redefinida com sucesso');
-				
-				setNewGeneratedPassword(newPassword);
-				
-				// Atualizar a senha atual no estado local
-				setPasswordData(prev => ({
-					...prev,
-					current: newPassword,
-					new: '',
-					confirm: ''
-				}));
+				setTokenSent(true);
+				setShowTokenModal(true);
+				setSaveSuccess(result.message || 'Token de redefinição enviado para seu email!');
+			} else {
+				setResetError(result.error || 'Erro ao solicitar token de redefinição.');
+			}
+		} catch (error) {
+			console.error('Erro ao solicitar token:', error);
+			setResetError('Erro inesperado ao solicitar token.');
+		} finally {
+			setIsRequestingToken(false);
+		}
+	};
 
-				// Atualizar no localStorage
+	// Função para redefinir senha com token (segundo passo - igual ao ResetPasswordPage)
+	const handleTokenReset = async () => {
+		setResetError('');
+		
+		// Validações
+		if (!resetToken.trim()) {
+			setResetError('Por favor, insira o token recebido por email.');
+			return;
+		}
+
+		if (!newResetPassword || !confirmResetPassword) {
+			setResetError('Por favor, preencha todos os campos de senha.');
+			return;
+		}
+
+		if (newResetPassword !== confirmResetPassword) {
+			setResetError('As senhas não coincidem.');
+			return;
+		}
+
+		// Validar critérios de senha
+		if (!hasMinLength || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
+			setResetError('A senha não atende aos critérios de segurança.');
+			return;
+		}
+
+		setIsResetLoading(true);
+
+		try {
+			// Usar o mesmo método que o ResetPasswordPage
+			const { authService } = await import('../../api/services');
+			const result = await authService.resetPassword(resetToken.trim(), newResetPassword);
+			
+			if (result.success) {
+				setSaveSuccess(result.message || 'Senha alterada com sucesso!');
+				
+				// Fechar modal e limpar estados
+				setShowTokenModal(false);
+				setResetToken('');
+				setNewResetPassword('');
+				setConfirmResetPassword('');
+				setTokenSent(false);
+				setResetError('');
+				
+				// Atualizar a senha no localStorage se necessário
 				try {
 					const auth = localStorage.getItem('smartquote_auth');
 					if (auth) {
 						const parsed = JSON.parse(auth);
 						if (parsed.user) {
-							parsed.user.password = newPassword;
+							parsed.user.password = newResetPassword;
 							localStorage.setItem('smartquote_auth', JSON.stringify(parsed));
 						}
 					}
 				} catch (e) {
 					console.warn('Não foi possível atualizar senha no localStorage:', e);
 				}
-
-				setSaveSuccess(t('settings.resetPasswordSuccess'));
+				
+				// Limpar mensagem após 3 segundos
 				setTimeout(() => setSaveSuccess(''), 3000);
 			} else {
-				console.error('❌ Erro ao redefinir senha:', result.error);
-				setSaveSuccess(result.error || t('settings.resetPasswordError'));
-				setTimeout(() => setSaveSuccess(''), 3000);
+				setResetError(result.error || 'Erro ao redefinir senha.');
 			}
-			
 		} catch (error) {
-			console.error('💥 Erro inesperado ao redefinir senha:', error);
-			setSaveSuccess(t('settings.resetPasswordError'));
-			setTimeout(() => setSaveSuccess(''), 3000);
+			console.error('Erro ao redefinir senha:', error);
+			setResetError('Erro inesperado ao redefinir senha.');
 		} finally {
-			setIsResetting(false);
+			setIsResetLoading(false);
 		}
 	};
 
-	// Função para copiar senha para a área de transferência
-	const copyPasswordToClipboard = async () => {
-		try {
-			await navigator.clipboard.writeText(newGeneratedPassword);
-			setSaveSuccess(t('settings.passwordCopied'));
-			setTimeout(() => setSaveSuccess(''), 2000);
-		} catch (error) {
-			console.error('Erro ao copiar senha:', error);
-		}
-	};
-
-	// Função para fechar o modal
-	const closeResetModal = () => {
-		setShowResetModal(false);
-		setNewGeneratedPassword('');
-		setIsResetting(false);
+	// Função para fechar o modal de token
+	const closeTokenModal = () => {
+		setShowTokenModal(false);
+		setResetToken('');
+		setNewResetPassword('');
+		setConfirmResetPassword('');
+		setTokenSent(false);
+		setResetError('');
+		setIsRequestingToken(false);
+		setIsResetLoading(false);
 	};
 
 	return (
@@ -615,9 +651,19 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 												? 'border-orange-300 text-orange-700 hover:bg-orange-50 hover:border-orange-400' 
 												: 'border-orange-500/50 text-orange-400 hover:bg-orange-500/10 hover:border-orange-400'
 										}`}
+										disabled={isRequestingToken}
 									>
-										<RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-										{t('settings.resetPassword')}
+										{isRequestingToken ? (
+											<>
+												<RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+												Enviando token...
+											</>
+										) : (
+											<>
+												<RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+												{t('settings.resetPassword')}
+											</>
+										)}
 									</Button>
 								</div>
 							</div>
@@ -755,123 +801,187 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 				</div>
 			</main>
 
-			{/* Modal de Redefinição de Senha */}
-			<Dialog open={showResetModal} onOpenChange={setShowResetModal}>
+			{/* Modal de Redefinição de Senha com Token */}
+			<Dialog open={showTokenModal} onOpenChange={setShowTokenModal}>
 				<DialogContent className={`max-w-md mx-auto ${isLight ? 'bg-white border-gray-200' : 'bg-dark-card border-dark-color'}`}>
 					<DialogHeader>
 						<DialogTitle className={`flex items-center gap-3 ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>
 							<div className={`p-2 rounded-lg ${isLight ? 'bg-orange-100' : 'bg-orange-500/20'}`}>
-								<RefreshCw className={`w-5 h-5 ${isLight ? 'text-orange-600' : 'text-orange-400'}`} />
+								<Lock className={`w-5 h-5 ${isLight ? 'text-orange-600' : 'text-orange-400'}`} />
 							</div>
-							{t('settings.resetPasswordModal')}
+							Redefinir Senha
 						</DialogTitle>
 						<DialogDescription className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
-							{!newGeneratedPassword 
-								? "Uma nova senha será gerada automaticamente para sua conta."
-								: "Nova senha gerada com sucesso! Certifique-se de salvá-la em um local seguro."
+							{tokenSent 
+								? "Insira o token recebido por email e defina sua nova senha."
+								: "Enviando token para seu email..."
 							}
 						</DialogDescription>
 					</DialogHeader>
 
 					<div className="space-y-4 mt-4">
-						{!newGeneratedPassword ? (
-							// Antes da redefinição
-							<div className={`p-4 rounded-lg border ${isLight ? 'bg-yellow-50 border-yellow-200' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
-								<div className="flex items-center gap-2 mb-2">
-									<AlertCircle className={`w-4 h-4 ${isLight ? 'text-yellow-600' : 'text-yellow-400'}`} />
-									<span className={`font-medium text-sm ${isLight ? 'text-yellow-800' : 'text-yellow-200'}`}>
-										Atenção
+						{resetError && (
+							<div className={`p-3 rounded-lg border ${isLight ? 'bg-red-50 border-red-200' : 'bg-red-500/10 border-red-500/30'}`}>
+								<div className="flex items-center gap-2">
+									<AlertCircle className={`w-4 h-4 ${isLight ? 'text-red-600' : 'text-red-400'}`} />
+									<span className={`text-sm ${isLight ? 'text-red-800' : 'text-red-200'}`}>
+										{resetError}
 									</span>
-								</div>
-								<p className={`text-sm ${isLight ? 'text-yellow-700' : 'text-yellow-300'}`}>
-									Esta ação irá gerar uma nova senha aleatória e substituir sua senha atual.
-									Você precisará usar a nova senha em seus próximos acessos.
-								</p>
-							</div>
-						) : (
-							// Após a redefinição - exibir nova senha
-							<div className={`p-4 rounded-lg border ${isLight ? 'bg-green-50 border-green-200' : 'bg-green-500/10 border-green-500/30'}`}>
-								<div className="flex items-center gap-2 mb-3">
-									<CheckCircle className={`w-4 h-4 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
-									<span className={`font-medium text-sm ${isLight ? 'text-green-800' : 'text-green-200'}`}>
-										Nova Senha Gerada
-									</span>
-								</div>
-								
-								<div className="space-y-3">
-									<div>
-										<Label className={`${isLight ? 'text-green-700' : 'text-green-300'} mb-2 block text-sm font-medium`}>
-											Sua nova senha:
-										</Label>
-										<div className="flex items-center gap-2">
-											<div className={`flex-1 p-3 rounded-lg font-mono text-sm border ${
-												isLight ? 'bg-white border-green-300 text-gray-800' : 'bg-dark-bg border-green-500/50 text-dark-primary-text'
-											} select-all`}>
-												{newGeneratedPassword}
-											</div>
-											<Button
-												onClick={copyPasswordToClipboard}
-												variant="outline"
-												size="sm"
-												className={`p-2 ${
-													isLight 
-														? 'border-green-300 hover:bg-green-50 text-green-700' 
-														: 'border-green-500/50 hover:bg-green-500/10 text-green-400'
-												}`}
-												title="Copiar senha"
-											>
-												<RefreshCw className="w-4 h-4" />
-											</Button>
-										</div>
-									</div>
-									<p className={`text-xs ${isLight ? 'text-green-600' : 'text-green-400'}`}>
-										💡 Clique na senha para selecioná-la, ou use o botão para copiar
-									</p>
 								</div>
 							</div>
 						)}
 
-						{/* Botões de ação */}
+						{tokenSent && (
+							<>
+								{/* Campo do Token */}
+								<div className="space-y-2">
+									<Label htmlFor="resetToken" className={`${isLight ? 'text-gray-700' : 'text-dark-secondary'} font-medium`}>
+										Token de Verificação
+									</Label>
+									<Input
+										id="resetToken"
+										type="text"
+										placeholder="Insira o token recebido por email"
+										value={resetToken}
+										onChange={(e) => setResetToken(e.target.value)}
+										className={`${isLight 
+											? 'border-gray-300 focus:border-orange-500 bg-white text-gray-900' 
+											: 'border-dark-color focus:border-orange-400 bg-dark-bg text-dark-primary-text'
+										} font-mono tracking-wider`}
+									/>
+									<p className={`text-xs ${isLight ? 'text-gray-500' : 'text-dark-tertiary'}`}>
+										Verifique sua caixa de entrada e spam
+									</p>
+								</div>
+
+								{/* Campo Nova Senha */}
+								<div className="space-y-2">
+									<Label htmlFor="newResetPassword" className={`${isLight ? 'text-gray-700' : 'text-dark-secondary'} font-medium`}>
+										Nova Senha
+									</Label>
+									<div className="relative">
+										<Input
+											id="newResetPassword"
+											type={showNewResetPassword ? "text" : "password"}
+											placeholder="Digite sua nova senha"
+											value={newResetPassword}
+											onChange={(e) => {
+												setNewResetPassword(e.target.value);
+												validatePassword(e.target.value);
+											}}
+											className={`${isLight 
+												? 'border-gray-300 focus:border-orange-500 bg-white text-gray-900' 
+												: 'border-dark-color focus:border-orange-400 bg-dark-bg text-dark-primary-text'
+											} pr-10`}
+										/>
+										<button
+											type="button"
+											onClick={() => setShowNewResetPassword(!showNewResetPassword)}
+											className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+												isLight ? 'text-gray-400 hover:text-gray-600' : 'text-dark-tertiary hover:text-dark-secondary'
+											}`}
+										>
+											{showNewResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+										</button>
+									</div>
+								</div>
+
+								{/* Campo Confirmar Senha */}
+								<div className="space-y-2">
+									<Label htmlFor="confirmResetPassword" className={`${isLight ? 'text-gray-700' : 'text-dark-secondary'} font-medium`}>
+										Confirmar Nova Senha
+									</Label>
+									<div className="relative">
+										<Input
+											id="confirmResetPassword"
+											type={showConfirmResetPassword ? "text" : "password"}
+											placeholder="Confirme sua nova senha"
+											value={confirmResetPassword}
+											onChange={(e) => setConfirmResetPassword(e.target.value)}
+											className={`${isLight 
+												? 'border-gray-300 focus:border-orange-500 bg-white text-gray-900' 
+												: 'border-dark-color focus:border-orange-400 bg-dark-bg text-dark-primary-text'
+											} pr-10`}
+										/>
+										<button
+											type="button"
+											onClick={() => setShowConfirmResetPassword(!showConfirmResetPassword)}
+											className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+												isLight ? 'text-gray-400 hover:text-gray-600' : 'text-dark-tertiary hover:text-dark-secondary'
+											}`}
+										>
+											{showConfirmResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+										</button>
+									</div>
+								</div>
+
+								{/* Critérios de Validação de Senha */}
+								{newResetPassword && (
+									<div className={`p-3 rounded-lg border ${isLight ? 'bg-gray-50 border-gray-200' : 'bg-dark-bg border-dark-color'}`}>
+										<h4 className={`text-sm font-medium mb-2 ${isLight ? 'text-gray-700' : 'text-dark-secondary'}`}>
+											Critérios de Senha:
+										</h4>
+										<div className="space-y-1">
+											{[
+												{ condition: hasMinLength, text: 'Mínimo de 8 caracteres' },
+												{ condition: hasUppercase, text: 'Uma letra maiúscula' },
+												{ condition: hasLowercase, text: 'Uma letra minúscula' },
+												{ condition: hasNumber, text: 'Um número' },
+												{ condition: hasSpecialChar, text: 'Um caractere especial' }
+											].map((criterion, index) => (
+												<div key={index} className="flex items-center gap-2">
+													{criterion.condition ? (
+														<CheckCircle className="w-4 h-4 text-green-500" />
+													) : (
+														<AlertCircle className={`w-4 h-4 ${isLight ? 'text-gray-400' : 'text-dark-tertiary'}`} />
+													)}
+													<span className={`text-xs ${
+														criterion.condition 
+															? 'text-green-600' 
+															: isLight ? 'text-gray-500' : 'text-dark-tertiary'
+													}`}>
+														{criterion.text}
+													</span>
+												</div>
+											))}
+										</div>
+									</div>
+								)}
+							</>
+						)}
+
+						{/* Botões de Ação */}
 						<div className="flex gap-3 pt-2">
-							{!newGeneratedPassword ? (
-								<>
-									<Button
-										onClick={closeResetModal}
-										variant="outline"
-										className={`flex-1 ${
-											isLight 
-												? 'border-gray-300 text-gray-700 hover:bg-gray-50' 
-												: 'border-dark-color text-dark-secondary hover:bg-dark-hover'
-										}`}
-										disabled={isResetting}
-									>
-										Cancelar
-									</Button>
-									<Button
-										onClick={confirmPasswordReset}
-										className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
-										disabled={isResetting}
-									>
-										{isResetting ? (
-											<>
-												<RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-												Gerando...
-											</>
-										) : (
-											<>
-												<RefreshCw className="w-4 h-4 mr-2" />
-												Confirmar
-											</>
-										)}
-									</Button>
-								</>
-							) : (
+							<Button
+								onClick={closeTokenModal}
+								variant="outline"
+								className={`flex-1 ${
+									isLight 
+										? 'border-gray-300 text-gray-700 hover:bg-gray-50' 
+										: 'border-dark-color text-dark-secondary hover:bg-dark-hover'
+								}`}
+								disabled={isResetLoading || isRequestingToken}
+							>
+								Cancelar
+							</Button>
+							
+							{tokenSent && (
 								<Button
-									onClick={closeResetModal}
-									className="w-full bg-green-600 hover:bg-green-700 text-white"
+									onClick={handleTokenReset}
+									className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+									disabled={isResetLoading || !resetToken.trim() || !newResetPassword || !confirmResetPassword}
 								>
-									<CheckCircle className="w-4 h-4 mr-2" />
-									Fechar
+									{isResetLoading ? (
+										<>
+											<RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+											Redefinindo...
+										</>
+									) : (
+										<>
+											<Lock className="w-4 h-4 mr-2" />
+											Redefinir
+										</>
+									)}
 								</Button>
 							)}
 						</div>
