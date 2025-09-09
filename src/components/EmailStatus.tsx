@@ -167,6 +167,10 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
             <span className={`${isLight ? 'text-gray-800' : 'text-white'}`}>{t('dashboard.gmailMonitor')}</span>
           </div>
           <div className="flex justify-between">
+            <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>Email de recepção:</span>
+            <span className={`${isLight ? 'text-gray-800' : 'text-white'}`}>smartquotercs@gmail.com</span>
+          </div>
+          <div className="flex justify-between">
             <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('dashboard.lastCheck')}:</span>
             <span className={`${isLight ? 'text-gray-800' : 'text-white'}`}>-</span>
           </div>
@@ -243,6 +247,10 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
         <div className="flex justify-between">
           <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>{t('dashboard.service')}:</span>
           <span className={`${isLight ? 'text-gray-800' : 'text-white'}`}>{t('dashboard.gmailMonitor')}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className={`${isLight ? 'text-gray-600' : 'text-slate-400'}`}>Email de recepção:</span>
+          <span className={`${isLight ? 'text-gray-800' : 'text-white'}`}>smartquotercs@gmail.com</span>
         </div>
         {status.lastCheck && (
           <div className="flex justify-between">
