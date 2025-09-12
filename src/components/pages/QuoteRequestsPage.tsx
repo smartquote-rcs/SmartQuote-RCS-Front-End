@@ -47,10 +47,21 @@ import {
 import { cotacaoService, relatorioService } from "../../api/services";
 import api from '../../api/client';
 
+import { produtoService } from '../../api/services';
+
 // Função universal para substituir item por produto local (ID) ou web (URL)
-async function handleReplaceUniversal(produto: any, item: any, setReplaceLoading: any, setReplaceError: any, setReplaceSuccess: any, onItemReplaced: any, t: any) {
+async function handleReplaceUniversal(
+  produto: any,
+  item: any,
+  setReplaceLoading: (v: boolean) => void,
+  setReplaceError: (v: string) => void,
+  setReplaceSuccess: (v: string) => void,
+  onItemReplaced: any,
+  t: any
+) {
   setReplaceLoading(true);
   setReplaceError("");
+  console.log('[ReplaceItem] Iniciando processo de substituição', { produto, itemId: item?.id });
   try {
     const hasLocalId = produto && (typeof produto.id === 'number' || (typeof produto.id === 'string' && produto.id.trim() !== ''));
     const hasUrl = produto && typeof produto.url === 'string' && produto.url.trim().length > 0;
@@ -77,9 +88,10 @@ async function handleReplaceUniversal(produto: any, item: any, setReplaceLoading
       return;
     }
 
-    // Chama o replace com o payload suportado pelo backend
-    const { replaceProduct } = await import('../../api/services').then(m => m.produtoService);
-    const res = await replaceProduct(payload);
+    // Chamada direta via import estático (evita falhas de carregamento dinâmico em produção)
+    console.log('[ReplaceItem] Enviando payload para replaceProduct:', payload);
+    const res = await produtoService.replaceProduct(payload);
+    console.log('[ReplaceItem] Resposta replaceProduct:', res);
     if (res.success) {
       const used = payload.newProductId ? `ID: ${payload.newProductId}` : `URL: ${payload.url}`;
       setReplaceSuccess(`${t("quoteRequests.itemReplacedSuccess")} (${used})`);
@@ -88,12 +100,18 @@ async function handleReplaceUniversal(produto: any, item: any, setReplaceLoading
       }
       if (onItemReplaced) onItemReplaced();
     } else {
-      setReplaceError(res.error || t("quoteRequests.errorReplacingItem"));
+      const msg = res.error || t("quoteRequests.errorReplacingItem");
+      console.warn('[ReplaceItem] Erro lógico na resposta:', msg);
+      setReplaceError(msg);
     }
   } catch (e) {
-    setReplaceError(t("quoteRequests.errorReplacingItem"));
+    console.error('[ReplaceItem] Exceção durante substituição:', e);
+    // Tentar extrair detalhes
+    const detailed = (e as any)?.message || '';
+    setReplaceError(`${t("quoteRequests.errorReplacingItem")}${detailed ? ' - ' + detailed : ''}`);
   }
   setReplaceLoading(false);
+  console.log('[ReplaceItem] Processo finalizado');
 }
 // Componente para exibir detalhes do item e submodal
 
