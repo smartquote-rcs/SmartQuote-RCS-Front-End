@@ -65,7 +65,7 @@ O **SmartQuote RCS** é uma aplicação web moderna e responsiva para gestão in
 
 1. **Clone o repositório**
    ```bash
-   git clone https://github.com/seu-usuario/SmartQuote-RCS-Front-End.git
+   git clone https://github.com/smartquote-rcs/SmartQuote-RCS-Front-End.git
    cd SmartQuote-RCS-Front-End
    ```
 
