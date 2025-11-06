@@ -1578,33 +1578,24 @@ export const relatorioService = {
 
 // Serviço de Integração Dynamics 365
 export const dynamics365Service = {
+  // Envia uma cotação específica para o Dynamics (usa endpoint correto do backend)
   async createOpportunity(cotacaoId: number | string, cotacaoData: any): Promise<AuthResponse> {
     try {
-      const response = await api.post('/dynamics365/opportunities', {
-        cotacaoId,
-        name: `Cotação #${cotacaoId} - ${cotacaoData.solicitante || 'Cliente'}`,
-        customerName: cotacaoData.solicitante,
-        customerEmail: cotacaoData.email,
-        company: cotacaoData.empresa,
-        product: cotacaoData.produto,
-        quantity: cotacaoData.quantidade,
-        estimatedValue: cotacaoData.valor_total,
-        description: cotacaoData.descricao,
-        status: 'open'
-      });
+      const response = await api.post(`/dynamics/send-cotacao/${cotacaoId}`);
       return { success: true, data: response.data };
     } catch (error: any) {
-      console.error('💥 Erro ao criar oportunidade no Dynamics 365:', error);
+      console.error('💥 Erro ao enviar cotação para Dynamics 365:', error);
       return {
         success: false,
-        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao criar oportunidade no Dynamics 365'
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao enviar cotação para Dynamics 365'
       };
     }
   },
 
+  // Sincroniza uma cotação específica (usa o mesmo endpoint de envio)
   async syncQuote(cotacaoId: number | string): Promise<AuthResponse> {
     try {
-      const response = await api.post(`/dynamics365/sync/${cotacaoId}`);
+      const response = await api.post(`/dynamics/send-cotacao/${cotacaoId}`);
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro ao sincronizar com Dynamics 365:', error);
@@ -1615,10 +1606,49 @@ export const dynamics365Service = {
     }
   },
 
+  // Sincroniza todas as cotações aprovadas
+  async syncAllApproved(): Promise<AuthResponse> {
+    try {
+      const response = await api.post('/dynamics/sync-approved');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao sincronizar cotações aprovadas:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao sincronizar cotações aprovadas'
+      };
+    }
+  },
+
+  // Lista oportunidades do Dynamics
+  async getOpportunities(): Promise<AuthResponse> {
+    try {
+      const response = await api.get('/dynamics/oportunidades');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar oportunidades no Dynamics 365:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar oportunidades'
+      };
+    }
+  },
+
+  // Busca uma oportunidade específica (filtra da lista)
   async getOpportunity(opportunityId: string): Promise<AuthResponse> {
     try {
-      const response = await api.get(`/dynamics365/opportunities/${opportunityId}`);
-      return { success: true, data: response.data };
+      const response = await api.get('/dynamics/oportunidades');
+      const opportunities = response.data?.data || [];
+      const opportunity = opportunities.find((opp: any) => opp.opportunityid === opportunityId);
+      
+      if (!opportunity) {
+        return {
+          success: false,
+          error: 'Oportunidade não encontrada'
+        };
+      }
+      
+      return { success: true, data: opportunity };
     } catch (error: any) {
       console.error('💥 Erro ao buscar oportunidade no Dynamics 365:', error);
       return {
