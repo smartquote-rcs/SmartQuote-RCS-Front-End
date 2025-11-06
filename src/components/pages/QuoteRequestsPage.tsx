@@ -1469,7 +1469,7 @@ export function QuoteRequestsPage({
                   className={`${isLight ? 'bg-red-100 hover:bg-red-200 border-red-300 text-red-700 hover:text-red-800 focus:ring-red-500 hover:border-red-400' : 'bg-red-600/20 hover:bg-red-600/40 border-red-500/30 hover:border-red-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <X className="w-3 h-3" />
-                  <span>{t('quoteRequests.buttonReject')}</span>
+                  <span>Rejeitar</span>
                 </button>
               </>
             )}
