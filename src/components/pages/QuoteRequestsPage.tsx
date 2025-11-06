@@ -685,6 +685,14 @@ export function QuoteRequestsPage({
   const [emailSaved, setEmailSaved] = useState(false);
   const [emailEditPulse, setEmailEditPulse] = useState(false);
   
+  // Modal de notificação para cotações com valor 0
+  const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
+  const [notifyLoading, setNotifyLoading] = useState(false);
+  const [notifyError, setNotifyError] = useState("");
+  const [notifySuccess, setNotifySuccess] = useState("");
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [selectedCotacaoForNotify, setSelectedCotacaoForNotify] = useState<any>(null);
+  
   // Sistema de Toast
   const [toasts, setToasts] = useState<Array<{
     id: string;
@@ -1210,19 +1218,73 @@ export function QuoteRequestsPage({
     }
   };
 
+  // Função para abrir modal de notificação
+  const handleNotifyClient = (cotacao: any) => {
+    setSelectedCotacaoForNotify(cotacao);
+    setNotifyMessage(`Olá, informamos que a cotação #${cotacao.id} não pôde ser processada pois o produto não foi encontrado. Por favor, entre em contato para mais informações.`);
+    setNotifyError("");
+    setNotifySuccess("");
+    setIsNotifyModalOpen(true);
+  };
+
+  // Função para enviar notificação
+  const handleSendNotification = async () => {
+    if (!selectedCotacaoForNotify || !notifyMessage.trim()) {
+      setNotifyError("Por favor, insira uma mensagem.");
+      return;
+    }
+
+    setNotifyLoading(true);
+    setNotifyError("");
+    setNotifySuccess("");
+
+    try {
+      // Enviar notificação via API
+      const response = await api.post('/notifications', {
+        tipo: 'cotacao_produto_nao_encontrado',
+        mensagem: notifyMessage,
+        cotacao_id: selectedCotacaoForNotify.id,
+        destinatario: selectedCotacaoForNotify.aprovado_por || selectedCotacaoForNotify.cliente
+      });
+
+      if (response.data) {
+        setNotifySuccess("Notificação enviada com sucesso!");
+        addToast('success', 'Cliente notificado sobre produto não encontrado');
+        setTimeout(() => {
+          setIsNotifyModalOpen(false);
+          setNotifyMessage("");
+          setSelectedCotacaoForNotify(null);
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error('Erro ao enviar notificação:', error);
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Erro ao enviar notificação';
+      setNotifyError(errorMsg);
+      addToast('error', errorMsg);
+    } finally {
+      setNotifyLoading(false);
+    }
+  };
+
   // Memoização para performance
   const QuoteCard = React.memo(({
     cotacao,
     onViewDetails,
     onDownload,
+    onNotifyClient,
     isLight,
   }: {
     cotacao: any;
     onViewDetails: (id: string) => void;
     onDownload: (cotacao: any) => void;
+    onNotifyClient?: (cotacao: any) => void;
     isLight?: boolean;
-  }) => (
-  <div className={`glass-card border-2 ${
+  }) => {
+  const cotacaoValor = parseFloat(String(cotacao.valor || cotacao.orcamento_geral || '0').replace(/[^\d.-]/g, ''));
+  const isProdutoNaoEncontrado = cotacaoValor === 0;
+  
+  return (
+  <div className={`glass-card border-2 ${isProdutoNaoEncontrado ? (isLight ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-orange-300 hover:border-orange-500' : 'bg-gradient-to-br from-yellow-900/30 to-orange-900/30 border-orange-500/50 hover:border-orange-400') : ''} ${
     isLight 
       ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 hover:shadow-xl' 
       : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-600/70 hover:border-cyan-400/60 hover:shadow-2xl hover:shadow-cyan-400/20'
@@ -1320,10 +1382,18 @@ export function QuoteRequestsPage({
                 {t("approvals.value")}
               </span>
             </div>
-            <div className={`text-lg font-bold ${isLight ? 'text-green-700' : 'text-green-400'}`}>
-              {formatCurrency(parseFloat(cotacao.orcamento_geral) || 0, false)}
+            <div className={`text-lg font-bold ${isProdutoNaoEncontrado ? (isLight ? 'text-orange-700' : 'text-orange-400') : (isLight ? 'text-green-700' : 'text-green-400')}`}>
+              {isProdutoNaoEncontrado ? 'N/A' : formatCurrency(parseFloat(cotacao.orcamento_geral) || 0, false)}
             </div>
           </div>
+
+          {/* Alerta de produto não encontrado */}
+          {isProdutoNaoEncontrado && (
+            <div className={`${isLight ? 'bg-orange-100 border-orange-300 text-orange-800' : 'bg-orange-900/30 border-orange-500/50 text-orange-300'} rounded-lg p-2 border text-center text-xs font-medium flex items-center justify-center gap-1`}>
+              <AlertTriangle className="w-3 h-3" />
+              <span>Produto não encontrado</span>
+            </div>
+          )}
 
           {/* Aviso de Aprovação Especial removido conforme solicitado */}
 
@@ -1348,6 +1418,17 @@ export function QuoteRequestsPage({
                   <Info className="w-3 h-3" />
                   <span>{t('quoteRequests.buttonViewDetails')}</span>
                 </button>
+                {/* Botão de notificar cliente se produto não encontrado */}
+                {isProdutoNaoEncontrado && onNotifyClient && (
+                  <button
+                    onClick={() => onNotifyClient(cotacao)}
+                    aria-label="Notificar cliente"
+                    className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  >
+                    <Mail className="w-3 h-3" />
+                    <span>Notificar Cliente</span>
+                  </button>
+                )}
               </>
             ) : (
               /* Aprovado - mostra botão para colocar como pendente */
@@ -1359,6 +1440,25 @@ export function QuoteRequestsPage({
                 >
                   <Eye className="w-3 h-3" />
                   <span>{t('quoteRequests.buttonView')}</span>
+                </button>
+                {/* Botão de notificar cliente se produto não encontrado */}
+                {isProdutoNaoEncontrado && onNotifyClient && (
+                  <button
+                    onClick={() => onNotifyClient(cotacao)}
+                    aria-label="Notificar cliente"
+                    className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  >
+                    <Mail className="w-3 h-3" />
+                    <span>Notificar Cliente</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => openApproval(String(cotacao.id),'set_pending')}
+                  aria-label="Marcar como pendente"
+                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                >
+                  <Clock className="w-3 h-3" />
+                  <span>{t('quoteRequests.buttonPending')}</span>
                 </button>
                 <button 
                   onClick={() => onDownload(cotacao)}
@@ -1382,7 +1482,8 @@ export function QuoteRequestsPage({
         </div>
       </div>
     </div>
-  ));
+  );
+  });
 
   // Lógica de filtragem e ordenação
   const filteredCotacoes = cotacoesList
@@ -1964,6 +2065,7 @@ export function QuoteRequestsPage({
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
+                              onNotifyClient={handleNotifyClient}
                               isLight={isLight}
                             />
                           ))}
@@ -1977,6 +2079,7 @@ export function QuoteRequestsPage({
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
+                              onNotifyClient={handleNotifyClient}
                               isLight={isLight}
                             />
                           ))}
@@ -2558,6 +2661,134 @@ export function QuoteRequestsPage({
                   Processando...
                 </Button>
               )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Notificação para Produto Não Encontrado */}
+      <Dialog open={isNotifyModalOpen} onOpenChange={setIsNotifyModalOpen}>
+        <DialogContent className={`max-w-2xl mx-auto ${isLight ? 'bg-white border-gray-200' : 'bg-dark-card border-dark-color'}`}>
+          <DialogHeader>
+            <DialogTitle className={`flex items-center gap-3 ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>
+              <div className={`p-2 rounded-lg ${isLight ? 'bg-orange-100' : 'bg-orange-500/20'}`}>
+                <Mail className={`w-5 h-5 ${isLight ? 'text-orange-600' : 'text-orange-400'}`} />
+              </div>
+              Notificar Cliente - Produto Não Encontrado
+            </DialogTitle>
+            <DialogDescription className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
+              Envie uma notificação ao cliente informando que o produto da cotação não foi encontrado.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {/* Informações da Cotação */}
+            {selectedCotacaoForNotify && (
+              <div className={`p-4 rounded-lg border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/30'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className={`w-4 h-4 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
+                  <span className={`font-medium text-sm ${isLight ? 'text-blue-800' : 'text-blue-200'}`}>
+                    Cotação #{selectedCotacaoForNotify.id}
+                  </span>
+                </div>
+                <p className={`text-sm ${isLight ? 'text-blue-700' : 'text-blue-300'}`}>
+                  Cliente: {selectedCotacaoForNotify.aprovado_por || selectedCotacaoForNotify.cliente || 'N/A'}
+                </p>
+                {selectedCotacaoForNotify.prompt?.texto_original && (
+                  <p className={`text-xs ${isLight ? 'text-blue-600' : 'text-blue-400'} mt-1`}>
+                    Solicitação: {selectedCotacaoForNotify.prompt.texto_original}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Campo de Mensagem */}
+            <div className="space-y-2">
+              <Label className={`text-sm font-medium ${isLight ? 'text-gray-700' : 'text-dark-primary-text'}`}>
+                Mensagem de Notificação
+              </Label>
+              <textarea
+                value={notifyMessage}
+                onChange={(e) => setNotifyMessage(e.target.value)}
+                rows={6}
+                className={`w-full px-4 py-3 rounded-lg border-2 focus:outline-none focus:ring-2 transition-all ${
+                  isLight 
+                    ? 'bg-white text-gray-900 border-gray-300 focus:border-blue-500 focus:ring-blue-200' 
+                    : 'bg-slate-800 text-white border-slate-600 focus:border-cyan-400 focus:ring-cyan-400/20'
+                }`}
+                placeholder="Digite a mensagem que será enviada ao cliente..."
+                disabled={notifyLoading}
+              />
+              <p className={`text-xs ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>
+                Esta mensagem será enviada como notificação ao cliente responsável pela cotação.
+              </p>
+            </div>
+
+            {/* Mensagens de Erro e Sucesso */}
+            {notifyError && (
+              <div className={`p-3 rounded-lg border ${isLight ? 'bg-red-50 border-red-200' : 'bg-red-900/20 border-red-500/30'}`}>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className={`w-4 h-4 ${isLight ? 'text-red-600' : 'text-red-400'}`} />
+                  <p className={`text-sm ${isLight ? 'text-red-700' : 'text-red-300'}`}>
+                    {notifyError}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {notifySuccess && (
+              <div className={`p-3 rounded-lg border ${isLight ? 'bg-green-50 border-green-200' : 'bg-green-900/20 border-green-500/30'}`}>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className={`w-4 h-4 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
+                  <p className={`text-sm ${isLight ? 'text-green-700' : 'text-green-300'}`}>
+                    {notifySuccess}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Botões de Ação */}
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={handleSendNotification}
+                disabled={notifyLoading || !notifyMessage.trim()}
+                className={`flex-1 ${
+                  notifyLoading || !notifyMessage.trim()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-orange-600 hover:bg-orange-700'
+                } text-white`}
+              >
+                {notifyLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Enviar Notificação
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  setIsNotifyModalOpen(false);
+                  setNotifyMessage("");
+                  setNotifyError("");
+                  setNotifySuccess("");
+                  setSelectedCotacaoForNotify(null);
+                }}
+                disabled={notifyLoading}
+                variant="outline"
+                className={`flex-1 ${
+                  isLight 
+                    ? 'border-gray-300 text-gray-700 hover:bg-gray-50' 
+                    : 'border-dark-color text-dark-secondary hover:bg-dark-hover'
+                }`}
+              >
+                Cancelar
+              </Button>
             </div>
           </div>
         </DialogContent>
