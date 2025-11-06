@@ -638,16 +638,9 @@ export function QuoteRequestsPage({
             orcamento_geral: c.orcamento_geral || c.valor || '',
           }))
           // Filtrar cotações que têm job ativo (não mostrar enquanto está executando)
-          // E também filtrar cotações com valor 0 (produto não encontrado)
           .filter((c: any) => {
             if (c.job_id && activeJobIds.has(c.job_id)) {
               console.log(`Cotação ${c.id} oculta - job ${c.job_id} está executando`);
-              return false;
-            }
-            // Filtrar cotações com valor 0
-            const valor = parseFloat(String(c.valor || c.orcamento_geral || '0').replace(/[^\d.-]/g, ''));
-            if (valor === 0) {
-              console.log(`Cotação ${c.id} oculta - valor 0 (produto não encontrado)`);
               return false;
             }
             return true;

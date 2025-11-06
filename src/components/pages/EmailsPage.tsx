@@ -516,33 +516,6 @@ export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
           </div>
         </div>
       </main>
-
-      {/* Email Service Status */}
-      {emailServiceStatus && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <div className={`p-3 rounded-lg shadow-lg ${
-            emailServiceStatus.running
-              ? 'bg-green-600/90 text-white'
-              : 'bg-yellow-600/90 text-white'
-          }`}>
-            <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${
-                emailServiceStatus.running ? 'bg-green-300' : 'bg-yellow-300'
-              }`}></div>
-              <span className="text-sm font-medium">
-                Serviço de Email: {emailServiceStatus.running ? 'Ativo' : 'Inativo'}
-              </span>
-              <button
-                onClick={() => setEmailServiceStatus(null)}
-                className="ml-2 text-white/70 hover:text-white"
-                title="Fechar notificação"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
