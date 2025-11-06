@@ -1,6 +1,7 @@
 
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,16 +56,16 @@ const getNotificationIcon = (type: string, isLight = false) => {
   }
 };
 
-const getNotificationBadge = (type: string) => {
+const getNotificationBadge = (type: string, t: any) => {
   switch (type) {
     case 'success':
-      return <Badge className="bg-green-600 text-white">Sucesso</Badge>;
+      return <Badge className="bg-green-600 text-white">{t("notifications.success")}</Badge>;
     case 'warning':
-      return <Badge className="bg-yellow-600 text-white">Aviso</Badge>;
+      return <Badge className="bg-yellow-600 text-white">{t("notifications.warning")}</Badge>;
     case 'error':
-      return <Badge className="bg-red-600 text-white">Erro</Badge>;
+      return <Badge className="bg-red-600 text-white">{t("notifications.error")}</Badge>;
     default:
-      return <Badge className="bg-blue-600 text-white">Info</Badge>;
+      return <Badge className="bg-blue-600 text-white">{t("notifications.info")}</Badge>;
   }
 };
 
@@ -88,6 +89,7 @@ const formatTimestamp = (timestamp: string) => {
 };
 
 export function NotificationsPage({ isLight = false }: { isLight?: boolean } = {}) {
+  const { t } = useTranslation();
   // Toast notification type
   interface ToastNotification {
     id: string;
@@ -483,13 +485,13 @@ export function NotificationsPage({ isLight = false }: { isLight?: boolean } = {
           <div>
             <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-3`}>
               <Bell className={`w-6 h-6 sm:w-7 sm:h-7 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-              Notificações
+              {t("notifications.title")}
               {unreadCount > 0 && (
                 <Badge className="bg-red-600 text-white ml-2">{unreadCount}</Badge>
               )}
             </h1>
             <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
-              Gerencie e acompanhe todas as notificações do sistema
+              {t("notifications.subtitle")}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
@@ -499,14 +501,14 @@ export function NotificationsPage({ isLight = false }: { isLight?: boolean } = {
               className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 sm:px-4 sm:py-2"
             >
               <Check className="w-4 h-4 mr-2" />
-              Marcar Todas como Lidas
+              {t("notifications.markAllRead")}
             </Button>
             <Button 
               onClick={handleStockCheckClick}
               className="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 sm:px-4 sm:py-2"
             >
               <AlertTriangle className="w-4 h-4 mr-2" />
-              Verificar Estoque
+              {t("notifications.checkStock")}
             </Button>
           </div>
         </div>
@@ -567,7 +569,7 @@ export function NotificationsPage({ isLight = false }: { isLight?: boolean } = {
                   className={`text-xs px-3 py-1.5 ${isLight ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                 >
                   <Check className="w-3 h-3 mr-1" />
-                  Marcar como Lidas
+                  {t("notifications.markAsRead")}
                 </Button>
                 <Button
                   onClick={handleBulkDeleteClick}
@@ -575,7 +577,7 @@ export function NotificationsPage({ isLight = false }: { isLight?: boolean } = {
                   className={`text-xs px-3 py-1.5 ${isLight ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}`}
                 >
                   <Trash2 className="w-3 h-3 mr-1" />
-                  Eliminar
+                  {t("notifications.delete")}
                 </Button>
               </div>
             )}
@@ -589,12 +591,12 @@ export function NotificationsPage({ isLight = false }: { isLight?: boolean } = {
               <CardContent>
                 <Bell className={`w-12 h-12 ${isLight ? 'text-gray-500' : 'text-dark-secondary'} mx-auto mb-4`} />
                 <h3 className={`text-lg font-medium ${isLight ? 'text-gray-800' : 'text-dark-primary'} mb-2`}>
-                  Nenhuma notificação encontrada
+                  {t("notifications.noNotifications")}
                 </h3>
                 <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'}`}>
                   {searchTerm
-                    ? 'Nenhuma notificação encontrada para sua busca.'
-                    : 'Você está em dia com todas as notificações!'}
+                    ? t("notifications.noSearchResults")
+                    : t("notifications.noNotificationsDesc")}
                 </p>
               </CardContent>
             </Card>
@@ -623,7 +625,7 @@ export function NotificationsPage({ isLight = false }: { isLight?: boolean } = {
                           {notification.title}
                         </h3>
                         <div className="flex items-center space-x-2 ml-2">
-                          {getNotificationBadge(notification.type)}
+                          {getNotificationBadge(notification.type, t)}
                           {!notification.read && (
                             <div className={`w-2 h-2 ${isLight ? 'bg-blue-600' : 'bg-blue-400'} rounded-full`}></div>
                           )}
@@ -711,8 +713,8 @@ export function NotificationsPage({ isLight = false }: { isLight?: boolean } = {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="gap-3">
-              <AlertDialogCancel onClick={() => setIsMarkAllReadDialogOpen(false)} className="bg-slate-700 text-white border-none">Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmMarkAllAsRead} className="bg-blue-600 hover:bg-blue-700 text-white">Marcar Todas</AlertDialogAction>
+              <AlertDialogCancel onClick={() => setIsMarkAllReadDialogOpen(false)} className="bg-slate-700 text-white border-none">{t("notifications.cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmMarkAllAsRead} className="bg-blue-600 hover:bg-blue-700 text-white">{t("notifications.markAll")}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

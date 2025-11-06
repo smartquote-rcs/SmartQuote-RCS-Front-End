@@ -288,7 +288,7 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto md:justify-end md:ml-auto">
               <div className={`glass-card ${isLight ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white/5 border-blue-500/30 text-blue-300'} px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 text-sm min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto`}>
                 <span className="font-bold text-base md:text-lg">{displayProducts.length}</span>
-                <span className="ml-2 text-blue-200">produtos</span>
+                <span className="ml-2 text-blue-200">{t('productSearch.products')}</span>
               </div>
               <button
                 onClick={handleRefreshProducts}
@@ -296,14 +296,14 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
                 className={`${isLight ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700' : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700'} text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg backdrop-blur-sm text-sm md:text-base min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto`}
               >
                 <RefreshCw className={`w-4 h-4 ${isLoadingProducts ? 'animate-spin' : ''}`} />
-                <span>Atualizar</span>
+                <span>{t('productSearch.refresh')}</span>
               </button>
               <button
                 onClick={() => onNavigateToNewProduct?.()}
                 className={`${isLight ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700' : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700'} text-white px-3 py-2 md:px-6 md:py-3 rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg backdrop-blur-sm text-sm md:text-base min-w-[120px] md:min-w-[160px] h-[40px] md:h-[44px] w-full md:w-auto`}
               >
                 <Plus className="w-4 h-4" />
-                <span>Novo Produto</span>
+                <span>{t('productSearch.newProduct')}</span>
               </button>
             </div>
           </div>
@@ -326,8 +326,8 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
                     <Edit2 className={`w-5 h-5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
                   </div>
                   <div>
-                    <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Editar Produto</h2>
-                    <p className={`text-xs ${isLight ? 'text-blue-600' : 'text-blue-200'}`}>Atualize as informações e salve para aplicar mudanças</p>
+                    <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>{t('productSearch.editProductTitle')}</h2>
+                    <p className={`text-xs ${isLight ? 'text-blue-600' : 'text-blue-200'}`}>{t('productSearch.editProductDescription')}</p>
                   </div>
                 </div>
                 <button
@@ -509,17 +509,17 @@ export function ProductSearchPage({ onNavigateToNewProduct, isLight = false }: P
                   className={`px-3 py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700 border border-gray-300' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 border border-slate-600/50'} font-semibold text-sm disabled:opacity-50 transition-all duration-200 backdrop-blur-sm`}
                   disabled={currentPage === 1}
                 >
-                  Anterior
+                  {t('productSearch.previous')}
                 </button>
                 <span className={`${isLight ? 'text-gray-800' : 'text-slate-300'} font-medium text-sm`}>
-                  Página {currentPage} de {totalPages}
+                  {t('productSearch.page')} {currentPage} {t('productSearch.of')} {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   className={`px-3 py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700 border border-gray-300' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300 border border-slate-600/50'} font-semibold text-sm disabled:opacity-50 transition-all duration-200 backdrop-blur-sm`}
                   disabled={currentPage === totalPages}
                 >
-                  Próxima
+                  {t('productSearch.next')}
                 </button>
               </div>
             </div>

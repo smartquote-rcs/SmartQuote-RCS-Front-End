@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -95,6 +96,7 @@ interface ProcessesPageProps {
 }
 
 export function ProcessesPage({ isLight = false }: ProcessesPageProps = {}) {
+  const { t } = useTranslation();
   const [jobs, setJobs] = useState<QuoteJob[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<QuoteJob[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -221,10 +223,10 @@ export function ProcessesPage({ isLight = false }: ProcessesPageProps = {}) {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
         <div>
           <h1 className={`text-xl sm:text-2xl font-bold ${isLight ? 'text-gray-800' : 'text-white'}`}>
-            Processos de Cotação
+            {t("processes.title")}
           </h1>
           <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-slate-400'} mt-1`}>
-            Acompanhe o status e progresso das cotações em andamento
+            {t("processes.subtitle")}
           </p>
         </div>
       </div>

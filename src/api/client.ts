@@ -49,20 +49,30 @@ api.interceptors.response.use(
     
     if (error.response?.status === 401) {
       // Token expirado ou inválido - fazer logout completo
+      console.log('🔑 Token expirado ou inválido - fazendo logout automático...');
+      
+      // Limpar todos os dados de autenticação
       localStorage.removeItem('auth_token');
       localStorage.removeItem('smartquote_auth');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userRole');
+      
+      // Limpar sessionStorage também
+      sessionStorage.clear();
       
       // Evitar redirecionamento infinito durante login
       if (!window.location.pathname.includes('/login') && window.location.pathname !== '/') {
-        console.log('🔑 Token expirado - redirecionando para login...');
+        console.log('🚪 Redirecionando para login...');
         
         // Emitir evento personalizado para notificar componentes sobre logout
-        window.dispatchEvent(new CustomEvent('tokenExpired'));
+        window.dispatchEvent(new CustomEvent('tokenExpired', { 
+          detail: { message: 'Sua sessão expirou. Por favor, faça login novamente.' }
+        }));
         
-        // Recarregar a página para voltar ao login
+        // Redirecionar para login após pequeno delay
         setTimeout(() => {
-          window.location.reload();
-        }, 100);
+          window.location.href = '/login';
+        }, 500);
       }
     }
     return Promise.reject(error);

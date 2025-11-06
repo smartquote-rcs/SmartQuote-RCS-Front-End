@@ -117,8 +117,8 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
 
       // Calcular estatísticas
       const aprovadas = cotacoes.filter(c => c.aprovacao === true).length;
-      const rejeitadas = cotacoes.filter(c => c.aprovacao === false).length;
-      const pendentes = cotacoes.filter(c => c.aprovacao === null || c.aprovacao === undefined).length;
+      const rejeitadas = cotacoes.filter(c => c.aprovacao === false && c.motivo).length;
+      const pendentes = cotacoes.filter(c => c.aprovacao !== true && !(c.aprovacao === false && c.motivo)).length;
       
       const valores = cotacoes
         .map(c => parseFloat(c.valor || c.orcamento_geral || '0'))
@@ -170,8 +170,8 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
 
       // Calcular estatísticas de status
       const aprovadas = allCotacoes.filter((c: any) => c.status === 'aprovada' || c.aprovacao === true).length;
-      const rejeitadas = allCotacoes.filter((c: any) => c.status === 'rejeitada' || c.aprovacao === false).length;
-      const pendentes = allCotacoes.filter((c: any) => c.status === 'pendente' || c.aprovacao === null || c.aprovacao === undefined).length;
+      const rejeitadas = allCotacoes.filter((c: any) => c.status === 'rejeitada' || (c.aprovacao === false && c.motivo)).length;
+      const pendentes = allCotacoes.filter((c: any) => c.status === 'pendente' || (c.aprovacao !== true && !(c.aprovacao === false && c.motivo))).length;
 
       const data = {
         aprovadas,
@@ -303,17 +303,17 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full xl:w-auto xl:flex-shrink-0">
             <div className="flex items-center space-x-1.5 sm:space-x-2">
               <Calendar className={`w-3 h-3 sm:w-4 sm:h-4 ${isLight ? 'text-gray-600' : 'text-dark-secondary'} flex-shrink-0`} />
-              <span className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm whitespace-nowrap`}>Período:</span>
+              <span className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm whitespace-nowrap`}>{t('reports.period')}:</span>
             </div>
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
               <SelectTrigger className={`w-full sm:w-40 md:w-48 ${isLight ? 'bg-white border-gray-300 text-gray-800' : 'bg-dark-card border-dark-color text-dark-primary-text'} text-xs sm:text-sm`}>
-                <SelectValue placeholder="Selecionar período" />
+                <SelectValue placeholder={t("reports.selectPeriod")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="7">Últimos 7 dias</SelectItem>
-                <SelectItem value="30">Últimos 30 dias</SelectItem>
-                <SelectItem value="90">Últimos 3 meses</SelectItem>
-                <SelectItem value="365">Último ano</SelectItem>
+                <SelectItem value="7">{t("reports.last7Days")}</SelectItem>
+                <SelectItem value="30">{t("reports.last30Days")}</SelectItem>
+                <SelectItem value="90">{t("reports.last3Months")}</SelectItem>
+                <SelectItem value="365">{t("reports.lastYear")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -350,31 +350,31 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               <StatCard
                 icon={ShoppingCart}
-                title="Total de Cotações"
+                title={t("reports.totalQuotes")}
                 value={reportData.totalCotacoes}
                 color="blue"
                 isLight={isLight}
               />
               <StatCard
                 icon={Target}
-                title="Cotações Aprovadas"
+                title={t("reports.quotesApproved")}
                 value={reportData.cotacoesAprovadas}
-                subtitle={`${reportData.totalCotacoes > 0 ? ((reportData.cotacoesAprovadas / reportData.totalCotacoes) * 100).toFixed(1) : 0}% do total`}
+                subtitle={`${reportData.totalCotacoes > 0 ? ((reportData.cotacoesAprovadas / reportData.totalCotacoes) * 100).toFixed(1) : 0}% ${t("reports.ofTotal")}`}
                 color="green"
                 isLight={isLight}
               />
               <StatCard
                 icon={Users}
-                title="Total de Fornecedores"
+                title={t("reports.totalSuppliers")}
                 value={reportData.totalFornecedores}
                 color="purple"
                 isLight={isLight}
               />
               <StatCard
                 icon={TrendingUp}
-                title="Valor Total"
+                title={t("reports.totalValue")}
                 value={formatCurrency(reportData.valorTotalCotacoes)}
-                subtitle={`Média: ${formatCurrency(reportData.mediaValorCotacao)}`}
+                subtitle={`${t("reports.averageValue")}: ${formatCurrency(reportData.mediaValorCotacao)}`}
                 color="orange"
                 isLight={isLight}
               />
@@ -384,25 +384,25 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
               <StatCard
                 icon={Target}
-                title="Cotações Pendentes"
+                title={t("reports.quotesPending")}
                 value={reportData.cotacoesPendentes}
-                subtitle="Aguardando aprovação"
+                subtitle={t("reports.awaitingApproval")}
                 color="orange"
                 isLight={isLight}
               />
               <StatCard
                 icon={Target}
-                title="Cotações Rejeitadas"
+                title={t("reports.quotesRejected")}
                 value={reportData.cotacoesRejeitadas}
-                subtitle="Não aprovadas"
+                subtitle={t("reports.notApproved")}
                 color="red"
                 isLight={isLight}
               />
               <StatCard
                 icon={ShoppingCart}
-                title="Total de Produtos"
+                title={t("reports.totalProducts")}
                 value={reportData.totalProdutos}
-                subtitle="Cadastrados no sistema"
+                subtitle={t("reports.registeredInSystem")}
                 color="blue"
                 isLight={isLight}
               />
@@ -418,9 +418,9 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
                       <ShoppingCart className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>Relatório Completo de Cotações</h3>
-                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalCotacoes} cotações registradas</p>
-                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1 break-words`}>Todas as cotações + resumo por status no final</p>
+                      <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>{t("reports.completeQuotesReport")}</h3>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalCotacoes} {t("reports.quotesRegistered")}</p>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1 break-words`}>{t("reports.allQuotesWithSummary")}</p>
                     </div>
                   </div>
                   <button 
@@ -430,7 +430,7 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
                     <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span>Download PDF</span>
+                    <span>{t("reports.downloadPDF")}</span>
                   </button>
                 </div>
               </div>
@@ -443,9 +443,9 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
                       <Target className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>Total de Produtos</h3>
-                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalProdutos} produtos cadastrados</p>
-                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1`}>Disponíveis para cotação no sistema</p>
+                      <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>{t("reports.productsReport")}</h3>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalProdutos} {reportData.totalProdutos} {t("reports.productsRegistered")}</p>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1`}>{t("reports.availableForQuote")}</p>
                     </div>
                   </div>
                   <button 
@@ -455,7 +455,7 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
                     <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span>Download PDF</span>
+                    <span>{t("reports.downloadPDF")}</span>
                   </button>
                 </div>
               </div>
@@ -468,9 +468,9 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
                       <Users className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 ${isLight ? 'text-purple-600' : 'text-purple-400'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>Total de Fornecedores</h3>
-                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalFornecedores} fornecedores ativos</p>
-                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1`}>Parceiros cadastrados no sistema</p>
+                      <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>{t("reports.suppliersReport")}</h3>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalFornecedores} {reportData.totalFornecedores} {t("reports.activeSuppliers")}</p>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1`}>{t("reports.registeredPartners")}</p>
                     </div>
                   </div>
                   <button 
@@ -480,7 +480,7 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
                     <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span>Download PDF</span>
+                    <span>{t("reports.downloadPDF")}</span>
                   </button>
                 </div>
               </div>

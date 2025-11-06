@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Save, RefreshCw } from "lucide-react";
 import { Supplier } from "../types";
+import { useTranslation } from "react-i18next";
 
 interface CreateSupplierModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface CreateSupplierModalProps {
 }
 
 export function CreateSupplierModal({ isOpen, onClose, onSave, userId, isLight = false }: CreateSupplierModalProps) {
+  const { t } = useTranslation();
   let currentUserId: number | null = null;
   if (typeof userId === 'number' && userId > 0) currentUserId = userId;
   else if (typeof userId === 'string' && userId.trim() !== '' && !isNaN(Number(userId)) && Number(userId) > 0) currentUserId = Number(userId);
@@ -59,20 +61,20 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId, isLight =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isUserValid) {
-      alert('Usuário não identificado. Faça login novamente para cadastrar fornecedor.');
+      alert(t('suppliers.userNotIdentified'));
       return;
     }
     if (!formData.nome.trim()) {
-      alert('Nome do fornecedor é obrigatório');
+      alert(t('suppliers.supplierNameRequired'));
       return;
     }
     if (!formData.contato_email?.trim()) {
-      alert('Email de contato é obrigatório');
+      alert(t('suppliers.contactEmailRequired'));
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.contato_email)) {
-      alert('Email de contato é inválido');
+      alert(t('suppliers.invalidEmail'));
       return;
     }
     setIsSaving(true);
@@ -99,7 +101,7 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId, isLight =
       });
       onClose();
     } catch (error) {
-      alert('Erro ao criar fornecedor. Tente novamente.');
+      alert(t('suppliers.errorCreatingSupplier'));
     } finally {
       setIsSaving(false);
     }
@@ -112,7 +114,7 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId, isLight =
       <div className={`${isLight ? 'bg-white' : 'bg-slate-900'} rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl`}>
         {/* Header */}
         <div className={`flex items-center justify-between p-6 ${isLight ? 'border-b border-gray-200' : 'border-b border-slate-700'}`}>
-          <h2 className={`text-xl font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Novo Fornecedor</h2>
+          <h2 className={`text-xl font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>{t('suppliers.newSupplierTitle')}</h2>
           <button
             onClick={onClose}
             className={`${isLight ? 'text-gray-400 hover:text-gray-600' : 'text-slate-400 hover:text-white'} transition-colors p-1`}
@@ -125,34 +127,34 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId, isLight =
         <form onSubmit={handleSubmit} className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
           {!isUserValid && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-lg p-4 mb-4 text-center">
-              <p>Usuário não identificado. Faça login novamente para cadastrar fornecedor.</p>
+              <p>{t('suppliers.userNotIdentified')}</p>
             </div>
           )}
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Nome *</label>
-                <input type="text" name="nome" value={formData.nome} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder="Nome do fornecedor" required disabled={isSaving} />
+                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>{t('suppliers.nameLabel')} *</label>
+                <input type="text" name="nome" value={formData.nome} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder={t('suppliers.supplierNamePlaceholder')} required disabled={isSaving} />
               </div>
               <div>
-                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Email de Contato *</label>
-                <input type="email" name="contato_email" value={formData.contato_email} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder="Email" required disabled={isSaving} />
+                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>{t('suppliers.contactEmailLabel')} *</label>
+                <input type="email" name="contato_email" value={formData.contato_email} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder={t('suppliers.emailPlaceholder')} required disabled={isSaving} />
               </div>
               <div>
-                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Telefone</label>
-                <input type="text" name="contato_telefone" value={formData.contato_telefone} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder="Telefone" disabled={isSaving} />
+                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>{t('suppliers.phoneLabel')}</label>
+                <input type="text" name="contato_telefone" value={formData.contato_telefone} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder={t('suppliers.phonePlaceholder')} disabled={isSaving} />
               </div>
               <div>
-                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Site</label>
-                <input type="text" name="site" value={formData.site} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder="Site" disabled={isSaving} />
+                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>{t('suppliers.websiteLabel')}</label>
+                <input type="text" name="site" value={formData.site} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder={t('suppliers.websitePlaceholder')} disabled={isSaving} />
               </div>
               <div className="md:col-span-2">
-                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>Observações</label>
-                <textarea name="observacoes" value={formData.observacoes} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder="Observações" rows={2} disabled={isSaving} />
+                <label className={`block text-sm font-medium ${isLight ? 'text-gray-700' : 'text-slate-300'} mb-2`}>{t('suppliers.notesLabel')}</label>
+                <textarea name="observacoes" value={formData.observacoes} onChange={handleChange} className={`w-full ${isLight ? 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500' : 'bg-slate-800 border-slate-600 text-white focus:border-blue-400'} border rounded-lg p-3 focus:ring-2 focus:ring-blue-400/20 transition-colors`} placeholder={t('suppliers.notesPlaceholder')} rows={2} disabled={isSaving} />
               </div>
               <div className="flex items-center space-x-2 md:col-span-2">
                 <input type="checkbox" name="ativo" checked={formData.ativo} onChange={handleChange} disabled={isSaving} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                <label className={`text-sm ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Ativo</label>
+                <label className={`text-sm ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>{t('suppliers.activeLabel')}</label>
               </div>
             </div>
           </div>
@@ -163,7 +165,7 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId, isLight =
               className={`flex-1 ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' : 'bg-slate-700 hover:bg-slate-600 text-white'} px-4 py-2 rounded-lg transition-colors disabled:opacity-50`}
               disabled={isSaving}
             >
-              Cancelar
+              {t('suppliers.cancel')}
             </button>
             <button
               type="submit"
@@ -173,12 +175,12 @@ export function CreateSupplierModal({ isOpen, onClose, onSave, userId, isLight =
               {isSaving ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Salvando...</span>
+                  <span>{t('suppliers.saving')}</span>
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  <span>Criar</span>
+                  <span>{t('suppliers.create')}</span>
                 </>
               )}
             </button>

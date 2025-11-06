@@ -37,7 +37,7 @@ import { EmailsPage } from "./pages/EmailsPage";
 import { ProcessesPage } from "./pages/ProcessesPage";
 import { HelpPage } from "./pages/HelpPage";
 import { useApp } from "../contexts/AppContext";
-import { produtoService, supplierService, dashboardService, jobService } from "../api/services";
+import { produtoService, supplierService, dashboardService, jobService, cotacaoService, notificationService } from "../api/services";
 import { buscaGeralService } from "../services/buscaGeralService";
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
@@ -151,6 +151,12 @@ export function AdminDashboard({
 
   // Estado para contador de processos ativos
   const [activeProcessesCount, setActiveProcessesCount] = useState(0);
+  
+  // Estado para contador de notificações não lidas
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  
+  // Estado para cotações reais do backend
+  const [recentCotacoes, setRecentCotacoes] = useState<any[]>([]);
 
   // Função para buscar processos ativos
   const fetchActiveProcesses = async () => {
@@ -159,11 +165,32 @@ export function AdminDashboard({
       if (response.success && response.data) {
         // A API retorna { success: true, message: "X jobs encontrados", jobs: [...] }
         const jobs = response.data.jobs || response.data;
-        const activeJobs = jobs.filter((job: any) => job.status === 'EXECUTANDO');
+        
+        // Conta processos em execução e pendentes (case-insensitive)
+        const activeJobs = Array.isArray(jobs) ? jobs.filter((job: any) => {
+          const status = job.status?.toLowerCase();
+          return status === 'executando' || status === 'pendente';
+        }) : [];
+        
         setActiveProcessesCount(activeJobs.length);
       }
     } catch (error) {
       console.error('Erro ao buscar processos ativos:', error);
+    }
+  };
+
+  // Função para buscar notificações não lidas
+  const fetchUnreadNotifications = async () => {
+    try {
+      const response = await notificationService.getAll();
+      if (response.success && response.data) {
+        const notifications = Array.isArray(response.data) ? response.data : response.data.data || [];
+        // Conta notificações não lidas
+        const unread = notifications.filter((notif: any) => !notif.lida && !notif.read);
+        setUnreadNotificationsCount(unread.length);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar notificações:', error);
     }
   };
 
@@ -174,6 +201,47 @@ export function AdminDashboard({
   useEffect(() => {
     fetchActiveProcesses();
     const interval = setInterval(fetchActiveProcesses, 5000); // A cada 5 segundos
+    return () => clearInterval(interval);
+  }, []);
+
+  // Buscar notificações não lidas periodicamente
+  useEffect(() => {
+    fetchUnreadNotifications();
+    const interval = setInterval(fetchUnreadNotifications, 10000); // A cada 10 segundos
+    return () => clearInterval(interval);
+  }, []);
+
+  // Buscar cotações recentes do backend
+  useEffect(() => {
+    async function fetchRecentCotacoes() {
+      try {
+        const response = await cotacaoService.getAll();
+        const cotacoesArr = Array.isArray(response.data?.data) ? response.data.data : [];
+        const mappedCotacoes = cotacoesArr.map((c: any) => ({
+          ...c,
+          produto: c.produto || c.nome_produto || c.prompt?.texto_original || 'Produto não especificado',
+          fornecedor: c.fornecedor || c.nome_fornecedor || c.fornecedor_nome || 'Múltiplos fornecedores',
+          valor: (() => {
+            const val = parseFloat(c.valor || c.orcamento_geral || '0');
+            return val === 0 ? 'Produto não encontrado' : (c.valor || c.orcamento_geral || formatCurrency(0));
+          })(),
+          data: c.dataRecebido || c.cadastrado_em || c.data_solicitacao || new Date().toLocaleDateString('pt-PT'),
+          submittedAt: c.cadastrado_em || c.dataRecebido || new Date().toLocaleString('pt-PT'),
+        }));
+        const recent = mappedCotacoes
+          .sort((a: any, b: any) => {
+            const idA = typeof a.id === 'number' ? a.id : parseInt(String(a.id).replace(/\D/g, '')) || 0;
+            const idB = typeof b.id === 'number' ? b.id : parseInt(String(b.id).replace(/\D/g, '')) || 0;
+            return idB - idA;
+          })
+          .slice(0, 2);
+        setRecentCotacoes(recent);
+      } catch (error) {
+        console.error('Erro ao buscar cotações recentes:', error);
+      }
+    }
+    fetchRecentCotacoes();
+    const interval = setInterval(fetchRecentCotacoes, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -795,7 +863,8 @@ export function AdminDashboard({
 
   const renderNavItem = (item: any, isActive: boolean) => {
     const Icon = item.icon;
-    const showCounter = item.key === 'processes' && activeProcessesCount > 0;
+    const showProcessCounter = item.key === 'processes' && activeProcessesCount > 0;
+    const showNotificationCounter = item.key === 'notifications' && unreadNotificationsCount > 0;
     
     return (
       <button
@@ -810,24 +879,24 @@ export function AdminDashboard({
           }`}
       >
         <div className="flex items-center space-x-2">
-          <div className="relative">
-            <Icon
-              className={`w-4 h-4 flex-shrink-0 ${isActive ? themeClasses.iconAccent : themeClasses.iconSecondary}`}
-            />
-            {showCounter && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center animate-pulse">
-                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-              </div>
-            )}
-          </div>
+          <Icon
+            className={`w-4 h-4 flex-shrink-0 ${isActive ? themeClasses.iconAccent : themeClasses.iconSecondary}`}
+          />
           <span className={`text-xs sm:text-sm truncate ${isActive ? themeClasses.iconAccent : themeClasses.textSecondary}`}>
             {t(item.label)}
           </span>
         </div>
-        {showCounter && (
+        {showProcessCounter && (
           <div className="flex items-center">
-            <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-semibold rounded-full px-2 py-1 min-w-[20px] text-center shadow-lg shadow-red-500/30 animate-pulse">
+            <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-semibold rounded-full px-2 py-1 min-w-[20px] text-center shadow-md shadow-red-500/30 animate-pulse">
               {activeProcessesCount}
+            </span>
+          </div>
+        )}
+        {showNotificationCounter && (
+          <div className="flex items-center">
+            <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-semibold rounded-full px-2 py-1 min-w-[20px] text-center shadow-md shadow-red-500/30 animate-pulse">
+              {unreadNotificationsCount}
             </span>
           </div>
         )}
@@ -867,7 +936,7 @@ export function AdminDashboard({
                     <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                     {t('newQuote.title')} - Admin
                   </h1>
-                  <p className={`text-xs sm:text-sm ${themeClasses?.textSecondary || 'text-dark-secondary'} mt-1`}>{t('newQuote.subtitle')} para qualquer cliente</p>
+                  <p className={`text-xs sm:text-sm ${themeClasses?.textSecondary || 'text-dark-secondary'} mt-1`}>{t('newQuote.subtitle')} {t('newQuote.forAnyClient')}</p>
                 </div>
               </div>
             </header>
@@ -936,7 +1005,7 @@ export function AdminDashboard({
                               
                               setQuoteMessage({
                                 type: 'success',
-                                text: 'Cotação criada com sucesso!',
+                                text: t('newQuote.successMessage'),
                                 quoteId: newQuote.id
                               });
                               setIsCreatingQuote(false);
@@ -951,7 +1020,7 @@ export function AdminDashboard({
                               console.error('❌ Erro ao fazer busca (Admin):', error);
                               setQuoteMessage({
                                 type: 'error',
-                                text: 'Erro ao processar solicitação. Tente novamente.'
+                                text: t('newQuote.processError')
                               });
                               setIsCreatingQuote(false);
                             }
@@ -963,12 +1032,12 @@ export function AdminDashboard({
                         {isCreatingQuote ? (
                           <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            <span>Processando IA...</span>
+                            <span>{t('newQuote.processingAI')}</span>
                           </>
                         ) : (
                           <>
                             <Send className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
-                            <span>Gerar Cotação</span>
+                            <span>{t('newQuote.generate')}</span>
                           </>
                         )}
                       </button>
@@ -980,7 +1049,7 @@ export function AdminDashboard({
                       >
                         <div className="flex items-center justify-center space-x-2">
                           <RotateCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
-                          <span>Limpar</span>
+                          <span>{t('newQuote.clear')}</span>
                         </div>
                       </button>
                       
@@ -990,7 +1059,7 @@ export function AdminDashboard({
                         className="group bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 border border-emerald-500/50 hover:border-emerald-400/50 text-emerald-100 hover:text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 transition-all duration-300 text-sm shadow-md hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                       >
                         <List className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
-                        <span>Ver Todas</span>
+                        <span>{t('newQuote.viewAllQuotes')}</span>
                       </button>
                     </div>
 
@@ -998,7 +1067,7 @@ export function AdminDashboard({
                       <div className={`${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/20'} border rounded-lg p-3 sm:p-4`}>
                         <div className="flex items-center space-x-3">
                           <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                          <span className={`${isLight ? 'text-blue-700' : 'text-blue-300'} text-xs sm:text-sm`}>Admin: Nossa IA está processando a cotação e conectando com fornecedores premium...</span>
+                          <span className={`${isLight ? 'text-blue-700' : 'text-blue-300'} text-xs sm:text-sm`}>{t('newQuote.aiProcessingAdmin')}</span>
                         </div>
                       </div>
                     )}
@@ -1047,11 +1116,11 @@ export function AdminDashboard({
                     Cotações Criadas Recentemente
                   </h2>
                   <span className={`text-sm px-3 py-1 rounded-full ${isLight ? 'bg-blue-100 text-blue-700' : 'bg-blue-500/20 text-blue-300'}`}>
-                    {allQuotes.filter(quote => quote.fornecedor === "Admin SmartQuote" || quote.produto.includes("Admin:")).length} cotaç{allQuotes.filter(quote => quote.fornecedor === "Admin SmartQuote" || quote.produto.includes("Admin:")).length !== 1 ? 'ões' : 'ão'}
+                    {recentCotacoes.length} cotaç{recentCotacoes.length !== 1 ? 'ões' : 'ão'}
                   </span>
                 </div>
 
-                {allQuotes.filter(quote => quote.fornecedor === "Admin SmartQuote" || quote.produto.includes("Admin:")).length === 0 ? (
+                {recentCotacoes.length === 0 ? (
                   <div className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-900/30 to-gray-900/30 border-slate-500/20'} rounded-xl border p-8 backdrop-blur-sm text-center`}>
                     <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${isLight ? 'bg-gray-100' : 'bg-slate-700/50'} mb-4`}>
                       <FileText className={`w-8 h-8 ${isLight ? 'text-gray-400' : 'text-slate-400'}`} />
@@ -1065,13 +1134,11 @@ export function AdminDashboard({
                   </div>
                 ) : (
                   <div className="grid gap-6">
-                    {allQuotes
-                      .filter(quote => quote.fornecedor === "Admin SmartQuote" || quote.produto.includes("Admin:"))
-                      .slice(0, 5)
+                    {recentCotacoes
                       .map((quote: any) => (
                       <div
                         key={quote.id}
-                        className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-lg border-gray-200 hover:shadow-xl' : 'bg-gradient-to-br from-slate-900/30 to-gray-900/30 border-slate-500/20 hover:border-slate-400/30'} rounded-xl border p-6 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] group cursor-pointer`}
+                        className={`${themeClasses?.glassCard || 'glass-card'} ${isLight ? 'bg-white shadow-md border-gray-200 hover:shadow-lg' : 'bg-gradient-to-br from-slate-900/30 to-gray-900/30 border-slate-500/20 hover:border-slate-400/30'} rounded-xl border p-6 backdrop-blur-sm transition-all duration-300 hover:scale-[1.005] group cursor-pointer`}
                       >
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-3">
@@ -1089,20 +1156,19 @@ export function AdminDashboard({
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              quote.status === 'approved' 
-                                ? isLight 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-green-500/20 text-green-300'
-                                : quote.status === 'pending'
-                                  ? isLight
+                              quote.valor === 'Produto não encontrado'
+                                ? isLight
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-red-500/20 text-red-300'
+                                : quote.aprovacao === true 
+                                  ? isLight 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-green-500/20 text-green-300'
+                                  : isLight
                                     ? 'bg-yellow-100 text-yellow-800'
                                     : 'bg-yellow-500/20 text-yellow-300'
-                                  : isLight
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-red-500/20 text-red-300'
                             }`}>
-                              {quote.status === 'approved' ? 'Aprovada' : 
-                               quote.status === 'pending' ? 'Pendente' : 'Rejeitada'}
+                              {quote.valor === 'Produto não encontrado' ? 'Falhou' : quote.aprovacao === true ? 'Aprovada' : 'Pendente'}
                             </span>
                           </div>
                         </div>
@@ -1132,13 +1198,15 @@ export function AdminDashboard({
                           <p className={`text-xs ${themeClasses?.textSecondary || 'text-dark-secondary'}`}>
                             Data: {quote.data}
                           </p>
-                          <button
-                            onClick={() => setActivePage("quotes")}
-                            className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] flex items-center space-x-2"
-                          >
-                            <Edit className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
-                            <span>Ver Detalhes</span>
-                          </button>
+                          {quote.valor !== 'Produto não encontrado' && (
+                            <button
+                              onClick={() => setActivePage("quotes")}
+                              className="group bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] flex items-center space-x-2"
+                            >
+                              <Edit className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+                              <span>Ver Detalhes</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

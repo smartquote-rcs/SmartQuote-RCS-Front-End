@@ -285,6 +285,26 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Listener para logout automático quando token expira
+  useEffect(() => {
+    const handleTokenExpired = (event: any) => {
+      console.log('🔔 Evento tokenExpired recebido');
+      setFeedback({
+        type: 'error',
+        message: event.detail?.message || 'Sua sessão expirou. Por favor, faça login novamente.'
+      });
+      // Limpar campos de login
+      setEmail('');
+      setPassword('');
+    };
+
+    window.addEventListener('tokenExpired', handleTokenExpired);
+    
+    return () => {
+      window.removeEventListener('tokenExpired', handleTokenExpired);
+    };
+  }, []);
+
   // Detectar tokens na URL ao carregar a página (reset, confirmação, etc.)
   useEffect(() => {
     // Primeiro verificar no hash da URL (formato: #access_token=...)

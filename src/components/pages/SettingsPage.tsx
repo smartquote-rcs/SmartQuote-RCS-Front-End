@@ -669,8 +669,8 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 									<Lock className={`w-4 h-4 sm:w-5 sm:h-5 ${isLight ? 'text-red-600' : 'text-red-400'}`} />
 								</div>
 								<div>
-									<h3 className={`text-base sm:text-lg font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>Alterar Senha</h3>
-									<p className={`${isLight ? 'text-red-600' : 'text-red-200'} text-xs sm:text-sm`}>Mantenha sua conta segura</p>
+									<h3 className={`text-base sm:text-lg font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>{t('settings.changePassword')}</h3>
+									<p className={`${isLight ? 'text-red-600' : 'text-red-200'} text-xs sm:text-sm`}>{t('settings.keepAccountSecure')}</p>
 								</div>
 							</div>
 
@@ -781,7 +781,7 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 									</div>
 									<div>
 										<h3 className={`text-base sm:text-lg font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'}`}>{t('settings.generalSettings')}</h3>
-										<p className={`${isLight ? 'text-green-600' : 'text-green-200'} text-xs sm:text-sm`}>Configurações globais do sistema</p>
+										<p className={`${isLight ? 'text-green-600' : 'text-green-200'} text-xs sm:text-sm`}>{t('settings.globalSystemSettings')}</p>
 									</div>
 								</div>
 								{isAdmin && (
@@ -873,7 +873,7 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 								<div className="flex items-center justify-between py-1">
 									<div>
 										<Label className="text-dark-primary-text text-sm">{t('settings.autoBackup')}</Label>
-										<p className="text-xs sm:text-sm text-dark-secondary">Backup automático diário</p>
+										<p className="text-xs sm:text-sm text-dark-secondary">{t('settings.dailyAutoBackup')}</p>
 									</div>
 									<Switch
 										checked={generalSettings.autoBackup}
@@ -886,7 +886,7 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 								<div className="flex items-center justify-between py-1">
 									<div>
 										<Label className="text-dark-primary-text text-sm">{t('settings.maintenanceMode')}</Label>
-										<p className="text-xs sm:text-sm text-dark-secondary">Modo de manutenção</p>
+										<p className="text-xs sm:text-sm text-dark-secondary">{t('settings.maintenanceModeDesc')}</p>
 									</div>
 									<Switch
 										checked={generalSettings.maintenanceMode}

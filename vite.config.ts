@@ -38,7 +38,7 @@ export default defineConfig({
   preview: {
     allowedHosts: ['smartquote-rcs-front-end.onrender.com'],
     host: '0.0.0.0',
-    port: process.env.PORT || 4173,
+    port: Number(process.env.PORT) || 4173,
   },
   // Opcional: para dev local em rede
   server: {

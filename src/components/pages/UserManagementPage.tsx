@@ -53,6 +53,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { userService } from "../../api/services";
+import { useTranslation } from 'react-i18next';
 
 interface UserData {
   id: string;
@@ -128,6 +129,7 @@ const getRoleIcon = (role: string) => {
 };
 
 export default function UserManagementPage({ isLight = false }: { isLight?: boolean } = {}) {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -918,10 +920,10 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
           <div>
             <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-3`}>
               <Users className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
-              Gestão de Usuários
+              {t('userManagement.pageTitle')}
             </h1>
             <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
-              Administre contas de usuário e permissões do sistema
+              {t('userManagement.pageSubtitle')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
@@ -929,7 +931,7 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
               <span className={`${isLight ? 'text-blue-600' : 'text-blue-300'} font-bold text-lg`}>
                 {filteredUsers.length}
               </span>
-              <span className={`${isLight ? 'text-blue-500' : 'text-blue-200'} ml-2`}>usuários</span>
+              <span className={`${isLight ? 'text-blue-500' : 'text-blue-200'} ml-2`}>{t('userManagement.usersCount')}</span>
             </div>
             <Button
               onClick={loadUsers}
@@ -1184,7 +1186,7 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
               <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isLight ? 'text-gray-600 group-hover:text-blue-500' : 'text-white/70 group-hover:text-blue-400'} transition-colors duration-200 z-10 pointer-events-none`} />
               <input
                 type="text"
-                placeholder="Pesquisar usuários por nome, email ou departamento..."
+                placeholder={t('userManagement.searchUserPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`pl-11 w-full ${isLight ? 'bg-white border-gray-300 text-gray-800 placeholder:text-gray-500 focus:ring-blue-500 focus:border-blue-500' : 'bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:ring-blue-500/50 focus:border-blue-500/50'} h-10 md:h-auto rounded-lg px-3 py-2 focus:outline-none focus:ring-2 border transition-all duration-200 backdrop-blur-sm`}
@@ -1494,7 +1496,7 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
                 <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
-                <p className="text-slate-300">Carregando usuários...</p>
+                <p className="text-slate-300">{t('userManagement.loadingUsers')}</p>
               </div>
             ) : filteredUsers.length > 0 ? (
               filteredUsers.map((user) => <UserCard key={user.id} user={user} />)
@@ -1503,7 +1505,7 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
                 <Users className="w-12 h-12 text-slate-500" />
                 <div className="text-center">
                   <h3 className="text-base sm:text-lg font-medium text-slate-300 mb-2">
-                    Nenhum usuário encontrado
+                    {t('userManagement.noUsers')}
                   </h3>
                   <p className="text-slate-500 text-sm">
                     Tente ajustar os filtros ou adicione um novo usuário.

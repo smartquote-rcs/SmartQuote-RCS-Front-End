@@ -44,7 +44,7 @@ import {
   X,
   RefreshCw,
 } from "lucide-react";
-import { cotacaoService, relatorioService } from "../../api/services";
+import { cotacaoService, relatorioService, jobService } from "../../api/services";
 import api from '../../api/client';
 
 import { produtoService } from '../../api/services';
@@ -158,7 +158,7 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
   );
 
   return (
-  <div className={`border-2 rounded-2xl p-4 md:p-6 flex flex-col gap-4 shadow-lg transition-all duration-300 hover:scale-[1.005] hover:shadow-xl w-full overflow-hidden ${
+  <div className={`border-2 rounded-2xl p-4 md:p-6 flex flex-col gap-4 shadow-md transition-all duration-300 hover:shadow-lg w-full overflow-hidden ${
     item.status === false 
       ? isLight 
         ? 'bg-red-50 border-red-300 text-red-900 hover:border-red-400' 
@@ -216,7 +216,7 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
           <div className="flex flex-row sm:flex-col gap-2 order-1 sm:order-2">
             <button 
               onClick={() => setOpen(true)} 
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.02] border-2 ${
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.01] border-2 ${
                 isLight 
                   ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300 hover:border-blue-400' 
                   : 'bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border-cyan-700/40 hover:border-cyan-400/60'
@@ -227,7 +227,7 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
             {item.status === true && (
               <button 
                 onClick={() => { setShowReplace(v => { if (!v) fetchSugeridos(); return !v; }); }} 
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.02] border-2 ${
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.01] border-2 ${
                   isLight 
                     ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 hover:border-purple-400' 
                     : 'bg-blue-900/30 hover:bg-blue-700/40 text-blue-300 border-blue-700/40 hover:border-blue-400/60'
@@ -239,7 +239,7 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
             {item.status === false && (
               <button 
                 onClick={() => { setShowReplace(v => { if (!v) fetchSugeridos(); return !v; }); }} 
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.02] border-2 ${
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:scale-[1.01] border-2 ${
                   isLight 
                     ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-300 hover:border-green-400' 
                     : 'bg-green-900/30 hover:bg-green-700/40 text-green-300 border-green-700/40 hover:border-green-400/60'
@@ -300,7 +300,7 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
               ) : sugeridosLocalFiltrados.map(prod => (
                 <button
                   key={prod.id}
-                  className={`w-full text-left px-4 py-3 rounded-lg text-base flex items-center gap-3 transition-all duration-300 hover:scale-[1.02] break-words min-h-[48px] border-2 ${
+                  className={`w-full text-left px-4 py-3 rounded-lg text-base flex items-center gap-3 transition-all duration-300 hover:scale-[1.01] break-words min-h-[48px] border-2 ${
                     isLight 
                       ? 'hover:bg-blue-50 text-blue-700 border-blue-200 hover:border-blue-400' 
                       : 'hover:bg-cyan-800/30 text-cyan-200 border-cyan-700/30 hover:border-cyan-400/60'
@@ -331,7 +331,7 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
               ) : sugeridosWebFiltrados.map((prod, idx) => (
                 <button
                   key={prod.url || prod.id || idx}
-                  className={`w-full text-left px-4 py-3 rounded-lg text-base flex items-center gap-3 transition-all duration-300 hover:scale-[1.02] break-words min-h-[48px] border-2 ${
+                  className={`w-full text-left px-4 py-3 rounded-lg text-base flex items-center gap-3 transition-all duration-300 hover:scale-[1.01] break-words min-h-[48px] border-2 ${
                     isLight 
                       ? 'hover:bg-purple-50 text-purple-700 border-purple-200 hover:border-purple-400' 
                       : 'hover:bg-blue-800/30 text-blue-200 border-blue-700/30 hover:border-blue-400/60'
@@ -505,7 +505,7 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
           <div className="flex flex-col sm:flex-row gap-4 mt-6 w-full">
             <button 
               onClick={() => setOpen(false)} 
-              className={`w-full sm:w-auto px-6 py-3 text-lg rounded-lg font-semibold transition-all duration-300 hover:scale-[1.02] border-2 ${
+              className={`w-full sm:w-auto px-6 py-3 text-lg rounded-lg font-semibold transition-all duration-300 hover:scale-[1.01] border-2 ${
                 isLight 
                   ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 hover:border-gray-400' 
                   : 'bg-cyan-700/60 hover:bg-cyan-600/70 text-cyan-100 border-cyan-600/60 hover:border-cyan-400/80'
@@ -535,15 +535,15 @@ const getStatusFromAprovacao = (cotacao: any) => {
   return "pending_approval"; // null ou undefined também é pendente
 };
 
-const getStatusBadge = (cotacao: any) => {
+const getStatusBadge = (cotacao: any, t: any) => {
   const status = getStatusFromAprovacao(cotacao);
   if (status === "approved") {
     return (
-      <Badge className="bg-green-600 text-white text-xs">Aprovado</Badge>
+      <Badge className="bg-green-600 text-white text-xs">{t('quoteRequests.statusApproved')}</Badge>
     );
   } else {
     return (
-      <Badge className="bg-orange-600 text-white text-xs">Pendente</Badge>
+      <Badge className="bg-orange-600 text-white text-xs">{t('quoteRequests.statusPending')}</Badge>
     );
   }
 };
@@ -570,7 +570,7 @@ export function QuoteRequestsPage({
   const [fornecedorFilter, setFornecedorFilter] = useState("Todos");
   const [dateFilter, setDateFilter] = useState("Todas");
   const [valueFilter, setValueFilter] = useState("Todos");
-  const [sortBy, setSortBy] = useState("data");
+  const [sortBy, setSortBy] = useState("id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   // Paginação
@@ -594,36 +594,76 @@ export function QuoteRequestsPage({
   useEffect(() => {
     async function fetchCotacoes() {
       try {
-        const response = await cotacaoService.getAll();
-        // Corrigir para acessar o array de cotações em response.data.data
-        const cotacoesArr = Array.isArray(response.data?.data) ? response.data.data : [];
+        // Buscar cotações e jobs em paralelo
+        const [cotacoesResponse, jobsResponse] = await Promise.all([
+          cotacaoService.getAll(),
+          jobService.getAllJobs()
+        ]);
+        
+        // Processar cotações
+        const cotacoesArr = Array.isArray(cotacoesResponse.data?.data) ? cotacoesResponse.data.data : [];
         console.log('Cotações recebidas da API:', cotacoesArr);
+        
+        // Processar jobs ativos (executando ou pendente)
+        const jobs = jobsResponse.success && jobsResponse.data ? 
+          (jobsResponse.data.jobs || jobsResponse.data) : [];
+        const activeJobIds = new Set(
+          jobs
+            .filter((job: any) => {
+              const status = job.status?.toLowerCase();
+              return status === 'executando' || status === 'pendente';
+            })
+            .map((job: any) => job.id)
+        );
+        
+        console.log('Jobs ativos (executando/pendente):', Array.from(activeJobIds));
+        
         // Mapeia os campos para garantir compatibilidade com o frontend
-        const mappedCotacoes = cotacoesArr.map((c: any) => ({
-          ...c,
-          cliente: c.cliente || c.nome_cliente || c.solicitante || '',
-          produto: c.produto || c.nome_produto || '',
-          fornecedor: c.fornecedor || c.nome_fornecedor || '',
-          prioridade: c.prioridade || c.priority || '',
-          status: c.status || '',
-          aprovacao: c.aprovacao,
-          valor: c.valor || c.orcamento_geral || '',
-          quantidade: c.quantidade || '',
-          aprovado_por: c.aprovado_por || c.aprovador || '',
-          motivo: c.motivo || '',
-          condicoes: c.condicoes || '',
-          dataRecebido: c.dataRecebido || c.cadastrado_em || c.data_solicitacao || '',
-          prazoResposta: c.prazoResposta || c.prazo_validade || '',
-          orcamento_geral: c.orcamento_geral || c.valor || '',
-        }));
-  // Exibe todas as cotações, sem filtrar por prazo_validade
-  setCotacoesList(mappedCotacoes);
+        const mappedCotacoes = cotacoesArr
+          .map((c: any) => ({
+            ...c,
+            cliente: c.cliente || c.nome_cliente || c.solicitante || '',
+            produto: c.produto || c.nome_produto || '',
+            fornecedor: c.fornecedor || c.nome_fornecedor || '',
+            prioridade: c.prioridade || c.priority || '',
+            status: c.status || '',
+            aprovacao: c.aprovacao,
+            valor: c.valor || c.orcamento_geral || '',
+            quantidade: c.quantidade || '',
+            aprovado_por: c.aprovado_por || c.aprovador || '',
+            motivo: c.motivo || '',
+            condicoes: c.condicoes || '',
+            dataRecebido: c.dataRecebido || c.cadastrado_em || c.data_solicitacao || '',
+            prazoResposta: c.prazoResposta || c.prazo_validade || '',
+            orcamento_geral: c.orcamento_geral || c.valor || '',
+          }))
+          // Filtrar cotações que têm job ativo (não mostrar enquanto está executando)
+          // E também filtrar cotações com valor 0 (produto não encontrado)
+          .filter((c: any) => {
+            if (c.job_id && activeJobIds.has(c.job_id)) {
+              console.log(`Cotação ${c.id} oculta - job ${c.job_id} está executando`);
+              return false;
+            }
+            // Filtrar cotações com valor 0
+            const valor = parseFloat(String(c.valor || c.orcamento_geral || '0').replace(/[^\d.-]/g, ''));
+            if (valor === 0) {
+              console.log(`Cotação ${c.id} oculta - valor 0 (produto não encontrado)`);
+              return false;
+            }
+            return true;
+          });
+        
+        setCotacoesList(mappedCotacoes);
       } catch (error) {
         setCotacoesList([]);
         console.error('Erro ao buscar cotações:', error);
       }
     }
     fetchCotacoes();
+    
+    // Atualizar a cada 10 segundos para refletir mudanças nos jobs
+    const interval = setInterval(fetchCotacoes, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Estados para o modal de detalhes
@@ -1193,7 +1233,7 @@ export function QuoteRequestsPage({
     isLight 
       ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 hover:shadow-xl' 
       : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-600/70 hover:border-cyan-400/60 hover:shadow-2xl hover:shadow-cyan-400/20'
-  } rounded-xl p-3 sm:p-4 backdrop-blur-sm transition-all duration-300 group relative w-full max-w-screen overflow-x-auto hover:scale-[1.005]`}>
+  } rounded-xl p-3 sm:p-4 backdrop-blur-sm transition-all duration-300 group relative w-full max-w-screen overflow-x-auto`}>
       {/* Borda lateral de status mais visível */}
       <div
         className={`absolute left-0 top-0 w-2 h-full rounded-l-xl transition-all duration-300 group-hover:w-3 ${
@@ -1229,7 +1269,7 @@ export function QuoteRequestsPage({
                 )}
               </div>
               <div className="flex items-center mb-1 sm:mb-0 sm:ml-2 sm:justify-end w-full sm:w-auto">
-                {getStatusBadge(cotacao)}
+                {getStatusBadge(cotacao, t)}
               </div>
             </div>
 
@@ -1302,18 +1342,18 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => openApproval(String(cotacao.id),'approve')}
                   aria-label="Aprovar cotação"
-                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700 hover:text-green-800 focus:ring-green-500 hover:border-green-400' : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 hover:border-green-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700 hover:text-green-800 focus:ring-green-500 hover:border-green-400' : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 hover:border-green-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Check className="w-3 h-3" />
-                  <span>Aprovar</span>
+                  <span>{t('quoteRequests.buttonApprove')}</span>
                 </button>
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
                   aria-label="Ver detalhes da cotação"
-                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 hover:border-blue-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 hover:border-blue-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Info className="w-3 h-3" />
-                  <span>Ver Detalhes</span>
+                  <span>{t('quoteRequests.buttonViewDetails')}</span>
                 </button>
               </>
             ) : (
@@ -1322,26 +1362,26 @@ export function QuoteRequestsPage({
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
                   aria-label="Visualizar cotação"
-                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 hover:border-blue-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  className={`${isLight ? 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-700 hover:text-blue-800 focus:ring-blue-500 hover:border-blue-400' : 'bg-blue-600/20 hover:bg-blue-600/40 border-blue-500/30 hover:border-blue-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Eye className="w-3 h-3" />
-                  <span>Visualizar</span>
+                  <span>{t('quoteRequests.buttonView')}</span>
                 </button>
                 <button 
                   onClick={() => onDownload(cotacao)}
-                  className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 hover:text-purple-700 focus:ring-purple-500 hover:border-purple-400' : 'bg-slate-700/50 hover:bg-slate-600/70 border-slate-600/50 text-slate-300 hover:text-purple-300 focus:ring-purple-400 hover:border-purple-500' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`} 
+                  className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 hover:text-purple-700 focus:ring-purple-500 hover:border-purple-400' : 'bg-slate-700/50 hover:bg-slate-600/70 border-slate-600/50 text-slate-300 hover:text-purple-300 focus:ring-purple-400 hover:border-purple-500' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`} 
                   aria-label="Download"
                 >
                   <Download className="w-3 h-3" />
-                  <span>Download</span>
+                  <span>{t('quoteRequests.buttonDownload')}</span>
                 </button>
                 <button
                   onClick={() => openApproval(String(cotacao.id),'set_pending')}
                   aria-label="Colocar como pendente"
-                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Clock className="w-3 h-3" />
-                  <span>Pendente</span>
+                  <span>{t('quoteRequests.buttonPending')}</span>
                 </button>
               </>
             )}
@@ -1351,20 +1391,70 @@ export function QuoteRequestsPage({
     </div>
   ));
 
-  // Lógica de filtragem
-  const filteredCotacoes = cotacoesList.filter((cotacao) => {
-    const matchesSearch = searchTerm === "" || 
-      (cotacao.cliente || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (cotacao.produto || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (cotacao.id ? String(cotacao.id) : "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (cotacao.fornecedor || "").toLowerCase().includes(searchTerm.toLowerCase());
+  // Lógica de filtragem e ordenação
+  const filteredCotacoes = cotacoesList
+    .filter((cotacao) => {
+      const matchesSearch = searchTerm === "" || 
+        (cotacao.cliente || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cotacao.produto || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cotacao.id ? String(cotacao.id) : "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cotacao.fornecedor || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cotacao.descricao || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cotacao.prompt?.texto_original || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "Todos" || cotacao.status === statusFilter;
-    const matchesPriority = priorityFilter === "Todas" || cotacao.prioridade === priorityFilter;
-    const matchesFornecedor = fornecedorFilter === "Todos" || cotacao.fornecedor === fornecedorFilter;
+      const matchesStatus = statusFilter === "Todos" || cotacao.status === statusFilter;
+      const matchesPriority = priorityFilter === "Todas" || cotacao.prioridade === priorityFilter;
+      const matchesFornecedor = fornecedorFilter === "Todos" || cotacao.fornecedor === fornecedorFilter;
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesFornecedor;
-  });
+      return matchesSearch && matchesStatus && matchesPriority && matchesFornecedor;
+    })
+    .sort((a, b) => {
+      let compareValue = 0;
+      
+      switch (sortBy) {
+        case "id":
+          // Ordenar por ID numérico
+          const idA = typeof a.id === 'number' ? a.id : parseInt(String(a.id).replace(/\D/g, '')) || 0;
+          const idB = typeof b.id === 'number' ? b.id : parseInt(String(b.id).replace(/\D/g, '')) || 0;
+          compareValue = idA - idB;
+          break;
+        case "data":
+          // Ordenar por data
+          const dateA = new Date(a.dataRecebido || a.cadastrado_em || 0).getTime();
+          const dateB = new Date(b.dataRecebido || b.cadastrado_em || 0).getTime();
+          compareValue = dateA - dateB;
+          break;
+        case "valor":
+          // Ordenar por valor
+          const valorA = parseFloat(String(a.valor || a.orcamento_geral || '0').replace(/[^\d.-]/g, '')) || 0;
+          const valorB = parseFloat(String(b.valor || b.orcamento_geral || '0').replace(/[^\d.-]/g, '')) || 0;
+          compareValue = valorA - valorB;
+          break;
+        case "cliente":
+          // Ordenar por cliente
+          compareValue = (a.cliente || '').localeCompare(b.cliente || '');
+          break;
+        case "fornecedor":
+          // Ordenar por fornecedor
+          compareValue = (a.fornecedor || '').localeCompare(b.fornecedor || '');
+          break;
+        case "status":
+          // Ordenar por status
+          compareValue = (a.status || '').localeCompare(b.status || '');
+          break;
+        case "prioridade":
+          // Ordenar por prioridade (high > medium > low)
+          const prioOrder: { [key: string]: number } = { high: 3, medium: 2, low: 1 };
+          const prioA = prioOrder[a.prioridade?.toLowerCase()] || 0;
+          const prioB = prioOrder[b.prioridade?.toLowerCase()] || 0;
+          compareValue = prioA - prioB;
+          break;
+        default:
+          compareValue = 0;
+      }
+      
+      return sortOrder === "asc" ? compareValue : -compareValue;
+    });
 
 
   // Estado para aba ativa
@@ -1748,6 +1838,12 @@ export function QuoteRequestsPage({
                           </SelectTrigger>
                           <SelectContent className="bg-dark-card border-dark-color">
                             <SelectItem
+                              value="id"
+                              className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-cyan-500/20 hover:text-cyan-300 transition-colors duration-200"
+                            >
+                              🔢 ID
+                            </SelectItem>
+                            <SelectItem
                               value="data"
                               className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-blue-500/20 hover:text-blue-300 transition-colors duration-200"
                             >
@@ -1764,6 +1860,12 @@ export function QuoteRequestsPage({
                               className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-purple-500/20 hover:text-purple-300 transition-colors duration-200"
                             >
                               👤 Cliente
+                            </SelectItem>
+                            <SelectItem
+                              value="fornecedor"
+                              className="data-[state=checked]:bg-white/5 data-[state=checked]:text-white hover:bg-indigo-500/20 hover:text-indigo-300 transition-colors duration-200"
+                            >
+                              🏢 Fornecedor
                             </SelectItem>
                             <SelectItem
                               value="status"
@@ -1939,13 +2041,13 @@ export function QuoteRequestsPage({
             <DialogTitle className={`${isLight ? 'text-gray-800' : 'text-white'} font-semibold flex items-center gap-2`}>
               {approvalModal.action === 'approve' && <Check className="w-4 h-4 text-green-400"/>}
               {approvalModal.action === 'set_pending' && <Clock className="w-4 h-4 text-orange-400"/>}
-              {approvalModal.action === 'approve' && 'Aprovar Cotação'}
-              {approvalModal.action === 'set_pending' && 'Marcar como Pendente'}
+              {approvalModal.action === 'approve' && t('quoteRequests.approveQuote')}
+              {approvalModal.action === 'set_pending' && t('quoteRequests.markAsPending')}
             </DialogTitle>
             <DialogDescription className={`text-sm ${
               isLight ? 'text-gray-600' : 'text-slate-300'
             }`}>
-              Informe o motivo. Esse registro ficará salvo no histórico.
+              {t('quoteRequests.reasonDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-2">
@@ -2073,16 +2175,16 @@ export function QuoteRequestsPage({
         <DialogContent className={`w-full max-w-3xl ${
           isLight
             ? 'bg-white border border-slate-200'
-            : 'bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-indigo-900/90 border border-indigo-500/30'
+            : 'bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/90 border border-cyan-500/30'
         } rounded-2xl overflow-hidden`}
         >
-          <DialogHeader className={`${isLight ? 'border-gray-200' : 'border-indigo-500/20'} border-b pb-3`}>
-            <DialogTitle className={`text-xl font-extrabold tracking-tight flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-indigo-100'}`}>
-              <Mail className={`h-5 w-5 ${isLight ? 'text-purple-600' : 'text-indigo-400'}`} />
-              Proposta de E-mail da Cotação {selectedCotacao?.id}
+          <DialogHeader className={`${isLight ? 'border-gray-200' : 'border-cyan-500/20'} border-b pb-3`}>
+            <DialogTitle className={`text-xl font-extrabold tracking-tight flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-cyan-100'}`}>
+              <Mail className={`h-5 w-5 ${isLight ? 'text-blue-600' : 'text-cyan-400'}`} />
+              {t('quoteRequests.emailProposalTitle')} {selectedCotacao?.id}
             </DialogTitle>
             <DialogDescription className={`${isLight ? 'text-slate-600' : 'text-slate-300'} text-sm`}>
-              Visualize, edite e gere uma versão assistida por IA. O processamento pode demorar alguns segundos.
+              {t('quoteRequests.emailProposalDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -2095,11 +2197,11 @@ export function QuoteRequestsPage({
           <div className="mt-4 space-y-4">
             <div className={`rounded-xl border-2 ${
               isLight
-                ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200'
-                : 'bg-gradient-to-br from-indigo-900/30 via-slate-800/30 to-purple-900/30 border-indigo-700/30'
+                ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
+                : 'bg-gradient-to-br from-cyan-900/30 via-slate-800/30 to-blue-900/30 border-cyan-700/30'
             } p-4`}>
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-indigo-200'}`}>email_proposta</span>
+                <span className={`text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-cyan-200'}`}>email_proposta</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setEmailEditable(v => !v)}
@@ -2129,7 +2231,7 @@ export function QuoteRequestsPage({
               <div className="relative">
                 {emailLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                    <div className="animate-pulse text-xs px-3 py-1.5 rounded-md bg-indigo-600/30 text-indigo-100 border border-indigo-400/30">Carregando...</div>
+                    <div className="animate-pulse text-xs px-3 py-1.5 rounded-md bg-cyan-600/30 text-cyan-100 border border-cyan-400/30">Carregando...</div>
                   </div>
                 )}
                 <textarea
@@ -2138,8 +2240,8 @@ export function QuoteRequestsPage({
                   readOnly={!emailEditable}
                   className={`w-full min-h-[260px] rounded-lg p-4 text-sm outline-none resize-vertical border ${
                     isLight 
-                      ? 'bg-white text-slate-900 border-purple-200 focus:border-purple-400'
-                      : 'bg-slate-900/40 text-slate-100 border-indigo-700/30 focus:border-indigo-400/60'
+                      ? 'bg-white text-slate-900 border-blue-200 focus:border-blue-400'
+                      : 'bg-slate-900/40 text-slate-100 border-cyan-700/30 focus:border-cyan-400/60'
                   }`}
                   placeholder="Sem conteúdo."
                 />
@@ -2147,8 +2249,8 @@ export function QuoteRequestsPage({
                   <>
                     <div className="absolute inset-0 rounded-lg backdrop-blur-[2px]" />
                     <div className="absolute inset-0 rounded-lg pointer-events-none">
-                      <div className="h-2 w-1/3 bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent rounded-full mt-2 ml-2 animate-pulse" />
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-400/10 to-transparent animate-pulse" />
+                      <div className="h-2 w-1/3 bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent rounded-full mt-2 ml-2 animate-pulse" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent animate-pulse" />
                     </div>
                   </>
                 )}
@@ -2159,7 +2261,7 @@ export function QuoteRequestsPage({
 <div className={`relative rounded-xl p-3 border ${
   isLight
     ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
-    : 'bg-gradient-to-r from-indigo-900/30 to-cyan-900/20 border-cyan-700/30'
+    : 'bg-gradient-to-r from-cyan-900/30 to-blue-900/20 border-cyan-700/30'
 } ${emailEditable ? '' : 'opacity-60'}`}>
 
   {!emailEditable && (
@@ -2299,12 +2401,12 @@ export function QuoteRequestsPage({
               <Download className={`h-5 w-5 ${
                 isLight ? 'text-blue-600' : 'text-cyan-400'
               }`} />
-              Escolha o formato de download
+              {t('quoteRequests.chooseDownloadFormat')}
             </DialogTitle>
             <DialogDescription className={`text-sm ${
               isLight ? 'text-slate-600' : 'text-slate-300'
             }`}>
-              Selecione o formato em que deseja baixar esta cotação:
+              {t('quoteRequests.selectFormatDescription')}
             </DialogDescription>
           </DialogHeader>
           
@@ -2367,12 +2469,12 @@ export function QuoteRequestsPage({
               <div className={`p-2 rounded-lg ${isLight ? 'bg-green-100' : 'bg-green-500/20'}`}>
                 <CheckCircle className={`w-5 h-5 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
               </div>
-              {isDynamicsLoading ? 'Criando Oportunidade...' : 'Nova Oportunidade Criada!'}
+              {isDynamicsLoading ? t('quoteRequests.creatingOpportunity') : t('quoteRequests.newOpportunityCreated')}
             </DialogTitle>
             <DialogDescription className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
               {isDynamicsLoading 
-                ? "Aguarde enquanto criamos uma nova oportunidade no Dynamics 365..."
-                : "Uma nova oportunidade foi criada com sucesso no Dynamics 365 para esta cotação aprovada."
+                ? t('quoteRequests.creatingOpportunityDescription')
+                : t('quoteRequests.opportunityCreatedDescription')
               }
             </DialogDescription>
           </DialogHeader>

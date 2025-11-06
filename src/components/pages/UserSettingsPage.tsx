@@ -18,7 +18,11 @@ export function UserSettingsPage() {
   // Sincronizar i18n quando o componente é montado
   useEffect(() => {
     if (userSettings.language) {
-      const lang = userSettings.language === 'pt-PT' || userSettings.language === 'pt-BR' ? 'pt' : 'en';
+      let lang = 'pt';
+      if (userSettings.language === 'pt-PT' || userSettings.language === 'pt-BR') lang = 'pt';
+      else if (userSettings.language === 'en-US' || userSettings.language === 'en-GB') lang = 'en';
+      else if (userSettings.language === 'es-ES') lang = 'es';
+      else if (userSettings.language === 'fr-FR') lang = 'fr';
       i18n.changeLanguage(lang);
       console.log('Sincronizando idioma inicial:', lang);
     }
@@ -44,7 +48,11 @@ export function UserSettingsPage() {
     updateSettings(localSettings);
     
     // Mapear e alterar idioma
-    const newLang = localSettings.language === 'pt-PT' || localSettings.language === 'pt-BR' ? 'pt' : 'en';
+    let newLang = 'pt';
+    if (localSettings.language === 'pt-PT' || localSettings.language === 'pt-BR') newLang = 'pt';
+    else if (localSettings.language === 'en-US' || localSettings.language === 'en-GB') newLang = 'en';
+    else if (localSettings.language === 'es-ES') newLang = 'es';
+    else if (localSettings.language === 'fr-FR') newLang = 'fr';
     
     try {
       // Salvar no localStorage
@@ -64,7 +72,6 @@ export function UserSettingsPage() {
   };
 
   const handleSaveProfile = () => {
-    // Simular salvamento do perfil
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
@@ -100,11 +107,11 @@ export function UserSettingsPage() {
               <Settings className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               {t('settings.title')}
             </h1>
-            <p className="text-sm sm:text-base text-dark-secondary mt-1">Personalize sua conta e preferências</p>
+            <p className="text-sm sm:text-base text-dark-secondary mt-1">{t('settings.personalizeAccount')}</p>
           </div>
           {showSuccess && (
             <Badge className="bg-green-600 text-white px-3 py-2 text-sm">
-              Configurações salvas com sucesso!
+              {t('settings.settingsSavedSuccess')}
             </Badge>
           )}
         </div>
@@ -119,14 +126,14 @@ export function UserSettingsPage() {
                 <User className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-white">Informações do Perfil</h2>
-                <p className="text-xs sm:text-sm text-blue-200">Atualize seus dados pessoais</p>
+                <h2 className="text-base sm:text-lg font-bold text-white">{t('settings.profileInfo')}</h2>
+                <p className="text-xs sm:text-sm text-blue-200">{t('settings.updatePersonalData')}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Nome Completo</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">{t('settings.fullName')}</label>
                 <input
                   type="text"
                   value={profileData.name}
@@ -135,7 +142,7 @@ export function UserSettingsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Email</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">{t('settings.email')}</label>
                 <input
                   type="email"
                   value={profileData.email}
@@ -144,7 +151,7 @@ export function UserSettingsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Telefone</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">{t('settings.phone')}</label>
                 <input
                   type="tel"
                   value={profileData.phone}
@@ -153,7 +160,7 @@ export function UserSettingsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Empresa</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">{t('settings.company')}</label>
                 <input
                   type="text"
                   value={profileData.company}
@@ -168,7 +175,7 @@ export function UserSettingsPage() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2"
             >
               <Save className="w-4 h-4" />
-              <span>Salvar Perfil</span>
+              <span>{t('settings.saveProfileButton')}</span>
             </button>
           </div>
 
@@ -179,21 +186,21 @@ export function UserSettingsPage() {
                 <Settings className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Alterar Senha</h2>
-                <p className="text-sm text-purple-200">Mantenha sua conta segura</p>
+                <h2 className="text-lg font-bold text-white">{t('settings.changePassword')}</h2>
+                <p className="text-sm text-purple-200">{t('settings.keepAccountSecure')}</p>
               </div>
             </div>
 
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Senha Atual</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">{t('settings.currentPasswordLabel')}</label>
                 <div className="relative">
                   <input
                     type={passwordData.showCurrent ? "text" : "password"}
                     value={passwordData.current}
                     onChange={(e) => setPasswordData({...passwordData, current: e.target.value})}
                     className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 pr-12 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors"
-                    placeholder="Digite sua senha atual"
+                    placeholder={t('settings.enterCurrentPassword')}
                   />
                   <button
                     type="button"
@@ -205,14 +212,14 @@ export function UserSettingsPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Nova Senha</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">{t('settings.newPasswordLabel')}</label>
                 <div className="relative">
                   <input
                     type={passwordData.showNew ? "text" : "password"}
                     value={passwordData.new}
                     onChange={(e) => setPasswordData({...passwordData, new: e.target.value})}
                     className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 pr-12 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors"
-                    placeholder="Digite sua nova senha"
+                    placeholder={t('settings.enterNewPassword')}
                   />
                   <button
                     type="button"
@@ -224,14 +231,14 @@ export function UserSettingsPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Confirmar Nova Senha</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">{t('settings.confirmNewPassword')}</label>
                 <div className="relative">
                   <input
                     type={passwordData.showConfirm ? "text" : "password"}
                     value={passwordData.confirm}
                     onChange={(e) => setPasswordData({...passwordData, confirm: e.target.value})}
                     className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 pr-12 text-white placeholder-slate-400 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors"
-                    placeholder="Confirme sua nova senha"
+                    placeholder={t('settings.confirmNewPasswordPlaceholder')}
                   />
                   <button
                     type="button"
@@ -250,7 +257,7 @@ export function UserSettingsPage() {
               className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2"
             >
               <Save className="w-4 h-4" />
-              <span>Alterar Senha</span>
+              <span>{t('settings.changePasswordButton')}</span>
             </button>
           </div>
 
@@ -261,16 +268,16 @@ export function UserSettingsPage() {
                 <Bell className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Preferências de Notificação</h2>
-                <p className="text-sm text-green-200">Configure como você deseja receber notificações</p>
+                <h2 className="text-lg font-bold text-white">{t('settings.notificationPreferences')}</h2>
+                <p className="text-sm text-green-200">{t('settings.configureNotifications')}</p>
               </div>
             </div>
 
             <div className="space-y-4 mb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-white">Notificações por Email</h3>
-                  <p className="text-sm text-dark-secondary">Receber notificações importantes por email</p>
+                  <h3 className="font-medium text-white">{t('settings.emailNotificationsLabel')}</h3>
+                  <p className="text-sm text-dark-secondary">{t('settings.receiveImportantEmails')}</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -291,8 +298,8 @@ export function UserSettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-white">Notificações do Navegador</h3>
-                  <p className="text-sm text-dark-secondary">Receber notificações push no navegador</p>
+                  <h3 className="font-medium text-white">{t('settings.browserNotifications')}</h3>
+                  <p className="text-sm text-dark-secondary">{t('settings.receivePushNotifications')}</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -313,8 +320,8 @@ export function UserSettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-white">Atualizações de Cotações</h3>
-                  <p className="text-sm text-dark-secondary">Notificar sobre mudanças nas suas cotações</p>
+                  <h3 className="font-medium text-white">{t('settings.quoteUpdates')}</h3>
+                  <p className="text-sm text-dark-secondary">{t('settings.notifyQuoteChanges')}</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -335,8 +342,8 @@ export function UserSettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-white">Atualizações de Fornecedores</h3>
-                  <p className="text-sm text-dark-secondary">Receber novidades dos fornecedores</p>
+                  <h3 className="font-medium text-white">{t('settings.supplierUpdatesLabel')}</h3>
+                  <p className="text-sm text-dark-secondary">{t('settings.receiveSupplierNews')}</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -364,8 +371,8 @@ export function UserSettingsPage() {
                 <Globe className="w-5 h-5 text-orange-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Configurações Gerais</h2>
-                <p className="text-sm text-orange-200">Personalize sua experiência</p>
+                <h2 className="text-lg font-bold text-white">{t('settings.generalSettingsLabel')}</h2>
+                <p className="text-sm text-orange-200">{t('settings.customizeExperience')}</p>
               </div>
             </div>
 
@@ -379,19 +386,21 @@ export function UserSettingsPage() {
                 >
                   <option value="pt-PT">{t('settings.portuguese')}</option>
                   <option value="en-US">{t('settings.english')}</option>
+                  <option value="es-ES">{t('settings.spanish')}</option>
+                  <option value="fr-FR">{t('settings.french')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-dark-primary mb-2">Tema</label>
+                <label className="block text-sm font-medium text-dark-primary mb-2">{t('settings.theme')}</label>
                 <select
                   value={localSettings.theme}
                   onChange={(e) => setLocalSettings({...localSettings, theme: e.target.value})}
                   className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg p-3 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-colors"
                 >
-                  <option value="dark">Escuro</option>
-                  <option value="light">Claro</option>
-                  <option value="auto">Automático</option>
+                  <option value="dark">{t('settings.dark')}</option>
+                  <option value="light">{t('settings.light')}</option>
+                  <option value="auto">{t('settings.auto')}</option>
                 </select>
               </div>
             </div>
@@ -401,7 +410,7 @@ export function UserSettingsPage() {
               className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-lg transition-all duration-300 flex items-center space-x-2"
             >
               <Save className="w-5 h-5" />
-              <span>Salvar Configurações</span>
+              <span>{t('settings.saveSettings')}</span>
             </button>
           </div>
         </div>

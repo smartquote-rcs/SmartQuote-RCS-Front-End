@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../../api/client';
 import { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import {
   Mail,
   Search,
@@ -45,6 +46,7 @@ interface EmailMessage {
 }
 
 export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
+  const { t } = useTranslation();
   const [emails, setEmails] = useState<EmailMessage[]>([]);
   const [filteredEmails, setFilteredEmails] = useState<EmailMessage[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,6 +54,20 @@ export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
   const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [emailServiceStatus, setEmailServiceStatus] = useState<any>(null);
+
+  // Sistema de persistência local para emails lidos (temporário - até backend implementar)
+  const READ_EMAILS_KEY = "readEmails";
+  const getReadEmailIds = (): string[] => {
+    try {
+      return JSON.parse(localStorage.getItem(READ_EMAILS_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  };
+  const setReadEmailIds = (ids: string[]) => {
+    localStorage.setItem(READ_EMAILS_KEY, JSON.stringify(ids));
+  };
+
   // Estado para controlar se está mostrando detalhes no mobile
   const [showMobileDetails, setShowMobileDetails] = useState(false);
 
@@ -137,7 +153,7 @@ export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
           origemTipo: origem.tipo || 'Não informado',
           origemFonte: origem.fonte || 'Não informado',
           status: item && item.status ? item.status : 'Não informado',
-          isRead: !!(item && item.isRead),
+          isRead: getReadEmailIds().includes(String(item.id)) || !!(item && item.isRead),
           attachments: Array.isArray(dadosBruto.attachments) ? dadosBruto.attachments : [],
           dadosBruto: dadosBruto
         };
@@ -181,6 +197,11 @@ export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
     setSelectedEmail(email);
     // Marcar como lido localmente e no backend
     if (!email.isRead) {
+      // Salvar no localStorage
+      const readIds = getReadEmailIds();
+      if (!readIds.includes(email.id)) {
+        setReadEmailIds([...readIds, email.id]);
+      }
       setEmails(prev => prev.map(e =>
         e.id === email.id ? { ...e, isRead: true, status: 'Lido' } : e
       ));
@@ -221,27 +242,27 @@ export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
           <div>
             <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold ${isLight ? 'text-gray-800' : 'text-dark-primary'} flex items-center gap-3`}>
               <Mail className={`w-6 h-6 sm:w-7 sm:h-7 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-              Pedidos de Cotação
+              {t("emails.title")}
             </h1>
             <p className={`text-sm sm:text-base ${isLight ? 'text-gray-600' : 'text-dark-secondary'} mt-2`}>
-              Pedidos recebidos e processados pelo sistema
+              {t("emails.subtitle")}
             </p>
           </div>
           <div className="hidden sm:flex items-center gap-3">
             <div className={`glass-card px-4 py-2 text-center ${isLight ? 'bg-blue-100 border-blue-200' : 'bg-blue-500/20 border-blue-500/30'} backdrop-blur-sm`}>
               <span className={`${isLight ? 'text-blue-700' : 'text-blue-300'} font-bold text-lg`}>{emails.length}</span>
-              <span className={`${isLight ? 'text-blue-600' : 'text-blue-200'} ml-2`}>Pedidos</span>
+              <span className={`${isLight ? 'text-blue-600' : 'text-blue-200'} ml-2`}>{t("emails.requests")}</span>
             </div>
             <div className={`glass-card px-4 py-2 text-center ${isLight ? 'bg-green-100 border-green-200' : 'bg-green-500/20 border-green-500/30'} backdrop-blur-sm`}>
               <span className={`${isLight ? 'text-green-700' : 'text-green-300'} font-bold text-lg`}>{emails.filter(e => !e.isRead).length}</span>
-              <span className={`${isLight ? 'text-green-600' : 'text-green-200'} ml-2`}>Não lidos</span>
+              <span className={`${isLight ? 'text-green-600' : 'text-green-200'} ml-2`}>{t("emails.unread")}</span>
             </div>
             <button
               onClick={handleRefresh}
               className={`${isLight ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center space-x-2`}
             >
               <RefreshCw className="w-4 h-4" />
-              <span>Atualizar</span>
+              <span>{t("emails.refresh")}</span>
             </button>
           </div>
         </div>
@@ -259,7 +280,7 @@ export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
                   <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isLight ? 'text-gray-500' : 'text-dark-secondary'}`} />
                   <input
                     type="text"
-                    placeholder="Buscar pedidos..."
+                    placeholder={t("emails.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className={`w-full pl-10 pr-4 py-2 rounded-lg transition-colors focus:ring-1 focus:ring-blue-500 ${
@@ -278,14 +299,14 @@ export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
                 <div className="flex items-center justify-center h-40">
                   <div className="flex items-center space-x-3">
                     <RefreshCw className={`w-5 h-5 animate-spin ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-                    <span className={isLight ? 'text-gray-600' : 'text-dark-secondary'}>Carregando pedidos...</span>
+                    <span className={isLight ? 'text-gray-600' : 'text-dark-secondary'}>{t("emails.loading")}</span>
                   </div>
                 </div>
               ) : filteredEmails.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-center p-4">
                   <Mail className={`w-12 h-12 mb-2 ${isLight ? 'text-gray-400' : 'text-dark-secondary'}`} />
                   <p className={isLight ? 'text-gray-600' : 'text-dark-secondary'}>
-                    {searchQuery ? 'Nenhum pedido encontrado' : 'Nenhum pedido recebido ainda'}
+                    {searchQuery ? t("emails.noRequestsFound") : t("emails.noRequestsYet")}
                   </p>
                 </div>
               ) : (
@@ -367,7 +388,7 @@ export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
               <div className="min-h-[600px]"> {/* Container com altura mínima para scroll */}
                 <button onClick={handleBackToList} className="mb-4 flex items-center gap-2 text-blue-400 hover:text-blue-600 font-medium">
                 <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left w-5 h-5"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                Voltar para lista
+                {t("emails.backToList")}
               </button>
               <section>
                 <h3 className={`text-base font-bold mb-2 flex items-center gap-2 ${isLight ? 'text-gray-900' : 'text-dark-primary'}`}>
@@ -376,9 +397,9 @@ export function EmailsPage({ isLight = false }: { isLight?: boolean } = {}) {
                 <div className="grid grid-cols-1 gap-2 text-xs">
                   <div className={isLight ? 'text-gray-700' : 'text-dark-primary'}><span className="font-medium">Nome:</span> {selectedEmail?.clienteNome || 'Não informado'}</div>
                   <div className={isLight ? 'text-gray-700' : 'text-dark-primary'}><span className="font-medium">E-mail:</span> {selectedEmail?.clienteEmail || 'Não informado'}</div>
-                  <div className={isLight ? 'text-gray-700' : 'text-dark-primary'}><span className="font-medium">Empresa:</span> {selectedEmail?.clienteEmpresa || 'Não informado'}</div>
-                  <div className={isLight ? 'text-gray-700' : 'text-dark-primary'}><span className="font-medium">Telefone:</span> {selectedEmail?.clienteTelefone || 'Não informado'}</div>
-                  <div className={isLight ? 'text-gray-700' : 'text-dark-primary'}><span className="font-medium">Localização:</span> {selectedEmail?.clienteLocalizacao || 'Não informado'}</div>
+                  <div className={isLight ? 'text-gray-700' : 'text-dark-primary'}><span className="font-medium">{t("emails.company")}:</span> {selectedEmail?.clienteEmpresa || 'Não informado'}</div>
+                  <div className={isLight ? 'text-gray-700' : 'text-dark-primary'}><span className="font-medium">{t("emails.phone")}:</span> {selectedEmail?.clienteTelefone || 'Não informado'}</div>
+                  <div className={isLight ? 'text-gray-700' : 'text-dark-primary'}><span className="font-medium">{t("emails.location")}:</span> {selectedEmail?.clienteLocalizacao || 'Não informado'}</div>
                 </div>
               </section>
               <section>

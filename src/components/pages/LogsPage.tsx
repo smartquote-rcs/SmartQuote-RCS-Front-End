@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
-import { Activity, AlertCircle, CheckCircle, Info, User, Clock, Eye, Award, Ban } from "lucide-react";
+import { Activity, AlertCircle, CheckCircle, Info, User, Clock, Eye, Award, Ban, AlertTriangle } from "lucide-react";
 import { cotacaoService } from "../../api/services";
 
 interface LogEntry {
@@ -30,7 +30,6 @@ const getLevelIcon = (nivel: string, isLight = false) => {
     case "success":
       return <CheckCircle className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-200'}`} />;
     case "info":
-      return <Info className={`w-4 h-4 ${isLight ? 'text-cyan-600' : 'text-cyan-200'}`} />;
     default:
       return <Activity className={`w-4 h-4 ${isLight ? 'text-gray-600' : 'text-slate-300'}`} />;
   }
@@ -42,12 +41,14 @@ const getActionIcon = (type: string, isLight = false) => {
       return <Award className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-300'}`} />;
     case "cotacao_rejected":
       return <Ban className={`w-4 h-4 ${isLight ? 'text-red-600' : 'text-red-300'}`} />;
+    case "cotacao_pending":
+      return <Clock className={`w-4 h-4 ${isLight ? 'text-amber-600' : 'text-amber-300'}`} />;
     default:
-      return null;
+      return <Info className={`w-4 h-4 ${isLight ? 'text-cyan-600' : 'text-cyan-300'}`} />;
   }
 };
 
-const LogCard = ({ log, isLight = false }: { log: LogEntry; isLight?: boolean }) => {
+const LogCard = ({ log, isLight = false, t }: { log: LogEntry; isLight?: boolean; t: any }) => {
   const getBorderColor = (nivel: string, isLight = false) => {
     switch (nivel) {
       case "error": return isLight ? "border-l-red-500" : "border-l-red-400";
@@ -84,7 +85,7 @@ const LogCard = ({ log, isLight = false }: { log: LogEntry; isLight?: boolean })
                 <div className="flex items-center space-x-2">
                   <Clock className={`w-3 h-3 ${isLight ? 'text-gray-600' : 'text-dark-secondary'} flex-shrink-0`} />
                   <span className={`font-mono text-xs sm:text-xs ${isLight ? 'text-gray-600' : 'text-dark-secondary'} font-medium truncate`}>
-                    {log.timestamp || 'Data não disponível'}
+                    {log.timestamp || t('logs.dateNotAvailable')}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2 mt-1 sm:mt-0">
@@ -97,16 +98,16 @@ const LogCard = ({ log, isLight = false }: { log: LogEntry; isLight?: boolean })
                   <User className={`w-3 h-3 ${isLight ? 'text-cyan-600' : 'text-cyan-300'} flex-shrink-0`} />
                   <span className="truncate">
                     {isQuoteLog 
-                      ? (log.type === 'cotacao_approved' ? 'Cotação Aprovada' : 'Cotação Rejeitada')
-                      : (log.acao || 'Ação não definida')
+                      ? (log.type === 'cotacao_approved' ? t('logs.quoteApproved') : (log.type === 'cotacao_rejected' ? t('logs.quoteRejected') : t('logs.quotePending')))
+                      : (log.acao || t('logs.actionNotDefined'))
                     }
                   </span>
                   {isQuoteLog && getActionIcon(log.type || '', isLight)}
                 </h4>
                 <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} leading-relaxed text-xs sm:text-xs line-clamp-2 sm:line-clamp-none`}>
                   {isQuoteLog 
-                    ? (log.motivo || 'Motivo não informado')
-                    : (log.detalhes || 'Detalhes não disponíveis')
+                    ? (log.motivo || t('logs.reasonNotProvided'))
+                    : (log.detalhes || t('logs.detailsNotAvailable'))
                   }
                 </p>
               </div>
@@ -117,7 +118,7 @@ const LogCard = ({ log, isLight = false }: { log: LogEntry; isLight?: boolean })
                   <User className={`w-3 h-3 ${isLight ? 'text-cyan-600' : 'text-cyan-200'}`} />
                   <span className={`${isLight ? 'text-gray-800' : 'text-slate-100'} font-medium text-xs truncate max-w-24 sm:max-w-none`}>
                     {isQuoteLog 
-                      ? `Status: ${log.type === 'cotacao_approved' ? 'true' : 'false'}`
+                      ? `${t('logs.status')}: ${log.type === 'cotacao_approved' ? 'approved' : (log.type === 'cotacao_rejected' ? 'rejected' : 'pending')}`
                       : (log.usuario || 'N/A')
                     }
                   </span>
@@ -185,8 +186,10 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
 
         // Gerar logs para todas as cotações
         const cotacaoLogs: LogEntry[] = cotacoesArr.map((cotacao: any) => {
+          // Verificar o status da aprovação
           const isApproved = cotacao.aprovacao === true;
-          const isRejected = cotacao.aprovacao === false;
+          const isRejected = cotacao.aprovacao === false && cotacao.motivo; // Só é rejeitada se tem motivo
+          const isPending = !isApproved && !isRejected; // Se não é aprovada nem rejeitada, é pendente
           
           return {
             id: `cotacao_${cotacao.id}`,
@@ -194,7 +197,7 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
             nivel: isApproved ? 'success' : (isRejected ? 'warning' : 'info'),
             categoria: 'Cotação',
             usuario: cotacao.aprovado_por || cotacao.solicitante || 'Sistema',
-            acao: isApproved ? 'Cotação Aprovada' : (isRejected ? 'Cotação Rejeitada' : 'Cotação Pendente'),
+            acao: isApproved ? 'Quote Approved' : (isRejected ? 'Quote Rejected' : 'Quote Pending'),
             detalhes: cotacao.motivo || (isApproved ? 'Cotação aprovada automaticamente' : (isRejected ? 'Cotação rejeitada' : 'Aguardando aprovação')),
             timestamp: cotacao.data_aprovacao || cotacao.dataRecebido || cotacao.cadastrado_em || new Date().toISOString(),
             cotacaoId: String(cotacao.id),
@@ -271,7 +274,7 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
               <svg xmlns="http://www.w3.org/2000/svg" className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 ${isLight ? 'text-gray-500 group-hover:text-blue-600' : 'text-white/70 group-hover:text-cyan-400'} transition-colors duration-200 z-10 pointer-events-none`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" strokeWidth="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2"/></svg>
               <input
                 type="text"
-                placeholder="Buscar logs..."
+                placeholder={t('logs.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`pl-10 sm:pl-11 w-full ${isLight ? 'bg-white border-gray-300 text-gray-800 placeholder:text-gray-500 focus:ring-blue-500/50 focus:border-blue-500/50' : 'bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:ring-cyan-500/50 focus:border-cyan-500/50'} h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 text-sm sm:text-base border backdrop-blur-sm`}
@@ -285,18 +288,18 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
                 className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300'} font-semibold text-xs sm:text-sm disabled:opacity-50 transition-all duration-200`}
                 disabled={page === 1}
               >
-                <span className="hidden sm:inline">Anterior</span>
+                <span className="hidden sm:inline">{t('logs.previous')}</span>
                 <span className="sm:hidden">‹</span>
               </button>
               <span className={`${isLight ? 'text-gray-700' : 'text-slate-300'} font-medium text-xs sm:text-sm whitespace-nowrap`}>
-                <span className="hidden sm:inline">Página </span>{page} de {totalPages}
+                <span className="hidden sm:inline">{t('logs.page')} </span>{page} {t('logs.of')} {totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg ${isLight ? 'bg-gray-200 hover:bg-gray-300 text-gray-700' : 'bg-slate-700/50 hover:bg-slate-600/70 text-slate-300'} font-semibold text-xs sm:text-sm disabled:opacity-50 transition-all duration-200`}
                 disabled={page === totalPages}
               >
-                <span className="hidden sm:inline">Próxima</span>
+                <span className="hidden sm:inline">{t('logs.next')}</span>
                 <span className="sm:hidden">›</span>
               </button>
             </div>
@@ -312,7 +315,7 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
             <div className="flex items-center space-x-3">
               <AlertCircle className={`w-5 h-5 ${isLight ? 'text-red-600' : 'text-red-400'}`} />
               <div>
-                <h3 className={`${isLight ? 'text-red-800' : 'text-red-300'} font-semibold`}>Erro detectado</h3>
+                <h3 className={`${isLight ? 'text-red-800' : 'text-red-300'} font-semibold`}>{t('logs.errorDetected')}</h3>
                 <p className={`${isLight ? 'text-red-700' : 'text-red-200'} text-sm`}>{error}</p>
               </div>
             </div>
@@ -323,30 +326,27 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
         {loading && (
           <div className="flex flex-col items-center justify-center py-8 sm:py-12">
             <div className={`w-6 h-6 sm:w-8 sm:h-8 border-2 ${isLight ? 'border-blue-600 border-t-transparent' : 'border-blue-400 border-t-transparent'} rounded-full animate-spin mb-4`}></div>
-            <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-sm sm:text-base`}>Carregando logs do sistema...</p>
+            <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-sm sm:text-base`}>{t('logs.loading')}</p>
           </div>
         )}
-
         {/* Lista de logs */}
         {!loading && filteredLogs.length > 0 && (
           <>
             <div className="space-y-3 sm:space-y-4">
               {paginatedLogs.map((log, index) => (
-                <LogCard key={log.id || index} log={log} isLight={isLight} />
+                <LogCard key={log.id || index} log={log} isLight={isLight} t={t} />
               ))}
             </div>
           </>
         )}
-
-        {/* Empty state */}
         {!loading && filteredLogs.length === 0 && !error && (
           <div className="text-center py-8 sm:py-12">
             <div className={`w-12 h-12 sm:w-16 sm:h-16 ${isLight ? 'bg-gray-100' : 'bg-dark-card'} rounded-full flex items-center justify-center mx-auto mb-4`}>
               <Activity className={`w-6 h-6 sm:w-8 sm:h-8 ${isLight ? 'text-gray-500' : 'text-dark-secondary'}`} />
             </div>
-            <h3 className={`text-base sm:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} mb-2`}>Nenhum log encontrado</h3>
+            <h3 className={`text-base sm:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} mb-2`}>{t('logs.noLogsFound')}</h3>
             <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} max-w-md mx-auto text-sm sm:text-base px-4`}>
-              Não há registros que correspondam aos seus critérios de pesquisa.
+              {t('logs.noLogsDescription')}
             </p>
           </div>
         )}
