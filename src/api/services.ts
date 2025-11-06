@@ -1575,3 +1575,56 @@ export const relatorioService = {
     window.URL.revokeObjectURL(url);
   }
 };
+
+// Serviço de Integração Dynamics 365
+export const dynamics365Service = {
+  async createOpportunity(cotacaoId: number | string, cotacaoData: any): Promise<AuthResponse> {
+    try {
+      const response = await api.post('/dynamics365/opportunities', {
+        cotacaoId,
+        name: `Cotação #${cotacaoId} - ${cotacaoData.solicitante || 'Cliente'}`,
+        customerName: cotacaoData.solicitante,
+        customerEmail: cotacaoData.email,
+        company: cotacaoData.empresa,
+        product: cotacaoData.produto,
+        quantity: cotacaoData.quantidade,
+        estimatedValue: cotacaoData.valor_total,
+        description: cotacaoData.descricao,
+        status: 'open'
+      });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao criar oportunidade no Dynamics 365:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao criar oportunidade no Dynamics 365'
+      };
+    }
+  },
+
+  async syncQuote(cotacaoId: number | string): Promise<AuthResponse> {
+    try {
+      const response = await api.post(`/dynamics365/sync/${cotacaoId}`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao sincronizar com Dynamics 365:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao sincronizar com Dynamics 365'
+      };
+    }
+  },
+
+  async getOpportunity(opportunityId: string): Promise<AuthResponse> {
+    try {
+      const response = await api.get(`/dynamics365/opportunities/${opportunityId}`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar oportunidade no Dynamics 365:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar oportunidade no Dynamics 365'
+      };
+    }
+  }
+};

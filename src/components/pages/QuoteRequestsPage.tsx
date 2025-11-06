@@ -45,7 +45,7 @@ import {
   RefreshCw,
   Send,
 } from "lucide-react";
-import { cotacaoService, relatorioService, jobService } from "../../api/services";
+import { cotacaoService, relatorioService, jobService, dynamics365Service } from "../../api/services";
 import api from '../../api/client';
 
 import { produtoService } from '../../api/services';
@@ -694,11 +694,6 @@ export function QuoteRequestsPage({
   const [notifyMessage, setNotifyMessage] = useState("");
   const [selectedCotacaoForNotify, setSelectedCotacaoForNotify] = useState<any>(null);
   
-  // Modal de marcar como enviado ao cliente
-  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
-  const [sendLoading, setSendLoading] = useState(false);
-  const [selectedCotacaoForSend, setSelectedCotacaoForSend] = useState<any>(null);
-  
   // Sistema de Toast
   const [toasts, setToasts] = useState<Array<{
     id: string;
@@ -1135,13 +1130,31 @@ export function QuoteRequestsPage({
     }));
     
     try {
-      // Simular integração com Dynamics 365
+      // Buscar dados completos da cotação
+      const cotacao = cotacoesList.find(c => String(c.id) === dynamicsData.cotacaoId);
+      
+      if (!cotacao) {
+        throw new Error('Cotação não encontrada');
+      }
+
+      // Criar oportunidade no Dynamics 365
       console.log('Criando oportunidade no Dynamics 365 para cotação:', dynamicsData.cotacaoId);
       
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Aprovar a cotação após integração
+      const dynamicsResp = await dynamics365Service.createOpportunity(dynamicsData.cotacaoId, {
+        solicitante: cotacao.solicitante || dynamicsData.customerCode,
+        email: cotacao.email,
+        empresa: cotacao.empresa,
+        produto: cotacao.produto,
+        quantidade: cotacao.quantidade,
+        valor_total: cotacao.valor_total,
+        descricao: dynamicsData.notes || cotacao.descricao
+      });
+
+      if (!dynamicsResp.success) {
+        throw new Error(dynamicsResp.error || 'Erro ao criar oportunidade no Dynamics 365');
+      }
+
+      // Aprovar a cotação após integração bem-sucedida
       const payload = {
         aprovacao: true,
         status: 'completa',
@@ -1149,7 +1162,7 @@ export function QuoteRequestsPage({
         motivo: dynamicsData.notes || 'Aprovado via Dynamics 365',
         aprovado_por: currentUserId,
         // Dados da oportunidade criada no Dynamics
-        dynamics_opportunity_id: `OPP-${Date.now()}`, // ID simulado da oportunidade
+        dynamics_opportunity_id: dynamicsResp.data?.opportunityId || `OPP-${Date.now()}`,
         dynamics_created_at: new Date().toISOString()
       };
       
@@ -1182,16 +1195,16 @@ export function QuoteRequestsPage({
         window.dispatchEvent(new CustomEvent('toast', { 
           detail: { 
             type: 'error', 
-            message: resp.error || 'Erro na integração com Dynamics 365' 
+            message: resp.error || 'Erro ao atualizar cotação' 
           } 
         }));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro na integração com Dynamics 365:', error);
       window.dispatchEvent(new CustomEvent('toast', { 
         detail: { 
           type: 'error', 
-          message: 'Erro na integração com Dynamics 365' 
+          message: error.message || 'Erro na integração com Dynamics 365' 
         } 
       }));
     } finally {
@@ -1273,46 +1286,7 @@ export function QuoteRequestsPage({
   };
 
   // Função para marcar cotação como enviada ao cliente
-  const handleMarkAsSent = async () => {
-    if (!selectedCotacaoForSend) return;
-
-    setSendLoading(true);
-    try {
-      // Tentar atualizar com campos de envio
-      // Se o backend não suportar, vamos apenas marcar localmente
-      try {
-        await api.patch(`/cotacoes/${selectedCotacaoForSend.id}`, {
-          enviado_cliente: true,
-          data_envio_cliente: new Date().toISOString()
-        });
-      } catch (apiError: any) {
-        // Se der erro 500, significa que o backend não tem esses campos
-        // Vamos apenas atualizar localmente
-        console.warn('Backend não suporta campos de envio, atualizando apenas localmente');
-      }
-
-      addToast('success', 'Cotação marcada como enviada');
-      
-      // Atualizar lista local (sempre funciona)
-      setCotacoesList(prev => prev.map(c => 
-        c.id === selectedCotacaoForSend.id 
-          ? { ...c, enviado_cliente: true, data_envio_cliente: new Date().toISOString() }
-          : c
-      ));
-
-      // Fechar modal
-      setTimeout(() => {
-        setIsSendModalOpen(false);
-        setSelectedCotacaoForSend(null);
-      }, 1500);
-    } catch (error: any) {
-      console.error('Erro ao marcar como enviado:', error);
-      const errorMsg = error.response?.data?.error || 'Erro ao marcar como enviado';
-      addToast('error', errorMsg);
-    } finally {
-      setSendLoading(false);
-    }
-  };
+  
 
   // Memoização para performance
   const QuoteCard = React.memo(({
@@ -1320,7 +1294,6 @@ export function QuoteRequestsPage({
     onViewDetails,
     onDownload,
     onNotifyClient,
-    onMarkAsSent,
     isLight,
   }: {
     cotacao: any;
@@ -1525,6 +1498,22 @@ export function QuoteRequestsPage({
                 >
                   <Download className="w-3 h-3" />
                   <span>{t('quoteRequests.buttonDownload')}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setDynamicsData({
+                      cotacaoId: String(cotacao.id),
+                      customerCode: cotacao.solicitante || '',
+                      projectCode: '',
+                      notes: ''
+                    });
+                    setShowDynamicsModal(true);
+                  }}
+                  aria-label="Integrar com Dynamics 365"
+                  className={`${isLight ? 'bg-cyan-100 hover:bg-cyan-200 border-cyan-300 text-cyan-700 hover:text-cyan-800 focus:ring-cyan-500 hover:border-cyan-400' : 'bg-cyan-600/20 hover:bg-cyan-600/40 border-cyan-500/30 hover:border-cyan-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                >
+                  <Building className="w-3 h-3" />
+                  <span>Dynamics 365</span>
                 </button>
                 <button
                   onClick={() => openApproval(String(cotacao.id),'reject')}
@@ -2110,10 +2099,6 @@ export function QuoteRequestsPage({
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
-                              onMarkAsSent={(cot) => {
-                                setSelectedCotacaoForSend(cot);
-                                setIsSendModalOpen(true);
-                              }}
                               isLight={isLight}
                             />
                           ))}
@@ -2142,10 +2127,6 @@ export function QuoteRequestsPage({
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
                               onNotifyClient={handleNotifyClient}
-                              onMarkAsSent={(cot) => {
-                                setSelectedCotacaoForSend(cot);
-                                setIsSendModalOpen(true);
-                              }}
                               isLight={isLight}
                             />
                           ))}
@@ -2296,24 +2277,7 @@ export function QuoteRequestsPage({
                 Download
               </button>
               
-              {/* Botão Marcar como Enviado - apenas se aprovado e não enviado */}
-              {selectedCotacao?.aprovacao === true && !selectedCotacao?.enviado_cliente && (
-                <button
-                  className={`px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
-                    isLight 
-                      ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-300 hover:border-green-400 hover:shadow-lg' 
-                      : 'bg-green-900/30 hover:bg-green-700/40 text-green-300 border-green-700/40 hover:border-green-400/60'
-                  }`}
-                  onClick={() => {
-                    setSelectedCotacaoForSend(selectedCotacao);
-                    setIsSendModalOpen(true);
-                  }}
-                  aria-label="Marcar como enviado"
-                >
-                  <Send className="h-4 w-4" />
-                  Marcar como Enviado
-                </button>
-              )}
+              
       {/* Modal de erro ao exportar PDF */}
       <Dialog open={pdfErrorModal.open} onOpenChange={(o)=>!o && setPdfErrorModal({open:false, message: ""})}>
         <DialogContent className="w-full max-w-xs sm:max-w-md bg-slate-900/95 border border-red-500/30 p-2 sm:p-6 rounded-xl overflow-y-auto">
@@ -2870,86 +2834,6 @@ export function QuoteRequestsPage({
                 className={`flex-1 ${
                   isLight 
                     ? 'border-gray-300 text-gray-700 hover:bg-gray-50' 
-                    : 'border-dark-color text-dark-secondary hover:bg-dark-hover'
-                }`}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de Marcar como Enviado */}
-      <Dialog open={isSendModalOpen} onOpenChange={setIsSendModalOpen}>
-        <DialogContent className={`max-w-md mx-auto ${isLight ? 'bg-white border-gray-200' : 'bg-dark-card border-dark-color'}`}>
-          <DialogHeader>
-            <DialogTitle className={`flex items-center gap-3 ${isLight ? 'text-gray-900' : 'text-white'}`}>
-              <div className={`p-2 rounded-lg ${isLight ? 'bg-green-100' : 'bg-green-500/20'}`}>
-                <Send className={`w-5 h-5 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
-              </div>
-              Marcar como Enviado
-            </DialogTitle>
-            <DialogDescription className={`${isLight ? 'text-gray-600' : 'text-gray-400'} mt-2`}>
-              Confirme que esta cotação foi enviada ao cliente
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 mt-4">
-            {/* Informações da Cotação */}
-            {selectedCotacaoForSend && (
-              <div className={`p-4 rounded-lg border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/30'}`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className={`w-4 h-4 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-                  <span className={`font-semibold text-sm ${isLight ? 'text-blue-800' : 'text-blue-200'}`}>
-                    Cotação #{selectedCotacaoForSend.id}
-                  </span>
-                </div>
-                <p className={`text-sm ${isLight ? 'text-blue-700' : 'text-blue-300'}`}>
-                  Cliente: {selectedCotacaoForSend.cliente || selectedCotacaoForSend.aprovado_por || 'N/A'}
-                </p>
-                {selectedCotacaoForSend.valor && (
-                  <p className={`text-sm font-semibold mt-1 ${isLight ? 'text-blue-800' : 'text-blue-200'}`}>
-                    Valor: {formatCurrency(parseFloat(selectedCotacaoForSend.valor))}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Botões */}
-            <div className="flex gap-3 pt-2">
-              <Button
-                onClick={handleMarkAsSent}
-                disabled={sendLoading}
-                className={`flex-1 ${
-                  sendLoading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700'
-                } text-white`}
-              >
-                {sendLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Confirmar Envio
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => {
-                  setIsSendModalOpen(false);
-                  setSelectedCotacaoForSend(null);
-                }}
-                disabled={sendLoading}
-                variant="outline"
-                className={`flex-1 ${
-                  isLight
-                    ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
                     : 'border-dark-color text-dark-secondary hover:bg-dark-hover'
                 }`}
               >
