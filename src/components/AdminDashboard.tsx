@@ -13,7 +13,6 @@ import {
   Shield,
   Bell,
   Plus,
-  CheckCircle,
   Send,
   Check,
   Mail,
@@ -37,7 +36,6 @@ import { NotificationsPage } from "./pages/NotificationsPage";
 import { EmailsPage } from "./pages/EmailsPage";
 import { ProcessesPage } from "./pages/ProcessesPage";
 import { HelpPage } from "./pages/HelpPage";
-import ApprovalRulesPage from "./pages/ApprovalRulesPage";
 import { useApp } from "../contexts/AppContext";
 import { produtoService, supplierService, dashboardService, jobService, cotacaoService, notificationService } from "../api/services";
 import { buscaGeralService } from "../services/buscaGeralService";
@@ -99,7 +97,6 @@ const adminItems = [
     label: "admin.navigation.userManagement",
     key: "user-management",
   },
-  { icon: CheckCircle, label: "Regras de Aprovação", key: "approval-rules" },
   { icon: Settings, label: "navigation.settings", key: "settings" },
   { icon: LogIn, label: "admin.navigation.loginLogs", key: "login-logs" },
   {
@@ -1729,8 +1726,6 @@ export function AdminDashboard({
         return <ReportsPage isLight={isLight} />;
       case "settings":
         return <SettingsPage isLight={isLight} />;
-      case "approval-rules":
-        return <ApprovalRulesPage />;
       case "user-management":
         return <UserManagementPage isLight={isLight} />;
       case "help":
