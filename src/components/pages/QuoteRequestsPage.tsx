@@ -1464,12 +1464,12 @@ export function QuoteRequestsPage({
                   <span>{t('quoteRequests.buttonDownload')}</span>
                 </button>
                 <button
-                  onClick={() => openApproval(String(cotacao.id),'set_pending')}
-                  aria-label="Marcar como pendente"
-                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  onClick={() => openApproval(String(cotacao.id),'reject')}
+                  aria-label="Rejeitar cotação"
+                  className={`${isLight ? 'bg-red-100 hover:bg-red-200 border-red-300 text-red-700 hover:text-red-800 focus:ring-red-500 hover:border-red-400' : 'bg-red-600/20 hover:bg-red-600/40 border-red-500/30 hover:border-red-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
-                  <Clock className="w-3 h-3" />
-                  <span>{t('quoteRequests.buttonPending')}</span>
+                  <X className="w-3 h-3" />
+                  <span>{t('quoteRequests.buttonReject')}</span>
                 </button>
               </>
             )}
