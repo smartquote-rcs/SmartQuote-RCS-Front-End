@@ -3,11 +3,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { LoginPage } from "./components/LoginPage";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { ResetPasswordPage } from "./components/pages/ResetPasswordPage";
+import { PublicQuoteForm } from "./components/pages/PublicQuoteForm";
 import { AppProvider } from "./contexts/AppContext";
 import { userService } from './api/services';
 import { emailService } from "./services/emailService";
 import { saveLog } from "./services/logService";
-
 interface User {
   id: number; // id numérico usado em FK/auditoria
   email: string;
@@ -226,6 +226,7 @@ export default function App() {
     return (
       <Router>
         <Routes>
+          <Route path="/solicitar-cotacao" element={<PublicQuoteForm />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="*" element={<LoginPage onLogin={handleLogin} />} />
         </Routes>
@@ -238,6 +239,7 @@ export default function App() {
       <AppProvider>
         <div className="min-h-screen max-w-full bg-dark-bg overflow-hidden">
           <Routes>
+            <Route path="/solicitar-cotacao" element={<PublicQuoteForm />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/" element={renderDashboard()} />
             <Route path="*" element={<Navigate to="/" replace />} />
