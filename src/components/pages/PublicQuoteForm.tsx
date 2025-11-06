@@ -71,49 +71,96 @@ export function PublicQuoteForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Background decorativo */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-2xl w-full bg-slate-800 border-2 border-cyan-500/30 rounded-2xl md:rounded-3xl shadow-xl p-6 sm:p-8 md:p-12 text-center relative z-10 transform animate-in">
+          {/* Ícone de sucesso animado */}
+          <div className="relative mb-8">
+            <div className="w-24 h-24 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full flex items-center justify-center mx-auto shadow-md animate-bounce">
+              <CheckCircle className="w-16 h-16 text-cyan-400" />
+            </div>
+            <div className="absolute inset-0 w-24 h-24 bg-cyan-400/20 rounded-full mx-auto animate-ping"></div>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Solicitação Enviada!
+
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-4">
+            Solicitação Enviada com Sucesso!
           </h2>
-          <p className="text-gray-600 mb-6">
+          
+          <p className="text-sm sm:text-base md:text-lg text-slate-300 mb-6 max-w-lg mx-auto px-4">
             Recebemos sua solicitação de cotação. Nossa equipe entrará em contato em breve através do email fornecido.
           </p>
-          <Button
-            onClick={() => setSuccess(false)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Fazer Nova Solicitação
-          </Button>
+
+          {/* Informações adicionais */}
+          <div className="bg-slate-700/50 border border-cyan-500/20 rounded-2xl p-6 mb-8">
+            <h3 className="font-semibold text-cyan-400 mb-4">O que acontece agora?</h3>
+            <div className="space-y-3 text-left max-w-md mx-auto">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-cyan-500 text-slate-900 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold">1</div>
+                <p className="text-sm text-slate-300">Nossa equipe analisa sua solicitação</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold">2</div>
+                <p className="text-sm text-slate-300">Preparamos uma proposta personalizada</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-cyan-400 text-slate-900 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold">3</div>
+                <p className="text-sm text-slate-300">Você recebe a cotação por email em até 24h úteis</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              onClick={() => setSuccess(false)}
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-8 py-6 text-lg shadow-md hover:shadow-lg transition-all"
+            >
+              <Send className="w-5 h-5 mr-2" />
+              Fazer Nova Solicitação
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <Send className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Solicitar Cotação</h1>
-              <p className="text-blue-100 text-sm">SmartQuote RCS</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decorativo */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-400/5 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="max-w-4xl w-full relative z-10">
+        {/* Header com logo e título */}
+        <div className="text-center mb-6 md:mb-8 px-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-cyan-500 rounded-2xl shadow-lg shadow-cyan-500/30 mb-4 md:mb-6 transform hover:scale-110 transition-transform duration-300">
+            <Send className="w-8 h-8 md:w-10 md:h-10 text-white" />
           </div>
-          <p className="text-blue-50">
-            Preencha o formulário abaixo e receba uma cotação personalizada em até 24 horas.
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 md:mb-3 drop-shadow-lg">
+            Solicite sua Cotação
+          </h1>
+          <p className="text-lg sm:text-xl text-cyan-400 mb-2">
+            SmartQuote RCS - Cotações Inteligentes
+          </p>
+          <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto px-4">
+            Preencha o formulário abaixo e nossa equipe entrará em contato com uma proposta personalizada em até 24 horas úteis.
           </p>
         </div>
 
+        {/* Card do formulário */}
+        <div className="bg-slate-800 border-2 border-cyan-500/30 rounded-3xl shadow-xl overflow-hidden backdrop-blur-xl">
+          {/* Barra de progresso decorativa */}
+          <div className="h-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-600"></div>
+
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 md:p-8 space-y-4 md:space-y-6">
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -126,8 +173,8 @@ export function PublicQuoteForm() {
 
           {/* Nome */}
           <div>
-            <Label className="text-gray-700 font-semibold flex items-center gap-2">
-              <User className="w-4 h-4" />
+            <Label className="text-slate-200 font-semibold flex items-center gap-2">
+              <User className="w-4 h-4 text-cyan-400" />
               Nome Completo *
             </Label>
             <Input
@@ -135,15 +182,15 @@ export function PublicQuoteForm() {
               value={formData.nome}
               onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
               placeholder="Seu nome completo"
-              className="mt-2 border-2 focus:border-blue-500"
+              className="mt-2 bg-slate-700 border-2 border-slate-600 text-white placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500"
               required
             />
           </div>
 
           {/* Email */}
           <div>
-            <Label className="text-gray-700 font-semibold flex items-center gap-2">
-              <Mail className="w-4 h-4" />
+            <Label className="text-slate-200 font-semibold flex items-center gap-2">
+              <Mail className="w-4 h-4 text-cyan-400" />
               Email *
             </Label>
             <Input
@@ -151,15 +198,15 @@ export function PublicQuoteForm() {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="seu@email.com"
-              className="mt-2 border-2 focus:border-blue-500"
+              className="mt-2 bg-slate-700 border-2 border-slate-600 text-white placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500"
               required
             />
           </div>
 
           {/* Empresa */}
           <div>
-            <Label className="text-gray-700 font-semibold flex items-center gap-2">
-              <Building className="w-4 h-4" />
+            <Label className="text-slate-200 font-semibold flex items-center gap-2">
+              <Building className="w-4 h-4 text-cyan-400" />
               Empresa
             </Label>
             <Input
@@ -167,14 +214,14 @@ export function PublicQuoteForm() {
               value={formData.empresa}
               onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
               placeholder="Nome da sua empresa"
-              className="mt-2 border-2 focus:border-blue-500"
+              className="mt-2 bg-slate-700 border-2 border-slate-600 text-white placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500"
             />
           </div>
 
           {/* Produto */}
           <div>
-            <Label className="text-gray-700 font-semibold flex items-center gap-2">
-              <Package className="w-4 h-4" />
+            <Label className="text-slate-200 font-semibold flex items-center gap-2">
+              <Package className="w-4 h-4 text-cyan-400" />
               Produto/Serviço *
             </Label>
             <Input
@@ -182,15 +229,15 @@ export function PublicQuoteForm() {
               value={formData.produto}
               onChange={(e) => setFormData({ ...formData, produto: e.target.value })}
               placeholder="Descreva o produto ou serviço desejado"
-              className="mt-2 border-2 focus:border-blue-500"
+              className="mt-2 bg-slate-700 border-2 border-slate-600 text-white placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500"
               required
             />
           </div>
 
           {/* Quantidade */}
           <div>
-            <Label className="text-gray-700 font-semibold flex items-center gap-2">
-              <Hash className="w-4 h-4" />
+            <Label className="text-slate-200 font-semibold flex items-center gap-2">
+              <Hash className="w-4 h-4 text-cyan-400" />
               Quantidade
             </Label>
             <Input
@@ -199,14 +246,14 @@ export function PublicQuoteForm() {
               onChange={(e) => setFormData({ ...formData, quantidade: e.target.value })}
               placeholder="Quantidade desejada"
               min="1"
-              className="mt-2 border-2 focus:border-blue-500"
+              className="mt-2 bg-slate-700 border-2 border-slate-600 text-white placeholder:text-slate-400 focus:border-cyan-500 focus:ring-cyan-500"
             />
           </div>
 
           {/* Descrição */}
           <div>
-            <Label className="text-gray-700 font-semibold flex items-center gap-2">
-              <FileText className="w-4 h-4" />
+            <Label className="text-slate-200 font-semibold flex items-center gap-2">
+              <FileText className="w-4 h-4 text-cyan-400" />
               Descrição Adicional
             </Label>
             <textarea
@@ -214,7 +261,7 @@ export function PublicQuoteForm() {
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               placeholder="Informações adicionais sobre sua necessidade..."
               rows={4}
-              className="mt-2 w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="mt-2 w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 resize-none"
             />
           </div>
 
@@ -222,7 +269,7 @@ export function PublicQuoteForm() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+            className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white py-4 sm:py-5 md:py-6 text-base sm:text-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300"
           >
             {loading ? (
               <>
@@ -237,16 +284,31 @@ export function PublicQuoteForm() {
             )}
           </Button>
 
-          <p className="text-center text-sm text-gray-500 mt-4">
+          <p className="text-center text-sm text-slate-400 mt-4">
             * Campos obrigatórios
           </p>
         </form>
 
-        {/* Footer */}
-        <div className="bg-gray-50 px-8 py-4 border-t">
-          <p className="text-center text-sm text-gray-600">
-            Ao enviar este formulário, você concorda com nossa política de privacidade.
-          </p>
+          {/* Footer */}
+          <div className="bg-slate-700/50 border-t border-cyan-500/20 px-4 sm:px-6 md:px-8 py-4 md:py-6">
+            <div className="flex flex-col md:flex-row items-center justify-center md:justify-between gap-3 md:gap-4">
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <CheckCircle className="w-4 h-4 text-cyan-400" />
+                <span>Resposta em até 24h úteis</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Mail className="w-4 h-4 text-blue-400" />
+                <span>Sem compromisso</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <User className="w-4 h-4 text-cyan-400" />
+                <span>Atendimento personalizado</span>
+              </div>
+            </div>
+            <p className="text-center text-xs text-slate-400 mt-4">
+              Ao enviar este formulário, você concorda com nossa política de privacidade.
+            </p>
+          </div>
         </div>
       </div>
     </div>
