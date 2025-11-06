@@ -1400,16 +1400,19 @@ export function QuoteRequestsPage({
           <div className="flex flex-col sm:flex-row lg:flex-col gap-2 w-full mt-2">
             {/* Botões de ação baseados no campo aprovacao */}
             {cotacao.aprovacao !== true ? (
-              /* Pendente - mostra botão de aprovar */
+              /* Pendente - mostra botão de aprovar (exceto se produto não encontrado) */
               <>
-                <button
-                  onClick={() => openApproval(String(cotacao.id),'approve')}
-                  aria-label="Aprovar cotação"
-                  className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700 hover:text-green-800 focus:ring-green-500 hover:border-green-400' : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 hover:border-green-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
-                >
-                  <Check className="w-3 h-3" />
-                  <span>{t('quoteRequests.buttonApprove')}</span>
-                </button>
+                {/* Botão de aprovar - apenas se produto foi encontrado */}
+                {!isProdutoNaoEncontrado && (
+                  <button
+                    onClick={() => openApproval(String(cotacao.id),'approve')}
+                    aria-label="Aprovar cotação"
+                    className={`${isLight ? 'bg-green-100 hover:bg-green-200 border-green-300 text-green-700 hover:text-green-800 focus:ring-green-500 hover:border-green-400' : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30 hover:border-green-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
+                  >
+                    <Check className="w-3 h-3" />
+                    <span>{t('quoteRequests.buttonApprove')}</span>
+                  </button>
+                )}
                 <button
                   onClick={() => onViewDetails(cotacao.id)}
                   aria-label="Ver detalhes da cotação"
