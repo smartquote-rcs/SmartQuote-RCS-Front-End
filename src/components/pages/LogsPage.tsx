@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
-import { Activity, AlertCircle, CheckCircle, Info, User, Clock, Eye, Award, Ban, AlertTriangle } from "lucide-react";
+import { Activity, AlertCircle, CheckCircle, Info, User, Clock, Eye, Award, Ban, AlertTriangle, Download } from "lucide-react";
 import { cotacaoService } from "../../api/services";
 
 interface LogEntry {
@@ -247,6 +247,44 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
   const totalPages = Math.ceil(filteredLogs.length / pageSize);
   const paginatedLogs = filteredLogs.slice((page - 1) * pageSize, page * pageSize);
 
+  // Função para exportar logs para CSV
+  const exportToCSV = () => {
+    // Cabeçalhos do CSV
+    const headers = ['Data/Hora', 'Nível', 'Categoria', 'Usuário', 'Ação', 'Detalhes', 'Cotação', 'Valor', 'Cliente'];
+    
+    // Converter logs para linhas CSV
+    const rows = filteredLogs.map(log => [
+      log.timestamp || '',
+      log.nivel || '',
+      log.categoria || '',
+      log.usuario || '',
+      log.acao || '',
+      (log.detalhes || '').replace(/"/g, '""'), // Escapar aspas duplas
+      log.cotacaoNumero || '',
+      log.valor ? log.valor.toFixed(2) : '',
+      log.cliente || ''
+    ]);
+    
+    // Criar conteúdo CSV
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    // Criar blob e fazer download
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().split('T')[0];
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `logs_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className={`min-h-screen ${isLight ? 'bg-gray-50' : 'bg-dark-bg'} flex flex-col overflow-hidden`}>
       {/* Header */}
@@ -267,7 +305,7 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
             </div>
           </div>
 
-          {/* Pesquisa e paginação - lado direito */}
+          {/* Pesquisa, Export e paginação - lado direito */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full lg:w-auto">
             {/* Pesquisa */}
             <div className="relative group w-full sm:flex-1 sm:min-w-0 sm:max-w-xs lg:max-w-sm">
@@ -280,6 +318,21 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
                 className={`pl-10 sm:pl-11 w-full ${isLight ? 'bg-white border-gray-300 text-gray-800 placeholder:text-gray-500 focus:ring-blue-500/50 focus:border-blue-500/50' : 'bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:ring-cyan-500/50 focus:border-cyan-500/50'} h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 text-sm sm:text-base border backdrop-blur-sm`}
               />
             </div>
+
+            {/* Botão Exportar CSV */}
+            <button
+              onClick={exportToCSV}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 hover:scale-105 ${
+                isLight 
+                  ? 'bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg' 
+                  : 'bg-green-600/90 hover:bg-green-500 text-white shadow-lg hover:shadow-green-500/50'
+              }`}
+              title="Exportar logs para CSV"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Exportar CSV</span>
+              <span className="sm:hidden">CSV</span>
+            </button>
             
             {/* Paginação */}
             <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-3">
