@@ -1500,22 +1500,6 @@ export function QuoteRequestsPage({
                   <span>{t('quoteRequests.buttonDownload')}</span>
                 </button>
                 <button
-                  onClick={() => {
-                    setDynamicsData({
-                      cotacaoId: String(cotacao.id),
-                      customerCode: cotacao.solicitante || '',
-                      projectCode: '',
-                      notes: ''
-                    });
-                    setShowDynamicsModal(true);
-                  }}
-                  aria-label="Integrar com Dynamics 365"
-                  className={`${isLight ? 'bg-cyan-100 hover:bg-cyan-200 border-cyan-300 text-cyan-700 hover:text-cyan-800 focus:ring-cyan-500 hover:border-cyan-400' : 'bg-cyan-600/20 hover:bg-cyan-600/40 border-cyan-500/30 hover:border-cyan-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
-                >
-                  <Building className="w-3 h-3" />
-                  <span>Dynamics 365</span>
-                </button>
-                <button
                   onClick={() => openApproval(String(cotacao.id),'reject')}
                   aria-label="Rejeitar cotação"
                   className={`${isLight ? 'bg-red-100 hover:bg-red-200 border-red-300 text-red-700 hover:text-red-800 focus:ring-red-500 hover:border-red-400' : 'bg-red-600/20 hover:bg-red-600/40 border-red-500/30 hover:border-red-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
