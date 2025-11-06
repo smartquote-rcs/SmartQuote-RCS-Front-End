@@ -1438,6 +1438,19 @@ export function QuoteRequestsPage({
             </div>
           )}
 
+          {/* Badge de Enviado ao Cliente */}
+          {cotacao.enviado_cliente && (
+            <div className={`${isLight ? 'bg-green-100 border-green-300 text-green-800' : 'bg-green-900/30 border-green-500/50 text-green-300'} rounded-lg p-2 border text-center text-xs font-medium flex items-center justify-center gap-1`}>
+              <CheckCircle className="w-3 h-3" />
+              <span>Enviado ao Cliente</span>
+              {cotacao.data_envio_cliente && (
+                <span className="opacity-75">
+                  • {new Date(cotacao.data_envio_cliente).toLocaleDateString("pt-PT")}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Aviso de Aprovação Especial removido conforme solicitado */}
 
           <div className="flex flex-col sm:flex-row lg:flex-col gap-2 w-full mt-2">
