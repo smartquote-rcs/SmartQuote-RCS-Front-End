@@ -1286,8 +1286,8 @@ export function QuoteRequestsPage({
   return (
   <div className={`glass-card border-2 ${isProdutoNaoEncontrado ? (isLight ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-orange-300 hover:border-orange-500' : 'bg-gradient-to-br from-yellow-900/30 to-orange-900/30 border-orange-500/50 hover:border-orange-400') : ''} ${
     isLight 
-      ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 hover:shadow-xl' 
-      : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-600/70 hover:border-cyan-400/60 hover:shadow-2xl hover:shadow-cyan-400/20'
+      ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 hover:shadow-md' 
+      : 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-600/70 hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-400/10'
   } rounded-xl p-3 sm:p-4 backdrop-blur-sm transition-all duration-300 group relative w-full max-w-screen overflow-x-auto`}>
       {/* Borda lateral de status mais visível */}
       <div
