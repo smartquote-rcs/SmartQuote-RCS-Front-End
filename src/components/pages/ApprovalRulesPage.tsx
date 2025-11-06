@@ -89,7 +89,7 @@ export default function ApprovalRulesPage() {
       setRules(response.data || []);
     } catch (error: any) {
       console.error('Erro ao buscar regras:', error);
-      addToast('error', 'Erro ao carregar regras de aprovação');
+      addToast('error', 'Erro ao carregar dados');
     } finally {
       setLoading(false);
     }
@@ -155,7 +155,7 @@ export default function ApprovalRulesPage() {
   const handleSave = async () => {
     // Validações
     if (!formData.nome.trim()) {
-      addToast('error', 'Nome da regra é obrigatório');
+      addToast('error', 'Nome obrigatório');
       return;
     }
     if (!formData.valor_minimo || parseFloat(formData.valor_minimo) < 0) {
@@ -163,7 +163,7 @@ export default function ApprovalRulesPage() {
       return;
     }
     if (!formData.aprovador_id) {
-      addToast('error', 'Selecione um aprovador');
+      addToast('error', 'Selecione aprovador');
       return;
     }
 
@@ -179,17 +179,17 @@ export default function ApprovalRulesPage() {
       if (editingRule) {
         // Atualizar
         await api.put(`/approval-rules/${editingRule.id}`, payload);
-        addToast('success', 'Regra atualizada com sucesso');
+        addToast('success', 'Regra atualizada');
       } else {
         // Criar
         await api.post('/approval-rules', payload);
-        addToast('success', 'Regra criada com sucesso');
+        addToast('success', 'Regra criada');
       }
       fetchRules();
       closeModal();
     } catch (error: any) {
       console.error('Erro ao salvar regra:', error);
-      const errorMsg = error.response?.data?.error || 'Erro ao salvar regra';
+      const errorMsg = error.response?.data?.error || 'Erro ao salvar';
       addToast('error', errorMsg);
     }
   };
@@ -202,11 +202,11 @@ export default function ApprovalRulesPage() {
 
     try {
       await api.delete(`/approval-rules/${id}`);
-      addToast('success', 'Regra excluída com sucesso');
+      addToast('success', 'Regra excluída');
       fetchRules();
     } catch (error: any) {
       console.error('Erro ao excluir regra:', error);
-      addToast('error', 'Erro ao excluir regra');
+      addToast('error', 'Erro ao excluir');
     }
   };
 
@@ -217,11 +217,11 @@ export default function ApprovalRulesPage() {
         ...rule,
         ativo: !rule.ativo
       });
-      addToast('success', `Regra ${!rule.ativo ? 'ativada' : 'desativada'} com sucesso`);
+      addToast('success', `Regra ${!rule.ativo ? 'ativada' : 'desativada'}`);
       fetchRules();
     } catch (error: any) {
       console.error('Erro ao alterar status:', error);
-      addToast('error', 'Erro ao alterar status da regra');
+      addToast('error', 'Erro ao alterar status');
     }
   };
 
@@ -242,10 +242,10 @@ export default function ApprovalRulesPage() {
             <div>
               <h1 className={`text-3xl font-bold ${isLight ? 'text-gray-900' : 'text-white'} flex items-center gap-3`}>
                 <Settings className="w-8 h-8" />
-                Regras de Aprovação por Valor
+                Regras de Aprovação
               </h1>
               <p className={`mt-2 ${isLight ? 'text-gray-600' : 'text-gray-400'}`}>
-                Configure os limites de valor e aprovadores para cotações
+                Gestão de limites e aprovadores
               </p>
             </div>
             <Button
@@ -258,48 +258,28 @@ export default function ApprovalRulesPage() {
           </div>
         </div>
 
-        {/* Info Box */}
-        <div className={`mb-6 p-4 rounded-lg border ${
-          isLight 
-            ? 'bg-blue-50 border-blue-200' 
-            : 'bg-blue-900/20 border-blue-500/30'
-        }`}>
-          <div className="flex items-start gap-3">
-            <AlertCircle className={`w-5 h-5 mt-0.5 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-            <div>
-              <h3 className={`font-semibold ${isLight ? 'text-blue-900' : 'text-blue-200'}`}>
-                Como funciona?
-              </h3>
-              <p className={`text-sm mt-1 ${isLight ? 'text-blue-700' : 'text-blue-300'}`}>
-                Quando uma cotação for criada, o sistema verificará automaticamente o valor e aplicará a regra correspondente.
-                Se o valor exceder o limite configurado, a cotação precisará ser aprovada pelo usuário designado.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Lista de Regras */}
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : rules.length === 0 ? (
-          <div className={`text-center py-12 rounded-lg border-2 border-dashed ${
+          <div className={`text-center py-16 rounded-lg border-2 border-dashed ${
             isLight ? 'border-gray-300 bg-white' : 'border-gray-700 bg-dark-card'
           }`}>
             <Settings className={`w-16 h-16 mx-auto mb-4 ${isLight ? 'text-gray-400' : 'text-gray-600'}`} />
             <h3 className={`text-lg font-semibold mb-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
-              Nenhuma regra configurada
+              Sem regras ativas
             </h3>
             <p className={`mb-4 ${isLight ? 'text-gray-600' : 'text-gray-400'}`}>
-              Crie sua primeira regra de aprovação por valor
+              Configure limites de aprovação
             </p>
             <Button
               onClick={() => openModal()}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Criar Regra
+              Adicionar
             </Button>
           </div>
         ) : (
@@ -413,10 +393,10 @@ export default function ApprovalRulesPage() {
           <DialogContent className={`max-w-2xl ${isLight ? 'bg-white' : 'bg-dark-card'}`}>
             <DialogHeader>
               <DialogTitle className={isLight ? 'text-gray-900' : 'text-white'}>
-                {editingRule ? 'Editar Regra' : 'Nova Regra de Aprovação'}
+                {editingRule ? 'Editar Regra' : 'Nova Regra'}
               </DialogTitle>
               <DialogDescription className={isLight ? 'text-gray-600' : 'text-gray-400'}>
-                Configure os limites de valor e o aprovador responsável
+                Defina limites e responsável
               </DialogDescription>
             </DialogHeader>
 
@@ -424,12 +404,12 @@ export default function ApprovalRulesPage() {
               {/* Nome */}
               <div>
                 <Label className={isLight ? 'text-gray-700' : 'text-gray-300'}>
-                  Nome da Regra *
+                  Nome *
                 </Label>
                 <Input
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  placeholder="Ex: Aprovação para valores acima de 2 milhões"
+                  placeholder="Descrição da regra"
                   className={`mt-1 ${
                     isLight
                       ? 'bg-white border-gray-300'
@@ -466,7 +446,7 @@ export default function ApprovalRulesPage() {
                     type="number"
                     value={formData.valor_maximo}
                     onChange={(e) => setFormData({ ...formData, valor_maximo: e.target.value })}
-                    placeholder="Deixe vazio para ilimitado"
+                    placeholder="Ilimitado"
                     min="0"
                     step="0.01"
                     className={`mt-1 ${
@@ -481,7 +461,7 @@ export default function ApprovalRulesPage() {
               {/* Aprovador */}
               <div>
                 <Label className={isLight ? 'text-gray-700' : 'text-gray-300'}>
-                  Aprovador Responsável *
+                  Aprovador *
                 </Label>
                 <Select
                   value={formData.aprovador_id}
@@ -492,12 +472,12 @@ export default function ApprovalRulesPage() {
                       ? 'bg-white border-gray-300'
                       : 'bg-gray-800 border-gray-600 text-white'
                   }`}>
-                    <SelectValue placeholder="Selecione um aprovador" />
+                    <SelectValue placeholder="Selecionar usuário" />
                   </SelectTrigger>
                   <SelectContent>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id.toString()}>
-                        {user.nome} ({user.email})
+                        {user.nome} - {user.email}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -514,7 +494,7 @@ export default function ApprovalRulesPage() {
                   className="w-4 h-4 text-blue-600 rounded"
                 />
                 <Label htmlFor="ativo" className={isLight ? 'text-gray-700' : 'text-gray-300'}>
-                  Regra ativa
+                  Ativa
                 </Label>
               </div>
             </div>
