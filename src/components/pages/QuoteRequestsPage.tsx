@@ -648,6 +648,37 @@ export function QuoteRequestsPage({
           });
         
         setCotacoesList(mappedCotacoes);
+
+        // Verificar cotações com valor 0 e criar notificações automaticamente
+        mappedCotacoes.forEach(async (cotacao: any) => {
+          const valorTotal = parseFloat(cotacao.valor_total || cotacao.orcamento_geral || cotacao.valor || '0');
+          
+          // Se valor é 0 e ainda não foi notificado
+          if (valorTotal === 0 && !cotacao.notificado_valor_zero) {
+            try {
+              console.log(`Criando notificação automática para cotação ${cotacao.id} com valor 0`);
+              
+              // Criar notificação via API
+              await api.post('/notifications', {
+                tipo: 'produto_nao_encontrado',
+                titulo: `Cotação #${cotacao.id} - Produto Não Encontrado`,
+                mensagem: `A cotação para "${cotacao.produto}" retornou valor R$ 0,00. Produto pode não ter sido encontrado.`,
+                cotacao_id: cotacao.id,
+                prioridade: 'alta',
+                lida: false
+              });
+
+              // Marcar cotação como notificada para não criar duplicatas
+              await api.patch(`/cotacoes/${cotacao.id}`, {
+                notificado_valor_zero: true
+              });
+
+              console.log(`✅ Notificação criada para cotação ${cotacao.id}`);
+            } catch (error) {
+              console.error(`Erro ao criar notificação para cotação ${cotacao.id}:`, error);
+            }
+          }
+        });
       } catch (error) {
         setCotacoesList([]);
         console.error('Erro ao buscar cotações:', error);
