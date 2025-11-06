@@ -43,6 +43,7 @@ import {
   Moon,
   X,
   RefreshCw,
+  Send,
 } from "lucide-react";
 import { cotacaoService, relatorioService, jobService } from "../../api/services";
 import api from '../../api/client';
@@ -693,6 +694,11 @@ export function QuoteRequestsPage({
   const [notifyMessage, setNotifyMessage] = useState("");
   const [selectedCotacaoForNotify, setSelectedCotacaoForNotify] = useState<any>(null);
   
+  // Modal de marcar como enviado ao cliente
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
+  const [selectedCotacaoForSend, setSelectedCotacaoForSend] = useState<any>(null);
+  
   // Sistema de Toast
   const [toasts, setToasts] = useState<Array<{
     id: string;
@@ -1266,18 +1272,55 @@ export function QuoteRequestsPage({
     }
   };
 
+  // Função para marcar cotação como enviada ao cliente
+  const handleMarkAsSent = async () => {
+    if (!selectedCotacaoForSend) return;
+
+    setSendLoading(true);
+    try {
+      // Atualizar cotação com status de enviado
+      await api.patch(`/cotacoes/${selectedCotacaoForSend.id}`, {
+        enviado_cliente: true,
+        data_envio_cliente: new Date().toISOString()
+      });
+
+      addToast('success', 'Cotação marcada como enviada');
+      
+      // Atualizar lista local
+      setCotacoesList(prev => prev.map(c => 
+        c.id === selectedCotacaoForSend.id 
+          ? { ...c, enviado_cliente: true, data_envio_cliente: new Date().toISOString() }
+          : c
+      ));
+
+      // Fechar modal
+      setTimeout(() => {
+        setIsSendModalOpen(false);
+        setSelectedCotacaoForSend(null);
+      }, 1500);
+    } catch (error: any) {
+      console.error('Erro ao marcar como enviado:', error);
+      const errorMsg = error.response?.data?.error || 'Erro ao marcar como enviado';
+      addToast('error', errorMsg);
+    } finally {
+      setSendLoading(false);
+    }
+  };
+
   // Memoização para performance
   const QuoteCard = React.memo(({
     cotacao,
     onViewDetails,
     onDownload,
     onNotifyClient,
+    onMarkAsSent,
     isLight,
   }: {
     cotacao: any;
     onViewDetails: (id: string) => void;
     onDownload: (cotacao: any) => void;
     onNotifyClient?: (cotacao: any) => void;
+    onMarkAsSent?: (cotacao: any) => void;
     isLight?: boolean;
   }) => {
   const cotacaoValor = parseFloat(String(cotacao.valor || cotacao.orcamento_geral || '0').replace(/[^\d.-]/g, ''));
@@ -2047,6 +2090,10 @@ export function QuoteRequestsPage({
                               cotacao={cotacao}
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
+                              onMarkAsSent={(cot) => {
+                                setSelectedCotacaoForSend(cot);
+                                setIsSendModalOpen(true);
+                              }}
                               isLight={isLight}
                             />
                           ))}
@@ -2075,6 +2122,10 @@ export function QuoteRequestsPage({
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
                               onNotifyClient={handleNotifyClient}
+                              onMarkAsSent={(cot) => {
+                                setSelectedCotacaoForSend(cot);
+                                setIsSendModalOpen(true);
+                              }}
                               isLight={isLight}
                             />
                           ))}
@@ -2225,6 +2276,24 @@ export function QuoteRequestsPage({
                   <Download className="h-4 w-4" />
                   Download
                 </button>
+                {/* Botão Marcar como Enviado - apenas se aprovado e não enviado */}
+                {selectedCotacao?.aprovacao === true && !selectedCotacao?.enviado_cliente && (
+                  <button
+                    className={`w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
+                      isLight 
+                        ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-300 hover:border-green-400 hover:shadow-lg' 
+                        : 'bg-green-900/30 hover:bg-green-700/40 text-green-300 border-green-700/40 hover:border-green-400/60'
+                    }`}
+                    onClick={() => {
+                      setSelectedCotacaoForSend(selectedCotacao);
+                      setIsSendModalOpen(true);
+                    }}
+                    aria-label="Marcar como enviado"
+                  >
+                    <Send className="h-4 w-4" />
+                    Marcar como Enviado
+                  </button>
+                )}
               </div>
       {/* Modal de erro ao exportar PDF */}
       <Dialog open={pdfErrorModal.open} onOpenChange={(o)=>!o && setPdfErrorModal({open:false, message: ""})}>
@@ -2779,6 +2848,86 @@ export function QuoteRequestsPage({
                 className={`flex-1 ${
                   isLight 
                     ? 'border-gray-300 text-gray-700 hover:bg-gray-50' 
+                    : 'border-dark-color text-dark-secondary hover:bg-dark-hover'
+                }`}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Marcar como Enviado */}
+      <Dialog open={isSendModalOpen} onOpenChange={setIsSendModalOpen}>
+        <DialogContent className={`max-w-md mx-auto ${isLight ? 'bg-white border-gray-200' : 'bg-dark-card border-dark-color'}`}>
+          <DialogHeader>
+            <DialogTitle className={`flex items-center gap-3 ${isLight ? 'text-gray-900' : 'text-white'}`}>
+              <div className={`p-2 rounded-lg ${isLight ? 'bg-green-100' : 'bg-green-500/20'}`}>
+                <Send className={`w-5 h-5 ${isLight ? 'text-green-600' : 'text-green-400'}`} />
+              </div>
+              Marcar como Enviado
+            </DialogTitle>
+            <DialogDescription className={`${isLight ? 'text-gray-600' : 'text-gray-400'} mt-2`}>
+              Confirme que esta cotação foi enviada ao cliente
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {/* Informações da Cotação */}
+            {selectedCotacaoForSend && (
+              <div className={`p-4 rounded-lg border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/30'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className={`w-4 h-4 ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
+                  <span className={`font-semibold text-sm ${isLight ? 'text-blue-800' : 'text-blue-200'}`}>
+                    Cotação #{selectedCotacaoForSend.id}
+                  </span>
+                </div>
+                <p className={`text-sm ${isLight ? 'text-blue-700' : 'text-blue-300'}`}>
+                  Cliente: {selectedCotacaoForSend.cliente || selectedCotacaoForSend.aprovado_por || 'N/A'}
+                </p>
+                {selectedCotacaoForSend.valor && (
+                  <p className={`text-sm font-semibold mt-1 ${isLight ? 'text-blue-800' : 'text-blue-200'}`}>
+                    Valor: {formatCurrency(parseFloat(selectedCotacaoForSend.valor))}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Botões */}
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={handleMarkAsSent}
+                disabled={sendLoading}
+                className={`flex-1 ${
+                  sendLoading
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700'
+                } text-white`}
+              >
+                {sendLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Confirmar Envio
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  setIsSendModalOpen(false);
+                  setSelectedCotacaoForSend(null);
+                }}
+                disabled={sendLoading}
+                variant="outline"
+                className={`flex-1 ${
+                  isLight
+                    ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
                     : 'border-dark-color text-dark-secondary hover:bg-dark-hover'
                 }`}
               >
