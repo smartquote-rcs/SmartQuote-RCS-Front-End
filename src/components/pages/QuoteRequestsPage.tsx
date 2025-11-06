@@ -2262,39 +2262,38 @@ export function QuoteRequestsPage({
               ? 'bg-gray-50 border-gray-300' 
               : 'bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-600/30'
           }`}>
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full">
-              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div className="flex flex-row flex-wrap gap-3 w-full items-center justify-start">
+              <button
+                className={`px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
+                  isLight 
+                    ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300 hover:border-blue-400 hover:shadow-lg' 
+                    : 'bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border-cyan-700/40 hover:border-cyan-400/60'
+                }`}
+                onClick={handleOpenDownloadModal}
+                aria-label="Download da cotação"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </button>
+              
+              {/* Botão Marcar como Enviado - apenas se aprovado e não enviado */}
+              {selectedCotacao?.aprovacao === true && !selectedCotacao?.enviado_cliente && (
                 <button
-                  className={`w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
+                  className={`px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
                     isLight 
-                      ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300 hover:border-blue-400 hover:shadow-lg' 
-                      : 'bg-cyan-900/30 hover:bg-cyan-700/40 text-cyan-300 border-cyan-700/40 hover:border-cyan-400/60'
+                      ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-300 hover:border-green-400 hover:shadow-lg' 
+                      : 'bg-green-900/30 hover:bg-green-700/40 text-green-300 border-green-700/40 hover:border-green-400/60'
                   }`}
-                  onClick={handleOpenDownloadModal}
-                  aria-label="Download da cotação"
+                  onClick={() => {
+                    setSelectedCotacaoForSend(selectedCotacao);
+                    setIsSendModalOpen(true);
+                  }}
+                  aria-label="Marcar como enviado"
                 >
-                  <Download className="h-4 w-4" />
-                  Download
+                  <Send className="h-4 w-4" />
+                  Marcar como Enviado
                 </button>
-                {/* Botão Marcar como Enviado - apenas se aprovado e não enviado */}
-                {selectedCotacao?.aprovacao === true && !selectedCotacao?.enviado_cliente && (
-                  <button
-                    className={`w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
-                      isLight 
-                        ? 'bg-green-50 hover:bg-green-100 text-green-700 border-green-300 hover:border-green-400 hover:shadow-lg' 
-                        : 'bg-green-900/30 hover:bg-green-700/40 text-green-300 border-green-700/40 hover:border-green-400/60'
-                    }`}
-                    onClick={() => {
-                      setSelectedCotacaoForSend(selectedCotacao);
-                      setIsSendModalOpen(true);
-                    }}
-                    aria-label="Marcar como enviado"
-                  >
-                    <Send className="h-4 w-4" />
-                    Marcar como Enviado
-                  </button>
-                )}
-              </div>
+              )}
       {/* Modal de erro ao exportar PDF */}
       <Dialog open={pdfErrorModal.open} onOpenChange={(o)=>!o && setPdfErrorModal({open:false, message: ""})}>
         <DialogContent className="w-full max-w-xs sm:max-w-md bg-slate-900/95 border border-red-500/30 p-2 sm:p-6 rounded-xl overflow-y-auto">
@@ -2317,11 +2316,14 @@ export function QuoteRequestsPage({
           </div>
         </DialogContent>
       </Dialog>
-              <button onClick={openEmailModal} className={`w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
-                isLight 
-                  ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 hover:border-purple-400 hover:shadow-lg' 
-                  : 'bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border-purple-500/50 hover:border-purple-400/70 hover:shadow-purple-400/20'
-              }`}>
+              <button 
+                onClick={openEmailModal} 
+                className={`px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] text-sm border-2 ${
+                  isLight 
+                    ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 hover:border-purple-400 hover:shadow-lg' 
+                    : 'bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-400 border-purple-500/50 hover:border-purple-400/70 hover:shadow-purple-400/20'
+                }`}
+              >
                 <Mail className="h-4 w-4" />
                 {t("quoteRequests.seeEmail")}
               </button>
