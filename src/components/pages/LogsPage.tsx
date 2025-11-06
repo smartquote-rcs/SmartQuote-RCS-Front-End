@@ -238,13 +238,13 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
       log.acao,
       log.cotacaoNumero,
       log.cliente
-    ].some(field => field && field.toLowerCase().includes(searchLower));
+    ].some(field => field && typeof field === 'string' && field.toLowerCase().includes(searchLower));
     
     return matchesSearch;
   });
 
   // Paginação
-  const totalPages = Math.ceil(filteredLogs.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / pageSize));
   const paginatedLogs = filteredLogs.slice((page - 1) * pageSize, page * pageSize);
 
   // Função para exportar logs para CSV
@@ -383,7 +383,7 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
           </div>
         )}
         {/* Lista de logs */}
-        {!loading && filteredLogs.length > 0 && (
+        {!loading && paginatedLogs.length > 0 && (
           <>
             <div className="space-y-3 sm:space-y-4">
               {paginatedLogs.map((log, index) => (
@@ -392,7 +392,7 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
             </div>
           </>
         )}
-        {!loading && filteredLogs.length === 0 && !error && (
+        {!loading && paginatedLogs.length === 0 && !error && (
           <div className="text-center py-8 sm:py-12">
             <div className={`w-12 h-12 sm:w-16 sm:h-16 ${isLight ? 'bg-gray-100' : 'bg-dark-card'} rounded-full flex items-center justify-center mx-auto mb-4`}>
               <Activity className={`w-6 h-6 sm:w-8 sm:h-8 ${isLight ? 'text-gray-500' : 'text-dark-secondary'}`} />
