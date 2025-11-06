@@ -1455,14 +1455,6 @@ export function QuoteRequestsPage({
                     <span>Notificar Cliente</span>
                   </button>
                 )}
-                <button
-                  onClick={() => openApproval(String(cotacao.id),'set_pending')}
-                  aria-label="Marcar como pendente"
-                  className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
-                >
-                  <Clock className="w-3 h-3" />
-                  <span>{t('quoteRequests.buttonPending')}</span>
-                </button>
                 <button 
                   onClick={() => onDownload(cotacao)}
                   className={`${isLight ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 hover:text-purple-700 focus:ring-purple-500 hover:border-purple-400' : 'bg-slate-700/50 hover:bg-slate-600/70 border-slate-600/50 text-slate-300 hover:text-purple-300 focus:ring-purple-400 hover:border-purple-500' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`} 
@@ -1473,7 +1465,7 @@ export function QuoteRequestsPage({
                 </button>
                 <button
                   onClick={() => openApproval(String(cotacao.id),'set_pending')}
-                  aria-label="Colocar como pendente"
+                  aria-label="Marcar como pendente"
                   className={`${isLight ? 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-700 hover:text-orange-800 focus:ring-orange-500 hover:border-orange-400' : 'bg-orange-600/20 hover:bg-orange-600/40 border-orange-500/30 hover:border-orange-400' } border-2 px-3 py-2 text-xs rounded-lg transition-all duration-300 flex items-center justify-center space-x-1 font-medium w-full sm:w-auto lg:w-full hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 active:scale-[0.98]`}
                 >
                   <Clock className="w-3 h-3" />
