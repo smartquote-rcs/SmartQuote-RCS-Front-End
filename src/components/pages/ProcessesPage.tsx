@@ -257,7 +257,7 @@ export function ProcessesPage({ isLight = false }: ProcessesPageProps = {}) {
 
       {/* Paginação e Estatísticas */}
       {filteredJobs.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center items-center justify-between gap-2 py-1">
           <div className={`text-sm ${isLight ? 'text-gray-600' : 'text-slate-400'}`}>
             Mostrando {Math.min((currentPage - 1) * itemsPerPage + 1, filteredJobs.length)} a{' '}
             {Math.min(currentPage * itemsPerPage, filteredJobs.length)} de {filteredJobs.length} processos
@@ -276,7 +276,7 @@ export function ProcessesPage({ isLight = false }: ProcessesPageProps = {}) {
                     : 'border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50'
                 }`}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3 w-3" />
               </Button>
               
               <div className="flex items-center gap-1">
@@ -327,7 +327,7 @@ export function ProcessesPage({ isLight = false }: ProcessesPageProps = {}) {
                     : 'border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50'
                 }`}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3 w-3" />
               </Button>
             </div>
           )}
