@@ -129,7 +129,7 @@ export function PublicQuoteForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 flex items-center justify-center p-2 sm:p-4 relative overflow-hidden">
       {/* Background decorativo */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl"></div>
@@ -137,20 +137,17 @@ export function PublicQuoteForm() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-400/5 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="max-w-4xl w-full relative z-10">
+      <div className="max-w-4xl w-full h-full max-h-screen overflow-y-auto relative z-10 py-4">
         {/* Header com logo e título */}
-        <div className="text-center mb-6 md:mb-8 px-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-cyan-500 rounded-2xl shadow-lg shadow-cyan-500/30 mb-4 md:mb-6 transform hover:scale-110 transition-transform duration-300">
-            <Send className="w-8 h-8 md:w-10 md:h-10 text-white" />
+        <div className="text-center mb-3 md:mb-4 px-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-cyan-500 rounded-xl shadow-lg shadow-cyan-500/30 mb-2 md:mb-3 transform hover:scale-110 transition-transform duration-300">
+            <Send className="w-6 h-6 md:w-8 md:h-8 text-white" />
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 md:mb-3 drop-shadow-lg">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 md:mb-2 drop-shadow-lg">
             Solicite sua Cotação
           </h1>
-          <p className="text-lg sm:text-xl text-cyan-400 mb-2">
-            SmartQuote RCS - Cotações Inteligentes
-          </p>
-          <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto px-4">
-            Preencha o formulário abaixo e nossa equipe entrará em contato com uma proposta personalizada em até 24 horas úteis.
+          <p className="text-base sm:text-lg text-cyan-400 mb-1">
+            SmartQuote RCS
           </p>
         </div>
 
@@ -160,7 +157,7 @@ export function PublicQuoteForm() {
           <div className="h-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-600"></div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 md:p-8 space-y-4 md:space-y-6">
+        <form onSubmit={handleSubmit} className="p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4">
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -260,8 +257,8 @@ export function PublicQuoteForm() {
               value={formData.descricao}
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               placeholder="Informações adicionais sobre sua necessidade..."
-              rows={4}
-              className="mt-2 w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 resize-none"
+              rows={3}
+              className="mt-2 w-full px-4 py-2 bg-slate-700 border-2 border-slate-600 text-white placeholder:text-slate-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 resize-none text-sm"
             />
           </div>
 
@@ -290,24 +287,21 @@ export function PublicQuoteForm() {
         </form>
 
           {/* Footer */}
-          <div className="bg-slate-700/50 border-t border-cyan-500/20 px-4 sm:px-6 md:px-8 py-4 md:py-6">
-            <div className="flex flex-col md:flex-row items-center justify-center md:justify-between gap-3 md:gap-4">
-              <div className="flex items-center gap-2 text-sm text-slate-300">
-                <CheckCircle className="w-4 h-4 text-cyan-400" />
-                <span>Resposta em até 24h úteis</span>
+          <div className="bg-slate-700/50 border-t border-cyan-500/20 px-3 sm:px-4 md:px-6 py-3 md:py-4">
+            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 text-xs sm:text-sm">
+              <div className="flex items-center gap-1 text-slate-300">
+                <CheckCircle className="w-3 h-3 text-cyan-400" />
+                <span>24h úteis</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-slate-300">
-                <Mail className="w-4 h-4 text-blue-400" />
+              <div className="flex items-center gap-1 text-slate-300">
+                <Mail className="w-3 h-3 text-blue-400" />
                 <span>Sem compromisso</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-slate-300">
-                <User className="w-4 h-4 text-cyan-400" />
+              <div className="flex items-center gap-1 text-slate-300">
+                <User className="w-3 h-3 text-cyan-400" />
                 <span>Atendimento personalizado</span>
               </div>
             </div>
-            <p className="text-center text-xs text-slate-400 mt-4">
-              Ao enviar este formulário, você concorda com nossa política de privacidade.
-            </p>
           </div>
         </div>
       </div>
