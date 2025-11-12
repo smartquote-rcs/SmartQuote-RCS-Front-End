@@ -575,6 +575,12 @@ export function QuoteRequestsPage({
   const [isLoadingCotacoes, setIsLoadingCotacoes] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number|null>(null);
   const [usersCache, setUsersCache] = useState<Map<number, string>>(new Map());
+  
+  // Limpar cache de usuários quando componente monta (para debug)
+  useEffect(() => {
+    console.log('🗑️ Limpando cache de usuários para debug');
+    setUsersCache(new Map());
+  }, []);
 
   useEffect(() => {
     try {
@@ -657,7 +663,15 @@ export function QuoteRequestsPage({
               const userPromises = uncachedUserIds.map(async (userId) => {
                 try {
                   const response = await api.get(`/users/${userId}`);
-                  return { id: userId, name: response.data.data?.name || `Usuário ${userId}` };
+                  // Debug: log da estrutura da resposta
+                  console.log(`🔍 Debug usuário ${userId}:`, response.data);
+                  
+                  // Tentar diferentes campos possíveis para o nome
+                  const userData = response.data.data || response.data;
+                  const userName = userData?.name || userData?.nome || userData?.username || userData?.displayName || `Usuário ${userId}`;
+                  
+                  console.log(`👤 Usuário ${userId} nome encontrado:`, userName);
+                  return { id: userId, name: userName };
                 } catch (err) {
                   console.error(`Erro ao buscar usuário ${userId}:`, err);
                   return { id: userId, name: `Usuário ${userId}` };
