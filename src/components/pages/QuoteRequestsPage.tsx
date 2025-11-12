@@ -579,6 +579,7 @@ export function QuoteRequestsPage({
   const itemsPerPage = 15;
   const [cotacoesList, setCotacoesList] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<number|null>(null);
+  const [usersCache, setUsersCache] = useState<Map<number, string>>(new Map());
 
   useEffect(() => {
     try {
@@ -646,6 +647,26 @@ export function QuoteRequestsPage({
             }
             return true;
           });
+        
+        // Buscar nomes dos usuários responsáveis
+        const userIds = [...new Set(mappedCotacoes
+          .map((c: any) => c.aprovado_por)
+          .filter((id: any) => id && typeof id === 'number'))] as number[];
+        
+        const newUsersCache = new Map(usersCache);
+        for (const userId of userIds) {
+          if (!newUsersCache.has(userId)) {
+            try {
+              const { default: api } = await import("../../api/client");
+              const response = await api.get(`/users/${userId}`);
+              newUsersCache.set(userId, response.data.data?.name || `Usuário ${userId}`);
+            } catch (err) {
+              console.error(`Erro ao buscar usuário ${userId}:`, err);
+              newUsersCache.set(userId, `Usuário ${userId}`);
+            }
+          }
+        }
+        setUsersCache(newUsersCache);
         
         setCotacoesList(mappedCotacoes);
 
@@ -1386,7 +1407,9 @@ export function QuoteRequestsPage({
               <div className="flex items-center space-x-2">
                 <Building className={`w-4 h-4 ${isLight ? 'text-gray-500' : 'text-slate-400'} flex-shrink-0`} />
                 <span className={`font-medium ${isLight ? 'text-gray-800' : 'text-white'} text-sm`}>
-                  {cotacao.aprovado_por}
+                  {typeof cotacao.aprovado_por === 'number' 
+                    ? (usersCache.get(cotacao.aprovado_por) || cotacao.aprovado_por)
+                    : cotacao.aprovado_por}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
@@ -1400,7 +1423,9 @@ export function QuoteRequestsPage({
                 <span className={`${isLight ? 'text-gray-600' : 'text-slate-300'} text-sm`}>
                   {t("approvals.responsible")}:{" "}
                   <span className={`${isLight ? 'text-gray-800' : 'text-white'} font-medium`}>
-                    {cotacao.aprovado_por}
+                    {typeof cotacao.aprovado_por === 'number' 
+                      ? (usersCache.get(cotacao.aprovado_por) || `Usuário ${cotacao.aprovado_por}`)
+                      : cotacao.aprovado_por}
                   </span>
                 </span>
               </div>
