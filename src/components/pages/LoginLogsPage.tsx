@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
-import { LogIn, Trash2 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../ui/alert-dialog";
+import { LogIn, RefreshCw, AlertCircle } from 'lucide-react';
+import { auditLogService } from '../../api/services';
+
+interface AuditLog {
+  id: number;
+  user_id: string;
+  action: string;
+  tabela_afetada?: string;
+  registo_id?: number;
+  detalhes_alteracao?: any;
+  created_at: string; // O campo no backend é created_at, não timestamp
+}
 
 function getRelativeTime(dateString: string) {
   const now = new Date();
@@ -22,41 +22,106 @@ function getRelativeTime(dateString: string) {
   return date.toLocaleString();
 }
 
+function parseUserAgent(ua: string): string {
+  if (!ua || ua === '-') return '-';
+  
+  // Detectar dispositivo móvel
+  const isMobile = /Mobile|Android|iPhone|iPad/i.test(ua);
+  
+  // Detectar navegador
+  let browser = 'Navegador';
+  if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+  else if (ua.includes('Edg')) browser = 'Edge';
+  else if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+  
+  // Detectar sistema operacional
+  let os = '';
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Mac OS')) os = 'Mac';
+  else if (ua.includes('Linux')) os = 'Linux';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+  
+  const device = isMobile ? '📱' : '💻';
+  return `${device} ${browser}${os ? ' • ' + os : ''}`;
+}
 
 export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
   const [loginLogs, setLoginLogs] = useState<Array<any>>([]);
-  const [deleting, setDeleting] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadLogs = () => {
-    let logs: any[] = [];
+  const loadLogs = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const offlineLogs = JSON.parse(localStorage.getItem('offline_logs') || '[]');
-      logs = offlineLogs.concat();
-    } catch {}
-    const loginLogs = logs.filter(l => l.type === 'login');
-    loginLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    setLoginLogs(loginLogs);
+      const result = await auditLogService.getAll({
+        limit: 100,
+        offset: 0
+      });
+
+      if (result.success && result.data?.data) {
+        const auditLogs: AuditLog[] = Array.isArray(result.data.data) 
+          ? result.data.data 
+          : [];
+
+        // Aceitar tanto LOGIN/LOGOUT quanto USER_LOGIN/USER_LOGOUT
+        const sessionLogs = auditLogs.filter(log => 
+          log.action === 'LOGIN' || log.action === 'LOGOUT' || 
+          log.action === 'USER_LOGIN' || log.action === 'USER_LOGOUT'
+        );
+
+        // Formatar logs usando APENAS os dados que já vêm em detalhes_alteracao
+        // SEM fazer chamadas à API
+        const formattedLogs = sessionLogs.map((log) => {
+          const detalhes = log.detalhes_alteracao || {};
+
+          // Extrair dados diretamente de detalhes_alteracao
+          const userName = detalhes.userName || detalhes.name || 'Usuário';
+          const userEmail = detalhes.userEmail || detalhes.email || '-';
+          const userRole = detalhes.role || detalhes.position || 'user';
+          const ip = detalhes.ip || '-';
+          const userAgent = detalhes.user_agent || '-';
+
+          return {
+            id: log.id,
+            userId: log.user_id,
+            type: log.action.toLowerCase().replace('user_', ''), // Remove 'user_' prefix
+            userName,
+            userEmail,
+            ip,
+            userAgent,
+            timestamp: log.created_at,
+            details: {
+              role: userRole,
+              position: userRole
+            }
+          };
+        });
+
+        formattedLogs.sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+
+        setLoginLogs(formattedLogs);
+      } else {
+        console.error('Erro ao buscar logs:', result.error);
+        setError(result.error || 'Erro ao carregar logs');
+        setLoginLogs([]);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar logs:', err);
+      setError('Erro ao conectar com o servidor');
+      setLoginLogs([]);
+    } finally {
+      setLoading(false);
+    }
   };
+
   useEffect(() => {
     loadLogs();
   }, []);
-
-  const handleDeleteLogs = () => {
-    setDeleting(true);
-    try {
-      let logs = [];
-      try {
-        logs = JSON.parse(localStorage.getItem('offline_logs') || '[]');
-      } catch {}
-      const filtered = logs.filter((l: any) => l.type !== 'login');
-      localStorage.setItem('offline_logs', JSON.stringify(filtered));
-      setLoginLogs([]);
-    } finally {
-      setDeleting(false);
-      setOpenDialog(false);
-    }
-  };
 
   return (
     <div className={`flex flex-col h-full w-full p-0 sm:p-0 lg:p-0 overflow-y-auto ${isLight ? 'bg-gray-50' : 'bg-dark-bg'}`}>
@@ -68,55 +133,46 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
           <div className="min-w-0 flex-1">
             <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-1 flex items-center gap-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
-              <LogIn className="w-6 h-6 text-blue-400" /> Logs de Login
+              <LogIn className="w-6 h-6 text-blue-400" /> Logs de Sessão
             </h1>
-            <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>Visualize todos os acessos recentes ao sistema nesta instância.</p>
+            <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>
+              Visualize todos os acessos (login/logout) registrados no sistema.
+            </p>
           </div>
-          <div className="flex-shrink-0 flex items-center mt-2 sm:mt-0">
-            <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
-              <AlertDialogTrigger asChild>
-                <button
-                  disabled={deleting || loginLogs.length === 0}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  title="Eliminar todos os logs de login"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  {deleting ? 'Eliminando...' : 'Eliminar logs'}
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className={`glass-card backdrop-blur-sm ${
-                isLight ? 'bg-white border-gray-300' : 'bg-slate-800/95 border-white/20'
-              }`}>
-                <AlertDialogHeader>
-                  <AlertDialogTitle className={`flex items-center gap-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
-                    <Trash2 className="w-5 h-5 text-red-400" />
-                    Confirmar Eliminação
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className={isLight ? 'text-gray-600' : 'text-slate-300'}>
-                    Tem certeza que deseja eliminar <b>todos os logs de login</b>? Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="gap-3">
-                  <AlertDialogCancel className={`px-6 py-2 rounded-xl ${
-                    isLight 
-                      ? 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200' 
-                      : 'bg-slate-700/50 border-slate-600 text-slate-200 hover:bg-slate-600/50'
-                  }`}>
-                    Cancelar
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteLogs}
-                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2 rounded-xl font-semibold"
-                  >
-                    Eliminar logs
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          <div className="flex-shrink-0 flex items-center gap-2 mt-2 sm:mt-0">
+            <button
+              onClick={loadLogs}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              title="Atualizar logs"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Carregando...' : 'Atualizar'}
+            </button>
           </div>
         </div>
-        {loginLogs.length === 0 ? (
-          <div className={`text-center py-12 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>Nenhum log de login encontrado.</div>
+
+        {error && (
+          <div className={`mb-4 p-3 rounded-lg flex items-center gap-2 ${
+            isLight 
+              ? 'bg-red-50 border border-red-200 text-red-800' 
+              : 'bg-red-900/20 border border-red-500/50 text-red-300'
+          }`}>
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-12">
+            <RefreshCw className={`w-8 h-8 mx-auto mb-3 animate-spin ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
+            <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>Carregando logs...</p>
+          </div>
+        ) : loginLogs.length === 0 ? (
+          <div className={`text-center py-12 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>
+            <LogIn className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p>Nenhum log de sessão encontrado.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto max-h-[60vh]">
             <table className={`min-w-full w-full text-sm rounded-none border shadow-lg table-fixed ${
@@ -126,20 +182,31 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
             }`}>
               <thead>
                 <tr className={isLight ? 'bg-gray-50' : 'bg-slate-900/60'}>
+                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Ação</th>
                   <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Usuário</th>
                   <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Email</th>
                   <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Cargo</th>
+                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Navegador/Dispositivo</th>
                   <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Data/Hora</th>
                   <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Tempo</th>
                 </tr>
               </thead>
               <tbody>
                 {loginLogs.map((log, idx) => (
-                  <tr key={idx} className={`border-t transition-colors ${
+                  <tr key={log.id || idx} className={`border-t transition-colors ${
                     isLight 
                       ? 'border-gray-200 hover:bg-blue-50' 
                       : 'border-slate-700 hover:bg-blue-900/20'
                   }`}>
+                    <td className="px-4 py-2">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
+                        log.type === 'login' 
+                          ? 'bg-green-500/20 text-green-400' 
+                          : 'bg-orange-500/20 text-orange-400'
+                      }`}>
+                        {log.type === 'login' ? 'LOGIN' : 'LOGOUT'}
+                      </span>
+                    </td>
                     <td className={`px-4 py-2 font-medium ${isLight ? 'text-gray-900' : 'text-white'}`}>{log.userName || '-'}</td>
                     <td className={`px-4 py-2 ${isLight ? 'text-gray-700' : 'text-slate-200'}`}>{log.userEmail || '-'}</td>
                     <td className="px-4 py-2">
@@ -151,8 +218,18 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
                         {log.details?.role || '-'}
                       </span>
                     </td>
-                    <td className={`px-4 py-2 ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>{log.timestamp ? new Date(log.timestamp).toLocaleString() : '-'}</td>
-                    <td className={`px-4 py-2 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>{log.timestamp ? getRelativeTime(log.timestamp) : '-'}</td>
+                    <td 
+                      className={`px-4 py-2 text-xs ${isLight ? 'text-gray-600' : 'text-slate-400'}`} 
+                      title={`${log.ip ? 'IP: ' + log.ip + '\n' : ''}User Agent: ${log.userAgent || 'N/A'}`}
+                    >
+                      {parseUserAgent(log.userAgent)}
+                    </td>
+                    <td className={`px-4 py-2 ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>
+                      {log.timestamp ? new Date(log.timestamp).toLocaleString('pt-BR') : '-'}
+                    </td>
+                    <td className={`px-4 py-2 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>
+                      {log.timestamp ? getRelativeTime(log.timestamp) : '-'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

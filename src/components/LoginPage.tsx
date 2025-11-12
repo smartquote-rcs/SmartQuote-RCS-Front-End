@@ -19,6 +19,8 @@ interface LoginPageProps {
     password: string;
     role?: 'user' | 'admin' | 'manager';
     position?: string;
+    authId?: string; // UUID do Supabase Auth
+    userName?: string; // Nome do usuário
   }) => void;
 }
 
@@ -395,6 +397,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       
       if (result.success) {
         console.log('✅ Login bem-sucedido!', result.data);
+        
+        // Extrair dados do usuário do response
+        const authId = result.data?.user?.id; // UUID do Supabase Auth
+        const userName = result.data?.user?.name || email.split('@')[0];
+        console.log('🔑 Dados do usuário:', { authId, userName });
+        
         // Buscar o papel real do usuário na API
         try {
           const { getUserRoleByEmail } = await import('../api/services');
@@ -411,12 +419,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           });
           setIsLoginSuccess(true);
           setTimeout(() => {
-            console.log('🚀 Chamando onLogin com role e position:', userRole);
+            console.log('🚀 Chamando onLogin com authId, role e position:', { authId, userRole, userName });
             // Garante que role e position sejam passados do backend
             let roleTyped: 'user' | 'admin' | 'manager' = 'user';
             if (userRole === 'admin') roleTyped = 'admin';
             else if (userRole === 'manager') roleTyped = 'manager';
-            onLogin({ email, password, role: roleTyped, position: userRole });
+            onLogin({ email, password, role: roleTyped, position: userRole, authId, userName });
           }, 2000);
         } catch (roleErr) {
           setFeedback({ type: 'error', message: 'Erro ao buscar permissões do usuário.' });

@@ -1,3 +1,79 @@
+import api from './client';
+
+// Serviço de Audit Logs (Logs de Sessão e Ações)
+export const auditLogService = {
+  async create(logData: {
+    user_id: string;
+    action: string;
+    tabela_afetada?: string;
+    registo_id?: number;
+    detalhes_alteracao?: any;
+  }) {
+    try {
+      const response = await api.post('/audit-logs', logData);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao criar log de auditoria:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao criar log de auditoria'
+      };
+    }
+  },
+
+  async getAll(filters?: {
+    user_id?: string;
+    action?: string;
+    tabela_afetada?: string;
+    registo_id?: number;
+    start_date?: string;
+    end_date?: string;
+    limit?: number;
+    offset?: number;
+  }) {
+    try {
+      const response = await api.get('/audit-logs', { params: filters });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar logs de auditoria:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar logs de auditoria'
+      };
+    }
+  },
+
+  async getByUserId(userId: string, limit?: number, offset?: number) {
+    try {
+      const response = await api.get(`/audit-logs/user/${userId}`, {
+        params: { limit, offset }
+      });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar logs do usuário:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar logs do usuário'
+      };
+    }
+  },
+
+  async getStatistics(startDate?: string, endDate?: string) {
+    try {
+      const response = await api.get('/audit-logs/statistics', {
+        params: { start_date: startDate, end_date: endDate }
+      });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('💥 Erro ao buscar estatísticas de auditoria:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao buscar estatísticas de auditoria'
+      };
+    }
+  }
+};
+
 // Serviço de Notificações
 export const notificationService = {
   async getAll() {
@@ -467,8 +543,6 @@ export const userService = {
   }
 };
 
-import api from './client';
-
 // Função utilitária para upload de imagem
 export async function uploadImage(file: File): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
@@ -689,8 +763,23 @@ export const authService = {
   },
 
   // Logout
-  logout(): void {
-    localStorage.removeItem('auth_token');
+  async logout(): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await api.post('/auth/logout');
+      localStorage.removeItem('auth_token');
+      return { 
+        success: true, 
+        message: response.data.message || 'Logout realizado com sucesso'
+      };
+    } catch (error: any) {
+      console.error('💥 Erro ao fazer logout:', error);
+      // Mesmo com erro, limpa o token local
+      localStorage.removeItem('auth_token');
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Erro ao fazer logout no servidor'
+      };
+    }
   },
 
   // Verificar se está logado

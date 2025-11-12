@@ -5,11 +5,12 @@ import { AdminDashboard } from "./components/AdminDashboard";
 import { ResetPasswordPage } from "./components/pages/ResetPasswordPage";
 import { PublicQuoteForm } from "./components/pages/PublicQuoteForm";
 import { AppProvider } from "./contexts/AppContext";
-import { userService } from './api/services';
+import { userService, authService } from './api/services';
 import { emailService } from "./services/emailService";
-import { saveLog } from "./services/logService";
+
 interface User {
   id: number; // id numérico usado em FK/auditoria
+  authId?: string; // UUID do Supabase Auth (para logs de auditoria)
   email: string;
   name: string;
   role: "user" | "manager" | "admin";
@@ -112,7 +113,7 @@ export default function App() {
     };
   }, []);
 
-  const handleLogin = (credentials: { email: string; password: string; role?: 'user' | 'admin' | 'manager'; position?: string }) => {
+  const handleLogin = (credentials: { email: string; password: string; role?: 'user' | 'admin' | 'manager'; position?: string; authId?: string; userName?: string }) => {
     console.log('🎯 App.tsx - handleLogin chamado com:', credentials);
     // Usa o valor de position vindo do backend, se existir
     const role: 'user' | 'admin' | 'manager' =
@@ -121,8 +122,9 @@ export default function App() {
         : 'user';
     const provisional: User = {
       id: deriveUserId(credentials.email),
+      authId: credentials.authId, // UUID do Supabase Auth
       email: credentials.email,
-      name: credentials.email.split('@')[0] || 'Usuário',
+      name: credentials.userName || credentials.email.split('@')[0] || 'Usuário',
       role,
       position: credentials.position || role
     };
@@ -143,17 +145,21 @@ export default function App() {
       })
       .catch(()=>{});
     console.log('👤 Dados do usuário (provisional):', provisional);
-    // Salva log de entrada do usuário
-    saveLog({
-      type: 'login',
-      userEmail: provisional.email,
-      userName: provisional.name,
-      details: { role: provisional.role, position: provisional.position }
-    });
-    console.log('✅ Login aceito no App.tsx (provisional), aguardando upsert para id real');
+    // ✨ LOG REMOVIDO: Agora é criado no backend automaticamente no endpoint /auth/signin
+    console.log('✅ Login aceito no App.tsx com authId:', provisional.authId);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // ✨ Chamar endpoint de logout do backend que cria o log de auditoria
+    if (user && user.authId) {
+      try {
+        await authService.logout();
+        console.log('✅ Logout registrado no backend');
+      } catch (error) {
+        console.error('❌ Erro ao registrar logout:', error);
+      }
+    }
+    
     // Limpar roles salvos para o usuário atual
     if (user?.email) {
       localStorage.removeItem('user_role_' + user.email);
