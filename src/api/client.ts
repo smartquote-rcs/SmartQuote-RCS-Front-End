@@ -8,7 +8,7 @@ export const API_BASE_URL = isDevelopment
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000, // Aumentado de 10s para 30s
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,12 +34,21 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error(`💥 Erro na API [${error.config?.method?.toUpperCase()} ${error.config?.url}]:`, {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      message: error.message
-    });
+    // Melhor tratamento de timeouts
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      console.error(`⏰ Timeout na API [${error.config?.method?.toUpperCase()} ${error.config?.url}]:`, {
+        timeout: error.config?.timeout,
+        message: error.message,
+        url: error.config?.url
+      });
+    } else {
+      console.error(`💥 Erro na API [${error.config?.method?.toUpperCase()} ${error.config?.url}]:`, {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+    }
     
     if (error.response?.status === 401) {
       // Token expirado ou inválido - fazer logout completo

@@ -988,16 +988,57 @@ export const cotacaoService = {
   },
 
   async update(id: string, cotacaoData: any): Promise<AuthResponse> {
-    try {
-      const response = await api.patch(`/cotacoes/${id}`, cotacaoData);
-      return { success: true, data: response.data };
-    } catch (error: any) {
-      console.error('💥 Erro ao atualizar cotação:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || error.response?.data?.message || 'Erro ao atualizar cotação'
-      };
+    const maxRetries = 2;
+    let lastError: any;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 Tentativa ${attempt}/${maxRetries} - Atualizando cotação ${id}`);
+        const response = await api.patch(`/cotacoes/${id}`, cotacaoData);
+        
+        if (attempt > 1) {
+          console.log(`✅ Sucesso na tentativa ${attempt} para cotação ${id}`);
+        }
+        
+        return { success: true, data: response.data };
+      } catch (error: any) {
+        lastError = error;
+        const isTimeout = error.code === 'ECONNABORTED' || error.message?.includes('timeout');
+        const isNetworkError = !error.response;
+        
+        console.error(`💥 Tentativa ${attempt} falhou para cotação ${id}:`, {
+          isTimeout,
+          isNetworkError,
+          message: error.message,
+          status: error.response?.status
+        });
+
+        // Se não é timeout/rede ou é a última tentativa, não retry
+        if ((!isTimeout && !isNetworkError) || attempt === maxRetries) {
+          break;
+        }
+
+        // Aguardar antes do retry (backoff exponencial)
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
+
+    // Tratamento de erro final
+    let errorMessage = 'Erro ao atualizar cotação';
+    if (lastError?.code === 'ECONNABORTED' || lastError?.message?.includes('timeout')) {
+      errorMessage = 'Timeout: O servidor está demorando muito para responder. Tente novamente.';
+    } else if (!lastError?.response) {
+      errorMessage = 'Erro de conexão: Verifique sua internet e tente novamente.';
+    } else {
+      errorMessage = lastError.response?.data?.error || lastError.response?.data?.message || errorMessage;
+    }
+
+    return {
+      success: false,
+      error: errorMessage
+    };
   },
 
   async delete(id: string): Promise<AuthResponse> {

@@ -1119,19 +1119,39 @@ export function QuoteRequestsPage({
             setShowDynamicsModal(true);
           }, 1000);
         } else {
+          // Melhor tratamento de erros de aprovação
+          let errorMessage = resp.error || 'Erro ao aprovar cotação';
+          if (resp.error?.includes('timeout') || resp.error?.includes('Timeout')) {
+            errorMessage = 'Timeout na aprovação: O servidor está demorando para responder. A cotação pode ter sido aprovada. Verifique o status.';
+          }
+          
           window.dispatchEvent(new CustomEvent('toast', { 
             detail: { 
               type: 'error', 
-              message: resp.error || 'Erro ao aprovar cotação' 
+              message: errorMessage
             } 
           }));
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error('Erro ao aprovar cotação:', e);
+        
+        // Tratamento específico para timeouts na aprovação
+        let errorMessage = 'Erro ao processar aprovação';
+        if (e?.code === 'ECONNABORTED' || e?.message?.includes('timeout')) {
+          errorMessage = 'Timeout na aprovação: O servidor está demorando para processar. A cotação pode ter sido aprovada. Recarregue a página para verificar o status.';
+          
+          // Auto-recarregar dados após timeout na aprovação
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        } else if (!e?.response) {
+          errorMessage = 'Erro de conexão: Verifique sua internet e tente novamente.';
+        }
+        
         window.dispatchEvent(new CustomEvent('toast', { 
           detail: { 
             type: 'error', 
-            message: 'Erro ao processar aprovação' 
+            message: errorMessage
           } 
         }));
       } finally {
