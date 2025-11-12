@@ -121,21 +121,71 @@ export function DashboardPage({
 
   // Estado para logs de login
   const [loginAlerts, setLoginAlerts] = useState<Array<any>>([]);
+  const [isLoadingAlerts, setIsLoadingAlerts] = useState(true);
 
   useEffect(() => {
-    // Buscar logs de login do localStorage
-    let logs: any[] = [];
-    try {
-      const offlineLogs = JSON.parse(localStorage.getItem('offline_logs') || '[]');
-      logs = offlineLogs.concat();
-    } catch {}
-    // Se houver endpoint de logs futuramente, buscar aqui
-    // Filtrar apenas logs de login
-    const loginLogs = logs.filter(l => l.type === 'login');
-    // Ordenar do mais recente para o mais antigo
-    loginLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    // Pegar os 3 mais recentes
-    setLoginAlerts(loginLogs.slice(0, 3));
+    async function fetchLoginLogs() {
+      setIsLoadingAlerts(true);
+      try {
+        const { auditLogService } = await import("../../api/services");
+        const response = await auditLogService.getAll({
+          limit: 3,
+          offset: 0
+        });
+
+        if (response.success && response.data?.data) {
+          const auditLogs = Array.isArray(response.data.data) 
+            ? response.data.data 
+            : [];
+
+          // Filtrar apenas logs de USER_LOGIN
+          const loginLogs = auditLogs.filter((log: any) => 
+            log.action === 'USER_LOGIN'
+          );
+
+          // Buscar dados dos usuários para cada log
+          const { default: api } = await import("../../api/client");
+          const logsWithUserData = await Promise.all(
+            loginLogs.slice(0, 3).map(async (log: any) => {
+              try {
+                const userResponse = await api.get(`/users/by-auth-id/${log.user_id}`);
+                const userData = userResponse.data;
+                const detalhes = log.detalhes_alteracao || {};
+                
+                return {
+                  id: log.id,
+                  userId: log.user_id,
+                  userName: userData?.name || 'Usuário',
+                  userEmail: userData?.email || '-',
+                  timestamp: log.created_at,
+                  details: {
+                    role: userData?.position || 'user',
+                    ip: detalhes.ip || '-',
+                    user_agent: detalhes.user_agent || '-'
+                  }
+                };
+              } catch (err) {
+                console.error(`Erro ao buscar usuário ${log.user_id}:`, err);
+                return null;
+              }
+            })
+          );
+
+          // Filtrar logs que falharam ao buscar usuário
+          const validLogs = logsWithUserData.filter((log: any) => log !== null);
+          setLoginAlerts(validLogs);
+        } else {
+          setLoginAlerts([]);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar logs de login para dashboard:', err);
+        setLoginAlerts([]);
+      } finally {
+        setIsLoadingAlerts(false);
+      }
+    }
+    
+    fetchLoginLogs();
   }, []);
 
   // Função para gerar métricas dinâmicas
@@ -441,25 +491,31 @@ export function DashboardPage({
               </button>
             </div>
             <div className="space-y-2">
-              {loginAlerts.length === 0 && (
+              {isLoadingAlerts ? (
+                <div className={`${finalIsLight ? 'text-gray-500' : 'text-slate-400'} text-xs text-center py-4`}>
+                  <RefreshCw className="w-4 h-4 mx-auto mb-2 animate-spin" />
+                  Carregando alertas...
+                </div>
+              ) : loginAlerts.length === 0 ? (
                 <div className={`${finalIsLight ? 'text-gray-500' : 'text-slate-400'} text-xs`}>Nenhum alerta de login recente.</div>
-              )}
-              {loginAlerts.map((log, index) => (
-                <div key={index} className={`${finalIsLight ? 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:shadow-md' : 'bg-gradient-to-r from-white/5 to-white/2 border-white/10 hover:border-cyan-400/30'} rounded-lg p-3 border transition-all duration-300`}>
-                  <div className="flex items-start space-x-3">
-                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${finalIsLight ? 'bg-blue-500' : 'bg-blue-400'}`}></div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs sm:text-sm font-medium ${finalIsLight ? 'text-gray-800' : 'text-white'} break-words`}>
-                        Login realizado por <span className="font-bold">{log.userName || log.userEmail}</span>
-                        {log.details?.role && (
-                          <span className={`ml-1 ${finalIsLight ? 'text-blue-600' : 'text-blue-300'}`}>({log.details.role})</span>
-                        )}
-                      </p>
-                      <p className={`text-xs ${finalIsLight ? 'text-gray-500' : 'text-slate-400'} mt-1`}>{getRelativeTime(log.timestamp)}</p>
+              ) : (
+                loginAlerts.map((log, index) => (
+                  <div key={log.id || index} className={`${finalIsLight ? 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:shadow-md' : 'bg-gradient-to-r from-white/5 to-white/2 border-white/10 hover:border-cyan-400/30'} rounded-lg p-3 border transition-all duration-300`}>
+                    <div className="flex items-start space-x-3">
+                      <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${finalIsLight ? 'bg-blue-500' : 'bg-blue-400'}`}></div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs sm:text-sm font-medium ${finalIsLight ? 'text-gray-800' : 'text-white'} break-words`}>
+                          Login realizado por <span className="font-bold">{log.userName || log.userEmail}</span>
+                          {log.details?.role && (
+                            <span className={`ml-1 ${finalIsLight ? 'text-blue-600' : 'text-blue-300'}`}>({log.details.role})</span>
+                          )}
+                        </p>
+                        <p className={`text-xs ${finalIsLight ? 'text-gray-500' : 'text-slate-400'} mt-1`}>{getRelativeTime(log.timestamp)}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
