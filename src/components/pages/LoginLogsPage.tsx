@@ -155,18 +155,18 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
   }, []);
 
   return (
-    <div className={`flex flex-col h-full w-full p-0 sm:p-0 lg:p-0 overflow-y-auto ${isLight ? 'bg-gray-50' : 'bg-dark-bg'}`}>
-      <div className={`glass-card rounded-none h-full w-full p-2 sm:p-4 border backdrop-blur-sm ${
+    <div className={`flex flex-col h-full w-full p-0 overflow-y-auto ${isLight ? 'bg-gray-50' : 'bg-dark-bg'}`}>
+      <div className={`glass-card rounded-none h-full w-full p-2 sm:p-3 border backdrop-blur-sm ${
         isLight 
           ? 'bg-gradient-to-br from-white/90 to-gray-50/90 border-gray-200' 
           : 'bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-white/10'
       }`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
           <div className="min-w-0 flex-1">
-            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-1 flex items-center gap-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
-              <LogIn className="w-6 h-6 text-blue-400" /> Logs de Sessão
+            <h1 className={`text-lg sm:text-xl lg:text-2xl font-bold mb-1 flex items-center gap-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
+              <LogIn className="w-5 h-5 text-blue-400" /> Logs de Sessão
             </h1>
-            <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>
+            <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>
               Visualize todos os acessos (login/logout) registrados no sistema.
             </p>
           </div>
@@ -174,52 +174,52 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
             <button
               onClick={loadLogs}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               title="Atualizar logs"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               {loading ? 'Carregando...' : 'Atualizar'}
             </button>
           </div>
         </div>
 
         {error && (
-          <div className={`mb-4 p-3 rounded-lg flex items-center gap-2 ${
+          <div className={`mb-3 p-2.5 rounded-lg flex items-center gap-2 ${
             isLight 
               ? 'bg-red-50 border border-red-200 text-red-800' 
               : 'bg-red-900/20 border border-red-500/50 text-red-300'
           }`}>
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <p className="text-sm">{error}</p>
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <p className="text-xs">{error}</p>
           </div>
         )}
 
         {loading ? (
-          <div className="text-center py-12">
-            <RefreshCw className={`w-8 h-8 mx-auto mb-3 animate-spin ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
-            <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>Carregando logs...</p>
+          <div className="text-center py-8">
+            <RefreshCw className={`w-7 h-7 mx-auto mb-2 animate-spin ${isLight ? 'text-blue-600' : 'text-blue-400'}`} />
+            <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>Carregando logs...</p>
           </div>
         ) : loginLogs.length === 0 ? (
-          <div className={`text-center py-12 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>
-            <LogIn className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Nenhum log de sessão encontrado.</p>
+          <div className={`text-center py-8 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>
+            <LogIn className="w-10 h-10 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Nenhum log de sessão encontrado.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto max-h-[60vh]">
-            <table className={`min-w-full w-full text-sm rounded-none border shadow-lg table-fixed ${
+          <div className="overflow-x-auto max-h-[65vh]">
+            <table className={`min-w-full w-full text-xs rounded-none border shadow-lg ${
               isLight 
                 ? 'bg-white border-gray-200' 
                 : 'bg-slate-800/80 border-slate-700'
             }`}>
               <thead>
                 <tr className={isLight ? 'bg-gray-50' : 'bg-slate-900/60'}>
-                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Ação</th>
-                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Usuário</th>
-                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Email</th>
-                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Cargo</th>
-                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Navegador/Dispositivo</th>
-                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Data/Hora</th>
-                  <th className={`px-4 py-3 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Tempo</th>
+                  <th className={`px-2 sm:px-3 py-2 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Ação</th>
+                  <th className={`px-2 sm:px-3 py-2 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Usuário</th>
+                  <th className={`hidden md:table-cell px-2 sm:px-3 py-2 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Email</th>
+                  <th className={`hidden lg:table-cell px-2 sm:px-3 py-2 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Cargo</th>
+                  <th className={`hidden xl:table-cell px-2 sm:px-3 py-2 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Navegador/Dispositivo</th>
+                  <th className={`px-2 sm:px-3 py-2 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Data/Hora</th>
+                  <th className={`hidden sm:table-cell px-2 sm:px-3 py-2 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Tempo</th>
                 </tr>
               </thead>
               <tbody>
@@ -229,8 +229,8 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
                       ? 'border-gray-200 hover:bg-blue-50' 
                       : 'border-slate-700 hover:bg-blue-900/20'
                   }`}>
-                    <td className="px-4 py-2">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
+                    <td className="px-2 sm:px-3 py-1.5">
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-semibold ${
                         log.type === 'login' 
                           ? 'bg-green-500/20 text-green-400' 
                           : 'bg-orange-500/20 text-orange-400'
@@ -238,10 +238,22 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
                         {log.type === 'login' ? 'LOGIN' : 'LOGOUT'}
                       </span>
                     </td>
-                    <td className={`px-4 py-2 font-medium ${isLight ? 'text-gray-900' : 'text-white'}`}>{log.userName || '-'}</td>
-                    <td className={`px-4 py-2 ${isLight ? 'text-gray-700' : 'text-slate-200'}`}>{log.userEmail || '-'}</td>
-                    <td className="px-4 py-2">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                    <td className={`px-2 sm:px-3 py-1.5 font-medium text-[11px] sm:text-xs ${isLight ? 'text-gray-900' : 'text-white'}`}>
+                      <div className="truncate max-w-[120px] sm:max-w-none" title={log.userName || '-'}>
+                        {log.userName || '-'}
+                      </div>
+                      {/* Mostrar email em telas pequenas abaixo do nome */}
+                      <div className={`md:hidden text-[10px] truncate max-w-[120px] ${isLight ? 'text-gray-600' : 'text-slate-400'}`} title={log.userEmail || '-'}>
+                        {log.userEmail || '-'}
+                      </div>
+                    </td>
+                    <td className={`hidden md:table-cell px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs ${isLight ? 'text-gray-700' : 'text-slate-200'}`}>
+                      <div className="truncate max-w-[150px] lg:max-w-none" title={log.userEmail || '-'}>
+                        {log.userEmail || '-'}
+                      </div>
+                    </td>
+                    <td className="hidden lg:table-cell px-2 sm:px-3 py-1.5">
+                      <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-semibold ${
                         log.details?.role === 'admin' ? 'bg-red-500/20 text-red-400' :
                         log.details?.role === 'manager' ? 'bg-yellow-500/20 text-yellow-400' :
                         'bg-blue-500/20 text-blue-300'
@@ -250,15 +262,23 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
                       </span>
                     </td>
                     <td 
-                      className={`px-4 py-2 text-xs ${isLight ? 'text-gray-600' : 'text-slate-400'}`} 
+                      className={`hidden xl:table-cell px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs ${isLight ? 'text-gray-600' : 'text-slate-400'}`} 
                       title={`${log.ip ? 'IP: ' + log.ip + '\n' : ''}User Agent: ${log.userAgent || 'N/A'}`}
                     >
                       {parseUserAgent(log.userAgent)}
                     </td>
-                    <td className={`px-4 py-2 ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>
-                      {log.timestamp ? new Date(log.timestamp).toLocaleString('pt-BR') : '-'}
+                    <td className={`px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>
+                      <div className="whitespace-nowrap">
+                        {log.timestamp ? new Date(log.timestamp).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : '-'}
+                      </div>
                     </td>
-                    <td className={`px-4 py-2 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>
+                    <td className={`hidden sm:table-cell px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs whitespace-nowrap ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>
                       {log.timestamp ? getRelativeTime(log.timestamp) : '-'}
                     </td>
                   </tr>
