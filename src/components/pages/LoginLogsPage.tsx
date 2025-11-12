@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { LogIn, RefreshCw, AlertCircle } from 'lucide-react';
 import { auditLogService } from '../../api/services';
+import api from '../../api/client';
 
 interface AuditLog {
   id: number;
@@ -9,7 +10,14 @@ interface AuditLog {
   tabela_afetada?: string;
   registo_id?: number;
   detalhes_alteracao?: any;
-  created_at: string; // O campo no backend é created_at, não timestamp
+  created_at: string;
+}
+
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  position: string;
 }
 
 function getRelativeTime(dateString: string) {
@@ -51,6 +59,33 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
   const [loginLogs, setLoginLogs] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [usersCache, setUsersCache] = useState<Map<string, UserData>>(new Map());
+
+  // Função para buscar dados do usuário por auth_id (UUID)
+  const fetchUserData = async (userId: string): Promise<UserData | null> => {
+    // Verificar cache primeiro
+    if (usersCache.has(userId)) {
+      return usersCache.get(userId)!;
+    }
+
+    try {
+      const response = await api.get(`/users/by-auth-id/${userId}`);
+      const userData: UserData = {
+        id: response.data.id,
+        name: response.data.name || 'Usuário',
+        email: response.data.email || '-',
+        position: response.data.position || 'user'
+      };
+      
+      // Atualizar cache
+      setUsersCache(prev => new Map(prev).set(userId, userData));
+      
+      return userData;
+    } catch (err) {
+      console.error(`Erro ao buscar usuário ${userId}:`, err);
+      return null;
+    }
+  };
 
   const loadLogs = async () => {
     setLoading(true);
@@ -66,39 +101,35 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
           ? result.data.data 
           : [];
 
-        // Aceitar tanto LOGIN/LOGOUT quanto USER_LOGIN/USER_LOGOUT
+        // Filtrar apenas logs de LOGIN/LOGOUT
         const sessionLogs = auditLogs.filter(log => 
-          log.action === 'LOGIN' || log.action === 'LOGOUT' || 
           log.action === 'USER_LOGIN' || log.action === 'USER_LOGOUT'
         );
 
-        // Formatar logs usando APENAS os dados que já vêm em detalhes_alteracao
-        // SEM fazer chamadas à API
-        const formattedLogs = sessionLogs.map((log) => {
+        // Buscar dados dos usuários para cada log
+        const formattedLogsPromises = sessionLogs.map(async (log) => {
           const detalhes = log.detalhes_alteracao || {};
-
-          // Extrair dados diretamente de detalhes_alteracao
-          const userName = detalhes.userName || detalhes.name || 'Usuário';
-          const userEmail = detalhes.userEmail || detalhes.email || '-';
-          const userRole = detalhes.role || detalhes.position || 'user';
-          const ip = detalhes.ip || '-';
-          const userAgent = detalhes.user_agent || '-';
+          
+          // Buscar dados do usuário através do user_id
+          const userData = await fetchUserData(log.user_id);
 
           return {
             id: log.id,
             userId: log.user_id,
-            type: log.action.toLowerCase().replace('user_', ''), // Remove 'user_' prefix
-            userName,
-            userEmail,
-            ip,
-            userAgent,
+            type: log.action.toLowerCase().replace('user_', ''),
+            userName: userData?.name || 'Usuário',
+            userEmail: userData?.email || '-',
+            ip: detalhes.ip || '-',
+            userAgent: detalhes.user_agent || '-',
             timestamp: log.created_at,
             details: {
-              role: userRole,
-              position: userRole
+              role: userData?.position || 'user',
+              position: userData?.position || 'user'
             }
           };
         });
+
+        const formattedLogs = await Promise.all(formattedLogsPromises);
 
         formattedLogs.sort((a, b) => 
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
