@@ -290,7 +290,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   // Listener para logout automático quando token expira
   useEffect(() => {
     const handleTokenExpired = (event: any) => {
-      console.log('🔔 Evento tokenExpired recebido');
       setFeedback({
         type: 'error',
         message: event.detail?.message || 'Sua sessão expirou. Por favor, faça login novamente.'
@@ -321,26 +320,21 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     const tokenFromUrl = accessToken || tokenFromQuery;
     
     if (tokenFromUrl) {
-      console.log('🔑 Token detectado na URL:', tokenFromUrl.substring(0, 10) + '...');
-      console.log('📋 Tipo de token:', tokenType);
       
       // Verificar o tipo de token para decidir a ação
       if (tokenType === 'recovery' || !tokenType) {
         // Token de recuperação de senha
-        console.log('🔄 Modo: Reset de senha');
         setResetToken(tokenFromUrl);
         setShowResetPassword(true);
         setShowForgotPassword(false);
       } else if (tokenType === 'signup' || tokenType === 'email_confirmation') {
         // Token de confirmação de cadastro
-        console.log('✅ Modo: Confirmação de cadastro');
         setFeedback({
           type: 'success',
           message: 'Conta confirmada com sucesso! Você já pode fazer login.'
         });
       } else {
         // Outros tipos de token - tratar como reset por padrão
-        console.log('❓ Tipo desconhecido, tratando como reset');
         setResetToken(tokenFromUrl);
         setShowResetPassword(true);
         setShowForgotPassword(false);
@@ -355,8 +349,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     e.preventDefault();
     setIsLoading(true);
     setFeedback({ type: null, message: '' });
-
-    console.log('🔍 Tentando fazer login com:', { email });
 
     // Validações locais primeiro
     if (!email || !password) {
@@ -393,21 +385,16 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       // Usar a API real para fazer login
       const result = await authService.signin({ email, password });
       
-      console.log('📡 Resposta da API:', result);
-      
       if (result.success) {
-        console.log('✅ Login bem-sucedido!', result.data);
         
         // Extrair dados do usuário do response
         const authId = result.data?.user?.id; // UUID do Supabase Auth
         const userName = result.data?.user?.name || email.split('@')[0];
-        console.log('🔑 Dados do usuário:', { authId, userName });
         
         // Buscar o papel real do usuário na API
         try {
           const { getUserRoleByEmail } = await import('../api/services');
           const roleRes = await getUserRoleByEmail(email);
-          console.log('🔎 Resposta do getUserRoleByEmail:', roleRes);
           // role pode ser 'admin', 'manager' ou 'user' (direto do backend)
           const userRole = roleRes.role?.toLowerCase() || 'user';
           let roleLabel = 'Usuário';
@@ -419,7 +406,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           });
           setIsLoginSuccess(true);
           setTimeout(() => {
-            console.log('🚀 Chamando onLogin com authId, role e position:', { authId, userRole, userName });
             // Garante que role e position sejam passados do backend
             let roleTyped: 'user' | 'admin' | 'manager' = 'user';
             if (userRole === 'admin') roleTyped = 'admin';
@@ -430,7 +416,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           setFeedback({ type: 'error', message: 'Erro ao buscar permissões do usuário.' });
         }
       } else {
-        console.error('❌ Erro no login:', result.error);
         // Mensagens de erro específicas baseadas na resposta da API
         let errorMessage = 'Erro ao fazer login';
         if (result.error?.toLowerCase().includes('password') || result.error?.toLowerCase().includes('senha')) {
@@ -495,7 +480,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     
     try {
       // Enviar diretamente para o backend - ele fará toda a validação
-      console.log('📧 Enviando email de recuperação...');
       const response = await authService.recoverPassword(email);
       
       if (response.success) {
@@ -567,7 +551,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setFeedback({ type: null, message: '' });
     
     try {
-      console.log('🔄 Renovando senha...');
       const response = await authService.resetPassword(resetToken, newPassword);
       
       if (response.success) {

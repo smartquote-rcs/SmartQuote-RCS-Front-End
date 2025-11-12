@@ -191,14 +191,8 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
 
       // Verificar se existe token de autenticação
       const token = localStorage.getItem("auth_token");
-      console.log(
-        "🔑 Debug - Token no localStorage:",
-        token ? "Presente" : "Ausente"
-      );
-      console.log("🔑 Debug - Token completo:", token);
 
       if (!token) {
-        console.error("❌ Token de autenticação não encontrado!");
         showToast(
           "error",
           "Erro de Autenticação",
@@ -210,41 +204,24 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
 
       const response = await userService.getAll();
 
-      console.log("🔍 Debug - Resposta completa da API (users):", response);
-
-      if (response.success && response.data) {
-        console.log("🔍 Debug - response.data:", response.data);
-        console.log("🔍 Debug - Tipo de response.data:", typeof response.data);
-        console.log("🔍 Debug - É array?", Array.isArray(response.data));
-        console.log(
-          "🔍 Debug - Keys de response.data:",
-          Object.keys(response.data)
-        );
+      if (response.success && response.data) {  
 
         // Verificar se response.data é um array ou se está aninhado
         let usersArray = null;
 
         // Tentar diferentes estruturas possíveis de dados
         if (Array.isArray(response.data)) {
-          console.log("🔍 Debug - Dados diretos em response.data (array)");
           usersArray = response.data;
         } else if (response.data.users && Array.isArray(response.data.users)) {
-          console.log("🔍 Debug - Dados encontrados em response.data.users");
           usersArray = response.data.users;
         } else if (response.data.data && Array.isArray(response.data.data)) {
-          console.log("🔍 Debug - Dados encontrados em response.data.data");
           usersArray = response.data.data;
         } else if (response.data.items && Array.isArray(response.data.items)) {
-          console.log("🔍 Debug - Dados encontrados em response.data.items");
           usersArray = response.data.items;
         } else {
-          // Tentar encontrar qualquer propriedade que seja um array
           const dataKeys = Object.keys(response.data);
           for (const key of dataKeys) {
             if (Array.isArray(response.data[key])) {
-              console.log(
-                `🔍 Debug - Array encontrado em response.data.${key}`
-              );
               usersArray = response.data[key];
               break;
             }
@@ -255,9 +232,6 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
         if (!usersArray) {
           // Se response.data é um objeto que contém um único usuário, transformar em array
           if (response.data.id || response.data._id || response.data.email) {
-            console.log(
-              "🔍 Debug - Objeto único detectado, convertendo para array"
-            );
             usersArray = [response.data];
           } else {
             console.warn(
@@ -275,12 +249,29 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
           }
         }
 
-        console.log("🔍 Debug - usersArray final:", usersArray);
-        console.log("🔍 Debug - Quantidade de usuários:", usersArray.length);
+        // Se ainda não encontrou um array, tentar outras estruturas
+        if (!usersArray) {
+          // Se response.data é um objeto que contém um único usuário, transformar em array
+          if (response.data.id || response.data._id || response.data.email) {
+            usersArray = [response.data];
+          } else {
+            console.warn(
+              "⚠️ Estrutura de dados não reconhecida:",
+              response.data
+            );
+            setUsers([]);
+            showToast(
+              "error",
+              "Formato de Dados Inválido",
+              "A API retornou dados em formato não reconhecido. Contacte o administrador.",
+              6000
+            );
+            return;
+          }
+        }
 
         // Verificar se o array tem elementos válidos
         if (usersArray.length === 0) {
-          console.log("📝 Array vazio - nenhum usuário encontrado");
           setUsers([]);
           showToast(
             "info",
@@ -295,7 +286,6 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
         try {
           const mappedUsers: UserData[] = usersArray.map(
             (user: any, index: number) => {
-              console.log(`🔍 Debug - Mapeando usuário ${index}:`, user);
               return {
                 id:
                   user.id?.toString() ||
@@ -322,14 +312,12 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
             }
           );
 
-          console.log("🔍 Debug - Usuários mapeados:", mappedUsers);
           setUsers(mappedUsers);
         } catch (mappingError) {
           console.error(
             "💥 Erro durante o mapeamento dos usuários:",
             mappingError
           );
-          console.error("💥 Dados que causaram o erro:", usersArray);
           setUsers([]);
           showToast(
             "error",
@@ -339,7 +327,6 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
           );
         }
       } else {
-        console.error("❌ Erro ao carregar usuários:", response.error);
         setUsers([]);
         showToast(
           "error",
@@ -561,35 +548,12 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
     return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
   });
 
-  // Função de debug para verificar estado do formulário
-  const debugFormState = () => {
-    console.log("🔍 Estado atual do formulário:", {
-      name: `"${newUser.name}" (length: ${newUser.name.length})`,
-      email: `"${newUser.email}" (length: ${
-        newUser.email.length
-      }, valid: ${/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUser.email)})`,
-      department: `"${newUser.department}" (length: ${newUser.department.length})`,
-      role: newUser.role,
-      status: newUser.status,
-      phone: `"${newUser.phone}" (length: ${newUser.phone.length})`,
-      password: newUser.password
-        ? `"[DEFINIDA]" (length: ${newUser.password.length})`
-        : "[VAZIA]",
-      isFormValid: !(!newUser.name || !newUser.email || !newUser.department),
-    });
-  };
-
   const handleAddUser = async () => {
-    console.log("🚀 Iniciando processo de criação de usuário...");
-    debugFormState();
-
     // Usar a função de validação
     if (!validateUserData()) {
-      console.log("❌ Validação falhou, cancelando criação");
       return;
     }
 
-    console.log("✅ Validação passou, continuando...");
     setIsCreatingUser(true);
 
     try {
@@ -610,20 +574,11 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
           newUser.password.length > 0 && { password: newUser.password }),
       };
 
-      // Log dos dados que serão enviados (sem a senha por segurança)
-      console.log("� Dados preparados para API:", {
-        ...newUserData,
-        password: newUserData.password ? "[SENHA DEFINIDA]" : "[SEM SENHA]",
-      });
-
       const response = await userService.create(newUserData);
-      console.log("📨 Resposta do serviço de criação:", response);
 
       if (response.success) {
-        console.log("✅ Usuário criado com sucesso!");
 
         // Recarregar lista de usuários
-        console.log("🔄 Recarregando lista de usuários...");
         await loadUsers();
 
         // Salvar o role do usuário no localStorage para futuro login
@@ -647,12 +602,9 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
           }`
         );
 
-        console.log(`👤 Role salvo para ${newUser.email}: ${newUser.role}`);
-
         // Limpar formulário e fechar dialog
         clearForm();
       } else {
-        console.log("❌ Falha ao criar usuário:", response.error);
 
         // Melhor tratamento de mensagens de erro
         let errorMessage = response.error || "Ocorreu um erro inesperado.";
@@ -691,8 +643,6 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
     if (!editingUser) return;
 
     try {
-      console.log("📝 Tentando atualizar usuário:", editingUser);
-
       const updateData = {
         name: editingUser.name,
         email: editingUser.email,
@@ -705,7 +655,6 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
       const response = await userService.updateUser(editingUser.id, updateData);
 
       if (response.success) {
-        console.log("✅ Usuário atualizado com sucesso!");
 
         // Atualizar na lista local
         setUsers(
@@ -716,9 +665,6 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
         localStorage.setItem(
           "user_role_" + editingUser.email,
           editingUser.role
-        );
-        console.log(
-          `👤 Role atualizado para ${editingUser.email}: ${editingUser.role}`
         );
 
         showToast(
@@ -731,7 +677,6 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
         setEditingUser(null);
         setIsEditDialogOpen(false);
       } else {
-        console.error("❌ Erro ao atualizar usuário:", response.error);
         showToast(
           "error",
           "Erro ao Atualizar",
@@ -752,11 +697,9 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      console.log("🗑️ Tentando deletar usuário:", userId);
       const response = await userService.deleteUser(userId);
 
       if (response.success) {
-        console.log("✅ Usuário deletado com sucesso!");
         // Remover da lista local
         setUsers(users.filter((user) => user.id !== userId));
         showToast(
@@ -766,7 +709,6 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
           3000
         );
       } else {
-        console.error("❌ Erro ao deletar usuário:", response.error);
         showToast(
           "error",
           "Erro ao Remover",
@@ -775,7 +717,6 @@ export default function UserManagementPage({ isLight = false }: { isLight?: bool
         );
       }
     } catch (error) {
-      console.error("💥 Erro inesperado ao deletar usuário:", error);
       showToast(
         "error",
         "Erro Inesperado",

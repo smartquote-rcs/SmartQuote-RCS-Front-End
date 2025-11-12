@@ -35,8 +35,6 @@ export async function saveLog(entry: LogEntry) {
         type: entry.type
       }
     };
-
-    console.log('📝 Salvando log de auditoria:', auditLogData);
     
     // Envia para o backend
     const result = await auditLogService.create(auditLogData);
@@ -46,9 +44,7 @@ export async function saveLog(entry: LogEntry) {
       // Se falhar, salva no localStorage para tentar novamente depois
       saveOfflineLog(entry);
     } else {
-      console.log('✅ Log de auditoria salvo com sucesso');
-      // Tenta sincronizar logs offline se existirem
-      syncOfflineLogs();
+        syncOfflineLogs();
     }
     
     return result;
@@ -93,7 +89,6 @@ function saveOfflineLog(entry: LogEntry) {
       savedAt: new Date().toISOString()
     });
     localStorage.setItem('offline_logs', JSON.stringify(offlineLogs));
-    console.log('💾 Log salvo localmente para sincronização futura');
   } catch (err) {
     console.error('❌ Erro ao salvar log offline:', err);
   }
@@ -109,9 +104,6 @@ async function syncOfflineLogs() {
     if (offlineLogs.length === 0) {
       return;
     }
-    
-    console.log(`🔄 Sincronizando ${offlineLogs.length} logs offline...`);
-    
     let successCount = 0;
     const failedLogs = [];
     
@@ -128,16 +120,14 @@ async function syncOfflineLogs() {
     localStorage.setItem('offline_logs', JSON.stringify(failedLogs));
     
     if (successCount > 0) {
-      console.log(`✅ ${successCount} logs sincronizados com sucesso`);
     }
     
     if (failedLogs.length > 0) {
-      console.log(`⚠️ ${failedLogs.length} logs ainda pendentes`);
     }
   } catch (err) {
     console.error('❌ Erro ao sincronizar logs offline:', err);
   }
-}
+} 
 
 /**
  * Obtém logs offline pendentes

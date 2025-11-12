@@ -164,7 +164,7 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
           <div className="min-w-0 flex-1">
             <h1 className={`text-lg sm:text-xl lg:text-2xl font-bold mb-1 flex items-center gap-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
-              <LogIn className="w-5 h-5 text-blue-400" /> Logs de Sessão
+              <LogIn className="w-5 h-5 text-blue-400" /> Logs de Acesso
             </h1>
             <p className={`text-xs ${isLight ? 'text-gray-600' : 'text-slate-300'}`}>
               Visualize todos os acessos (login/logout) registrados no sistema.

@@ -77,13 +77,9 @@ class EmailService {
   // Testar conexão com servidor de email
   private async testConnection(config: EmailConfig): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log('🔗 Testando conexão IMAP...');
-      
-      // Tentar conexão real com IMAP
       const connection = await this.createImapConnection(config);
       
       if (connection) {
-        console.log('✅ Conexão IMAP estabelecida com sucesso');
         await this.closeImapConnection(connection);
         return { success: true };
       }
@@ -91,7 +87,6 @@ class EmailService {
       return { success: false, error: 'Não foi possível estabelecer conexão' };
       
     } catch (error: any) {
-      console.error('❌ Erro na conexão IMAP:', error);
       return { 
         success: false, 
         error: error.message || 'Erro de conexão desconhecido' 
@@ -143,13 +138,10 @@ class EmailService {
           throw new Error('Senha muito curta');
         }
         
-        // Se as validações básicas passaram, assumimos que está ok
-        console.log('⚠️ Teste de conectividade limitado no ambiente web - validações básicas OK');
         return { host: config.host, port: config.port };
       }
       
     } catch (error: any) {
-      console.error('Erro ao criar conexão IMAP:', error);
       throw error;
     }
   }
@@ -158,8 +150,7 @@ class EmailService {
   private async closeImapConnection(connection: any): Promise<void> {
     try {
       if (connection) {
-        // Em uma implementação real, fecharia a conexão aqui
-        console.log('🔒 Conexão IMAP fechada');
+          // Em uma implementação real, fecharia a conexão aqui
       }
     } catch (error) {
       console.error('Erro ao fechar conexão IMAP:', error);
@@ -171,7 +162,6 @@ class EmailService {
     if (!this.config || !this.config.enabled || this.isRunning) return;
 
     this.isRunning = true;
-    console.log('📧 Iniciando monitoramento de emails para cotações...');
 
     this.intervalId = setInterval(() => {
       this.checkForNewEmails();
@@ -188,7 +178,6 @@ class EmailService {
       this.intervalId = null;
     }
     this.isRunning = false;
-    console.log('📧 Monitoramento de emails interrompido');
   }
 
   // Verificar novos emails
@@ -196,7 +185,6 @@ class EmailService {
     if (!this.config) return;
 
     try {
-      console.log('📧 Verificando novos emails...');
       
       // Simular busca de emails (em produção, usar IMAP)
       const emails = await this.fetchUnreadEmails();
@@ -217,8 +205,7 @@ class EmailService {
   private async fetchUnreadEmails(): Promise<EmailMessage[]> {
     if (!this.config) return [];
 
-    try {
-      console.log('📨 Conectando ao servidor IMAP...');
+      try {
       
       // Verificar se estamos em ambiente Node.js
       const isNode = typeof window === 'undefined';
@@ -227,7 +214,6 @@ class EmailService {
         return await this.fetchEmailsWithImapSimple();
       } else {
         // Em ambiente browser, usar simulação controlada
-        console.log('🌐 Ambiente browser detectado, usando modo simulação');
         return this.getSimulatedEmails();
       }
       
@@ -262,15 +248,11 @@ class EmailService {
           }
         }
       };
-
-      console.log(`🔗 Conectando a ${this.config.host}:${this.config.port}...`);
       
       const connection = await imaps.connect(imapConfig);
-      console.log('✅ Conexão IMAP estabelecida');
 
       // Abrir caixa de entrada
       await connection.openBox('INBOX');
-      console.log('📮 Caixa de entrada aberta');
 
       // Buscar emails não lidos dos últimos 30 dias
       const searchCriteria = [
@@ -284,11 +266,8 @@ class EmailService {
         struct: true
       };
 
-      console.log('🔍 Buscando emails não lidos...');
       const messages = await connection.search(searchCriteria, fetchOptions);
       
-      console.log(`📧 Encontrados ${messages.length} emails não lidos`);
-
       const emails: EmailMessage[] = [];
 
       for (const message of messages) {
@@ -322,8 +301,6 @@ class EmailService {
             
             // Marcar como processado
             this.lastProcessedEmailIds.add(emailId);
-            
-            console.log(`📧 Email processado: "${emailMessage.subject}" de ${emailMessage.from}`);
           }
         } catch (parseError) {
           console.warn('⚠️ Erro ao processar email individual:', parseError);
@@ -332,9 +309,6 @@ class EmailService {
 
       // Fechar conexão
       await connection.end();
-      console.log('� Conexão IMAP fechada');
-
-      console.log(`✅ ${emails.length} emails novos processados com sucesso`);
       return emails;
 
     } catch (error: any) {
@@ -353,8 +327,7 @@ class EmailService {
         console.error('❓ Erro desconhecido:', error.message);
       }
       
-      // Retornar simulação em caso de erro
-      console.log('🔄 Usando modo simulação devido ao erro');
+          // Retornar simulação em caso de erro
       return this.getSimulatedEmails();
     }
   }
@@ -416,8 +389,6 @@ class EmailService {
 
     // Marcar como processados
     simulatedEmails.forEach(email => this.lastProcessedEmailIds.add(email.id));
-    
-    console.log('📧 Usando emails simulados para demonstração');
     return simulatedEmails;
   }
 
@@ -506,7 +477,6 @@ class EmailService {
       const response = await cotacaoService.create(cotacaoData);
       
       if (response.success) {
-        console.log('✅ Cotação criada automaticamente via email:', cotacaoData.id);
         
         // Notificar administradores
         this.notifyNewQuoteFromEmail(cotacaoData);
@@ -521,7 +491,6 @@ class EmailService {
   // Notificar sobre nova cotação via email
   private notifyNewQuoteFromEmail(cotacao: any): void {
     // Aqui poderia enviar notificação push, email, etc.
-    console.log('🔔 Nova cotação recebida via email:', cotacao.id);
     
     // Salvar notificação no localStorage para mostrar no dashboard
     const notifications = JSON.parse(localStorage.getItem('smartquote-notifications') || '[]');

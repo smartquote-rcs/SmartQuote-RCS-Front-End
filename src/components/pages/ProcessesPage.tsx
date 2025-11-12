@@ -123,7 +123,6 @@ export function ProcessesPage({ isLight = false }: ProcessesPageProps = {}) {
   };
 
   const viewJobDetails = (jobId: string) => {
-    console.log('Abrindo detalhes para job:', jobId);
     setSelectedJobId(jobId);
     setViewMode('details');
   };

@@ -26,12 +26,6 @@ api.interceptors.request.use((config) => {
 // Interceptor para tratar erros de autenticação
 api.interceptors.response.use(
   (response) => {
-    console.log(`📨 Resposta da API [${response.config.method?.toUpperCase()} ${response.config.url}]:`, {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data
-    });
-    
     // Status 204 (No Content) é sucesso mas sem dados
     if (response.status === 204) {
       response.data = { message: 'Operação realizada com sucesso' };
@@ -49,7 +43,6 @@ api.interceptors.response.use(
     
     if (error.response?.status === 401) {
       // Token expirado ou inválido - fazer logout completo
-      console.log('🔑 Token expirado ou inválido - fazendo logout automático...');
       
       // Limpar todos os dados de autenticação
       localStorage.removeItem('auth_token');
@@ -62,7 +55,6 @@ api.interceptors.response.use(
       
       // Evitar redirecionamento infinito durante login
       if (!window.location.pathname.includes('/login') && window.location.pathname !== '/') {
-        console.log('🚪 Redirecionando para login...');
         
         // Emitir evento personalizado para notificar componentes sobre logout
         window.dispatchEvent(new CustomEvent('tokenExpired', { 
@@ -86,12 +78,9 @@ export const registerUser = async (userData: {
   password: string;
   role?: string;
 }) => {
-  try {
-    console.log('📤 Tentando cadastrar usuário:', { ...userData, password: '***' });
+    try {
     
     const response = await api.post('/auth/register', userData);
-    
-    console.log('✅ Usuário cadastrado com sucesso:', response.data);
     return response.data;
   } catch (error: any) {
     console.error('❌ Erro ao cadastrar usuário:', error.response?.data || error.message);
@@ -105,17 +94,14 @@ export const loginUser = async (credentials: {
   password: string;
 }) => {
   try {
-    console.log('📤 Tentando fazer login:', { ...credentials, password: '***' });
     
     const response = await api.post('/auth/login', credentials);
     
     // Salvar token se retornado
     if (response.data.token) {
       localStorage.setItem('auth_token', response.data.token);
-      console.log('🔑 Token salvo no localStorage');
     }
     
-    console.log('✅ Login realizado com sucesso:', response.data);
     return response.data;
   } catch (error: any) {
     console.error('❌ Erro ao fazer login:', error.response?.data || error.message);

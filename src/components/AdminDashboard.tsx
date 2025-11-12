@@ -604,9 +604,7 @@ export function AdminDashboard({
         cadastrado_por: currentUserId,
         atualizado_em: currentDate,
         atualizado_por: currentUserId
-      };
-  console.log('🛰️ [AdminDashboard] Payload fornecedor antes de addSupplier:', supplierData);
-      await addSupplier(supplierData);
+      };        await addSupplier(supplierData);
       showToast(
         "success",
         "Fornecedor Adicionado com Sucesso",
@@ -651,77 +649,25 @@ export function AdminDashboard({
       if (statsResponse.success) {
         setDashboardStats(statsResponse.data);
       } else {
-        // Fallback: buscar dados individuais e compor estatísticas
-        const [quoteStatsResponse, suppliersResponse, productsResponse, userStatsResponse] = await Promise.allSettled([
-          dashboardService.getQuoteStats(),
-          supplierService.getAll(),
-          produtoService.getAll ? produtoService.getAll() : Promise.resolve({ success: false }),
-          dashboardService.getUserStats()
-        ]);
-
-        // Processar dados das cotações
-        let quotesStats = {
-          total: allQuotes.length,
-          approved: allQuotes.filter(q => q.status === 'approved').length,
-          pending: allQuotes.filter(q => q.status === 'pending').length,
-          processing: allQuotes.filter(q => q.status === 'processing').length,
-          rejected: allQuotes.filter(q => q.status === 'rejected').length,
+        // Fallback: usar dados locais em vez de fazer mais chamadas API que podem falhar
+        const localStats = {
+          quotes: {
+            total: allQuotes.length,
+            approved: allQuotes.filter(q => q.status === 'approved').length,
+            pending: allQuotes.filter(q => q.status === 'pending').length,
+            processing: allQuotes.filter(q => q.status === 'processing').length,
+            rejected: allQuotes.filter(q => q.status === 'rejected').length,
+          },
+          suppliers: { 
+            total: fornecedores.length, 
+            active: fornecedores.filter(f => f.ativo !== false).length, 
+            inactive: fornecedores.filter(f => f.ativo === false).length 
+          },
+          products: { total: 0, inStock: 0, outOfStock: 0 },
+          users: { total: 0, admin: 0, manager: 0, user: 0 }
         };
-
-        if (quoteStatsResponse.status === 'fulfilled' && quoteStatsResponse.value.success) {
-          quotesStats = {
-            total: quoteStatsResponse.value.data.total || quotesStats.total,
-            approved: quoteStatsResponse.value.data.approved || quotesStats.approved,
-            pending: quoteStatsResponse.value.data.pending || quotesStats.pending,
-            processing: quoteStatsResponse.value.data.processing || quotesStats.processing,
-            rejected: quoteStatsResponse.value.data.rejected || quotesStats.rejected,
-          };
-        }
-
-        // Processar dados dos fornecedores
-        let suppliersCount = fornecedores.length;
-        if (suppliersResponse.status === 'fulfilled' && suppliersResponse.value.success) {
-          const suppliersData = Array.isArray(suppliersResponse.value.data)
-            ? suppliersResponse.value.data
-            : suppliersResponse.value.data?.data || [];
-          suppliersCount = suppliersData.length;
-        }
-
-        // Processar dados dos produtos
-        let productsCount = 0;
-        if (productsResponse.status === 'fulfilled' && productsResponse.value.success) {
-          const productsValue = productsResponse.value as any;
-          const productsData = Array.isArray(productsValue.data)
-            ? productsValue.data
-            : productsValue.data?.data || [];
-          productsCount = productsData.length;
-        }
-
-        // Processar dados dos usuários
-        let usersStats = { total: 0, admin: 0, manager: 0, user: 0 };
-        if (userStatsResponse.status === 'fulfilled' && userStatsResponse.value.success) {
-          usersStats = {
-            total: userStatsResponse.value.data.total || 0,
-            admin: userStatsResponse.value.data.admin || 0,
-            manager: userStatsResponse.value.data.manager || 0,
-            user: userStatsResponse.value.data.user || 0,
-          };
-        }
-
-        setDashboardStats({
-          quotes: quotesStats,
-          suppliers: {
-            total: suppliersCount,
-            active: suppliersCount,
-            inactive: 0
-          },
-          products: {
-            total: productsCount,
-            inStock: productsCount,
-            outOfStock: 0
-          },
-          users: usersStats
-        });
+        
+        setDashboardStats(localStats);
       }
     } catch (error) {
       console.error('Erro ao atualizar estatísticas:', error);
@@ -746,87 +692,43 @@ export function AdminDashboard({
 
   // Buscar estatísticas da API
   useEffect(() => {
+    let isMounted = true;
+    
     async function fetchDashboardStats() {
+      if (!isMounted) return;
+      
       setIsLoadingStats(true);
       setStatsError(null);
 
       try {
         // Tentar buscar estatísticas específicas do dashboard
         const statsResponse = await dashboardService.getStats();
+        if (!isMounted) return;
+        
         if (statsResponse.success) {
           setDashboardStats(statsResponse.data);
         } else {
-          // Fallback: buscar dados individuais e compor estatísticas
-          const [quoteStatsResponse, suppliersResponse, productsResponse, userStatsResponse] = await Promise.allSettled([
-            dashboardService.getQuoteStats(),
-            supplierService.getAll(),
-            produtoService.getAll ? produtoService.getAll() : Promise.resolve({ success: false }),
-            dashboardService.getUserStats()
-          ]);
-
-          // Processar dados das cotações
-          let quotesStats = {
-            total: allQuotes.length,
-            approved: allQuotes.filter(q => q.status === 'approved').length,
-            pending: allQuotes.filter(q => q.status === 'pending').length,
-            processing: allQuotes.filter(q => q.status === 'processing').length,
-            rejected: allQuotes.filter(q => q.status === 'rejected').length,
+          // Fallback: usar dados locais em vez de fazer mais chamadas API que podem falhar
+          if (!isMounted) return;
+          
+          const localStats = {
+            quotes: {
+              total: allQuotes.length,
+              approved: allQuotes.filter(q => q.status === 'approved').length,
+              pending: allQuotes.filter(q => q.status === 'pending').length,
+              processing: allQuotes.filter(q => q.status === 'processing').length,
+              rejected: allQuotes.filter(q => q.status === 'rejected').length,
+            },
+            suppliers: { 
+              total: fornecedores.length, 
+              active: fornecedores.filter(f => f.ativo !== false).length, 
+              inactive: fornecedores.filter(f => f.ativo === false).length 
+            },
+            products: { total: 0, inStock: 0, outOfStock: 0 },
+            users: { total: 0, admin: 0, manager: 0, user: 0 }
           };
-
-          if (quoteStatsResponse.status === 'fulfilled' && quoteStatsResponse.value.success) {
-            quotesStats = {
-              total: quoteStatsResponse.value.data.total || quotesStats.total,
-              approved: quoteStatsResponse.value.data.approved || quotesStats.approved,
-              pending: quoteStatsResponse.value.data.pending || quotesStats.pending,
-              processing: quoteStatsResponse.value.data.processing || quotesStats.processing,
-              rejected: quoteStatsResponse.value.data.rejected || quotesStats.rejected,
-            };
-          }
-
-          // Processar dados dos fornecedores
-          let suppliersCount = fornecedores.length;
-          if (suppliersResponse.status === 'fulfilled' && suppliersResponse.value.success) {
-            const suppliersData = Array.isArray(suppliersResponse.value.data)
-              ? suppliersResponse.value.data
-              : suppliersResponse.value.data?.data || [];
-            suppliersCount = suppliersData.length;
-          }
-
-          // Processar dados dos produtos
-          let productsCount = 0;
-          if (productsResponse.status === 'fulfilled' && productsResponse.value.success) {
-            const productsValue = productsResponse.value as any; // Type assertion para contornar tipo limitado
-            const productsData = Array.isArray(productsValue.data)
-              ? productsValue.data
-              : productsValue.data?.data || [];
-            productsCount = productsData.length;
-          }
-
-          // Processar dados dos usuários
-          let usersStats = { total: 0, admin: 0, manager: 0, user: 0 };
-          if (userStatsResponse.status === 'fulfilled' && userStatsResponse.value.success) {
-            usersStats = {
-              total: userStatsResponse.value.data.total || 0,
-              admin: userStatsResponse.value.data.admin || 0,
-              manager: userStatsResponse.value.data.manager || 0,
-              user: userStatsResponse.value.data.user || 0,
-            };
-          }
-
-          setDashboardStats({
-            quotes: quotesStats,
-            suppliers: {
-              total: suppliersCount,
-              active: suppliersCount, // Assumir todos ativos por padrão
-              inactive: 0
-            },
-            products: {
-              total: productsCount,
-              inStock: productsCount, // Assumir todos em stock por padrão
-              outOfStock: 0
-            },
-            users: usersStats
-          });
+          
+          setDashboardStats(localStats);
         }
       } catch (error) {
         console.error('Erro ao buscar estatísticas:', error);
@@ -850,16 +752,11 @@ export function AdminDashboard({
     }
 
     fetchDashboardStats();
-  }, [fornecedores, allQuotes]); // Recarregar quando fornecedores ou cotações mudarem
-
-  // Registrar função de toast no contexto - DESABILITADO para evitar toasts automáticos
-  /*
-  useEffect(() => {
-    console.log('🎯 AdminDashboard: Registrando showToast no contexto...');
-    setToastCallback(showToast);
-    console.log('✅ AdminDashboard: showToast registrado com sucesso');
-  }, [setToastCallback]);
-  */
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Only run once on mount to prevent cascade of API calls 
 
   const renderNavItem = (item: any, isActive: boolean) => {
     const Icon = item.icon;
@@ -980,7 +877,6 @@ export function AdminDashboard({
                             try {
                               // Usar o serviço de busca geral
                               const result = await buscaGeralService.buscarGeral(newQuotePrompt.trim());
-                              console.log('📨 Resposta da API de busca geral (Admin):', result);
 
                               // Criar cotação com base na resposta da API
                               const newQuote = {

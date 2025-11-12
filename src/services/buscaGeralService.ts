@@ -27,8 +27,6 @@ class BuscaGeralService {
 
   async buscarGeral(solicitacao: string): Promise<BuscaGeralResponse> {
     try {
-      console.log('🔍 Fazendo busca geral para:', solicitacao);
-      
       const response = await fetch(`${this.baseUrl}/busca/geral`, {
         method: 'POST',
         headers: {
@@ -41,12 +39,10 @@ class BuscaGeralService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`❌ Erro na API de busca: ${response.status} - ${errorText}`);
         throw new Error(`Erro na API: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('✅ Resposta da API de busca geral:', result);
 
       return {
         success: true,
@@ -54,8 +50,6 @@ class BuscaGeralService {
       };
 
     } catch (error: any) {
-      console.error('❌ Erro ao fazer busca geral:', error);
-      
       return {
         success: false,
         error: error.message || 'Erro ao processar solicitação',
@@ -76,7 +70,6 @@ class BuscaGeralService {
 
       return response.ok;
     } catch (error) {
-      console.error('❌ Erro ao testar conectividade:', error);
       return false;
     }
   }

@@ -220,8 +220,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const addNotification = (notification: Omit<Notification, 'id' | 'data' | 'lida'>) => {
-    console.log('🔔 addNotification chamada com:', notification);
-    
     const newNotification: Notification = {
       ...notification,
       id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -229,7 +227,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       lida: false
     };
     setNotifications(prev => [newNotification, ...prev]);
-    console.log('📝 Notificação adicionada ao estado:', newNotification);
     
     // Toast automático removido - notificações devem aparecer apenas na área de notificações
     // Para mostrar toast manualmente use: window.debugSuppliers.testToast()
@@ -247,25 +244,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadSuppliers = async () => {
     setIsLoadingSuppliers(true);
     try {
-      console.log('🔄 Carregando fornecedores da API...');
       const response = await supplierService.getAll();
       // Garante que suppliers sempre será um array
       const apiSuppliers = response?.data?.data ?? [];
       if (response.success && Array.isArray(apiSuppliers)) {
-        console.log('✅ Fornecedores carregados da API:', apiSuppliers);
         setSuppliers(apiSuppliers);
         // Salvar no localStorage como backup
         localStorage.setItem('suppliers_backup', JSON.stringify(apiSuppliers));
       } else {
-        console.log('⚠️ API não retornou dados, tentando localStorage...');
         // Fallback para localStorage
         const localSuppliers = localStorage.getItem('suppliers_backup');
         if (localSuppliers) {
           const suppliersData = JSON.parse(localSuppliers);
-          console.log('✅ Fornecedores carregados do localStorage:', suppliersData);
           setSuppliers(suppliersData);
         } else {
-          console.log('📝 Nenhum dado encontrado, iniciando com lista vazia');
           setSuppliers([]);
         }
       }
@@ -275,10 +267,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const localSuppliers = localStorage.getItem('suppliers_backup');
       if (localSuppliers) {
         const suppliersData = JSON.parse(localSuppliers);
-        console.log('✅ Fallback: Fornecedores carregados do localStorage:', suppliersData);
         setSuppliers(suppliersData);
       } else {
-        console.log('📝 Nenhum backup encontrado, iniciando com lista vazia');
         setSuppliers([]);
       }
     } finally {
@@ -300,77 +290,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       clearLocal: () => {
         localStorage.removeItem('suppliers_backup');
-        console.log('🗑️ localStorage limpo');
       },
       showCurrent: () => {
-        console.log('📊 Estado atual dos fornecedores:', suppliers);
+        return suppliers;
       },
       testAPI: async () => {
         try {
           const response = await supplierService.getAll();
-          console.log('🧪 Teste API:', response);
           return response;
         } catch (error) {
-          console.error('🧪 Erro no teste API:', error);
           return { success: false, error };
         }
       },
       // Novas funções para debug de notificações - toast removido para evitar toasts automáticos
       testNotification: () => {
-        console.log('🧪 Testando notificação...');
         addNotification({
           tipo: 'supplier',
           titulo: 'Teste de Notificação',
           mensagem: 'Esta é uma notificação de teste para verificar o sistema.',
           urgente: false
         });
-        console.log('✅ Notificação de teste adicionada');
-      },
-      /*
-      testToast: () => {
-        console.log('🧪 Testando toast...');
-        console.log('📞 toastCallback disponível:', !!toastCallback);
-        if (toastCallback) {
-          toastCallback('success', 'Teste de Toast', 'Este é um toast de teste para verificar o sistema.');
-          console.log('✅ Toast de teste disparado');
-        } else {
-          console.log('❌ Toast callback não está disponível');
-        }
-      },
-      getToastCallback: () => {
-        console.log('📞 Estado do toastCallback:', !!toastCallback);
-        return !!toastCallback;
-      },
-      */
+      },  
       listSuppliers: () => {
-        console.log('📋 Lista de fornecedores:', suppliers);
         return suppliers;
       },
       help: () => {
-        console.log('🔧 Ferramentas de Debug Disponíveis:');
-        console.log('  📊 window.debugSuppliers.showCurrent() - Ver estado atual dos fornecedores');
-        console.log('  🔄 window.debugSuppliers.loadFromAPI() - Recarregar da API');
-        console.log('  💾 window.debugSuppliers.getLocal() - Ver dados do localStorage');
-        console.log('  🗑️ window.debugSuppliers.clearLocal() - Limpar localStorage');
-        console.log('  🧪 window.debugSuppliers.testAPI() - Testar conexão com API');
-        console.log('  🔔 window.debugSuppliers.testNotification() - Testar sistema de notificações');
-        console.log('  🍞 window.debugSuppliers.testToast() - Testar sistema de toast');
-        console.log('  📞 window.debugSuppliers.getToastCallback() - Verificar se toast callback está registrado');
-        console.log('  📋 window.debugSuppliers.listSuppliers() - Listar todos os fornecedores');
-        console.log('  ❓ window.debugSuppliers.help() - Mostrar esta ajuda');
+        return {
+          showCurrent: 'Ver estado atual dos fornecedores',
+          loadFromAPI: 'Recarregar da API',
+          getLocal: 'Ver dados do localStorage',
+          clearLocal: 'Limpar localStorage',
+          testAPI: 'Testar conexão com API',
+          testNotification: 'Testar sistema de notificações',
+          listSuppliers: 'Listar todos os fornecedores'
+        };
       }
     };
-    
-    console.log('🔧 Debug tools disponíveis em window.debugSuppliers:');
-    console.log('  - window.debugSuppliers.help() // Mostrar todas as ferramentas disponíveis');
-    // console.log('  - window.debugSuppliers.testToast() // Testar sistema de toast');
-    // console.log('  - window.debugSuppliers.testNotification() // Testar notificações');
-    // console.log('  - window.debugSuppliers.getToastCallback() // Verificar callback de toast');
   }, []);
 
   const addSupplier = async (supplier: Omit<Supplier, 'id'>) => {
     try {
-      console.log('📤 Tentando salvar fornecedor na API...', supplier);
       // Garantir datas válidas (backend não aceita string vazia)
   const now = new Date().toISOString();
       const normalizeDate = (d?: string) => {
@@ -395,15 +354,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         atualizado_em: atualizadoEm,
         atualizado_por: supplier.atualizado_por || 1
       };
-      console.log('🛰️ Payload final POST /suppliers:', JSON.stringify(payload, null, 2));
       const response = await supplierService.create(payload);
       
       if (response.success) {
-        console.log('✅ Fornecedor salvo na API, recarregando lista...');
         // Recarregar a lista para pegar o ID correto da API
         await loadSuppliers();
       } else {
-        console.log('⚠️ API falhou, salvando localmente...', response.error);
         // Se falhar na API, adiciona localmente
         const newSupplier: Supplier = {
           ...supplier,
@@ -413,7 +369,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSuppliers(updatedSuppliers);
         // Salvar no localStorage
         localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
-        console.log('✅ Fornecedor salvo localmente:', newSupplier);
       }
     } catch (error) {
       console.error('💥 Erro na API, salvando localmente:', error);
@@ -426,26 +381,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSuppliers(updatedSuppliers);
       // Salvar no localStorage
       localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
-      console.log('✅ Fornecedor salvo localmente (fallback):', newSupplier);
     }
   };
 
   const deleteSupplier = async (id: number) => {
     try {
-      console.log('📤 Tentando deletar fornecedor da API...', id);
       const response = await supplierService.delete(id.toString());
       
       if (response.success) {
-        console.log('✅ Fornecedor deletado da API, recarregando lista...');
         // Recarregar a lista para sincronizar
         await loadSuppliers();
       } else {
-        console.log('⚠️ API falhou, removendo localmente...', response.error);
         // Se falhar na API, remove localmente
         const updatedSuppliers = suppliers.filter(s => s.id !== id);
         setSuppliers(updatedSuppliers);
         localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
-        console.log('✅ Fornecedor removido localmente');
       }
     } catch (error) {
       console.error('💥 Erro na API, removendo localmente:', error);
@@ -453,16 +403,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const updatedSuppliers = suppliers.filter(s => s.id !== id);
       setSuppliers(updatedSuppliers);
       localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
-      console.log('✅ Fornecedor removido localmente (fallback)');
     }
   };
 
   const updateSupplier = async (supplier: Supplier) => {
     try {
-      console.log('📤 Tentando atualizar fornecedor na API...', supplier);
       const supplierId = supplier.id || 0;
       if (!supplierId || supplierId <= 0) {
-        console.warn('⚠️ updateSupplier chamado com ID inválido, convertendo para criação (POST). Dados:', supplier);
         const { id, ...rest } = supplier as any;
         // Reusar caminho de criação
         await addSupplier(rest);
@@ -483,16 +430,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       
       if (response.success) {
-        console.log('✅ Fornecedor atualizado na API, recarregando lista...');
         // Recarregar a lista para sincronizar
         await loadSuppliers();
       } else {
-        console.log('⚠️ API falhou, atualizando localmente...', response.error);
         // Se falhar na API, atualiza localmente
         const updatedSuppliers = suppliers.map(s => s.id === supplier.id ? supplier : s);
         setSuppliers(updatedSuppliers);
         localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
-        console.log('✅ Fornecedor atualizado localmente');
       }
     } catch (error) {
       console.error('💥 Erro na API, atualizando localmente:', error);
@@ -500,7 +444,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const updatedSuppliers = suppliers.map(s => s.id === supplier.id ? supplier : s);
       setSuppliers(updatedSuppliers);
       localStorage.setItem('suppliers_backup', JSON.stringify(updatedSuppliers));
-      console.log('✅ Fornecedor atualizado localmente (fallback)');
     }
   };
 
@@ -510,25 +453,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadProducts = async () => {
     setIsLoadingProducts(true);
     try {
-      console.log('🔄 Carregando produtos da API...');
       const response = await produtoService.getAll();
       if (response.success && response.data) {
-        console.log('✅ Produtos carregados da API:', response.data);
         // Extrai sempre o array independentemente do wrapper
         const apiProducts = Array.isArray(response.data) ? response.data : response.data.data || [];
         setProducts(apiProducts);
         // Salvar somente o array no localStorage como backup (evita wrapper antigo reintroduzir registros)
         localStorage.setItem('products_backup', JSON.stringify(apiProducts));
       } else {
-        console.log('⚠️ API não retornou dados, tentando localStorage...');
         // Fallback para localStorage
         const localProducts = localStorage.getItem('products_backup');
         if (localProducts) {
           const productsData = JSON.parse(localProducts);
-          console.log('✅ Produtos carregados do localStorage:', productsData);
           setProducts(productsData);
-        } else {
-          console.log('📝 Nenhum dado encontrado, iniciando com lista vazia');
+        } else {  
           setProducts([]);
         }
       }
@@ -538,10 +476,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const localProducts = localStorage.getItem('products_backup');
       if (localProducts) {
         const productsData = JSON.parse(localProducts);
-        console.log('✅ Fallback: Produtos carregados do localStorage:', productsData);
         setProducts(productsData);
       } else {
-        console.log('📝 Nenhum backup encontrado, iniciando com lista vazia');
         setProducts([]);
       }
     } finally {
@@ -551,8 +487,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
     try {
-      console.log('📤 Tentando salvar produto na API...', product);
-      // Mapear para os campos esperados pela API
       const response = await produtoService.create({
         nome: product.nome,
         descricao: product.descricao || '',
@@ -570,7 +504,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       
       if (response.success) {
-        console.log('✅ Produto salvo na API, recarregando lista...');
         // Recarregar a lista para pegar o ID correto da API
         await loadProducts();
         
@@ -582,7 +515,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           urgente: false
         });
       } else {
-        console.log('⚠️ API falhou, salvando localmente...', response.error);
         // Se falhar na API, adiciona localmente
         const newProduct: Product = {
           ...product,
@@ -592,7 +524,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setProducts(updatedProducts);
         // Salvar no localStorage
         localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
-        console.log('✅ Produto salvo localmente:', newProduct);
         
         // Adicionar notificação de sucesso local
         addNotification({
@@ -613,7 +544,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setProducts(updatedProducts);
       // Salvar no localStorage
       localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
-      console.log('✅ Produto salvo localmente (fallback):', newProduct);
       
       // Adicionar notificação de sucesso local (fallback)
       addNotification({
@@ -626,8 +556,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteProduct = async (id: number, options?: { force?: boolean }) => {
-    console.log('�️ Iniciando exclusão de produto (optimistic UI)...', id);
-    // Optimistic update: remove imediatamente
     const prevProducts = products;
     const updatedProductsOptimistic = products.filter(p => p.id !== id);
     setProducts(updatedProductsOptimistic);
@@ -638,16 +566,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ? await produtoService.forceDelete(id.toString())
         : await produtoService.delete(id.toString());
       if (response.success) {
-        console.log('✅ Produto deletado confirmado pela API');
-        // Recarrega para garantir sincronização real (por ex. triggers, etc.)
         await loadProducts();
       } else {
-        console.warn('⚠️ Falha ao deletar na API, revertendo alteração local:', response.error);
         setProducts(prevProducts); // rollback
         localStorage.setItem('products_backup', JSON.stringify(prevProducts));
         if (response.error?.includes('vinculado') && !options?.force) {
-          // Tenta exclusão forçada automaticamente uma vez
-          console.log('🔁 Tentando exclusão forçada do produto', id);
           return await deleteProduct(id, { force: true });
         } else {
           addNotification({
@@ -673,7 +596,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateProduct = async (product: Product) => {
     try {
-      console.log('📤 Tentando atualizar produto na API...', product);
       const productId = product.id || 0;
       const response = await produtoService.update(productId.toString(), {
         nome: product.nome,
@@ -692,11 +614,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       
       if (response.success) {
-        console.log('✅ Produto atualizado na API, recarregando lista...');
-        // Recarregar a lista para sincronizar
         await loadProducts();
         
-        // Adicionar notificação de sucesso
         addNotification({
           tipo: 'system',
           titulo: 'Produto Atualizado',
@@ -704,14 +623,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           urgente: false
         });
       } else {
-        console.log('⚠️ API falhou, atualizando localmente...', response.error);
-        // Se falhar na API, atualiza localmente
         const updatedProducts = products.map(p => p.id === product.id ? product : p);
         setProducts(updatedProducts);
         localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
-        console.log('✅ Produto atualizado localmente');
         
-        // Adicionar notificação de sucesso local
         addNotification({
           tipo: 'system',
           titulo: 'Produto Atualizado (Local)',
@@ -720,14 +635,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
       }
     } catch (error) {
-      console.error('💥 Erro na API, atualizando localmente:', error);
-      // Em caso de erro, atualiza localmente
       const updatedProducts = products.map(p => p.id === product.id ? product : p);
       setProducts(updatedProducts);
       localStorage.setItem('products_backup', JSON.stringify(updatedProducts));
-      console.log('✅ Produto atualizado localmente (fallback)');
       
-      // Adicionar notificação de sucesso local (fallback)
       addNotification({
         tipo: 'system',
         titulo: 'Produto Atualizado (Local)',
@@ -748,7 +659,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       };
       
-      // Salvar tema no localStorage quando alterado
       if (newSettings.theme) {
         localStorage.setItem('theme', newSettings.theme);
       }

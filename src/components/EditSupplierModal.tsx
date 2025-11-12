@@ -92,7 +92,6 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete,
 
     setIsSaving(true);
     try {
-      console.log('📝 EditSupplierModal: Iniciando salvamento...', formData.nome);
       // Atualizar campos de auditoria
   const isNew = !supplier;
   const updatedSupplier: Supplier = {
@@ -102,9 +101,7 @@ export function EditSupplierModal({ supplier, isOpen, onClose, onSave, onDelete,
     atualizado_em: new Date().toISOString(),
 	atualizado_por: currentUserId || formData.atualizado_por || 0 // fallback 0 se não resolvido
   };
-      console.log('📤 EditSupplierModal: Chamando onSave...', updatedSupplier, isNew);
       await onSave(updatedSupplier, isNew);
-      console.log('✅ EditSupplierModal: onSave executado com sucesso');
       if (isNew) {
         // Limpar campos após criação
         setFormData({

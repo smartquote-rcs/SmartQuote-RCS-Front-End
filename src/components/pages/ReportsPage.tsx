@@ -53,11 +53,6 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
           
           // Verifica se a moeda mudou
           if (settings.currency !== oldSettings.currency) {
-            console.log('ReportsPage: Moeda alterada, recarregando dados...', {
-              de: oldSettings.currency,
-              para: settings.currency
-            });
-            // Recarrega os dados com a nova moeda
             fetchReportData();
           }
         } catch (error) {
@@ -68,7 +63,6 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
 
     // Listener para eventos customizados de mudança de moeda
     const handleCurrencyChange = () => {
-      console.log('ReportsPage: Evento de mudança de moeda detectado, recarregando dados...');
       fetchReportData();
     };
 
@@ -89,8 +83,6 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
     setLoading(true);
     setError(null);
     try {
-      console.log('ReportsPage: fetchReportData iniciado');
-      
       // Buscar dados das cotações
       const cotacoesResult = await cotacaoService.getAll();
       let cotacoes: any[] = [];
@@ -138,12 +130,6 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
         mediaValorCotacao: mediaValor
       });
 
-      console.log('ReportsPage: dados processados:', {
-        cotacoes: cotacoes.length,
-        produtos: produtos.length,
-        fornecedores: fornecedores.length
-      });
-
     } catch (error) {
       console.error('ReportsPage: erro ao buscar dados:', error);
       setError('Erro ao carregar dados dos relatórios');
@@ -155,18 +141,14 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
   // Funções para download de PDF
   const downloadCotacoesPDF = async () => {
     try {
-      console.log('🔍 Iniciando download de cotações...');
       // Buscar dados completos de cotações da API (rota: GET /cotacoes)
       const cotacoesResponse = await cotacaoService.getAll();
-      console.log('📥 Dados recebidos da API de cotações:', cotacoesResponse);
       
       let allCotacoes = [];
       if (cotacoesResponse.success && cotacoesResponse.data) {
         allCotacoes = Array.isArray(cotacoesResponse.data) ? cotacoesResponse.data : 
                      Array.isArray(cotacoesResponse.data.data) ? cotacoesResponse.data.data : [];
       }
-
-      console.log(`📊 Total de cotações encontradas:`, allCotacoes.length);
 
       // Calcular estatísticas de status
       const aprovadas = allCotacoes.filter((c: any) => c.status === 'aprovada' || c.aprovacao === true).length;
@@ -181,9 +163,7 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
         cotacoes: allCotacoes
       };
 
-      console.log('📄 Dados que serão enviados para o PDF:', data);
       await exportQuotationsSummaryPdf(data);
-      console.log('✅ Relatório completo de Cotações baixado em PDF');
     } catch (error) {
       console.error('❌ Erro ao gerar relatório de cotações:', error);
     }
@@ -191,10 +171,8 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
 
   const downloadProdutosPDF = async () => {
     try {
-      console.log('🔍 Iniciando download de produtos...');
       // Buscar dados completos de produtos da API (rota: GET /produtos)
       const produtosResponse = await produtoService.getAll();
-      console.log('📥 Dados recebidos da API de produtos:', produtosResponse);
       
       let allProdutos = [];
       if (produtosResponse.success && produtosResponse.data) {
@@ -208,9 +186,7 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
         produtos: allProdutos
       };
 
-      console.log('📄 Dados que serão enviados para o PDF de produtos:', data);
       await exportProductsSummaryPdf(data);
-      console.log('✅ Relatório de Produtos baixado em PDF');
     } catch (error) {
       console.error('❌ Erro ao gerar relatório de produtos:', error);
     }
@@ -218,10 +194,8 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
 
   const downloadFornecedoresPDF = async () => {
     try {
-      console.log('🔍 Iniciando download de fornecedores...');
       // Buscar dados completos de fornecedores da API (rota: GET /fornecedores)
       const fornecedoresResponse = await supplierService.getAll();
-      console.log('📥 Dados recebidos da API de fornecedores:', fornecedoresResponse);
       
       let allFornecedores = [];
       if (fornecedoresResponse.success && fornecedoresResponse.data) {
@@ -235,9 +209,7 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
         fornecedores: allFornecedores
       };
 
-      console.log('📄 Dados que serão enviados para o PDF de fornecedores:', data);
       await exportSuppliersSummaryPdf(data);
-      console.log('✅ Relatório de Fornecedores baixado em PDF');
     } catch (error) {
       console.error('❌ Erro ao gerar relatório de fornecedores:', error);
     }

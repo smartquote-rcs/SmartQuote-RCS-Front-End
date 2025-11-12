@@ -25,7 +25,6 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const api = await response.json();
-      console.log('Status recebido da API:', api);
       let normalizedStatus: 'ativo' | 'parado' | 'unknown' = 'unknown';
       let message = '';
       let lastCheck: Date | undefined = undefined;
@@ -49,7 +48,6 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
           lastCheck = new Date(api.timestamp);
         }
       }
-      console.log('Status normalizado:', normalizedStatus);
       // Filtrar mensagens técnicas do backend
       const technicalErrorPatterns = [
         'GaxiosError', 'invalid_client', 'OAuth', 'googleapis', 'google-auth-library', 'apirequest', 'gmail', 'refreshToken', 'Unauthorized', '401'
@@ -64,7 +62,6 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
         lastCheck: lastCheck
       });
     } catch (error) {
-      console.error('Erro ao buscar status do email:', error);
       setStatus({
         status: 'unknown',
         message: 'Erro ao conectar com o serviço',
@@ -89,7 +86,6 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
       const endpoint = wantsActive
   ? `${API_BASE_URL}/email/auto-monitor/start`
   : `${API_BASE_URL}/email/auto-monitor/stop`;
-      console.log(`Tentando endpoint: ${endpoint}, Valor desejado: ${wantsActive}`);
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -97,10 +93,8 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
         },
         body: JSON.stringify({})
       });
-      console.log(`Resposta HTTP: ${response.status} ${response.statusText}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Resposta da API:', data);
         setTimeout(async () => {
           await fetchStatus();
         }, 500);
@@ -108,22 +102,18 @@ export function EmailStatus({ themeClasses, isLight = false }: EmailStatusProps 
         try {
           const errorData = await response.json();
           if (errorData.message && errorData.message.includes('não está rodando')) {
-            console.log('Info: Monitoramento já estava parado, sincronizando status...');
             setTimeout(async () => {
               await fetchStatus();
             }, 500);
           } else {
-            console.error(`Erro da API (${response.status}):`, errorData);
             throw new Error(`${errorData.message || 'Erro desconhecido'}`);
           }
         } catch (parseError) {
           const errorText = await response.text();
-          console.error(`Erro da API (${response.status}):`, errorText);
           throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
       }
     } catch (error) {
-      console.error('Erro ao alterar monitoramento:', error);
       setTimeout(async () => {
         await fetchStatus();
       }, 1000);

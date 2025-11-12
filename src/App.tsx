@@ -42,7 +42,6 @@ export default function App() {
   useEffect(() => {
     // Listener para evento de token expirado
     const handleTokenExpired = () => {
-      console.log('🔑 Token expirado detectado - fazendo logout...');
       handleLogout();
     };
 
@@ -114,7 +113,7 @@ export default function App() {
   }, []);
 
   const handleLogin = (credentials: { email: string; password: string; role?: 'user' | 'admin' | 'manager'; position?: string; authId?: string; userName?: string }) => {
-    console.log('🎯 App.tsx - handleLogin chamado com:', credentials);
+ 
     // Usa o valor de position vindo do backend, se existir
     const role: 'user' | 'admin' | 'manager' =
       credentials.role === 'admin' || credentials.role === 'manager'
@@ -144,9 +143,6 @@ export default function App() {
         }
       })
       .catch(()=>{});
-    console.log('👤 Dados do usuário (provisional):', provisional);
-    // ✨ LOG REMOVIDO: Agora é criado no backend automaticamente no endpoint /auth/signin
-    console.log('✅ Login aceito no App.tsx com authId:', provisional.authId);
   };
 
   const handleLogout = async () => {
@@ -154,9 +150,8 @@ export default function App() {
     if (user && user.authId) {
       try {
         await authService.logout();
-        console.log('✅ Logout registrado no backend');
       } catch (error) {
-        console.error('❌ Erro ao registrar logout:', error);
+        // Erro ao registrar logout no backend
       }
     }
     

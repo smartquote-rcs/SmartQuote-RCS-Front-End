@@ -165,24 +165,20 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
 
   // Carregar logs e cotações quando o componente for montado
   useEffect(() => {
-    console.log('LogsPage: useEffect executado');
     fetchData();
   }, []);
 
   const fetchData = async () => {
-    console.log('LogsPage: fetchData iniciado');
     setLoading(true);
     setError(null);
     try {
       // Carregar cotações da API
       const cotacoesResult = await cotacaoService.getAll();
       
-      console.log('LogsPage: resultado de cotações:', cotacoesResult);
       
       // Processar cotações
       if (cotacoesResult.success && cotacoesResult.data) {
         const cotacoesArr = Array.isArray(cotacoesResult.data?.data) ? cotacoesResult.data.data : [];
-        console.log('LogsPage: cotações carregadas:', cotacoesArr.length);
 
         // Gerar logs para todas as cotações
         const cotacaoLogs: LogEntry[] = cotacoesArr.map((cotacao: any) => {
@@ -212,17 +208,14 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
 
         setLogs(cotacaoLogs);
       } else {
-        console.log('LogsPage: erro ao carregar cotações ou dados vazios');
         setError('Erro ao carregar cotações da API');
         setLogs([]);
       }
       
     } catch (error) {
-      console.error('LogsPage: erro na função fetchData:', error);
       setError('Erro ao carregar dados: ' + String(error));
       setLogs([]);
     } finally {
-      console.log('LogsPage: fetchData finalizado');
       setLoading(false);
     }
   };

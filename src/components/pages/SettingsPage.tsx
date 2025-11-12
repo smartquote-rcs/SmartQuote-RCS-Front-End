@@ -140,7 +140,6 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 			const { sistemaService } = await import('../../api/services');
 			const result = await sistemaService.getConfig();
 			const data = result.data;
-			console.log('API /api/sistema response:', data); // <-- Adicionado para depuração
 			const config = data && data.data ? data.data : null;
 			if (config) {
 				const sysName = typeof config.nome_empresa === 'string' ? config.nome_empresa.trim() : '';
@@ -172,7 +171,6 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 	}, [saveSuccess]);
 
 	const handleSaveProfile = () => {
-		console.log('Salvando perfil do admin:', adminProfile);
 		setSaveSuccess(t('settings.profileUpdated'));
 	};
 
@@ -213,11 +211,7 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 				localStorage.setItem('smartquote-general-settings', JSON.stringify(generalSettings));
 				
 				// Disparar evento customizado se a moeda foi alterada
-				if (oldSettings.currency !== generalSettings.currency) {
-					console.log('SettingsPage: Moeda alterada, disparando evento currencyChanged', {
-						de: oldSettings.currency,
-						para: generalSettings.currency
-					});
+				if (oldSettings.currency !== generalSettings.currency) { 
 					window.dispatchEvent(new CustomEvent('currencyChanged', { 
 						detail: { 
 							oldCurrency: oldSettings.currency, 
@@ -242,45 +236,28 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 	};
 
 	const handleChangePassword = async () => {
-		console.log('🔐 Iniciando alteração de senha...');
-		console.log('📊 Dados da senha:', {
-			currentLength: passwordData.current?.length || 0,
-			newLength: passwordData.new?.length || 0,
-			confirmLength: passwordData.confirm?.length || 0,
-			passwordsMatch: passwordData.new === passwordData.confirm
-		});
-
 		if (passwordData.new !== passwordData.confirm) {
-			console.warn('⚠️ Senhas não coincidem');
 			alert(t('settings.passwordsDoNotMatch'));
 			return;
 		}
 
 		if (passwordData.new.length < 8) {
-			console.warn('⚠️ Senha muito curta');
 			alert(t('settings.passwordTooShort'));
 			return;
 		}
 
 		if (!passwordData.current) {
-			console.warn('⚠️ Senha atual não informada');
-			alert(t('settings.currentPasswordRequired'));
 			return;
 		}
 
 		try {
-			console.log('� Importando authService...');
 			
 			// Importar o serviço de autenticação e fazer a alteração real
 			const { authService } = await import('../../api/services');
-			console.log('✅ AuthService importado com sucesso');
 			
-			console.log('📤 Chamando authService.changePassword...');
 			const result = await authService.changePassword(passwordData.current, passwordData.new);
-			console.log('📨 Resultado da alteração:', result);
 			
 			if (result.success) {
-				console.log('✅ Senha alterada com sucesso');
 				
 				// Limpar os campos de senha
 				setPasswordData({
@@ -303,7 +280,6 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 						if (parsed.user) {
 							parsed.user.password = passwordData.new;
 							localStorage.setItem('smartquote_auth', JSON.stringify(parsed));
-							console.log('✅ Senha atualizada no localStorage');
 						}
 					}
 				} catch (e) {
@@ -343,41 +319,23 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 		setIsRequestingToken(true);
 		setResetError('');
 
-		try {
-			console.log('🚀 Iniciando processo de redefinição de senha...');
+			try {
 			
-			// Verificar se o usuário está autenticado
-			const authToken = localStorage.getItem('auth_token');
-			const smartquoteAuth = localStorage.getItem('smartquote_auth');
-			console.log('🔑 Status de autenticação:', {
-				hasAuthToken: !!authToken,
-				hasSmartquoteAuth: !!smartquoteAuth,
-				authTokenLength: authToken?.length || 0
-			});
-			
-			// Obter email do usuário atual
 			const userEmail = adminProfile.email;
-			console.log('📧 Email do usuário:', userEmail);
-			console.log('👤 Admin profile completo:', adminProfile);
 			
 			if (!userEmail) {
-				console.error('❌ Email do usuário não encontrado no adminProfile:', adminProfile);
 				
-				// Tentar obter email do smartquote_auth como backup
 				try {
 					const auth = localStorage.getItem('smartquote_auth');
 					if (auth) {
 						const parsed = JSON.parse(auth);
 						if (parsed?.user?.email) {
-							console.log('🔄 Email encontrado no smartquote_auth:', parsed.user.email);
 							setAdminProfile(prev => ({ ...prev, email: parsed.user.email }));
-							// Chamar novamente a função com o email atualizado
 							setTimeout(() => handleResetPassword(), 100);
 							return;
 						}
 					}
 				} catch (e) {
-					console.error('❌ Erro ao tentar obter email do localStorage:', e);
 				}
 				
 				setResetError('Email do usuário não encontrado. Faça login novamente.');
@@ -386,16 +344,11 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 			}
 
 			// Solicitar token via email usando o mesmo método da página esqueci senha
-			console.log('📤 Importando authService...');
 			const { authService } = await import('../../api/services');
-			console.log('✅ AuthService importado com sucesso');
 			
-			console.log('📤 Chamando authService.recoverPassword...');
 			const result = await authService.recoverPassword(userEmail);
-			console.log('📨 Resultado da recuperação:', result);
 			
 			if (result.success) {
-				console.log('✅ Token solicitado com sucesso');
 				setTokenSent(true);
 				setShowTokenModal(true);
 				setSaveSuccess(result.message || 'Token de redefinição enviado para seu email!');
@@ -420,23 +373,19 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 	// Função para redefinir senha com token (segundo passo - igual ao ResetPasswordPage)
 	const handleTokenReset = async () => {
 		setResetError('');
-		console.log('🔐 Iniciando redefinição de senha com token...');
 		
 		// Validações
 		if (!resetToken.trim()) {
-			console.warn('⚠️ Token não informado');
 			setResetError('Por favor, insira o token recebido por email.');
 			return;
 		}
 
 		if (!newResetPassword || !confirmResetPassword) {
-			console.warn('⚠️ Senhas não preenchidas');
 			setResetError('Por favor, preencha todos os campos de senha.');
 			return;
 		}
 
 		if (newResetPassword !== confirmResetPassword) {
-			console.warn('⚠️ Senhas não coincidem');
 			setResetError('As senhas não coincidem.');
 			return;
 		}
@@ -448,11 +397,8 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 			hasLowercase,
 			hasNumber,
 			hasSpecialChar
-		};
-		console.log('🔍 Validação de senha:', passwordValidation);
-		
+		};		
 		if (!hasMinLength || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
-			console.warn('⚠️ Senha não atende aos critérios de segurança');
 			setResetError('A senha não atende aos critérios de segurança.');
 			return;
 		}
@@ -460,17 +406,11 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 		setIsResetLoading(true);
 
 		try {
-			console.log('📤 Importando authService para reset...');
-			// Usar o mesmo método que o ResetPasswordPage
 			const { authService } = await import('../../api/services');
-			console.log('✅ AuthService importado para reset');
 			
-			console.log('📤 Chamando authService.resetPassword com token:', resetToken.substring(0, 5) + '...');
 			const result = await authService.resetPassword(resetToken.trim(), newResetPassword);
-			console.log('📨 Resultado do reset de senha:', result);
 			
 			if (result.success) {
-				console.log('✅ Senha redefinida com sucesso');
 				setSaveSuccess(result.message || 'Senha alterada com sucesso!');
 				
 				// Fechar modal e limpar estados
@@ -489,21 +429,17 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 						if (parsed.user) {
 							parsed.user.password = newResetPassword;
 							localStorage.setItem('smartquote_auth', JSON.stringify(parsed));
-							console.log('✅ Senha atualizada no localStorage');
 						}
 					}
 				} catch (e) {
-					console.warn('⚠️ Não foi possível atualizar senha no localStorage:', e);
 				}
 				
 				// Limpar mensagem após 3 segundos
 				setTimeout(() => setSaveSuccess(''), 3000);
 			} else {
-				console.error('❌ Erro no reset de senha:', result.error);
 				setResetError(result.error || 'Erro ao redefinir senha.');
 			}
 		} catch (error: any) {
-			console.error('💥 Erro inesperado ao redefinir senha:', error);
 			console.error('📊 Detalhes completos do erro:', {
 				name: error?.name,
 				message: error?.message,

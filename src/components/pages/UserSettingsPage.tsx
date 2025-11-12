@@ -24,7 +24,6 @@ export function UserSettingsPage() {
       else if (userSettings.language === 'es-ES') lang = 'es';
       else if (userSettings.language === 'fr-FR') lang = 'fr';
       i18n.changeLanguage(lang);
-      console.log('Sincronizando idioma inicial:', lang);
     }
   }, []);
   

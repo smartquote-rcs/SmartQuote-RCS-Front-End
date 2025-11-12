@@ -7,12 +7,10 @@ export function useLanguage() {
   
   useEffect(() => {
     const handleLanguageChange = (lng: string) => {
-      console.log('Hook useLanguage detectou mudança para:', lng);
       setCurrentLanguage(lng);
     };
 
     const handleCustomLanguageChange = (event: any) => {
-      console.log('Hook useLanguage detectou evento customizado:', event);
       const newLang = event.detail?.language || i18n.language;
       setCurrentLanguage(newLang);
     };
@@ -33,12 +31,10 @@ export function useLanguage() {
     const supportedLanguages = ['pt', 'en', 'es', 'fr', 'de', 'it'];
     
     if (!supportedLanguages.includes(newLang)) {
-      console.warn('Idioma não suportado:', newLang);
       return false;
     }
     
     try {
-      console.log('useLanguage.changeLanguage chamado com:', newLang);
       await i18n.changeLanguage(newLang);
       localStorage.setItem('i18nextLng', newLang);
       setCurrentLanguage(newLang);
@@ -50,7 +46,6 @@ export function useLanguage() {
       
       return true;
     } catch (error) {
-      console.error('Erro ao mudar idioma:', error);
       return false;
     }
   };

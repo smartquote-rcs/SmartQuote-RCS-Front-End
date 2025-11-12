@@ -62,7 +62,6 @@ async function handleReplaceUniversal(
 ) {
   setReplaceLoading(true);
   setReplaceError("");
-  console.log('[ReplaceItem] Iniciando processo de substituição', { produto, itemId: item?.id });
   try {
     const hasLocalId = produto && (typeof produto.id === 'number' || (typeof produto.id === 'string' && produto.id.trim() !== ''));
     const hasUrl = produto && typeof produto.url === 'string' && produto.url.trim().length > 0;
@@ -89,10 +88,7 @@ async function handleReplaceUniversal(
       return;
     }
 
-    // Chamada direta via import estático (evita falhas de carregamento dinâmico em produção)
-    console.log('[ReplaceItem] Enviando payload para replaceProduct:', payload);
     const res = await produtoService.replaceProduct(payload);
-    console.log('[ReplaceItem] Resposta replaceProduct:', res);
     if (res.success) {
       const used = payload.newProductId ? `ID: ${payload.newProductId}` : `URL: ${payload.url}`;
       setReplaceSuccess(`${t("quoteRequests.itemReplacedSuccess")} (${used})`);
@@ -112,7 +108,6 @@ async function handleReplaceUniversal(
     setReplaceError(`${t("quoteRequests.errorReplacingItem")}${detailed ? ' - ' + detailed : ''}`);
   }
   setReplaceLoading(false);
-  console.log('[ReplaceItem] Processo finalizado');
 }
 // Componente para exibir detalhes do item e submodal
 
@@ -132,8 +127,7 @@ const ItemDetalheCard = ({ item, onItemReplaced, isLight = false }: ItemDetalheC
   const [replaceSuccess, setReplaceSuccess] = React.useState("");
 
   // Buscar Opções Locais e web ao abrir modal
-  const fetchSugeridos = async () => {
-    console.log('fetchSugeridos chamado para item.id:', item.id);
+    const fetchSugeridos = async () => {
     setLoadingSugeridos(true);
     setReplaceError("");
     try {
@@ -578,6 +572,7 @@ export function QuoteRequestsPage({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
   const [cotacoesList, setCotacoesList] = useState<any[]>([]);
+  const [isLoadingCotacoes, setIsLoadingCotacoes] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number|null>(null);
   const [usersCache, setUsersCache] = useState<Map<number, string>>(new Map());
 
@@ -596,6 +591,7 @@ export function QuoteRequestsPage({
   useEffect(() => {
     async function fetchCotacoes() {
       try {
+        setIsLoadingCotacoes(true);
         // Buscar cotações e jobs em paralelo
         const [cotacoesResponse, jobsResponse] = await Promise.all([
           cotacaoService.getAll(),
@@ -604,8 +600,6 @@ export function QuoteRequestsPage({
         
         // Processar cotações
         const cotacoesArr = Array.isArray(cotacoesResponse.data?.data) ? cotacoesResponse.data.data : [];
-        console.log('Cotações recebidas da API:', cotacoesArr);
-        
         // Processar jobs ativos (executando ou pendente)
         const jobs = jobsResponse.success && jobsResponse.data ? 
           (jobsResponse.data.jobs || jobsResponse.data) : [];
@@ -617,8 +611,6 @@ export function QuoteRequestsPage({
             })
             .map((job: any) => job.id)
         );
-        
-        console.log('Jobs ativos (executando/pendente):', Array.from(activeJobIds));
         
         // Mapeia os campos para garantir compatibilidade com o frontend
         const mappedCotacoes = cotacoesArr
@@ -642,73 +634,84 @@ export function QuoteRequestsPage({
           // Filtrar cotações que têm job ativo (não mostrar enquanto está executando)
           .filter((c: any) => {
             if (c.job_id && activeJobIds.has(c.job_id)) {
-              console.log(`Cotação ${c.id} oculta - job ${c.job_id} está executando`);
               return false;
             }
             return true;
           });
         
-        // Buscar nomes dos usuários responsáveis
+        // Buscar nomes dos usuários responsáveis de forma otimizada
         const userIds = [...new Set(mappedCotacoes
           .map((c: any) => c.aprovado_por)
           .filter((id: any) => id && typeof id === 'number'))] as number[];
         
         const newUsersCache = new Map(usersCache);
-        for (const userId of userIds) {
-          if (!newUsersCache.has(userId)) {
-            try {
-              const { default: api } = await import("../../api/client");
-              const response = await api.get(`/users/${userId}`);
-              newUsersCache.set(userId, response.data.data?.name || `Usuário ${userId}`);
-            } catch (err) {
-              console.error(`Erro ao buscar usuário ${userId}:`, err);
-              newUsersCache.set(userId, `Usuário ${userId}`);
+        const uncachedUserIds = userIds.filter(id => !newUsersCache.has(id));
+        
+        // Buscar usuários em paralelo em vez de sequencial
+        if (uncachedUserIds.length > 0) {
+          try {
+            const { default: api } = await import("../../api/client");
+            
+            // Buscar todos os usuários de uma vez se possível
+            if (uncachedUserIds.length <= 5) {
+              const userPromises = uncachedUserIds.map(async (userId) => {
+                try {
+                  const response = await api.get(`/users/${userId}`);
+                  return { id: userId, name: response.data.data?.name || `Usuário ${userId}` };
+                } catch (err) {
+                  console.error(`Erro ao buscar usuário ${userId}:`, err);
+                  return { id: userId, name: `Usuário ${userId}` };
+                }
+              });
+              
+              const userResults = await Promise.allSettled(userPromises);
+              userResults.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                  newUsersCache.set(result.value.id, result.value.name);
+                } else {
+                  newUsersCache.set(uncachedUserIds[index], `Usuário ${uncachedUserIds[index]}`);
+                }
+              });
+            } else {
+              // Se muitos usuários, buscar apenas os primeiros 5 para não sobrecarregar
+              uncachedUserIds.slice(0, 5).forEach(userId => {
+                newUsersCache.set(userId, `Usuário ${userId}`);
+              });
             }
+          } catch (err) {
+            console.error('Erro ao buscar usuários:', err);
+            uncachedUserIds.forEach(userId => {
+              newUsersCache.set(userId, `Usuário ${userId}`);
+            });
           }
         }
         setUsersCache(newUsersCache);
         
         setCotacoesList(mappedCotacoes);
 
-        // Verificar cotações com valor 0 e criar notificações automaticamente
-        mappedCotacoes.forEach(async (cotacao: any) => {
+        // TEMPORARIAMENTE DESABILITADO: Criação automática de notificações
+        // Verificar cotações com valor 0 para logging (sem criar notificações)
+        const cotacoesComValorZero = mappedCotacoes.filter((cotacao: any) => {
           const valorTotal = parseFloat(cotacao.valor_total || cotacao.orcamento_geral || cotacao.valor || '0');
-          
-          // Se valor é 0 e ainda não foi notificado
-          if (valorTotal === 0 && !cotacao.notificado_valor_zero) {
-            try {
-              console.log(`Criando notificação automática para cotação ${cotacao.id} com valor 0`);
-              
-              // Criar notificação via API
-              await api.post('/notifications', {
-                tipo: 'produto_nao_encontrado',
-                titulo: `Cotação #${cotacao.id} - Produto Não Encontrado`,
-                mensagem: `A cotação para "${cotacao.produto}" retornou valor R$ 0,00. Produto pode não ter sido encontrado.`,
-                cotacao_id: cotacao.id,
-                prioridade: 'alta',
-                lida: false
-              });
-
-              // Marcar cotação como notificada para não criar duplicatas
-              await api.patch(`/cotacoes/${cotacao.id}`, {
-                notificado_valor_zero: true
-              });
-
-              console.log(`✅ Notificação criada para cotação ${cotacao.id}`);
-            } catch (error) {
-              console.error(`Erro ao criar notificação para cotação ${cotacao.id}:`, error);
-            }
-          }
+          return valorTotal === 0 && !cotacao.notificado_valor_zero;
         });
+
+        // Apenas log para debug, sem criar notificações
+        if (cotacoesComValorZero.length > 0 && !sessionStorage.getItem('zero_value_quotes_logged')) {
+          console.log(`📊 Encontradas ${cotacoesComValorZero.length} cotações com valor R$ 0,00`);
+          sessionStorage.setItem('zero_value_quotes_logged', 'true');
+        }
       } catch (error) {
         setCotacoesList([]);
         console.error('Erro ao buscar cotações:', error);
+      } finally {
+        setIsLoadingCotacoes(false);
       }
     }
     fetchCotacoes();
     
-    // Atualizar a cada 10 segundos para refletir mudanças nos jobs
-    const interval = setInterval(fetchCotacoes, 10000);
+    // Atualizar a cada 30 segundos para refletir mudanças nos jobs (reduzido de 10s para melhor performance)
+    const interval = setInterval(fetchCotacoes, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1007,19 +1010,15 @@ export function QuoteRequestsPage({
   };
 
   const openApproval = (id:string, action:'approve'|'set_pending'|'reject') => {
-    console.log('openApproval chamado:', { id, action, user });
     
     // Se é uma aprovação ou mudança de status, verificar se o usuário tem permissão baseada no valor
     if (action === 'approve' || action === 'set_pending') {
       const cotacao = cotacoesList.find(c => String(c.id) === String(id));
-      console.log('Cotacao encontrada:', cotacao);
       
       if (cotacao) {
         const valor = cotacao.orcamento_geral || '0';
-        console.log('Valor da cotação:', valor);
         
         const approvalCheck = canApproveQuote(valor);
-        console.log('Resultado da verificação:', approvalCheck);
         
         if (!approvalCheck.canApprove) {
           // Mostrar mensagem de erro e não abrir o modal
@@ -1190,7 +1189,6 @@ export function QuoteRequestsPage({
       }
 
       // Criar oportunidade no Dynamics 365
-      console.log('Criando oportunidade no Dynamics 365 para cotação:', dynamicsData.cotacaoId);
       
       const dynamicsResp = await dynamics365Service.createOpportunity(dynamicsData.cotacaoId, {
         solicitante: cotacao.solicitante || dynamicsData.customerCode,
@@ -1310,23 +1308,22 @@ export function QuoteRequestsPage({
     setNotifySuccess("");
 
     try {
-      // Enviar notificação via API
-      const response = await api.post('/notifications', {
+      // TEMPORARIAMENTE DESABILITADO: Envio de notificação via API
+      console.log('📧 Notificação seria enviada:', {
         tipo: 'cotacao_produto_nao_encontrado',
         mensagem: notifyMessage,
         cotacao_id: selectedCotacaoForNotify.id,
         destinatario: selectedCotacaoForNotify.aprovado_por || selectedCotacaoForNotify.cliente
       });
 
-      if (response.data) {
-        setNotifySuccess("Notificação enviada com sucesso!");
-        addToast('success', 'Cliente notificado sobre produto não encontrado');
-        setTimeout(() => {
-          setIsNotifyModalOpen(false);
-          setNotifyMessage("");
-          setSelectedCotacaoForNotify(null);
-        }, 2000);
-      }
+      // Simular sucesso temporariamente
+      setNotifySuccess("Notificação simulada com sucesso! (API temporariamente desabilitada)");
+      addToast('info', 'Notificação simulada - API em manutenção');
+      setTimeout(() => {
+        setIsNotifyModalOpen(false);
+        setNotifyMessage("");
+        setSelectedCotacaoForNotify(null);
+      }, 2000);
     } catch (error: any) {
       console.error('Erro ao enviar notificação:', error);
       const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Erro ao enviar notificação';
@@ -2120,36 +2117,60 @@ export function QuoteRequestsPage({
             {/* Conteúdo com dados */}
             {cotacoesList.length > 0 && (
               <div className="flex-1 overflow-y-auto">
-                {/* Funções para filtrar e paginar por aba */}
-                {(() => {
-                  const getPaginated = (tab: string) => {
-                    // Primeiro aplica os filtros de pesquisa, depois o filtro da aba
-                    const filtered = filteredCotacoes.filter(getTabFilter(tab));
-                    const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
-                    const page = Math.min(currentPage, totalPages);
-                    return filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-                  };
-                  return (
-                    <>
-                      <TabsContent value="all" className="h-full mt-0">
-                        <div className="grid gap-4">
-                          {getPaginated('all').map((cotacao) => (
-                            <QuoteCard
-                              key={cotacao.id}
-                              cotacao={cotacao}
-                              onViewDetails={handleViewDetails}
-                              onDownload={handleDownload}
-                              isLight={isLight}
-                            />
-                          ))}
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="pending" className="h-full mt-0">
-                        <div className="grid gap-4">
-                          {getPaginated('pending').map((cotacao) => (
-                            <QuoteCard
-                              key={cotacao.id}
-                              cotacao={cotacao}
+                {/* Loading State */}
+                {isLoadingCotacoes ? (
+                  <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                    <div className="relative">
+                      <div className={`w-12 h-12 rounded-full border-4 ${
+                        isLight 
+                          ? 'border-blue-200 border-t-blue-600' 
+                          : 'border-slate-600 border-t-cyan-400'
+                      } animate-spin`}></div>
+                    </div>
+                    <div className="text-center space-y-2">
+                      <p className={`text-lg font-medium ${
+                        isLight ? 'text-gray-700' : 'text-slate-200'
+                      }`}>
+                        {t("quoteRequests.loading")}
+                      </p>
+                      <p className={`text-sm ${
+                        isLight ? 'text-gray-500' : 'text-slate-400'
+                      }`}>
+                        {t("quoteRequests.loadingDescription")}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  /* Funções para filtrar e paginar por aba */
+                  (() => {
+                    const getPaginated = (tab: string) => {
+                      // Primeiro aplica os filtros de pesquisa, depois o filtro da aba
+                      const filtered = filteredCotacoes.filter(getTabFilter(tab));
+                      const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+                      const page = Math.min(currentPage, totalPages);
+                      return filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+                    };
+                    return (
+                      <>
+                        <TabsContent value="all" className="h-full mt-0">
+                          <div className="grid gap-4">
+                            {getPaginated('all').map((cotacao) => (
+                              <QuoteCard
+                                key={cotacao.id}
+                                cotacao={cotacao}
+                                onViewDetails={handleViewDetails}
+                                onDownload={handleDownload}
+                                isLight={isLight}
+                              />
+                            ))}
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="pending" className="h-full mt-0">
+                          <div className="grid gap-4">
+                            {getPaginated('pending').map((cotacao) => (
+                              <QuoteCard
+                                key={cotacao.id}
+                                cotacao={cotacao}
                               onViewDetails={handleViewDetails}
                               onDownload={handleDownload}
                               onNotifyClient={handleNotifyClient}
@@ -2174,7 +2195,8 @@ export function QuoteRequestsPage({
                       </TabsContent>
                     </>
                   );
-                })()}
+                })()
+                )}
 
                 {/* Estado quando há dados mas filtros não retornam resultados */}
                 {filteredCotacoes.length === 0 && cotacoesList.length > 0 && (

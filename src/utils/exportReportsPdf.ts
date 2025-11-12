@@ -80,7 +80,6 @@ export async function exportQuotationsSummaryPdf(data: QuotationsSummaryData) {
   // Tabela de cotações
   let finalY = 170;
   if (data.cotacoes && data.cotacoes.length > 0) {
-    console.log('📊 Gerando tabela com', data.cotacoes.length, 'cotações');
     const tableHead = [['ID', 'Data', 'Status', 'Fornecedor', 'Valor Total', 'Observações']];
     const tableBody = data.cotacoes.map(cotacao => [
       cotacao.id?.toString() || cotacao.cotacao_id?.toString() || '-',
@@ -108,7 +107,6 @@ export async function exportQuotationsSummaryPdf(data: QuotationsSummaryData) {
       }
     });
   } else {
-    console.log('⚠️ Nenhuma cotação encontrada para exibir no PDF');
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(12);
     doc.text('Nenhuma cotação encontrada no sistema.', 40, 170);
@@ -215,7 +213,6 @@ export async function exportProductsSummaryPdf(data: ProductsData) {
 
   // Tabela de produtos
   if (data.produtos && data.produtos.length > 0) {
-    console.log('📊 Gerando tabela com', data.produtos.length, 'produtos');
     const tableHead = [['ID', 'Nome', 'Descrição', 'Categoria', 'Preço', 'Status']];
     const tableBody = data.produtos.map(produto => [
       produto.id?.toString() || produto.produto_id?.toString() || '-',
@@ -238,7 +235,6 @@ export async function exportProductsSummaryPdf(data: ProductsData) {
       alternateRowStyles: { fillColor: [245, 247, 250] }
     });
   } else {
-    console.log('⚠️ Nenhum produto encontrado para exibir no PDF');
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(12);
     doc.text('Nenhum produto encontrado no sistema.', 40, 160);
@@ -298,7 +294,6 @@ export async function exportSuppliersSummaryPdf(data: SuppliersData) {
 
   // Tabela de fornecedores
   if (data.fornecedores && data.fornecedores.length > 0) {
-    console.log('📊 Gerando tabela com', data.fornecedores.length, 'fornecedores');
     const tableHead = [['ID', 'Nome', 'Email', 'Telefone', 'Status']];
     const tableBody = data.fornecedores.map(fornecedor => [
       fornecedor.id?.toString() || fornecedor.fornecedor_id?.toString() || '-',
@@ -318,7 +313,6 @@ export async function exportSuppliersSummaryPdf(data: SuppliersData) {
       alternateRowStyles: { fillColor: [245, 247, 250] }
     });
   } else {
-    console.log('⚠️ Nenhum fornecedor encontrado para exibir no PDF');
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(12);
     doc.text('Nenhum fornecedor encontrado no sistema.', 40, 160);

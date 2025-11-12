@@ -53,7 +53,6 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({
       return;
     }
     
-    console.log('🔑 Token de reset detectado:', finalToken.substring(0, 10) + '...');
     setToken(finalToken);
   }, [searchParams]);
 

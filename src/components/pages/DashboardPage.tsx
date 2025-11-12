@@ -118,8 +118,6 @@ export function DashboardPage({
     }
     fetchNotifications();
   }, []);
-
-  // Estado para logs de login
   const [loginAlerts, setLoginAlerts] = useState<Array<any>>([]);
   const [isLoadingAlerts, setIsLoadingAlerts] = useState(true);
 
@@ -178,7 +176,6 @@ export function DashboardPage({
           setLoginAlerts([]);
         }
       } catch (err) {
-        console.error('Erro ao buscar logs de login para dashboard:', err);
         setLoginAlerts([]);
       } finally {
         setIsLoadingAlerts(false);
@@ -469,7 +466,6 @@ export function DashboardPage({
           />
         </div>
 
-        {/* System Alerts dinâmicos com logs de login */}
         <div className="mb-4 sm:mb-6 lg:mb-8">
           <div className={`${finalThemeClasses?.glassCard || 'glass-card'} ${finalIsLight ? 'bg-white shadow-lg border-gray-200' : 'bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-white/10'} rounded-xl p-3 sm:p-4 border backdrop-blur-sm`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 sm:pb-4 space-y-2 sm:space-y-0">

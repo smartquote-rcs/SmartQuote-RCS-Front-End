@@ -104,15 +104,11 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
     const fornecedor = suppliers.find(s => s.id === id);
     if (!fornecedor) return;
     try {
-      // Garante que o campo rate está presente no objeto enviado
       const fornecedorAtualizado = { ...fornecedor, rate: nota };
-      console.log('[handleRating] Enviando para updateSupplier:', fornecedorAtualizado);
-      const resp = await updateSupplier(fornecedorAtualizado);
-      console.log('[handleRating] Resposta updateSupplier:', resp);
+      await updateSupplier(fornecedorAtualizado);
       setRatings(prev => ({ ...prev, [id]: nota }));
       showToast('success', 'Classificação atualizada', `Classificação do fornecedor "${fornecedor.nome}" atualizada para ${nota} estrela(s).`);
     } catch (error) {
-      console.error('[handleRating] Erro ao atualizar classificação:', error);
       showToast('error', 'Erro ao atualizar classificação', 'Não foi possível atualizar a classificação do fornecedor.');
     }
   };
@@ -210,11 +206,9 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
 
   // Função para editar fornecedor
   const handleEditSupplier = (fornecedor: any) => {
-    console.log('✏️ Editando fornecedor:', fornecedor);
     const supplierId = Number(fornecedor.id);
     const originalSupplier = suppliers.find(s => s.id === supplierId);
     if (!originalSupplier) {
-      console.error('Fornecedor não encontrado para edição:', supplierId);
       showToast('error', t('suppliers.supplierNotFound'), t('suppliers.supplierNotFoundMessage'));
       return;
     }
@@ -255,7 +249,6 @@ export function SuppliersPage({ user, isLight = false }: SuppliersPageProps) {
         t('suppliers.supplierRemoved'),
         t('suppliers.supplierRemovedSuccess')
       );
-      console.log('Fornecedor deletado com sucesso:', supplierId);
     } catch (error: any) {
       console.error('Erro ao deletar fornecedor:', error);
       showToast(

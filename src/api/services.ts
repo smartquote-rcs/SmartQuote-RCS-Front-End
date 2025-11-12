@@ -253,17 +253,14 @@ export const sistemaService = {
 // Busca o papel/função do usuário por email
 export async function getUserRoleByEmail(email: string): Promise<{ role: string, origem: 'employees' | 'users' | null }> {
   try {
-    // 1. Tenta encontrar na tabela employees
-    const empRes = await api.get(`/employee/by-email/${encodeURIComponent(email)}`);
-    if (empRes.data && empRes.data.position) {
-      return { role: 'admin', origem: 'employees' };
-    }
-  } catch (e) { /* ignora erro, tenta users */ }
-  try {
-    // 2. Tenta encontrar na tabela users
-    const userRes = await api.get(`/users/by-email/${encodeURIComponent(email)}`);
-    if (userRes.data && userRes.data.position) {
-      return { role: userRes.data.position, origem: 'users' };
+    // Busca apenas na tabela users
+    const userRes = await api.get('/users');
+    if (userRes.data) {
+      const users = Array.isArray(userRes.data) ? userRes.data : userRes.data.data || [];
+      const user = users.find((u: any) => u.email === email);
+      if (user && user.position) {
+        return { role: user.position, origem: 'users' };
+      }
     }
   } catch (e) { /* ignora erro */ }
   return { role: 'user', origem: null };
@@ -281,11 +278,6 @@ export const userService = {
     contacto?: string;
   }): Promise<AuthResponse> {
     try {
-      console.log('📤 Enviando dados para criar usuário (POST /users/create):', {
-        ...userData,
-        password: userData.password ? '[SENHA DEFINIDA]' : '[SEM SENHA]'
-      });
-      
       const requestData: any = {
         name: userData.nome?.trim(),
         email: userData.email?.trim().toLowerCase(),
@@ -317,29 +309,11 @@ export const userService = {
         requestData.contact = userData.contacto.trim(); // API espera 'contact' não 'phone'
       }
       
-      console.log('🔍 Dados finais enviados para API:', requestData);
-      console.log('📋 Estrutura dos dados:', {
-        name: typeof requestData.name,
-        email: typeof requestData.email,
-        department: typeof requestData.department,
-        position: typeof requestData.position,
-        password: requestData.password ? 'definida' : 'não definida',
-        contact: requestData.contact ? 'definido' : 'não definido'
-      });
-      console.log('📐 Validação dos campos:', {
-        name: requestData.name ? `✅ "${requestData.name}"` : '❌ vazio',
-        email: requestData.email ? `✅ "${requestData.email}"` : '❌ vazio',
-        department: requestData.department ? `✅ "${requestData.department}"` : '❌ vazio',
-        position: requestData.position ? `✅ "${requestData.position}"` : '❌ vazio'
-      });
-
       let response;
       try {
         // Primeira tentativa com a estrutura atual
         response = await api.post('/users/create', requestData);
       } catch (firstError: any) {
-        console.log('❌ Primeira tentativa falhou, tentando estrutura alternativa...');
-        console.log('📄 Erro da primeira tentativa:', firstError.response?.data);
         
         // Segunda tentativa com estrutura alternativa
         const alternativeData: any = {
@@ -356,12 +330,9 @@ export const userService = {
           alternativeData.contact = requestData.contact;
         }
         
-        console.log('🔄 Tentativa alternativa com:', alternativeData);
         try {
           response = await api.post('/users/create', alternativeData);
         } catch (secondError: any) {
-          console.log('❌ Segunda tentativa também falhou, tentando terceira estrutura...');
-          console.log('� Erro da segunda tentativa:', secondError.response?.data);
           
           // Terceira tentativa com estrutura baseada em employees
           const thirdData: any = {
@@ -378,7 +349,6 @@ export const userService = {
             thirdData.phone = requestData.contact;
           }
           
-          console.log('🔄 Terceira tentativa com:', thirdData);
           response = await api.post('/users/create', thirdData);
         }
       }
@@ -398,7 +368,6 @@ export const userService = {
       
       if (error.response) {
         // Erro da API
-        console.log('🔍 Verificando estrutura de erro:', error.response.data);
         
         // Verificar se há erros específicos de validação
         if (error.response.data?.errors) {
@@ -444,9 +413,7 @@ export const userService = {
 
   async getAll(): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para buscar usuários (GET /users)...');
       const response = await api.get('/users');
-      console.log('📨 Resposta da API (users):', response);
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro ao buscar usuários:', error);
@@ -459,9 +426,7 @@ export const userService = {
 
   async getById(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para buscar usuário por ID (GET /users/${id})...`);
       const response = await api.get(`/users/${id}`);
-      console.log('📨 Resposta da API (user by ID):', response);
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro ao buscar usuário por ID:', error);
@@ -490,7 +455,6 @@ export const userService = {
 
   async deleteUser(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para deletar usuário (DELETE /users/${id})...`);
       const response = await api.delete(`/users/${id}`);
       if (response.status === 204 || response.status === 200) {
         return { success: true, data: { message: 'Usuário removido com sucesso' } };
@@ -514,8 +478,6 @@ export const userService = {
     password?: string;
   }): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para atualizar usuário (PATCH /users/${id}):`, userData);
-      
       // Mapear os campos para a estrutura correta da API
       const updateData: any = {};
       
@@ -525,8 +487,6 @@ export const userService = {
       if (userData.role) updateData.position = userData.role; // API espera 'position' não 'role'
       if (userData.phone) updateData.contact = userData.phone; // API espera 'contact' não 'phone'
       if (userData.password) updateData.password = userData.password;
-      
-      console.log(`📤 Dados mapeados para API:`, updateData);
       
       const response = await api.patch(`/users/${id}`, updateData);
       if (response.status === 200) {
@@ -601,12 +561,9 @@ export const authService = {
         return { success: false, error: 'Token não encontrado no localStorage' };
       }
       
-      console.log('🔑 Testando token:', token.substring(0, 20) + '...');
-      
       // Fazer uma requisição simples para testar se o token é válido
       const response = await api.get('/auth/me'); // Endpoint para verificar token
       
-      console.log('✅ Token válido, dados do usuário:', response.data);
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('❌ Token inválido:', error.response?.data || error.message);
@@ -624,16 +581,12 @@ export const authService = {
   // Registrar novo usuário
   async signup(userData: SignupData): Promise<AuthResponse> {
     try {
-      console.log('🔌 Fazendo requisição para:', '/auth/signup');
-      console.log('📝 Dados enviados:', { email: userData.email, name: userData.name });
-      
       const response = await api.post('/auth/signup', {
         email: userData.email,
         password: userData.password,
         username: userData.name
       });
       
-      console.log('📨 Resposta recebida:', response.data);
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro na requisição de registro:', error);
@@ -688,20 +641,14 @@ export const authService = {
   // Fazer login
   async signin(credentials: SigninData): Promise<AuthResponse> {
     try {
-      console.log('Fazendo requisição para:', '/auth/signin');
-      console.log('Dados enviados:', { email: credentials.email });
-      
       const response = await api.post('/auth/signin', {
         email: credentials.email,
         password: credentials.password
       });
       
-      console.log('Resposta recebida:', response.data);
-      
       // Salvar token no localStorage
       if (response.data.token) {
         localStorage.setItem('auth_token', response.data.token);
-        console.log('Token salvo no localStorage');
       }
       
       return { success: true, data: response.data };
@@ -790,14 +737,10 @@ export const authService = {
   // Recuperar senha
   async recoverPassword(email: string): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      console.log('🔌 Fazendo requisição para:', '/auth/forget/');
-      console.log('📧 Email enviado:', email);
-      
       const response = await api.post('/auth/forget/', {
         email: email
       });
       
-      console.log('📨 Resposta recebida:', response.data);
       return { 
         success: true, 
         message: response.data.message || 'Email de recuperação enviado com sucesso!'
@@ -845,15 +788,11 @@ export const authService = {
   // Renovar senha com token
   async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      console.log('🔌 Fazendo requisição para:', '/auth/reset-password');
-      console.log('🔑 Token enviado:', token.substring(0, 10) + '...');
-      
       const response = await api.post('/auth/reset-password', {
         token: token,
         newPassword: newPassword
       });
       
-      console.log('📨 Resposta recebida:', response.data);
       return { 
         success: true, 
         message: response.data.message || 'Senha alterada com sucesso!'
@@ -905,23 +844,15 @@ export const authService = {
 
   // Alterar senha do usuário atual
   async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    try {
-      console.log('🔌 Fazendo requisição para alterar senha:', '/auth/change-password');
-      
-      const response = await api.post('/auth/change-password', {
+    try { const response = await api.post('/auth/change-password', {
         currentPassword: currentPassword,
         newPassword: newPassword
       });
-      
-      console.log('📨 Resposta recebida:', response.data);
       return { 
         success: true, 
         message: response.data.message || 'Senha alterada com sucesso!'
       };
     } catch (error: any) {
-      console.error('💥 Erro ao alterar senha:', error);
-      console.error('📊 Status do erro:', error.response?.status);
-      console.error('📄 Dados do erro:', error.response?.data);
       
       let errorMessage = 'Erro ao alterar senha';
       
@@ -966,15 +897,7 @@ export const employeeService = {
   // Listar todos os funcionários
   async getAll(): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para buscar usuários...');
       const response = await api.get('/users/');
-      
-      console.log('📨 Resposta bruta da API:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-        data: response.data
-      });
       
       return { success: true, data: response.data };
     } catch (error: any) {
@@ -992,8 +915,6 @@ export const employeeService = {
   // Criar novo funcionário
   async create(usersData: EmployeeData): Promise<AuthResponse> {
     try {
-      console.log('📤 Enviando dados para criar usuário:', usersData);
-      
       const response = await api.post('/users/create', {
         name: usersData.name,
         email: usersData.email,
@@ -1002,10 +923,6 @@ export const employeeService = {
         phone: usersData.phone,
         password: usersData.password
       });
-      
-      console.log('📨 Resposta da API ao criar usuário:', response);
-      console.log('📊 Status da resposta:', response.status);
-      console.log('📄 Dados da resposta:', response.data);
       
       // Status 204 (No Content) é um sucesso, mas sem dados de retorno
       if (response.status === 204 || response.status === 201 || response.status === 200) {
@@ -1033,9 +950,7 @@ export const employeeService = {
 export const cotacaoService = {
   async getAll(): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para buscar cotações (GET /cotacoes)...');
       const response = await api.get('/cotacoes');
-      console.log('📨 Resposta da API (cotações):', response);
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro ao buscar cotações:', error);
@@ -1048,7 +963,6 @@ export const cotacaoService = {
 
   async create(cotacaoData: any): Promise<AuthResponse> {
     try {
-      console.log('📤 Criando nova cotação (POST /cotacoes):', cotacaoData);
       const response = await api.post('/cotacoes', cotacaoData);
       return { success: true, data: response.data };
     } catch (error: any) {
@@ -1062,7 +976,6 @@ export const cotacaoService = {
 
   async getById(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Buscando cotação por ID (GET /cotacoes/${id})...`);
       const response = await api.get(`/cotacoes/${id}`);
       return { success: true, data: response.data };
     } catch (error: any) {
@@ -1076,7 +989,6 @@ export const cotacaoService = {
 
   async update(id: string, cotacaoData: any): Promise<AuthResponse> {
     try {
-      console.log(`📤 Atualizando cotação (PATCH /cotacoes/${id}):`, cotacaoData);
       const response = await api.patch(`/cotacoes/${id}`, cotacaoData);
       return { success: true, data: response.data };
     } catch (error: any) {
@@ -1090,7 +1002,6 @@ export const cotacaoService = {
 
   async delete(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Deletando cotação (DELETE /cotacoes/${id})...`);
       await api.delete(`/cotacoes/${id}`);
       return { success: true, data: { message: 'Cotação removida com sucesso' } };
     } catch (error: any) {
@@ -1107,10 +1018,8 @@ export const cotacaoService = {
 export const produtoService = {
   async delete(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para deletar produto (DELETE /produtos/${id})...`);
       const response = await api.delete(`/produtos/${id}`);
       const status = response.status;
-      console.log('📥 Resposta delete produto:', status, response.data);
       if (status === 200 || status === 204) {
         return { success: true, data: response.data || { message: 'Produto removido com sucesso' } };
       }
@@ -1132,7 +1041,6 @@ export const produtoService = {
   },
   async forceDelete(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para deletar FORÇADO produto (DELETE /produtos/${id}/force)...`);
       const response = await api.delete(`/produtos/${id}/force`);
       const status = response.status;
       if (status === 200 || status === 204) {
@@ -1149,9 +1057,7 @@ export const produtoService = {
   },
   async getAll(): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para buscar produtos (GET /produtos)...');
       const response = await api.get('/produtos');
-      console.log('📥 Resposta da API para produtos:', response.data);
       
       if (response.status === 200) {
         return { success: true, data: response.data };
@@ -1184,7 +1090,6 @@ export const produtoService = {
     atualizado_em: string;
   }): Promise<AuthResponse> {
     try {
-      console.log('📤 Enviando dados para criar produto (POST /produtos):', productData);
       const response = await api.post('/produtos', productData);
       if (response.status === 201 || response.status === 200) {
         return { success: true, data: response.data };
@@ -1221,8 +1126,6 @@ export const produtoService = {
     m?: string;
   }>): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para atualizar produto (PATCH /produtos/${id})...`);
-      console.log(`📊 Dados recebidos para atualização:`, productData);
       const response = await api.patch(`/produtos/${id}`, productData);
       if (response.status === 200) {
         return { success: true, data: response.data };
@@ -1261,109 +1164,90 @@ export const produtoService = {
     }
   }
 }
-
-// Serviço de Dashboard - Estatísticas
 export const dashboardService = {
   async getStats(): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para buscar estatísticas do dashboard (GET /dashboard/stats)...');
-      const response = await api.get('/dashboard/stats');
-      if (response.status === 200) {
-        return { success: true, data: response.data };
-      }
-      return { success: false, error: 'Erro ao buscar estatísticas.' };
-    } catch (error: any) {
-      console.error('💥 Erro ao buscar estatísticas:', error);
-      let errorMessage = 'Erro ao buscar estatísticas.';
-      if (error.response) {
-        errorMessage = error.response.data?.error || error.response.data?.message || errorMessage;
-      } else if (error.request) {
-        errorMessage = 'Erro de conexão. Verifique sua internet.';
-      }
-      return {
-        success: false,
-        error: errorMessage
-      };
-    }
-  },
+      // Como os endpoints de stats não existem, vamos buscar dados dos endpoints principais
+      // e calcular as estatísticas no frontend
+      const [cotacoesResponse, usersResponse, suppliersResponse, productsResponse] = await Promise.allSettled([
+        api.get('/cotacoes'),
+        api.get('/users'),
+        api.get('/fornecedores'),
+        api.get('/products')
+      ]);
 
-  async getQuoteStats(): Promise<AuthResponse> {
-    try {
-      console.log('📤 Fazendo requisição para buscar estatísticas de cotações (GET /cotacoes/stats)...');
-      const response = await api.get('/cotacoes/stats');
-      if (response.status === 200) {
-        return { success: true, data: response.data };
-      }
-      return { success: false, error: 'Erro ao buscar estatísticas de cotações.' };
-    } catch (error: any) {
-      console.error('💥 Erro ao buscar estatísticas de cotações:', error);
-      // Fallback: tentar buscar todas as cotações e calcular estatísticas localmente
-      try {
-        const cotacoesResponse = await cotacaoService.getAll();
-        if (cotacoesResponse.success && cotacoesResponse.data) {
-          const cotacoes = Array.isArray(cotacoesResponse.data) ? cotacoesResponse.data : cotacoesResponse.data.data || [];
-          const stats = {
-            total: cotacoes.length,
-            approved: cotacoes.filter((c: any) => c.status === 'approved' || c.status === 'aprovada').length,
-            pending: cotacoes.filter((c: any) => c.status === 'pending' || c.status === 'pendente').length,
-            processing: cotacoes.filter((c: any) => c.status === 'processing' || c.status === 'processando').length,
-            rejected: cotacoes.filter((c: any) => c.status === 'rejected' || c.status === 'rejeitada').length
-          };
-          return { success: true, data: stats };
-        }
-      } catch (fallbackError) {
-        console.error('💥 Erro no fallback de estatísticas:', fallbackError);
-      }
-      
-      let errorMessage = 'Erro ao buscar estatísticas de cotações.';
-      if (error.response) {
-        errorMessage = error.response.data?.error || error.response.data?.message || errorMessage;
-      } else if (error.request) {
-        errorMessage = 'Erro de conexão. Verifique sua internet.';
-      }
-      return {
-        success: false,
-        error: errorMessage
+      let stats = {
+        quotes: { total: 0, approved: 0, pending: 0, processing: 0, rejected: 0 },
+        users: { total: 0, admin: 0, manager: 0, user: 0 },
+        suppliers: { total: 0, active: 0, inactive: 0 },
+        products: { total: 0, inStock: 0, outOfStock: 0 }
       };
-    }
-  },
 
-  async getUserStats(): Promise<AuthResponse> {
-    try {
-      console.log('📤 Fazendo requisição para buscar estatísticas de usuários (GET /users/stats)...');
-      const response = await api.get('/users/stats');
-      if (response.status === 200) {
-        return { success: true, data: response.data };
+      // Processar cotações
+      if (cotacoesResponse.status === 'fulfilled' && cotacoesResponse.value.status === 200) {
+        const cotacoes = Array.isArray(cotacoesResponse.value.data) 
+          ? cotacoesResponse.value.data 
+          : cotacoesResponse.value.data?.data || [];
+        
+        stats.quotes = {
+          total: cotacoes.length,
+          approved: cotacoes.filter((c: any) => c.status === 'approved' || c.status === 'aprovada').length,
+          pending: cotacoes.filter((c: any) => c.status === 'pending' || c.status === 'pendente').length,
+          processing: cotacoes.filter((c: any) => c.status === 'processing' || c.status === 'processando').length,
+          rejected: cotacoes.filter((c: any) => c.status === 'rejected' || c.status === 'rejeitada').length
+        };
       }
-      return { success: false, error: 'Erro ao buscar estatísticas de usuários.' };
+
+      // Processar usuários apenas
+      if (usersResponse.status === 'fulfilled' && usersResponse.value.status === 200) {
+        const users = Array.isArray(usersResponse.value.data) 
+          ? usersResponse.value.data 
+          : usersResponse.value.data?.data || [];
+        
+        stats.users = {
+          total: users.length,
+          admin: users.filter((u: any) => u.role === 'admin' || u.position === 'admin').length,
+          manager: users.filter((u: any) => u.role === 'manager' || u.position === 'manager').length,
+          user: users.filter((u: any) => u.role === 'user' || u.position === 'user' || (!u.role && !u.position)).length
+        };
+      }
+
+      // Processar fornecedores
+      if (suppliersResponse.status === 'fulfilled' && suppliersResponse.value.status === 200) {
+        const suppliers = Array.isArray(suppliersResponse.value.data) 
+          ? suppliersResponse.value.data 
+          : suppliersResponse.value.data?.data || [];
+        
+        stats.suppliers = {
+          total: suppliers.length,
+          active: suppliers.filter((s: any) => s.ativo).length,
+          inactive: suppliers.filter((s: any) => !s.ativo).length
+        };
+      }
+
+      // Processar produtos
+      if (productsResponse.status === 'fulfilled' && productsResponse.value.status === 200) {
+        const products = Array.isArray(productsResponse.value.data) 
+          ? productsResponse.value.data 
+          : productsResponse.value.data?.data || [];
+        
+        stats.products = {
+          total: products.length,
+          inStock: products.filter((p: any) => p.estoque > 0).length,
+          outOfStock: products.filter((p: any) => p.estoque <= 0).length
+        };
+      }
+
+      return { success: true, data: stats };
     } catch (error: any) {
-      console.error('💥 Erro ao buscar estatísticas de usuários:', error);
-      // Fallback: tentar buscar todos os usuários e calcular estatísticas localmente
-      try {
-        const usersResponse = await userService.getAll();
-        if (usersResponse.success && usersResponse.data) {
-          const users = Array.isArray(usersResponse.data) ? usersResponse.data : usersResponse.data.data || [];
-          const stats = {
-            total: users.length,
-            admin: users.filter((u: any) => u.role === 'admin' || u.position === 'admin').length,
-            manager: users.filter((u: any) => u.role === 'manager' || u.position === 'manager').length,
-            user: users.filter((u: any) => u.role === 'user' || u.position === 'user' || (!u.role && !u.position)).length
-          };
-          return { success: true, data: stats };
-        }
-      } catch (fallbackError) {
-        console.error('💥 Erro no fallback de estatísticas de usuários:', fallbackError);
-      }
-      
-      let errorMessage = 'Erro ao buscar estatísticas de usuários.';
-      if (error.response) {
-        errorMessage = error.response.data?.error || error.response.data?.message || errorMessage;
-      } else if (error.request) {
-        errorMessage = 'Erro de conexão. Verifique sua internet.';
+      // Only log error once per session to avoid spam
+      if (!sessionStorage.getItem('dashboard_stats_error_logged')) {
+        console.error('💥 Erro ao buscar estatísticas:', error);
+        sessionStorage.setItem('dashboard_stats_error_logged', 'true');
       }
       return {
         success: false,
-        error: errorMessage
+        error: 'Erro ao buscar estatísticas do dashboard.'
       };
     }
   }
@@ -1383,7 +1267,6 @@ export const supplierService = {
     atualizado_por: number;
   }): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para criar fornecedor (POST /fornecedores):', supplierData);
       const response = await api.post('/fornecedores', supplierData);
       if (response.status === 201 || response.status === 200) {
         return { success: true, data: response.data };
@@ -1400,9 +1283,7 @@ export const supplierService = {
 
   async getAll(): Promise<AuthResponse> {
     try {
-      console.log('📤 Fazendo requisição para buscar fornecedores (GET /fornecedores)...');
       const response = await api.get('/fornecedores');
-      console.log('📨 Resposta da API (fornecedores):', response);
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro ao buscar fornecedores:', error);
@@ -1415,9 +1296,7 @@ export const supplierService = {
 
   async getById(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para buscar fornecedor por ID (GET /fornecedores/${id})...`);
       const response = await api.get(`/fornecedores/${id}`);
-      console.log('📨 Resposta da API (supplier by ID):', response);
       return { success: true, data: response.data };
     } catch (error: any) {
       console.error('💥 Erro ao buscar fornecedor por ID:', error);
@@ -1442,7 +1321,6 @@ export const supplierService = {
     rate?: number;
   }>): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para atualizar fornecedor (PATCH /fornecedores/${id}):`, supplierData);
       const response = await api.patch(`/fornecedores/${id}`, supplierData);
       if (response.status === 200) {
         return { success: true, data: response.data };
@@ -1459,7 +1337,6 @@ export const supplierService = {
 
   async delete(id: string): Promise<AuthResponse> {
     try {
-      console.log(`📤 Fazendo requisição para deletar fornecedor (DELETE /fornecedores/${id})...`);
       const response = await api.delete(`/fornecedores/${id}`);
       if (response.status === 204 || response.status === 200) {
         return { success: true, data: { message: 'Fornecedor removido com sucesso' } };
