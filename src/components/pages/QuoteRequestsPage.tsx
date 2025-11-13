@@ -573,14 +573,10 @@ export function QuoteRequestsPage({
   const itemsPerPage = 15;
   const [cotacoesList, setCotacoesList] = useState<any[]>([]);
   const [isLoadingCotacoes, setIsLoadingCotacoes] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number|null>(null);
   const [usersCache, setUsersCache] = useState<Map<number, string>>(new Map());
   
-  // Limpar cache de usuários quando componente monta (para debug)
-  useEffect(() => {
-    console.log('🗑️ Limpando cache de usuários para debug');
-    setUsersCache(new Map());
-  }, []);
 
   useEffect(() => {
     try {
@@ -597,7 +593,10 @@ export function QuoteRequestsPage({
   useEffect(() => {
     async function fetchCotacoes() {
       try {
-        setIsLoadingCotacoes(true);
+        // Só mostrar loading spinner no carregamento inicial
+        if (isInitialLoad) {
+          setIsLoadingCotacoes(true);
+        }
         // Buscar cotações e jobs em paralelo
         const [cotacoesResponse, jobsResponse] = await Promise.all([
           cotacaoService.getAll(),
@@ -663,14 +662,11 @@ export function QuoteRequestsPage({
               const userPromises = uncachedUserIds.map(async (userId) => {
                 try {
                   const response = await api.get(`/users/${userId}`);
-                  // Debug: log da estrutura da resposta
-                  console.log(`🔍 Debug usuário ${userId}:`, response.data);
                   
                   // Tentar diferentes campos possíveis para o nome
                   const userData = response.data.data || response.data;
                   const userName = userData?.name || userData?.nome || userData?.username || userData?.displayName || `Usuário ${userId}`;
                   
-                  console.log(`👤 Usuário ${userId} nome encontrado:`, userName);
                   return { id: userId, name: userName };
                 } catch (err) {
                   console.error(`Erro ao buscar usuário ${userId}:`, err);
@@ -719,7 +715,10 @@ export function QuoteRequestsPage({
         setCotacoesList([]);
         console.error('Erro ao buscar cotações:', error);
       } finally {
-        setIsLoadingCotacoes(false);
+        if (isInitialLoad) {
+          setIsLoadingCotacoes(false);
+          setIsInitialLoad(false);
+        }
       }
     }
     fetchCotacoes();
@@ -1138,12 +1137,7 @@ export function QuoteRequestsPage({
         // Tratamento específico para timeouts na aprovação
         let errorMessage = 'Erro ao processar aprovação';
         if (e?.code === 'ECONNABORTED' || e?.message?.includes('timeout')) {
-          errorMessage = 'Timeout na aprovação: O servidor está demorando para processar. A cotação pode ter sido aprovada. Recarregue a página para verificar o status.';
-          
-          // Auto-recarregar dados após timeout na aprovação
-          setTimeout(() => {
-            window.location.reload();
-          }, 3000);
+          errorMessage = 'Timeout na aprovação: O servidor está demorando para processar. A cotação pode ter sido aprovada. Recarregue a página manualmente para verificar o status.';
         } else if (!e?.response) {
           errorMessage = 'Erro de conexão: Verifique sua internet e tente novamente.';
         }
@@ -2151,8 +2145,8 @@ export function QuoteRequestsPage({
             {/* Conteúdo com dados */}
             {cotacoesList.length > 0 && (
               <div className="flex-1 overflow-y-auto">
-                {/* Loading State */}
-                {isLoadingCotacoes ? (
+                {/* Loading State - apenas no carregamento inicial */}
+                {isLoadingCotacoes && isInitialLoad ? (
                   <div className="flex flex-col items-center justify-center py-16 space-y-4">
                     <div className="relative">
                       <div className={`w-12 h-12 rounded-full border-4 ${
