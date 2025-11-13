@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LogIn, RefreshCw, AlertCircle } from 'lucide-react';
+import { LogIn, RefreshCw, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { auditLogService } from '../../api/services';
 import api from '../../api/client';
 
@@ -58,60 +58,149 @@ function parseUserAgent(ua: string): string {
 export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
   const [loginLogs, setLoginLogs] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usersCache, setUsersCache] = useState<Map<string, UserData>>(new Map());
+  
+  // Estados de paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalLogs, setTotalLogs] = useState(0);
+  const [logsPerPage] = useState(25); // Reduzido de 100 para 25
 
-  // Função para buscar dados do usuário por auth_id (UUID)
-  const fetchUserData = async (userId: string): Promise<UserData | null> => {
-    // Verificar cache primeiro
+  // Cache persistente com sessionStorage
+  const getCachedUser = (userId: string): UserData | null => {
+    // Verificar cache em memória primeiro
     if (usersCache.has(userId)) {
       return usersCache.get(userId)!;
     }
-
+    
+    // Verificar sessionStorage
     try {
-      const response = await api.get(`/users/by-auth-id/${userId}`);
-      const userData: UserData = {
-        id: response.data.id,
-        name: response.data.name || 'Usuário',
-        email: response.data.email || '-',
-        position: response.data.position || 'user'
-      };
-      
-      // Atualizar cache
-      setUsersCache(prev => new Map(prev).set(userId, userData));
-      
-      return userData;
+      const cached = sessionStorage.getItem(`user_cache_${userId}`);
+      if (cached) {
+        const userData = JSON.parse(cached);
+        // Verificar se cache não expirou (1 hora)
+        if (Date.now() - userData.cached_at < 3600000) {
+          setUsersCache(prev => new Map(prev).set(userId, userData));
+          return userData;
+        }
+      }
     } catch (err) {
-      console.error(`Erro ao buscar usuário ${userId}:`, err);
-      return null;
+      console.error('Erro ao ler cache:', err);
+    }
+    
+    return null;
+  };
+  
+  const setCachedUser = (userId: string, userData: UserData) => {
+    const cachedData = { ...userData, cached_at: Date.now() };
+    
+    // Atualizar cache em memória
+    setUsersCache(prev => new Map(prev).set(userId, userData));
+    
+    // Salvar no sessionStorage
+    try {
+      sessionStorage.setItem(`user_cache_${userId}`, JSON.stringify(cachedData));
+    } catch (err) {
+      console.error('Erro ao salvar cache:', err);
     }
   };
 
-  const loadLogs = async () => {
+  // Função otimizada para buscar usuários únicos em lote
+  const fetchUsersInBatch = async (userIds: string[]): Promise<Map<string, UserData>> => {
+    const userMap = new Map<string, UserData>();
+    const uncachedUserIds: string[] = [];
+    
+    // Verificar cache primeiro
+    userIds.forEach(userId => {
+      const cached = getCachedUser(userId);
+      if (cached) {
+        userMap.set(userId, cached);
+      } else {
+        uncachedUserIds.push(userId);
+      }
+    });
+    
+    // Limitar a 5 usuários únicos por vez para evitar sobrecarga
+    const limitedUserIds = uncachedUserIds.slice(0, 5);
+    
+    if (limitedUserIds.length > 0) {
+      setLoadingUsers(true);
+      
+      try {
+        // Buscar usuários em paralelo (máximo 5)
+        const userPromises = limitedUserIds.map(async (userId) => {
+          try {
+            const response = await api.get(`/users/by-auth-id/${userId}`);
+            const userData: UserData = {
+              id: response.data.id,
+              name: response.data.name || 'Usuário',
+              email: response.data.email || '-',
+              position: response.data.position || 'user'
+            };
+            
+            setCachedUser(userId, userData);
+            return { userId, userData };
+          } catch (err) {
+            console.error(`Erro ao buscar usuário ${userId}:`, err);
+            return { userId, userData: null };
+          }
+        });
+        
+        const results = await Promise.allSettled(userPromises);
+        
+        results.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value.userData) {
+            userMap.set(result.value.userId, result.value.userData);
+          }
+        });
+        
+      } catch (err) {
+        console.error('Erro ao buscar usuários em lote:', err);
+      } finally {
+        setLoadingUsers(false);
+      }
+    }
+    
+    return userMap;
+  };
+
+  const loadLogs = async (page: number = 1) => {
     setLoading(true);
     setError(null);
+    
     try {
+      const offset = (page - 1) * logsPerPage;
       const result = await auditLogService.getAll({
-        limit: 100,
-        offset: 0
+        limit: logsPerPage,
+        offset: offset
       });
 
       if (result.success && result.data?.data) {
         const auditLogs: AuditLog[] = Array.isArray(result.data.data) 
           ? result.data.data 
           : [];
+        
+        // Atualizar total de logs se disponível
+        if (result.data.total !== undefined) {
+          setTotalLogs(result.data.total);
+        }
 
         // Filtrar apenas logs de LOGIN/LOGOUT
         const sessionLogs = auditLogs.filter(log => 
           log.action === 'USER_LOGIN' || log.action === 'USER_LOGOUT'
         );
 
-        // Buscar dados dos usuários para cada log
-        const formattedLogsPromises = sessionLogs.map(async (log) => {
+        // Obter usuários únicos
+        const uniqueUserIds = [...new Set(sessionLogs.map(log => log.user_id))];
+        
+        // Buscar dados dos usuários em lote
+        const userMap = await fetchUsersInBatch(uniqueUserIds);
+
+        // Formatar logs com dados dos usuários
+        const formattedLogs = sessionLogs.map(log => {
           const detalhes = log.detalhes_alteracao || {};
-          
-          // Buscar dados do usuário através do user_id
-          const userData = await fetchUserData(log.user_id);
+          const userData = userMap.get(log.user_id);
 
           return {
             id: log.id,
@@ -129,13 +218,13 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
           };
         });
 
-        const formattedLogs = await Promise.all(formattedLogsPromises);
-
+        // Ordenar por timestamp (mais recente primeiro)
         formattedLogs.sort((a, b) => 
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
 
         setLoginLogs(formattedLogs);
+        setCurrentPage(page);
       } else {
         console.error('Erro ao buscar logs:', result.error);
         setError(result.error || 'Erro ao carregar logs');
@@ -149,9 +238,16 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
       setLoading(false);
     }
   };
+  
+  // Função para navegar entre páginas
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= Math.ceil(totalLogs / logsPerPage)) {
+      loadLogs(newPage);
+    }
+  };
 
   useEffect(() => {
-    loadLogs();
+    loadLogs(1);
   }, []);
 
   return (
@@ -171,8 +267,14 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
             </p>
           </div>
           <div className="flex-shrink-0 flex items-center gap-2 mt-2 sm:mt-0">
+            {loadingUsers && (
+              <div className="flex items-center gap-1 text-xs text-blue-400">
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                <span>Carregando usuários...</span>
+              </div>
+            )}
             <button
-              onClick={loadLogs}
+              onClick={() => loadLogs(currentPage)}
               disabled={loading}
               className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               title="Atualizar logs"
@@ -205,12 +307,13 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
             <p className="text-sm">Nenhum log de sessão encontrado.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto max-h-[65vh]">
-            <table className={`min-w-full w-full text-xs rounded-none border shadow-lg ${
-              isLight 
-                ? 'bg-white border-gray-200' 
-                : 'bg-slate-800/80 border-slate-700'
-            }`}>
+          <>
+            <div className="overflow-x-auto max-h-[55vh]">
+              <table className={`min-w-full w-full text-xs rounded-none border shadow-lg ${
+                isLight 
+                  ? 'bg-white border-gray-200' 
+                  : 'bg-slate-800/80 border-slate-700'
+              }`}>
               <thead>
                 <tr className={isLight ? 'bg-gray-50' : 'bg-slate-900/60'}>
                   <th className={`px-2 sm:px-3 py-2 text-left font-semibold ${isLight ? 'text-gray-700' : 'text-slate-300'}`}>Ação</th>
@@ -285,7 +388,61 @@ export function LoginLogsPage({ isLight = false }: { isLight?: boolean } = {}) {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+            
+            {/* Controles de Paginação */}
+            {totalLogs > logsPerPage && (
+              <div className={`flex items-center justify-between mt-4 px-2 py-3 border-t ${
+                isLight ? 'border-gray-200 bg-gray-50' : 'border-slate-700 bg-slate-800/50'
+              }`}>
+                <div className={`text-xs ${
+                  isLight ? 'text-gray-600' : 'text-slate-400'
+                }`}>
+                  Mostrando {((currentPage - 1) * logsPerPage) + 1} a {Math.min(currentPage * logsPerPage, totalLogs)} de {totalLogs} logs
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1 || loading}
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-all ${
+                      currentPage === 1 || loading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : isLight
+                          ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          : 'bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600'
+                    }`}
+                  >
+                    <ChevronLeft className="w-3 h-3" />
+                    Anterior
+                  </button>
+                  
+                  <span className={`px-3 py-1 rounded text-xs font-medium ${
+                    isLight 
+                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                      : 'bg-blue-900/50 text-blue-300 border border-blue-500/50'
+                  }`}>
+                    {currentPage} de {Math.ceil(totalLogs / logsPerPage)}
+                  </span>
+                  
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= Math.ceil(totalLogs / logsPerPage) || loading}
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-all ${
+                      currentPage >= Math.ceil(totalLogs / logsPerPage) || loading
+                        ? 'opacity-50 cursor-not-allowed'
+                        : isLight
+                          ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          : 'bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600'
+                    }`}
+                  >
+                    Próxima
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
