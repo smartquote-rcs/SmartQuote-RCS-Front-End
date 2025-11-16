@@ -218,40 +218,6 @@ O projeto usa TypeScript com configuração estrita para garantir type safety.
 ### Tailwind CSS
 Classes utilitárias para estilização rápida e consistente.
 
-## 📝 Contribuição
-
-1. **Fork** o projeto
-2. **Create** uma feature branch (`git checkout -b feature/AmazingFeature`)
-3. **Commit** suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** para a branch (`git push origin feature/AmazingFeature`)
-5. **Open** um Pull Request
-
-## 📄 Licença
-
-Este projeto está licenciado sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-## 🏢 Sobre a RCS
-
-A **RCS** é uma empresa líder em soluções tecnológicas em Angola, oferecendo:
-
-- 💼 **Consultoria em TI**
-- 🖥️ **Soluções de Hardware**
-- ☁️ **Serviços em Nuvem**
-- 🔧 **Suporte Técnico 24/7**
-
-### 📞 Contato
-
-- **Website**: [https://www.rcsangola.co.ao/](https://www.rcsangola.co.ao/)
-- **Call Center**: 932 896 190
-- **Horário**: Segunda-feira – Sexta-feira, 7h30 – 17h00
-- **Helpdesk**: 24/7
-
-### 📍 Localização
-
-- **Sede**: Rua Comandante Arguelles, nº103 – Prenda
-- **Filial**: Rua de Liberdade, nº94 – Vila Alice
-
----
 
 <div align="center">
   <strong>Desenvolvido por Devs da 42 Luanda</strong>
