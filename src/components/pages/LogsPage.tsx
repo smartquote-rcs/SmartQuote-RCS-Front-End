@@ -114,14 +114,24 @@ const LogCard = ({ log, isLight = false, t }: { log: LogEntry; isLight?: boolean
               
               {/* Metadata */}
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <div className={`${isLight ? 'bg-gray-100 border-gray-300' : 'bg-gradient-to-r from-slate-800/50 to-slate-900/50 border-slate-500/50'} px-2 py-1 rounded-md border shadow-sm`}>
-                  <User className={`w-3 h-3 ${isLight ? 'text-cyan-600' : 'text-cyan-200'}`} />
-                  <span className={`${isLight ? 'text-gray-800' : 'text-slate-100'} font-medium text-xs truncate max-w-24 sm:max-w-none`}>
-                    {isQuoteLog 
-                      ? `${t('logs.status')}: ${log.type === 'cotacao_approved' ? 'approved' : (log.type === 'cotacao_rejected' ? 'rejected' : 'pending')}`
-                      : (log.usuario || 'N/A')
-                    }
-                  </span>
+                <div className={`flex items-center space-x-2 ${isLight ? 'bg-gray-100 border-gray-300' : 'bg-gradient-to-r from-slate-800/50 to-slate-900/50 border-slate-500/50'} px-2 py-1 rounded-md border shadow-sm`}>
+                  <div className="flex items-center space-x-1">
+                    <User className={`w-3 h-3 ${isLight ? 'text-cyan-600' : 'text-cyan-200'}`} />
+                    <span className={`${isLight ? 'text-gray-800' : 'text-slate-100'} font-medium text-xs truncate max-w-24 sm:max-w-none`}>
+                      {isQuoteLog 
+                        ? `${t('logs.status')}: ${log.type === 'cotacao_approved' ? 'approved' : (log.type === 'cotacao_rejected' ? 'rejected' : 'pending')}`
+                        : (log.usuario || 'N/A')
+                      }
+                    </span>
+                  </div>
+                  
+                  {/* Mostrar usuário em todos os logs de cotação */}
+                  {isQuoteLog && log.usuario && (
+                    <div className="flex items-center space-x-1 border-l pl-2 ml-1 border-gray-400/30">
+                      <span>👤</span>
+                      <span className={`${isLight ? 'text-gray-800' : 'text-slate-100'} font-medium text-xs truncate max-w-20 sm:max-w-none`}>{log.usuario}</span>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Mostrar usuário responsável */}
@@ -162,6 +172,7 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const [usersCache, setUsersCache] = useState<Map<number, string>>(new Map());
 
   // Carregar logs e cotações quando o componente for montado
   useEffect(() => {
@@ -180,6 +191,54 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
       if (cotacoesResult.success && cotacoesResult.data) {
         const cotacoesArr = Array.isArray(cotacoesResult.data?.data) ? cotacoesResult.data.data : [];
 
+        // Buscar nomes dos usuários responsáveis de forma otimizada
+        const userIds = [...new Set(cotacoesArr
+          .map((c: any) => c.aprovado_por)
+          .filter((id: any) => id && typeof id === 'number'))] as number[];
+        
+        const newUsersCache = new Map(usersCache);
+        const uncachedUserIds = userIds.filter(id => !newUsersCache.has(id));
+        
+        // Buscar usuários em paralelo
+        if (uncachedUserIds.length > 0) {
+          try {
+            const { default: api } = await import("../../api/client");
+            
+            if (uncachedUserIds.length <= 10) {
+              const userPromises = uncachedUserIds.map(async (userId) => {
+                try {
+                  const response = await api.get(`/users/${userId}`);
+                  const userData = response.data.data || response.data;
+                  const userName = userData?.name || userData?.nome || userData?.username || userData?.displayName || `Usuário ${userId}`;
+                  return { id: userId, name: userName };
+                } catch (err) {
+                  console.error(`Erro ao buscar usuário ${userId}:`, err);
+                  return { id: userId, name: `Usuário ${userId}` };
+                }
+              });
+              
+              const userResults = await Promise.allSettled(userPromises);
+              userResults.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                  newUsersCache.set(result.value.id, result.value.name);
+                } else {
+                  newUsersCache.set(uncachedUserIds[index], `Usuário ${uncachedUserIds[index]}`);
+                }
+              });
+            } else {
+              uncachedUserIds.forEach(userId => {
+                newUsersCache.set(userId, `Usuário ${userId}`);
+              });
+            }
+          } catch (err) {
+            console.error('Erro ao buscar usuários:', err);
+            uncachedUserIds.forEach(userId => {
+              newUsersCache.set(userId, `Usuário ${userId}`);
+            });
+          }
+        }
+        setUsersCache(newUsersCache);
+
         // Gerar logs para todas as cotações
         const cotacaoLogs: LogEntry[] = cotacoesArr.map((cotacao: any) => {
           // Verificar o status da aprovação
@@ -187,12 +246,17 @@ export function LogsPage({ isLight = false }: { isLight?: boolean } = {}) {
           const isRejected = cotacao.aprovacao === false && cotacao.motivo; // Só é rejeitada se tem motivo
           const isPending = !isApproved && !isRejected; // Se não é aprovada nem rejeitada, é pendente
           
+          // Buscar nome do usuário do cache
+          const userName = typeof cotacao.aprovado_por === 'number' 
+            ? newUsersCache.get(cotacao.aprovado_por) || cotacao.solicitante || 'Sistema'
+            : cotacao.aprovado_por || cotacao.solicitante || 'Sistema';
+          
           return {
             id: `cotacao_${cotacao.id}`,
             type: isApproved ? 'cotacao_approved' : (isRejected ? 'cotacao_rejected' : 'cotacao_pending'),
             nivel: isApproved ? 'success' : (isRejected ? 'warning' : 'info'),
             categoria: 'Cotação',
-            usuario: cotacao.aprovado_por || cotacao.solicitante || 'Sistema',
+            usuario: userName,
             acao: isApproved ? 'Quote Approved' : (isRejected ? 'Quote Rejected' : 'Quote Pending'),
             detalhes: cotacao.motivo || (isApproved ? 'Cotação aprovada automaticamente' : (isRejected ? 'Cotação rejeitada' : 'Aguardando aprovação')),
             timestamp: cotacao.data_aprovacao || cotacao.dataRecebido || cotacao.cadastrado_em || new Date().toISOString(),
