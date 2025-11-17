@@ -2142,28 +2142,11 @@ export function QuoteRequestsPage({
           </div>
 
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Loading State - SEMPRE mostrar quando está carregando */}
+            {/* Loading State */}
             {isLoadingCotacoes && isInitialLoad ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-12 sm:py-16 space-y-4">
-                <div className="relative">
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border-4 ${
-                    isLight 
-                      ? 'border-blue-200 border-t-blue-600' 
-                      : 'border-slate-600 border-t-cyan-400'
-                  } animate-spin`}></div>
-                </div>
-                <div className="text-center space-y-2">
-                  <p className={`text-base sm:text-lg font-medium ${
-                    isLight ? 'text-gray-700' : 'text-slate-200'
-                  }`}>
-                    {t("quoteRequests.loading")}
-                  </p>
-                  <p className={`text-xs sm:text-sm ${
-                    isLight ? 'text-gray-500' : 'text-slate-400'
-                  }`}>
-                    {t("quoteRequests.loadingDescription")}
-                  </p>
-                </div>
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <RefreshCw className={`w-8 h-8 ${isLight ? 'text-blue-600' : 'text-blue-400'} animate-spin`} />
+                <p className={`${isLight ? 'text-gray-600' : 'text-slate-300'}`}>{t("quoteRequests.loading")}</p>
               </div>
             ) : (
               <>
