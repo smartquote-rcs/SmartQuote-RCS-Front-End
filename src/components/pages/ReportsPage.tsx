@@ -416,7 +416,7 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>{t("reports.productsReport")}</h3>
-                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalProdutos} {reportData.totalProdutos} {t("reports.productsRegistered")}</p>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalProdutos} {t("reports.productsRegistered")}</p>
                       <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1`}>{t("reports.availableForQuote")}</p>
                     </div>
                   </div>
@@ -441,7 +441,7 @@ export function ReportsPage({ isLight = false }: { isLight?: boolean } = {}) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className={`text-sm sm:text-base lg:text-lg font-semibold ${isLight ? 'text-gray-800' : 'text-dark-primary-text'} truncate`}>{t("reports.suppliersReport")}</h3>
-                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalFornecedores} {reportData.totalFornecedores} {t("reports.activeSuppliers")}</p>
+                      <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-sm lg:text-base mt-1`}>{reportData.totalFornecedores} {t("reports.activeSuppliers")}</p>
                       <p className={`${isLight ? 'text-gray-600' : 'text-dark-secondary'} text-xs sm:text-xs lg:text-sm mt-1`}>{t("reports.registeredPartners")}</p>
                     </div>
                   </div>
