@@ -844,13 +844,67 @@ export const authService = {
 
   // Alterar senha do usuário atual
   async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    try { const response = await api.post('/auth/change-password', {
-        currentPassword: currentPassword,
-        newPassword: newPassword
+    try {
+      // Pegar o ID e email do usuário logado do localStorage
+      const auth = localStorage.getItem('smartquote_auth');
+      if (!auth) {
+        return { 
+          success: false, 
+          error: 'Usuário não autenticado. Faça login novamente.' 
+        };
+      }
+      
+      const parsed = JSON.parse(auth);
+      const userId = parsed.user?.id;
+      const userEmail = parsed.user?.email;
+      
+      if (!userId || !userEmail) {
+        return { 
+          success: false, 
+          error: 'Dados do usuário não encontrados. Faça login novamente.' 
+        };
+      }
+      
+      // Verificar se a senha atual está correta
+      try {
+        const loginTest = await api.post('/auth/signin', {
+          email: userEmail,
+          password: currentPassword
+        });
+        
+        if (!loginTest.data || loginTest.status !== 200) {
+          return { 
+            success: false, 
+            error: 'Senha atual incorreta. Verifique e tente novamente.' 
+          };
+        }
+      } catch (verifyError: any) {
+        return { 
+          success: false, 
+          error: 'Senha atual incorreta. Verifique e tente novamente.' 
+        };
+      }
+      
+      // Atualizar a senha
+      const response = await api.patch(`/users/${userId}`, {
+        password: newPassword
       });
+      
+      // Verificar se o backend realmente atualizou
+      if (response.status === 200 || response.status === 204) {
+        // Atualizar o token/sessão com a nova senha
+        parsed.user.password = newPassword;
+        localStorage.setItem('smartquote_auth', JSON.stringify(parsed));
+        
+        return { 
+          success: true, 
+          message: response.data?.message || 'Senha alterada com sucesso!'
+        };
+      }
+      
       return { 
-        success: true, 
-        message: response.data.message || 'Senha alterada com sucesso!'
+        success: false, 
+        error: 'Resposta inesperada do servidor.'
       };
     } catch (error: any) {
       

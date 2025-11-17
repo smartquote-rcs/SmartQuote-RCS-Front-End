@@ -114,6 +114,7 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 	});
 
 	const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+	const [isChangingPassword, setIsChangingPassword] = useState(false);
 
 	// Estados para o modal de redefinição de senha (método igual ao esqueci senha)
 	const [showTokenModal, setShowTokenModal] = useState(false);
@@ -247,18 +248,18 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 		}
 
 		if (!passwordData.current) {
+			alert(t('settings.currentPasswordRequired'));
 			return;
 		}
-
+		
+		setIsChangingPassword(true);
+		
 		try {
-			
-			// Importar o serviço de autenticação e fazer a alteração real
 			const { authService } = await import('../../api/services');
 			
 			const result = await authService.changePassword(passwordData.current, passwordData.new);
 			
 			if (result.success) {
-				
 				// Limpar os campos de senha
 				setPasswordData({
 					current: '',
@@ -283,16 +284,14 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 						}
 					}
 				} catch (e) {
-					console.warn('⚠️ Não foi possível atualizar senha no localStorage:', e);
+					// Silently fail
 				}
 				
 			} else {
-				console.error('❌ Erro ao alterar senha:', result.error);
 				alert(result.error || 'Erro ao alterar senha. Tente novamente.');
 			}
 			
 		} catch (error: any) {
-			console.error('💥 Erro inesperado ao alterar senha:', error);
 			console.error('📊 Detalhes completos do erro:', {
 				name: error?.name,
 				message: error?.message,
@@ -302,6 +301,8 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 				statusText: error?.response?.statusText
 			});
 			alert(`Erro inesperado ao alterar senha: ${error?.message || 'Erro desconhecido'}`);
+		} finally {
+			setIsChangingPassword(false);
 		}
 	};
 
@@ -671,33 +672,21 @@ export default function SettingsPage({ isLight = false }: { isLight?: boolean } 
 									</div>
 								</div>
 
-								<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+								<div className="flex justify-end">
 									<Button
 										onClick={handleChangePassword}
-										className="flex-1 h-9 sm:h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base"
+										disabled={isChangingPassword}
+										className="h-9 sm:h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base px-6 disabled:opacity-50 disabled:cursor-not-allowed"
 									>
-										<Lock className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-										{t('settings.changePassword')}
-									</Button>
-									<Button
-										onClick={handleResetPassword}
-										variant="outline"
-										className={`flex-1 h-9 sm:h-10 text-sm sm:text-base ${
-											isLight 
-												? 'border-orange-300 text-orange-700 hover:bg-orange-50 hover:border-orange-400' 
-												: 'border-orange-500/50 text-orange-400 hover:bg-orange-500/10 hover:border-orange-400'
-										}`}
-										disabled={isRequestingToken}
-									>
-										{isRequestingToken ? (
+										{isChangingPassword ? (
 											<>
 												<RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
-												Enviando token...
+												Alterando...
 											</>
 										) : (
 											<>
-												<RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-												{t('settings.resetPassword')}
+												<Lock className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+												{t('settings.changePassword')}
 											</>
 										)}
 									</Button>
