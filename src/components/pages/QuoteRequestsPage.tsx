@@ -652,44 +652,35 @@ export function QuoteRequestsPage({
         const newUsersCache = new Map(usersCache);
         const uncachedUserIds = userIds.filter(id => !newUsersCache.has(id));
         
-        // Buscar usuários em paralelo em vez de sequencial
+        // Buscar usuários em paralelo
         if (uncachedUserIds.length > 0) {
           try {
             const { default: api } = await import("../../api/client");
             
-            // Buscar todos os usuários de uma vez se possível
-            if (uncachedUserIds.length <= 5) {
-              const userPromises = uncachedUserIds.map(async (userId) => {
-                try {
-                  const response = await api.get(`/users/${userId}`);
-                  
-                  // Tentar diferentes campos possíveis para o nome
-                  const userData = response.data.data || response.data;
-                  const userName = userData?.name || userData?.nome || userData?.username || userData?.displayName || `Usuário ${userId}`;
-                  
-                  return { id: userId, name: userName };
-                } catch (err) {
-                  console.error(`Erro ao buscar usuário ${userId}:`, err);
-                  return { id: userId, name: `Usuário ${userId}` };
-                }
-              });
-              
-              const userResults = await Promise.allSettled(userPromises);
-              userResults.forEach((result, index) => {
-                if (result.status === 'fulfilled') {
-                  newUsersCache.set(result.value.id, result.value.name);
-                } else {
-                  newUsersCache.set(uncachedUserIds[index], `Usuário ${uncachedUserIds[index]}`);
-                }
-              });
-            } else {
-              // Se muitos usuários, buscar apenas os primeiros 5 para não sobrecarregar
-              uncachedUserIds.slice(0, 5).forEach(userId => {
-                newUsersCache.set(userId, `Usuário ${userId}`);
-              });
-            }
+            // Buscar todos os usuários necessários
+            const userPromises = uncachedUserIds.map(async (userId) => {
+              try {
+                const response = await api.get(`/users/${userId}`);
+                
+                // Tentar diferentes campos possíveis para o nome
+                const userData = response.data.data || response.data;
+                const userName = userData?.name || userData?.nome || userData?.username || userData?.displayName || `Usuário ${userId}`;
+                
+                return { id: userId, name: userName };
+              } catch (err) {
+                return { id: userId, name: `Usuário ${userId}` };
+              }
+            });
+            
+            const userResults = await Promise.allSettled(userPromises);
+            userResults.forEach((result, index) => {
+              if (result.status === 'fulfilled') {
+                newUsersCache.set(result.value.id, result.value.name);
+              } else {
+                newUsersCache.set(uncachedUserIds[index], `Usuário ${uncachedUserIds[index]}`);
+              }
+            });
           } catch (err) {
-            console.error('Erro ao buscar usuários:', err);
             uncachedUserIds.forEach(userId => {
               newUsersCache.set(userId, `Usuário ${userId}`);
             });
