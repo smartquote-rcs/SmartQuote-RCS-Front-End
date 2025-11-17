@@ -2142,33 +2142,35 @@ export function QuoteRequestsPage({
           </div>
 
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Conteúdo com dados */}
-            {cotacoesList.length > 0 && (
-              <div className="flex-1 overflow-y-auto">
-                {/* Loading State - apenas no carregamento inicial */}
-                {isLoadingCotacoes && isInitialLoad ? (
-                  <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                    <div className="relative">
-                      <div className={`w-12 h-12 rounded-full border-4 ${
-                        isLight 
-                          ? 'border-blue-200 border-t-blue-600' 
-                          : 'border-slate-600 border-t-cyan-400'
-                      } animate-spin`}></div>
-                    </div>
-                    <div className="text-center space-y-2">
-                      <p className={`text-lg font-medium ${
-                        isLight ? 'text-gray-700' : 'text-slate-200'
-                      }`}>
-                        {t("quoteRequests.loading")}
-                      </p>
-                      <p className={`text-sm ${
-                        isLight ? 'text-gray-500' : 'text-slate-400'
-                      }`}>
-                        {t("quoteRequests.loadingDescription")}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
+            {/* Loading State - SEMPRE mostrar quando está carregando */}
+            {isLoadingCotacoes && isInitialLoad ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-12 sm:py-16 space-y-4">
+                <div className="relative">
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border-4 ${
+                    isLight 
+                      ? 'border-blue-200 border-t-blue-600' 
+                      : 'border-slate-600 border-t-cyan-400'
+                  } animate-spin`}></div>
+                </div>
+                <div className="text-center space-y-2">
+                  <p className={`text-base sm:text-lg font-medium ${
+                    isLight ? 'text-gray-700' : 'text-slate-200'
+                  }`}>
+                    {t("quoteRequests.loading")}
+                  </p>
+                  <p className={`text-xs sm:text-sm ${
+                    isLight ? 'text-gray-500' : 'text-slate-400'
+                  }`}>
+                    {t("quoteRequests.loadingDescription")}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Conteúdo com dados */}
+                {cotacoesList.length > 0 && (
+                  <div className="flex-1 overflow-y-auto">
+                    {(
                   /* Funções para filtrar e paginar por aba */
                   (() => {
                     const getPaginated = (tab: string) => {
@@ -2243,7 +2245,7 @@ export function QuoteRequestsPage({
             )}
 
             {/* Estado vazio centralizado quando não há dados */}
-            {cotacoesList.length === 0 && (
+            {cotacoesList.length === 0 && !isLoadingCotacoes && (
               <div className="flex-1 flex flex-col justify-center items-center">
                 <FileText className="w-16 h-16 text-slate-400 mb-6" />
                 <h3 className="text-xl font-semibold text-white mb-3">
@@ -2261,6 +2263,8 @@ export function QuoteRequestsPage({
                   </button>
                 )}
               </div>
+            )}
+            </>
             )}
           </div>
         </Tabs>
